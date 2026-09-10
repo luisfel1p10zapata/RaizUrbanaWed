@@ -1,0 +1,316 @@
+/* =========================================================
+   ADMIN LAYOUT
+   ========================================================= */
+
+/* Permitir que toda la página crezca y tenga scroll */
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
+}
+
+html {
+  overflow-y: auto;
+}
+
+body {
+  min-height: 100vh;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+
+/* =========================================================
+   CONTENEDOR PRINCIPAL
+   ========================================================= */
+
+.admin-layout {
+  width: 100%;
+  min-height: 100vh;
+
+  background-color: #f6ece8;
+}
+
+
+/* =========================================================
+   CONTENIDO
+   ========================================================= */
+
+.admin-content {
+  min-height: 100vh;
+
+  margin-left: 260px;
+  padding: 32px;
+
+  box-sizing: border-box;
+
+  transition: margin-left 0.25s ease;
+}
+
+.admin-layout.sidebar-collapsed .admin-content {
+  margin-left: 76px;
+}
+
+
+/* =========================================================
+   CONTENEDOR DE CADA PÁGINA
+   ========================================================= */
+
+.admin-page {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.admin-page-content {
+  width: 100%;
+}
+
+
+/* =========================================================
+   HEADER GENÉRICO
+   ========================================================= */
+
+.admin-page-header {
+  margin-bottom: 28px;
+}
+
+.admin-page-title {
+  margin: 0;
+
+  color: #171735;
+
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.admin-page-description {
+  margin: 8px 0 0;
+
+  color: #77748a;
+
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+
+/* =========================================================
+   CARD GENÉRICA
+   ========================================================= */
+
+.admin-card {
+  width: 100%;
+
+  box-sizing: border-box;
+
+  padding: 24px;
+
+  background-color: #ffffff;
+
+  border: 1px solid #d8b6ae;
+  border-radius: 10px;
+}
+
+
+/* =========================================================
+   ROLES - ESCALA Y SCROLL
+   ========================================================= */
+
+.roles-page {
+  width: 100%;
+  min-height: calc(100vh - 64px);
+
+  box-sizing: border-box;
+}
+
+
+/* =========================================================
+   ESTADÍSTICAS
+   ========================================================= */
+
+.roles-stats {
+  width: 100%;
+}
+
+
+/* =========================================================
+   TABLA
+   ========================================================= */
+
+.roles-table-card {
+  width: 100%;
+  box-sizing: border-box;
+
+  background-color: #ffffff;
+
+  border: 1px solid #d8b6ae;
+  border-radius: 10px;
+
+  overflow: hidden;
+}
+
+.roles-table-wrapper {
+  width: 100%;
+
+  overflow-x: auto;
+  overflow-y: visible;
+}
+
+
+/* =========================================================
+   FILAS DE TABLA - MÁS ALTAS COMO EN FIGMA
+   ========================================================= */
+
+.roles-table th {
+  height: 42px;
+
+  padding: 0 14px;
+
+  box-sizing: border-box;
+
+  background-color: #fafafa;
+
+  border-bottom: 1px solid #d8b6ae;
+
+  color: #30304a;
+
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.45px;
+
+  text-align: left;
+}
+
+.roles-table td {
+  height: 58px;
+
+  padding: 0 14px;
+
+  box-sizing: border-box;
+
+  background-color: #ffffff;
+
+  border-bottom: 1px solid #e1c4be;
+
+  color: #77748a;
+
+  font-size: 9px;
+}
+
+.roles-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+
+/* =========================================================
+   PAGINACIÓN
+   ========================================================= */
+
+.roles-pagination {
+  height: 52px;
+
+  padding: 0 15px;
+
+  box-sizing: border-box;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  background-color: #ffffff;
+
+  /* Línea de separación que faltaba */
+  border-top: 1px solid #d8b6ae;
+}
+
+
+/* =========================================================
+   COLORES DE BORDES DE ROLES
+   ========================================================= */
+
+.roles-stat-card,
+.roles-filters-card,
+.roles-table-card {
+  border-color: #d8b6ae;
+}
+
+.roles-filter-header,
+.roles-table-header {
+  border-color: #d8b6ae;
+}
+
+
+/* =========================================================
+   FONDO DEL BUSCADOR
+   ========================================================= */
+
+.roles-filters-card {
+  background-color: #ffffff;
+}
+
+.roles-filter-header {
+  background-color: #ffffff;
+}
+
+.roles-filters {
+  background-color: #ffffff;
+}
+
+
+/* =========================================================
+   FONDO DE LA TABLA
+   ========================================================= */
+
+.roles-table-header {
+  background-color: #ffffff;
+}
+
+.roles-table thead,
+.roles-table th {
+  background-color: #fafafa;
+}
+
+
+/* =========================================================
+   NO RECORTAR LA PÁGINA
+   ========================================================= */
+
+.admin-content,
+.admin-page,
+.admin-page-content,
+.roles-page {
+  overflow: visible;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 900px) {
+  .admin-content {
+    margin-left: 76px;
+    padding: 24px;
+  }
+
+  .admin-layout.sidebar-collapsed .admin-content {
+    margin-left: 76px;
+  }
+}
+
+@media (max-width: 650px) {
+  .admin-content {
+    margin-left: 0;
+    padding: 18px;
+  }
+
+  .admin-layout.sidebar-collapsed .admin-content {
+    margin-left: 0;
+  }
+}

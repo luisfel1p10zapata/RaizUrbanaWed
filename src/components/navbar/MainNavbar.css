@@ -1,0 +1,257 @@
+/* ========================= */
+/* MAIN NAVBAR */
+/* ========================= */
+
+.main-navbar {
+    width: 100%;
+    height: 68px;
+
+    padding: 0 42px;
+
+    display: flex;
+    align-items: center;
+
+    background-color: #ffffff;
+    border-bottom: 1px solid #e8e8e8;
+
+    box-sizing: border-box;
+}
+
+/* ========================= */
+/* LOGO */
+/* ========================= */
+
+.main-navbar-logo {
+    display: flex;
+    align-items: center;
+}
+
+.main-navbar-logo button {
+    width: 42px;
+    height: 42px;
+
+    padding: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: none;
+    background: transparent;
+
+    cursor: pointer;
+}
+
+.main-navbar-logo img {
+    width: 60px;
+    height: 60px;
+
+    display: block;
+
+    object-fit: contain;
+}
+
+/* ========================= */
+/* LINKS CENTRALES */
+/* ========================= */
+
+.main-navbar-links {
+    position: absolute;
+    left: 50%;
+
+    display: flex;
+    align-items: center;
+    gap: 20px;
+
+    transform: translateX(-50%);
+}
+
+.main-navbar-links a {
+    position: relative;
+
+    color: #4A4E69;
+
+    text-decoration: none;
+
+    font-size: 14px;
+    font-weight: 500;
+
+    padding: 10px 16px;
+
+    border-radius: 9px;
+
+    transition:
+        color 0.2s ease,
+        background-color 0.2s ease;
+}
+
+.main-navbar-links a:hover {
+    color: #22223B;
+    background-color: #f3f3f5;
+}
+
+.main-navbar-links a.active {
+    color: #22223B;
+    background-color: #e9e9eb;
+}
+
+/* ========================= */
+/* ACCIONES DERECHA */
+/* ========================= */
+
+.main-navbar-actions {
+    margin-left: auto;
+
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.main-navbar-actions button,
+.main-navbar-actions a {
+    color: #4A4E69;
+
+    font-size: 13px;
+    font-weight: 500;
+
+    text-decoration: none;
+
+    transition:
+        color 0.2s ease,
+        background-color 0.2s ease;
+}
+
+.main-navbar-actions button {
+    width: 34px;
+    height: 34px;
+
+    padding: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: none;
+    border-radius: 50%;
+
+    background-color: transparent;
+
+    cursor: pointer;
+}
+
+.main-navbar-actions button:hover {
+    background-color: #f3f3f5;
+    color: #22223B;
+}
+
+.main-navbar-actions a:hover {
+    color: #22223B;
+}
+
+/* ========================= */
+/* SEPARADOR */
+/* ========================= */
+
+.main-navbar-divider {
+    width: 1px;
+    height: 22px;
+
+    margin: 0 10px;
+
+    background-color: #dedede;
+}
+
+/* ========================= */
+/* REGISTRARSE */
+/* ========================= */
+
+.main-navbar-register {
+    padding: 10px 17px;
+
+    border-radius: 12px;
+
+    background-color: #22223B;
+    color: #ffffff !important;
+
+    transition:
+        background-color 0.2s ease,
+        transform 0.2s ease;
+}
+
+.main-navbar-register:hover {
+    background-color: #30304d !important;
+    color: #ffffff !important;
+
+    transform: translateY(-1px);
+}
+
+/* ========================= */
+/* ADMINISTRADOR */
+/* ========================= */
+
+.main-navbar-admin {
+    width: auto !important;
+    height: auto !important;
+
+    padding: 8px 14px !important;
+
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    gap: 6px;
+
+    box-sizing: border-box;
+
+    border: 1px solid #c9c7cc !important;
+    border-radius: 8px !important;
+
+    background-color: #ffffff !important;
+    color: #4A4E69 !important;
+
+    font-size: 13px !important;
+    font-weight: 500 !important;
+
+    line-height: 1.2;
+
+    text-decoration: none;
+
+    cursor: pointer;
+}
+
+.main-navbar-admin:hover {
+    background-color: #f5f5f7 !important;
+    border-color: #b8b6bd !important;
+}
+
+/* ========================= */
+/* AJUSTE PARA PANTALLAS */
+/* ========================= */
+
+@media (max-width: 900px) {
+    .main-navbar {
+        padding: 0 24px;
+    }
+
+    .main-navbar-links {
+        gap: 24px;
+    }
+
+    .main-navbar-actions {
+        gap: 10px;
+    }
+
+    .main-navbar-divider {
+        margin: 0;
+    }
+
+    /* ========================= */
+    /* POSICIÓN SUPERIOR */
+    /* ========================= */
+
+    .main-navbar {
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+    }
+}

@@ -1,0 +1,368 @@
+.admin-sidebar {
+  width: 260px;
+  height: 100vh;
+  background-color: #ffffff;
+  border-right: 1px solid #e5e5e5;
+
+  display: flex;
+  flex-direction: column;
+
+  transition: width 0.25s ease;
+
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+}
+
+.admin-sidebar.collapsed {
+  width: 76px;
+}
+
+/* ========================= */
+/* HEADER */
+/* ========================= */
+
+.admin-sidebar-header {
+  min-height: 72px;
+  padding: 0 18px;
+
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.admin-sidebar-logo {
+  width: 50px;
+  height: 50px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  overflow: hidden;
+}
+
+.admin-sidebar-logo img {
+  width: 100%;
+  height: 100%;
+
+  display: block;
+
+  object-fit: contain;
+}
+
+.admin-sidebar-title {
+  flex: 1;
+
+  font-size: 16px;
+  font-weight: 600;
+  color: #111111;
+
+  white-space: nowrap;
+}
+
+/* ========================= */
+/* BOTÓN COLAPSAR */
+/* ========================= */
+
+.admin-sidebar-toggle {
+  width: 32px;
+  height: 32px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+  background: transparent;
+
+  color: #666666;
+
+  cursor: pointer;
+
+  border-radius: 6px;
+
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.admin-sidebar-toggle:hover {
+  background-color: #f2f2f2;
+  color: #111111;
+}
+
+/* ========================= */
+/* NAVEGACIÓN */
+/* ========================= */
+
+.admin-sidebar-nav {
+  flex: 1;
+
+  padding: 16px 12px;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* ========================= */
+/* SECCIONES */
+/* ========================= */
+
+.sidebar-section {
+  margin-bottom: 8px;
+}
+
+.sidebar-section-header {
+  width: 100%;
+  min-height: 40px;
+
+  padding: 0 10px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  border: none;
+  background: transparent;
+
+  color: #555555;
+
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+
+  cursor: pointer;
+
+  border-radius: 6px;
+
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.sidebar-section-header:hover {
+  background-color: #f5f5f5;
+  color: #111111;
+}
+
+.sidebar-section-title {
+  white-space: nowrap;
+}
+
+.sidebar-section-items {
+  display: flex;
+  flex-direction: column;
+
+  gap: 3px;
+
+  margin-top: 3px;
+}
+
+/* ========================= */
+/* ELEMENTOS DEL SIDEBAR */
+/* ========================= */
+
+.sidebar-item {
+  /* CAMBIO: necesario para posicionar la línea del activo */
+  position: relative;
+
+  min-height: 42px;
+
+  padding: 0 12px;
+
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  color: #555555;
+
+  text-decoration: none;
+
+  font-size: 14px;
+  font-weight: 500;
+
+  border-radius: 7px;
+
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.sidebar-item:hover {
+  background-color: #f3f3f3;
+  color: #111111;
+}
+
+/* ========================= */
+/* ELEMENTO ACTIVO */
+/* ========================= */
+
+.sidebar-item.active {
+  background-color: #e8e8eb;
+  color: #343449;
+}
+
+/* Línea lateral del elemento activo */
+.sidebar-item.active::before {
+  content: "";
+
+  position: absolute;
+
+  left: 0;
+  top: 0px;
+  bottom: 5px;
+
+  width: 3px;
+  height: 100%;
+
+  background-color: #343449;
+
+  border-radius: 7px
+}
+
+.sidebar-item-label {
+  white-space: nowrap;
+}
+
+/* ========================= */
+/* SIDEBAR COLAPSADO */
+/* ========================= */
+
+.admin-sidebar.collapsed .admin-sidebar-header {
+  padding: 0;
+
+  justify-content: center;
+
+  flex-wrap: wrap;
+}
+
+.admin-sidebar.collapsed .admin-sidebar-toggle {
+  margin-left: 0;
+}
+
+.admin-sidebar.collapsed .admin-sidebar-nav {
+  padding: 16px 10px;
+}
+
+.collapsed-nav {
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+
+  gap: 6px;
+}
+
+.admin-sidebar.collapsed .sidebar-item {
+  width: 48px;
+  height: 42px;
+
+  padding: 0;
+
+  justify-content: center;
+
+  gap: 0;
+}
+
+.admin-sidebar.collapsed .sidebar-item-label {
+  display: none;
+}
+
+/* ========================= */
+/* SCROLLBAR */
+/* ========================= */
+
+.admin-sidebar-nav::-webkit-scrollbar {
+  width: 5px;
+}
+
+.admin-sidebar-nav::-webkit-scrollbar-thumb {
+  background-color: #d0d0d0;
+  border-radius: 10px;
+}
+
+/* ========================= */
+/* OPCIONES INFERIORES */
+/* ========================= */
+
+.admin-sidebar-bottom {
+  padding: 12px;
+
+  border-top: 1px solid #e5e5e5;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 3px;
+}
+
+.admin-sidebar-bottom-item {
+  width: 100%;
+  min-height: 42px;
+
+  padding: 0 12px;
+
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  border: none;
+  border-radius: 7px;
+
+  background-color: transparent;
+
+  color: #555555;
+
+  text-decoration: none;
+
+  font-family: 'Montserrat', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.admin-sidebar-bottom-item:hover {
+  background-color: #f3f3f3;
+  color: #111111;
+}
+
+.admin-sidebar-bottom-item span {
+  white-space: nowrap;
+}
+
+/* ========================= */
+/* SIDEBAR COLAPSADO */
+/* ========================= */
+
+.admin-sidebar.collapsed .admin-sidebar-bottom {
+  padding: 12px 10px;
+}
+
+.admin-sidebar.collapsed .admin-sidebar-bottom-item {
+  width: 48px;
+  height: 42px;
+
+  padding: 0;
+
+  justify-content: center;
+
+  gap: 0;
+}
+
+.admin-sidebar.collapsed .admin-sidebar-bottom-item span {
+  display: none;
+}

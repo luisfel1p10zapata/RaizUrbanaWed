@@ -1,0 +1,788 @@
+/* =========================================================
+   PRODUCCIÓN
+   ========================================================= */
+
+.produccion-page {
+  width: 100%;
+  min-height: calc(100vh - 64px);
+
+  box-sizing: border-box;
+
+  color: #171735;
+  font-family: 'Montserrat', sans-serif;
+}
+
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.produccion-header {
+  width: 100%;
+
+  margin-bottom: 24px;
+
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.produccion-header-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.produccion-eyebrow {
+  display: block;
+
+  margin: 0 0 7px;
+
+  color: #252545;
+
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+
+.produccion-title {
+  margin: 0;
+
+  color: #171735;
+
+  font-family: Georgia, 'Times New Roman', serif;
+
+  font-size: 38px;
+  font-weight: 400;
+  line-height: 1;
+
+  letter-spacing: -1px;
+}
+
+.produccion-description {
+  margin: 7px 0 0;
+
+  color: #77748a;
+
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.produccion-register-button {
+  height: 48px;
+
+  padding: 0 23px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  border: none;
+  border-radius: 9px;
+
+  background-color: #20203d;
+  color: #ffffff;
+
+  font-family: 'Montserrat', sans-serif;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  box-shadow: 0 3px 6px rgba(32, 32, 61, 0.18);
+}
+
+.produccion-register-button:hover {
+  background-color: #17172f;
+}
+
+
+/* =========================================================
+   ESTADÍSTICAS
+   ========================================================= */
+
+.produccion-stats {
+  width: 100%;
+
+  margin-bottom: 24px;
+
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.produccion-stat-card {
+  min-height: 106px;
+
+  padding: 20px;
+
+  box-sizing: border-box;
+
+  display: flex;
+  align-items: center;
+  gap: 15px;
+
+  background-color: #ffffff;
+
+  border: 1px solid #d8b6ae;
+  border-radius: 11px;
+}
+
+.produccion-stat-icon {
+  width: 40px;
+  height: 40px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 10px;
+
+  background-color: #e9e9ed;
+  color: #30304b;
+}
+
+.produccion-stat-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.produccion-stat-label {
+  margin: 0;
+
+  color: #77748a;
+
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.produccion-stat-value {
+  margin: 5px 0 0;
+
+  color: #171735;
+
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.produccion-stat-description {
+  margin: 5px 0 0;
+
+  color: #77748a;
+
+  font-size: 10px;
+  line-height: 1;
+}
+
+
+/* =========================================================
+   FILTROS
+   ========================================================= */
+
+.produccion-filters-card {
+  width: 100%;
+
+  margin-bottom: 24px;
+
+  box-sizing: border-box;
+
+  overflow: hidden;
+
+  background-color: #ffffff;
+
+  border: 1px solid #d8b6ae;
+  border-radius: 11px;
+}
+
+.produccion-filter-header {
+  height: 52px;
+
+  padding: 0 20px;
+
+  box-sizing: border-box;
+
+  display: flex;
+  align-items: center;
+  gap: 9px;
+
+  background-color: #ffffff;
+
+  border-bottom: 1px solid #d8b6ae;
+
+  color: #171735;
+
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.produccion-filters {
+  min-height: 82px;
+
+  padding: 20px;
+
+  box-sizing: border-box;
+
+  display: flex;
+  align-items: center;
+}
+
+.produccion-search {
+  width: 576px;
+  height: 42px;
+
+  position: relative;
+}
+
+.produccion-search-icon {
+  position: absolute;
+
+  left: 14px;
+  top: 13px;
+
+  color: #68667d;
+}
+
+.produccion-search-input {
+  width: 100%;
+  height: 100%;
+
+  padding: 0 15px 0 40px;
+
+  box-sizing: border-box;
+
+  outline: none;
+
+  border: 1px solid #d8b6ae;
+  border-radius: 9px;
+
+  background-color: #ffffff;
+
+  color: #55536b;
+
+  font-family: 'Montserrat', sans-serif;
+
+  font-size: 12px;
+}
+
+.produccion-search-input::placeholder {
+  color: #aaa6b4;
+}
+
+.produccion-search-input:focus {
+  border-color: #bd958c;
+}
+
+.produccion-filter-select {
+  display: none;
+}
+
+
+/* =========================================================
+   TABLA - CONTENEDOR
+   ========================================================= */
+
+.produccion-table-card {
+  width: 100%;
+
+  box-sizing: border-box;
+
+  overflow: hidden;
+
+  background-color: #ffffff;
+
+  border: 1px solid #d8b6ae;
+  border-radius: 11px;
+}
+
+
+/* =========================================================
+   HEADER DE TABLA
+   ========================================================= */
+
+.produccion-table-header {
+  height: 53px;
+
+  padding: 0 24px;
+
+  box-sizing: border-box;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  background-color: #ffffff;
+
+  border-bottom: 1px solid #d8b6ae;
+}
+
+.produccion-table-title {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+
+  color: #171735;
+
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.produccion-table-count {
+  min-width: 20px;
+  height: 20px;
+
+  padding: 0 6px;
+
+  box-sizing: border-box;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 7px;
+
+  background-color: #e9e9ed;
+  color: #68667b;
+
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.produccion-table-page {
+  color: #77748a;
+
+  font-size: 10px;
+}
+
+
+/* =========================================================
+   TABLA
+   ========================================================= */
+
+.produccion-table-wrapper {
+  width: 100%;
+
+  overflow-x: auto;
+  overflow-y: visible;
+}
+
+.produccion-table {
+  width: 100%;
+  min-width: 1180px;
+
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+
+/* CABECERA */
+
+.produccion-table th {
+  height: 44px;
+
+  padding: 0 20px;
+
+  box-sizing: border-box;
+
+  background-color: #faf9f9;
+
+  border-bottom: 1px solid #d8b6ae;
+
+  color: #30304b;
+
+  font-size: 9px;
+  font-weight: 600;
+
+  letter-spacing: 0.6px;
+
+  text-align: left;
+}
+
+
+/* ANCHOS */
+
+.produccion-table th:nth-child(1) {
+  width: 6%;
+}
+
+.produccion-table th:nth-child(2) {
+  width: 10%;
+}
+
+.produccion-table th:nth-child(3) {
+  width: 16%;
+}
+
+.produccion-table th:nth-child(4) {
+  width: 16%;
+}
+
+.produccion-table th:nth-child(5) {
+  width: 17%;
+}
+
+.produccion-table th:nth-child(6) {
+  width: 11%;
+}
+
+.produccion-table th:nth-child(7) {
+  width: 14%;
+}
+
+.produccion-table th:nth-child(8) {
+  width: 10%;
+}
+
+
+/* FILAS */
+
+.produccion-table td {
+  height: 65px;
+
+  padding: 0 20px;
+
+  box-sizing: border-box;
+
+  background-color: #ffffff;
+
+  border-bottom: 1px solid #e1c4be;
+
+  color: #77748a;
+
+  font-size: 10px;
+
+  vertical-align: middle;
+}
+
+.produccion-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+
+/* =========================================================
+   ID
+   ========================================================= */
+
+.produccion-id span {
+  display: inline-flex;
+  align-items: center;
+
+  padding: 3px 7px;
+
+  border-radius: 5px;
+
+  background-color: #eeeeF1;
+
+  color: #77748a;
+
+  font-size: 9px;
+}
+
+
+/* =========================================================
+   CÓDIGO
+   ========================================================= */
+
+.produccion-code {
+  display: inline-flex;
+  align-items: center;
+
+  min-height: 27px;
+
+  padding: 0 11px;
+
+  box-sizing: border-box;
+
+  border: 1px solid #bfc0ca;
+  border-radius: 7px;
+
+  background-color: #f0f0f2;
+
+  color: #252545;
+
+  font-size: 10px;
+  font-weight: 500;
+
+  white-space: nowrap;
+}
+
+
+/* =========================================================
+   PRODUCTO
+   ========================================================= */
+
+.produccion-product {
+  color: #171735 !important;
+
+  font-size: 11px !important;
+  font-weight: 500;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
+/* =========================================================
+   RESPONSABLE
+   ========================================================= */
+
+.produccion-responsible {
+  color: #171735 !important;
+
+  font-size: 11px !important;
+  font-weight: 600;
+
+  white-space: nowrap;
+}
+
+
+/* =========================================================
+   ENCARGADO
+   ========================================================= */
+
+.produccion-assigned {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  white-space: nowrap;
+}
+
+.produccion-assigned-icon {
+  width: 28px;
+  height: 28px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 8px;
+
+  background-color: #e9e9ed;
+  color: #34344f;
+}
+
+.produccion-assigned span {
+  color: #77748a;
+
+  font-size: 11px;
+}
+
+
+/* =========================================================
+   FECHA
+   ========================================================= */
+
+.produccion-date {
+  color: #77748a;
+
+  font-size: 11px;
+
+  white-space: nowrap;
+}
+
+
+/* =========================================================
+   ESTADO
+   ========================================================= */
+
+.produccion-status {
+  height: 28px;
+
+  padding: 0 11px;
+
+  box-sizing: border-box;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  border: 1px solid #f1d37c;
+  border-radius: 20px;
+
+  background-color: #fffdf5;
+
+  color: #e89116;
+
+  font-size: 10px;
+  font-weight: 600;
+
+  white-space: nowrap;
+}
+
+.produccion-status.completed {
+  border-color: #9be4bf;
+
+  background-color: #f5fff9;
+
+  color: #25ad6c;
+}
+
+
+/* =========================================================
+   ACCIONES
+   ========================================================= */
+
+.produccion-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+
+  gap: 17px;
+}
+
+.produccion-action-button {
+  width: 18px;
+  height: 24px;
+
+  padding: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+  background-color: transparent;
+
+  cursor: pointer;
+}
+
+.produccion-action-view {
+  color: #4287ff;
+}
+
+.produccion-action-edit {
+  color: #f0a03d;
+}
+
+.produccion-action-delete {
+  color: #f28d8d;
+}
+
+.produccion-action-button:hover {
+  opacity: 0.65;
+}
+
+
+/* =========================================================
+   PAGINACIÓN
+   ========================================================= */
+
+.produccion-pagination {
+  height: 68px;
+
+  padding: 0 24px;
+
+  box-sizing: border-box;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  background-color: #ffffff;
+
+  /* SEPARACIÓN SUPERIOR */
+  border-top: 1px solid #d8b6ae;
+}
+
+.produccion-pagination-info {
+  margin: 0;
+
+  color: #77748a;
+
+  font-size: 10px;
+}
+
+.produccion-pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.produccion-pagination-button {
+  width: 28px;
+  height: 34px;
+
+  padding: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+  border-radius: 7px;
+
+  background-color: transparent;
+
+  color: #aaa7b4;
+
+  font-size: 11px;
+
+  cursor: pointer;
+}
+
+.produccion-pagination-button.active {
+  background-color: #20203d;
+  color: #ffffff;
+}
+
+.produccion-pagination-button:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+
+/* =========================================================
+   SIN RESULTADOS
+   ========================================================= */
+
+.produccion-empty {
+  height: 110px;
+
+  text-align: center;
+
+  color: #858197;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 1000px) {
+  .produccion-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .produccion-header {
+    gap: 20px;
+  }
+}
+
+@media (max-width: 700px) {
+  .produccion-header {
+    flex-direction: column;
+  }
+
+  .produccion-title {
+    font-size: 32px;
+  }
+
+  .produccion-register-button {
+    height: 42px;
+  }
+
+  .produccion-search {
+    width: 100%;
+  }
+}
