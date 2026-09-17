@@ -1,7 +1,7 @@
 .compras-insumos-page {
   min-height: 100%;
   padding: 22px 21px 35px;
-  background: #f8f9fa;
+ background: transparent;
   color: #22223b;
 }
 
@@ -99,7 +99,7 @@
   padding: 12px 14px 10px;
   border: 1px solid #c9ada7;
   border-radius: 14px;
-  background: #f8efeb;
+  background: #fff;
   box-shadow: 0 2px 4px rgba(34, 34, 59, .07);
 }
 
@@ -1096,4 +1096,51 @@
     gap: 10px;
     padding: 12px 15px;
   }
+}
+/* Sistema visual de las referencias enviadas.
+   Agregar al FINAL de ComprasInsumos.css */
+
+.compras-insumos-page {
+  background: transparent;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.compras-insumos-page button,
+.compras-insumos-page input,
+.compras-insumos-page select,
+.compras-insumos-page textarea {
+  font-family: 'Montserrat', sans-serif;
+}
+
+.compras-insumos-page .ci-primary-button {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+}
+
+.compras-insumos-page .ci-secondary-button {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+}
+
+.compras-insumos-page .ci-danger-button {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+}
+
+.compras-insumos-page .ci-clear-filters {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+}
+
+/* Variantes visuales disponibles */
+.compras-insumos-page .ci-outline-button {
+  background: transparent;
+  border: 1px solid #22223B;
+  color: #22223B;
+}
+
+.compras-insumos-page .ci-ghost-button {
+  background: transparent;
+  border: 0;
+  color: #22223B;
 }
