@@ -1,7 +1,5 @@
-/* =========================================================
-   MÉTODOS DE PAGO - RAÍZ URBANA
-========================================================= */
 
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap');
 .metodo-page {
   width: 100%;
   min-height: 100%;
@@ -9,10 +7,6 @@
   color: #22223b;
   font-family: 'Montserrat', sans-serif;
 }
-
-/* =========================================================
-   HEADER
-========================================================= */
 
 .metodo-header {
   display: flex;
@@ -39,7 +33,7 @@
 .metodo-header h1 {
   margin: 0;
   color: #22223b;
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
   font-size: 30px;
   font-weight: 400;
   line-height: 1.05;
@@ -94,7 +88,7 @@
   padding: 13px 13px 10px;
   border: 1px solid #d5b1a9;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.1);
+  background: #ffffff;
   box-shadow: 0 2px 4px rgba(34, 34, 59, 0.06);
 }
 
@@ -162,7 +156,7 @@
   overflow: hidden;
   border: 1px solid #d5b1a9;
   border-radius: 11px;
-  background: rgba(255, 255, 255, 0.17);
+  background: #ffffff;
   box-shadow: 0 2px 4px rgba(34, 34, 59, 0.05);
 }
 
@@ -243,7 +237,7 @@
   overflow: hidden;
   border: 1px solid #d5b1a9;
   border-radius: 11px;
-  background: rgba(255, 255, 255, 0.22);
+  background: #ffffff;
   box-shadow: 0 2px 5px rgba(34, 34, 59, 0.06);
 }
 
@@ -300,7 +294,7 @@
   height: 29px;
   padding: 0 14px;
   border-bottom: 1px solid #d5b1a9;
-  background: rgba(255, 255, 255, 0.14);
+  background: #ffffff;
   color: #22223b;
   font-size: 8.5px;
   font-weight: 700;
@@ -641,7 +635,7 @@
 .metodo-modal-header h2 {
   margin: 0;
   color: #2c2c45;
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
   font-size: 22px;
   font-weight: 400;
   line-height: 1.1;
@@ -1084,4 +1078,17 @@
   .metodo-modal-footer button {
     width: 100%;
   }
+}
+
+.metodo-page,
+.metodo-page button,
+.metodo-page input,
+.metodo-page textarea,
+.metodo-page select {
+  font-family: 'Montserrat', sans-serif;
+}
+
+.metodo-header h1,
+.metodo-modal-header h2 {
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
 }

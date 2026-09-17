@@ -225,24 +225,69 @@ const formatDate = (date) => {
   return `${year}-${month}-${day}`;
 };
 
-const totalPurchase = (purchase) =>
-  purchase.products.reduce(
-    (total, item) => total + item.quantity * item.unitPrice,
-    0
-  );
+const totalPurchase = (purchase) => {
+  const products = Array.isArray(purchase?.products)
+    ? purchase.products
+    : [];
+
+  return products.reduce((total, item) => {
+    const quantity = Number(item?.quantity) || 0;
+    const unitPrice = Number(item?.unitPrice) || 0;
+    return total + quantity * unitPrice;
+  }, 0);
+};
+
+function normalizePurchase(purchase, index = 0) {
+  const safePurchase =
+    purchase && typeof purchase === 'object'
+      ? purchase
+      : {};
+
+  const products = Array.isArray(safePurchase.products)
+    ? safePurchase.products
+    : [];
+
+  return {
+    ...safePurchase,
+    number:
+      Number(safePurchase.number) || index + 1,
+    id:
+      typeof safePurchase.id === 'string'
+        ? safePurchase.id
+        : `COM${String(index + 1).padStart(2, '0')}`,
+    date: safePurchase.date || '',
+    provider: safePurchase.provider || '',
+    payment: safePurchase.payment || paymentMethods[0],
+    status: safePurchase.status || 'Pendiente',
+    photo: safePurchase.photo || '',
+    products: products.map((item) => ({
+      ...item,
+      product: item?.product || '',
+      category: item?.category || '',
+      color: item?.color || '',
+      size: item?.size || '',
+      quantity: Number(item?.quantity) || 0,
+      unitPrice: Number(item?.unitPrice) || 0,
+    })),
+  };
+}
 
 function readPurchases() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
 
     if (saved) {
-      return JSON.parse(saved);
+      const parsed = JSON.parse(saved);
+
+      if (Array.isArray(parsed)) {
+        return parsed.map(normalizePurchase);
+      }
     }
   } catch (error) {
     console.error('Error leyendo compras:', error);
   }
 
-  return initialPurchases;
+  return initialPurchases.map(normalizePurchase);
 }
 
 function statusClass(status) {
@@ -500,8 +545,17 @@ function PurchaseForm({
   title,
   eyebrow,
 }) {
-  const [form, setForm] = useState(
-    initialValue || {
+  const [form, setForm] = useState(() => {
+    if (initialValue && typeof initialValue === 'object') {
+      return {
+        ...initialValue,
+        products: Array.isArray(initialValue.products)
+          ? initialValue.products
+          : [],
+      };
+    }
+
+    return {
       date: new Date()
         .toISOString()
         .slice(0, 10),
@@ -509,8 +563,8 @@ function PurchaseForm({
       payment: paymentMethods[0],
       status: 'Pendiente',
       products: [],
-    }
-  );
+    };
+  });
 
   const [draftProduct, setDraftProduct] = useState({
     product: productCatalog[0].name,
@@ -533,7 +587,9 @@ function PurchaseForm({
     setForm((current) => ({
       ...current,
       products: [
-        ...current.products,
+        ...(Array.isArray(current.products)
+          ? current.products
+          : []),
         {
           ...draftProduct,
         },
@@ -544,7 +600,10 @@ function PurchaseForm({
   const removeProduct = (index) => {
     setForm((current) => ({
       ...current,
-      products: current.products.filter(
+      products: (Array.isArray(current.products)
+        ? current.products
+        : []
+      ).filter(
         (_, itemIndex) => itemIndex !== index
       ),
     }));
@@ -555,6 +614,7 @@ function PurchaseForm({
       !form.date ||
       !form.provider ||
       !form.payment ||
+      !Array.isArray(form.products) ||
       form.products.length === 0
     ) {
       return;
@@ -563,9 +623,14 @@ function PurchaseForm({
     onSave(form);
   };
 
-  const total = form.products.reduce(
+  const total = (Array.isArray(form.products)
+    ? form.products
+    : []
+  ).reduce(
     (sum, item) =>
-      sum + item.quantity * item.unitPrice,
+      sum +
+      (Number(item?.quantity) || 0) *
+      (Number(item?.unitPrice) || 0),
     0
   );
 
@@ -865,13 +930,13 @@ export default function Compras() {
           `#${purchase.number}`
             .toLowerCase()
             .includes(term) ||
-          purchase.id
+          String(purchase.id || '')
             .toLowerCase()
             .includes(term) ||
-          purchase.provider
+          String(purchase.provider || '')
             .toLowerCase()
             .includes(term) ||
-          purchase.status
+          String(purchase.status || '')
             .toLowerCase()
             .includes(term);
 
@@ -944,15 +1009,18 @@ export default function Compras() {
     const nextNumber =
       purchases.reduce(
         (max, item) =>
-          Math.max(max, item.number),
+          Math.max(max, Number(item?.number) || 0),
         0
       ) + 1;
 
-    const newPurchase = {
+    const newPurchase = normalizePurchase({
       ...data,
       number: nextNumber,
       id: `COM${String(nextNumber).padStart(2, '0')}`,
-    };
+      products: Array.isArray(data?.products)
+        ? data.products
+        : [],
+    }, nextNumber - 1);
 
     setPurchases((current) => [
       ...current,
@@ -1338,7 +1406,10 @@ export default function Compras() {
                       </strong>
 
                       <span>
-                        {purchase.products.length}
+                        {(Array.isArray(purchase.products)
+                          ? purchase.products
+                          : []
+                        ).length}
                         {' '}
                         producto(s)
                       </span>
@@ -1663,7 +1734,10 @@ export default function Compras() {
                     <span>P.UNIT.</span>
                   </div>
 
-                  {selectedPurchase.products.map(
+                  {(Array.isArray(selectedPurchase.products)
+                    ? selectedPurchase.products
+                    : []
+                  ).map(
                     (product, index) => (
 
                       <div

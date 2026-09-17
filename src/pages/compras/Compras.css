@@ -1,7 +1,7 @@
 .compras-page {
   min-height: 100%;
   padding: 22px 21px 35px;
-  background: #f8f9fa;
+  background: transparent;
   color: #22223b;
   font-family: inherit;
 }
@@ -89,88 +89,145 @@
   letter-spacing: .2px;
 }
 
+/* =========================================================
+   KPI CARDS - ESTRUCTURA ESTÁNDAR
+   ========================================================= */
+
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 15px;
-  margin-bottom: 23px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 13px;
+  width: 100%;
+  margin-bottom: 19px;
 }
 
 .kpi-card {
-  min-height: 123px;
-  padding: 16px 16px 13px;
+  position: relative;
+  min-width: 0;
+  height: 100px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: stretch;
+  padding: 12px 14px 10px;
   border: 1px solid #c9ada7;
-  border-radius: 15px;
-  background: #f7efeb;
-  box-shadow: 0 2px 4px rgba(34, 34, 59, .08);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 2px 4px rgba(34, 34, 59, .07);
+  text-align: left;
 }
+
+/* FILA SUPERIOR:
+   ETIQUETA A LA IZQUIERDA + ICONO A LA DERECHA */
 
 .kpi-top {
+  width: 100%;
+  min-height: 28px;
+  margin: 0;
+  padding: 0;
   display: flex;
+  flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 7px;
+  text-align: left;
 }
 
+/* ETIQUETA SIEMPRE A LA IZQUIERDA */
+
 .kpi-top > span {
+  display: block;
+  flex: 1;
+  margin: 0;
+  padding: 0;
   color: #4a4e69;
-  font-size: 11px;
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 1.2;
+  text-align: left;
 }
+
+/* ICONO SIEMPRE A LA DERECHA */
 
 .kpi-icon {
   display: grid;
   place-items: center;
-  width: 33px;
-  height: 33px;
-  border-radius: 12px;
-  background: #ded9d9;
+  flex: 0 0 30px;
+  width: 30px;
+  height: 30px;
+  margin-left: auto;
+  border-radius: 10px;
+  background: #dedadb;
   color: #22223b;
-  font-size: 17px;
+  font-size: 15px;
+  line-height: 1;
+  text-align: center;
 }
+
+/* VALOR SIEMPRE A LA IZQUIERDA */
 
 .kpi-card > strong {
   display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
   color: #22223b;
-  font-size: 23px;
-  line-height: 1.2;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.1;
+  text-align: left;
 }
+
+/* VARIACIÓN SIEMPRE A LA IZQUIERDA */
 
 .kpi-card small {
   display: block;
-  margin-top: 4px;
-  font-size: 11px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 1.2;
+  text-align: left;
 }
 
 .kpi-card small span {
   color: #4a4e69;
 }
 
+/* VARIACIÓN POSITIVA */
+
 .positive {
   color: #00a95a;
 }
 
+/* VARIACIÓN NEGATIVA */
+
 .negative {
   color: #e53b47;
 }
+/* =========================================================
+   FILTROS
+   ========================================================= */
 
 .filters-card {
   overflow: hidden;
-  margin-bottom: 24px;
+  margin-bottom: 19px;
   border: 1px solid #c9ada7;
-  border-radius: 16px;
+  border-radius: 15px;
   background: #fff;
-  box-shadow: 0 2px 5px rgba(34, 34, 59, .07);
+  box-shadow: 0 2px 4px rgba(34, 34, 59, .06);
 }
 
 .filters-title {
   display: flex;
   align-items: center;
-  gap: 9px;
-  min-height: 53px;
-  padding: 0 21px;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 17px;
   border-bottom: 1px solid #c9ada7;
   color: #22223b;
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .filters-title svg {
@@ -179,21 +236,21 @@
 
 .filters-row {
   display: grid;
-  grid-template-columns: 1.8fr .85fr .95fr .9fr .85fr auto;
-  gap: 12px;
-  padding: 20px;
+  grid-template-columns: 1.65fr .78fr .9fr .82fr .78fr auto;
+  gap: 9px;
+  padding: 15px 17px;
 }
 
 .search-control,
 .filters-row select,
 .date-control {
-  height: 43px;
+  height: 35px;
   border: 1px solid #c9ada7;
-  border-radius: 11px;
+  border-radius: 9px;
   background: #fff;
   color: #4a4e69;
   font-family: inherit;
-  font-size: 12px;
+  font-size: 10px;
 }
 
 .search-control {
@@ -224,9 +281,8 @@
 
 .filters-row select {
   width: 100%;
-  padding: 0 11px;
+  padding: 0 9px;
   outline: none;
-  cursor: pointer;
 }
 
 .date-control {
@@ -249,19 +305,23 @@
 
 .date-control svg {
   position: absolute;
-  right: 10px;
-  pointer-events: none;
+  right: 9px;
   color: #22223b;
+  pointer-events: none;
 }
 
 .clear-filters {
   border: 0;
   background: transparent;
-  color: #e53b47;
+  color: #e43e4e;
   font-family: inherit;
-  font-size: 11px;
+  font-size: 10px;
   cursor: pointer;
 }
+
+/* =========================================================
+   TABLA
+   ========================================================= */
 
 .table-card {
   overflow: hidden;
@@ -563,6 +623,10 @@
   font-size: 12px;
 }
 
+/* =========================================================
+   MODALES
+   ========================================================= */
+
 .compras-modal-backdrop {
   position: fixed;
   z-index: 1000;
@@ -595,7 +659,7 @@
 
 .compras-modal-header h2 {
   margin: 3px 0 0;
-  color: #22223b;
+  color: transparent;
   font-family: Georgia, 'Times New Roman', serif;
   font-size: 25px;
   font-weight: 400;
@@ -991,9 +1055,13 @@
   line-height: 1.55;
 }
 
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
 @media (max-width: 1100px) {
   .kpi-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .filters-row {
@@ -1061,4 +1129,54 @@
     align-items: flex-start;
     padding: 15px;
   }
+}
+
+/* =========================================================
+   SISTEMA VISUAL
+   ========================================================= */
+
+.compras-page {
+  background: transparent;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.compras-page button,
+.compras-page input,
+.compras-page select,
+.compras-page textarea {
+  font-family: 'Montserrat', sans-serif;
+}
+
+.compras-page .primary-button {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+}
+
+.compras-page .secondary-button {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+}
+
+.compras-page .danger-button {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+}
+
+.compras-page .clear-filters {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+}
+
+/* Variantes visuales disponibles */
+
+.compras-page .outline-button {
+  background: transparent;
+  border: 1px solid #22223B;
+  color: #22223B;
+}
+
+.compras-page .ghost-button {
+  background: transparent;
+  border: 0;
+  color: #22223B;
 }
