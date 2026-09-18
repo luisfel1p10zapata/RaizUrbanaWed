@@ -1,0 +1,551 @@
+/* =========================================================
+   TIPO DE PRODUCTO - ESTRUCTURA GENERAL
+   ========================================================= */
+
+.tipo-producto-page {
+  width: 100%;
+  min-height: calc(100vh - 64px);
+  box-sizing: border-box;
+  color: #171735;
+  font-family: 'Montserrat', sans-serif;
+}
+
+/* =========================================================
+   HEADER SUPERIOR
+   ========================================================= */
+
+.tipo-producto-header {
+  width: 100%;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.tipo-producto-header-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.tipo-producto-eyebrow {
+  display: block;
+  margin: 0 0 7px;
+  color: #252545;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+
+.tipo-producto-title {
+  margin: 0;
+  color: #171735;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 38px;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -1px;
+}
+
+.tipo-producto-description {
+  margin: 7px 0 0;
+  color: #77748a;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.3;
+}
+
+.tipo-producto-register-button {
+  height: 48px;
+  padding: 0 23px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: none;
+  border-radius: 9px;
+  background-color: #20203d;
+  color: #ffffff;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 3px 6px rgba(32, 32, 61, 0.18);
+  transition: background-color 0.2s ease;
+}
+
+.tipo-producto-register-button:hover {
+  background-color: #17172f;
+}
+
+/* =========================================================
+   ESTADÍSTICAS / KPIS (3 COLUMNAS)
+   ========================================================= */
+
+.tipo-producto-stats {
+  width: 100%;
+  margin-bottom: 24px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.tipo-producto-stat-card {
+  min-height: 106px;
+  padding: 20px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  background-color: #ffffff;
+  border: 1px solid #d8b6ae;
+  border-radius: 11px;
+}
+
+.tipo-producto-stat-icon {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background-color: #e9e9ed;
+  color: #30304b;
+}
+
+.tipo-producto-stat-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.tipo-producto-stat-label {
+  margin: 0;
+  color: #77748a;
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.tipo-producto-stat-value {
+  margin: 5px 0 0;
+  color: #171735;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.tipo-producto-stat-description {
+  margin: 5px 0 0;
+  color: #77748a;
+  font-size: 10px;
+  line-height: 1;
+}
+
+/* =========================================================
+   BUSCADOR Y FILTROS
+   ========================================================= */
+
+.tipo-producto-filters-card {
+  width: 100%;
+  margin-bottom: 24px;
+  box-sizing: border-box;
+  overflow: hidden;
+  background-color: #ffffff;
+  border: 1px solid #d8b6ae;
+  border-radius: 11px;
+}
+
+.tipo-producto-filter-header {
+  height: 52px;
+  padding: 0 20px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  background-color: #ffffff;
+  border-bottom: 1px solid #d8b6ae;
+  color: #171735;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.tipo-producto-filters {
+  min-height: 82px;
+  padding: 20px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.tipo-producto-search {
+  flex: 1;
+  max-width: 576px;
+  height: 42px;
+  position: relative;
+}
+
+.tipo-producto-search-icon {
+  position: absolute;
+  left: 14px;
+  top: 13px;
+  color: #68667d;
+}
+
+.tipo-producto-search-input {
+  width: 100%;
+  height: 100%;
+  padding: 0 15px 0 40px;
+  box-sizing: border-box;
+  outline: none;
+  border: 1px solid #d8b6ae;
+  border-radius: 99px;
+  background-color: #ffffff;
+  color: #55536b;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 12px;
+}
+
+.tipo-producto-search-input::placeholder {
+  color: #aaa6b4;
+}
+
+.tipo-producto-search-input:focus {
+  border-color: #bd958c;
+}
+
+.tipo-producto-filter-select {
+  height: 42px;
+  min-width: 200px;
+  padding: 0 15px;
+  box-sizing: border-box;
+  outline: none;
+  border: 1px solid #d8b6ae;
+  border-radius: 99px;
+  background-color: #ffffff;
+  color: #55536b;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.tipo-producto-filter-select:focus {
+  border-color: #bd958c;
+}
+
+/* =========================================================
+   TABLA PRINCIPAL
+   ========================================================= */
+
+.tipo-producto-table-card {
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  background-color: #ffffff;
+  border: 1px solid #d8b6ae;
+  border-radius: 11px;
+}
+
+.tipo-producto-table-header {
+  height: 53px;
+  padding: 0 24px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #ffffff;
+  border-bottom: 1px solid #d8b6ae;
+}
+
+.tipo-producto-table-title {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #171735;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.tipo-producto-table-count {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  background-color: #e9e9ed;
+  color: #68667b;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.tipo-producto-table-page {
+  color: #77748a;
+  font-size: 10px;
+}
+
+/* =========================================================
+   TABLA INTERNA Y ENCABEZADOS (THEAD)
+   ========================================================= */
+
+.tipo-producto-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+}
+
+.tipo-producto-table {
+  width: 100%;
+  min-width: 850px;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.tipo-producto-table thead tr {
+  background-color: #faf9f9;
+  border-bottom: 1px solid #d8b6ae;
+}
+
+.tipo-producto-table th {
+  height: 44px;
+  padding: 0 20px;
+  box-sizing: border-box;
+  color: #30304b;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.tipo-producto-table td {
+  height: 68px;
+  padding: 0 20px;
+  box-sizing: border-box;
+  background-color: #ffffff;
+  border-bottom: 1px solid #e1c4be;
+  color: #77748a;
+  font-size: 10px;
+  vertical-align: middle;
+}
+
+.tipo-producto-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Distribución exacta de columnas */
+.tipo-producto-table th:nth-child(1), .tipo-producto-table td:nth-child(1) { width: 50px; }
+.tipo-producto-table th:nth-child(2), .tipo-producto-table td:nth-child(2) { width: 340px; }
+.tipo-producto-table th:nth-child(3), .tipo-producto-table td:nth-child(3) { width: 180px; }
+.tipo-producto-table th:nth-child(4), .tipo-producto-table td:nth-child(4) { width: 110px; }
+.tipo-producto-table th:nth-child(5), .tipo-producto-table td:nth-child(5) { width: 90px; }
+
+/* =========================================================
+   CELDAS ESPECÍFICAS
+   ========================================================= */
+
+/* ID */
+.tipo-producto-id span {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 7px;
+  border-radius: 5px;
+  background-color: #eeeeF1;
+  color: #77748a;
+  font-size: 9px;
+  font-weight: 600;
+}
+
+/* NOMBRE Y SUBTÍTULO */
+.tipo-producto-name-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tipo-producto-name-icon {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  background-color: #e9e9ed;
+  color: #41415a;
+}
+
+.tipo-producto-info-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.tipo-producto-name {
+  color: #171735;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.tipo-producto-subtext {
+  margin-top: 2px;
+  color: #77748a;
+  font-size: 9px;
+}
+
+/* ETIQUETA CATEGORÍA */
+.tipo-producto-category-pill {
+  height: 25px;
+  padding: 0 10px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #d8b6ae;
+  border-radius: 7px;
+  background-color: #faf9f9;
+  color: #55536b;
+  font-size: 9px;
+  font-weight: 600;
+}
+
+/* ESTADO */
+.tipo-producto-status {
+  height: 25px;
+  padding: 0 10px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #9be4bf;
+  border-radius: 20px;
+  background-color: #f5fff9;
+  color: #25ad6c;
+  font-size: 9px;
+  font-weight: 600;
+}
+
+.tipo-producto-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #28c77a;
+}
+
+.tipo-producto-status.inactive {
+  border-color: #dfb2aa;
+  background-color: #fffafa;
+  color: #b36f66;
+}
+
+.tipo-producto-status.inactive .tipo-producto-status-dot {
+  background-color: #b36f66;
+}
+
+/* ACCIONES */
+.tipo-producto-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 17px;
+}
+
+.tipo-producto-action-button {
+  width: 18px;
+  height: 24px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.tipo-producto-action-view { color: #4287ff; }
+.tipo-producto-action-edit { color: #f0a03d; }
+.tipo-producto-action-delete { color: #f28d8d; }
+
+.tipo-producto-action-button:hover { opacity: 0.65; }
+
+/* =========================================================
+   PAGINACIÓN
+   ========================================================= */
+
+.tipo-producto-pagination {
+  height: 58px;
+  padding: 0 24px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #ffffff;
+  border-top: 1px solid #d8b6ae;
+}
+
+.tipo-producto-pagination-info {
+  margin: 0;
+  color: #858197;
+  font-size: 9px;
+}
+
+.tipo-producto-pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tipo-producto-pagination-button {
+  width: 26px;
+  height: 30px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 6px;
+  background-color: transparent;
+  color: #aaa7b4;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.tipo-producto-pagination-button.active {
+  background-color: #20203d;
+  color: #ffffff;
+}
+
+.tipo-producto-pagination-button:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+.tipo-producto-empty {
+  height: 100px;
+  text-align: center;
+  color: #858197;
+  font-size: 11px;
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 1000px) {
+  .tipo-producto-stats { grid-template-columns: 1fr; }
+  .tipo-producto-header { gap: 20px; }
+  .tipo-producto-filters { flex-direction: column; align-items: stretch; }
+  .tipo-producto-search { width: 100%; max-width: 100%; }
+}
+
+@media (max-width: 700px) {
+  .tipo-producto-header { flex-direction: column; }
+  .tipo-producto-title { font-size: 32px; }
+  .tipo-producto-register-button { height: 42px; width: 100%; margin-top: 12px; }
+}
