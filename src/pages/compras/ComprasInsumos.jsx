@@ -1701,7 +1701,7 @@ export default function ComprasInsumos() {
             </strong>
 
             <small>
-              Mensual
+              Mensuall
             </small>
 
           </div>
@@ -2877,3 +2877,4 @@ export default function ComprasInsumos() {
     </div>
   );
 }
+
