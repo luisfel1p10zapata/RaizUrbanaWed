@@ -87,19 +87,21 @@ export default function CategoriaInsumos() {
         </button>
       </header>
 
-      {/* FILTROS / BÚSQUEDA */}
+      {/* FILTROS / BÚSQUEDA (Estilo guía unificado) */}
       <section className="cat-filters-card">
         <div className="cat-filters-title">
           <Filter size={14} /> Buscar categoría de insumo
         </div>
-        <div className="cat-search-box">
-          <Search size={16} />
-          <input
-            type="text"
-            placeholder="Buscar por ID o nombre..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        <div className="cat-filters-row">
+          <div className="cat-search">
+            <Search size={16} />
+            <input
+              type="text"
+              placeholder="Buscar por ID o nombre..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
         </div>
       </section>
 
@@ -112,7 +114,6 @@ export default function CategoriaInsumos() {
           </div>
           <span className="cat-page-counter">Página 1 de 1</span>
         </div>
-
         <div className="cat-table-wrapper">
           <table className="cat-table">
             <thead>
@@ -185,7 +186,6 @@ export default function CategoriaInsumos() {
                 <X size={18} />
               </button>
             </div>
-
             <form onSubmit={handleSave}>
               <div className="cat-modal-body">
                 <div className="cat-field-group">
@@ -199,7 +199,6 @@ export default function CategoriaInsumos() {
                   />
                   {activeModal === 'create' && <span className="cat-field-hint">Obligatorio. Debe ser único.</span>}
                 </div>
-
                 <div className="cat-field-group">
                   <label>DESCRIPCIÓN</label>
                   <textarea
@@ -210,7 +209,6 @@ export default function CategoriaInsumos() {
                   />
                 </div>
               </div>
-
               <div className="cat-modal-footer">
                 <button type="button" className="btn-cat-cancel" onClick={() => setActiveModal(null)}>
                   Cancelar
@@ -237,7 +235,6 @@ export default function CategoriaInsumos() {
                 <X size={18} />
               </button>
             </div>
-
             <div className="cat-modal-body">
               <div className="cat-view-hero">
                 <div className="cat-view-avatar">
@@ -248,7 +245,6 @@ export default function CategoriaInsumos() {
                   <p>ID Categoria #{selectedCategory.id}</p>
                 </div>
               </div>
-
               <div className="cat-view-details">
                 <div className="cat-view-row">
                   <span className="lbl">ID Categoría</span>
@@ -264,7 +260,6 @@ export default function CategoriaInsumos() {
                 </div>
               </div>
             </div>
-
             <div className="cat-modal-footer">
               <button className="btn-cat-cancel" onClick={() => setActiveModal(null)}>Cerrar</button>
               <button className="btn-cat-submit" onClick={() => handleOpenEdit(selectedCategory)}>Editar</button>
@@ -285,7 +280,6 @@ export default function CategoriaInsumos() {
               <h3>Confirmar eliminación</h3>
               <p>¿Estás seguro de eliminar <strong>"{selectedCategory.nombre}"</strong>? Esta acción no se puede deshacer.</p>
             </div>
-
             <div className="cat-modal-footer">
               <button className="btn-cat-cancel" onClick={() => setActiveModal(null)}>Cancelar</button>
               <button className="btn-cat-danger" onClick={handleDelete}>Eliminar</button>
