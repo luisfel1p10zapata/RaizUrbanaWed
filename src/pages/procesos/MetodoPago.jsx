@@ -309,7 +309,6 @@ const MetodoPago = () => {
       ========================== */}
       <div className="metodo-header">
         <div className="metodo-header-info">
-          <span className="metodo-eyebrow">CU.11 · MÓDULO</span>
 
           <h1>Métodos de Pago</h1>
 
@@ -342,9 +341,7 @@ const MetodoPago = () => {
           <strong>{totalMetodos}</strong>
 
           <div className="metodo-kpi-footer positivo">
-            <span>↗</span>
-            <b>+1</b>
-            <small>configurados</small>
+            <small>Registradas</small>
           </div>
         </div>
 
@@ -360,9 +357,7 @@ const MetodoPago = () => {
           <strong>{totalActivos}</strong>
 
           <div className="metodo-kpi-footer positivo">
-            <span>↗</span>
-            <b>+1</b>
-            <small>disponibles</small>
+            <small>Disponibles</small>
           </div>
         </div>
 
@@ -378,9 +373,7 @@ const MetodoPago = () => {
           <strong>{totalInactivos}</strong>
 
           <div className="metodo-kpi-footer positivo">
-            <span>↗</span>
-            <b>~1</b>
-            <small>vs. mes anterior</small>
+            <small>Deshabilitada</small>
           </div>
         </div>
       </div>
