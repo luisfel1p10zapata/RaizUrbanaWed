@@ -37,9 +37,9 @@
 .ru-root * { box-sizing: border-box; }
 
 .ru-page {
-  max-width: 1480px;
+  max-width: 100%;
   margin: 0 auto;
-  padding: 48px 130px 90px;
+  padding: 48px 10px 90px;
 }
 
 /* ============ HEADER ============ */
@@ -52,8 +52,9 @@
 }
 
 .ru-eyebrow {
-  font-size: 11.5px;
-  letter-spacing: 0.14em;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   color: var(--accent);
   font-weight: 600;
   margin-bottom: 9px;
@@ -61,8 +62,9 @@
 
 .ru-u-title {
   font-family: var(--font-logo);
-  font-weight: 600;
-  font-size: 38px;
+  font-weight: 500;
+  font-size: 44px;
+  line-height: 1.15;
   color: var(--primary);
   margin: 0 0 9px 0;
 }
@@ -103,7 +105,7 @@
   box-shadow: var(--shadow-card);
 }
 
-.ru-filters-card { padding: 26px 28px; margin-bottom: 26px; }
+.ru-filters-card { padding: 24px 26px; margin-bottom: 26px; }
 
 .ru-filters-head {
   display: flex;
@@ -171,7 +173,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 28px 20px;
+  padding: 0 24px 18px;
 }
 
 .ru-list-title {
@@ -198,30 +200,32 @@
 
 .ru-users-table { width: 100%; border-collapse: collapse; min-width: 900px; }
 
+/* Encabezado y celdas alineados con la tabla de Ventas */
 .ru-users-table thead th {
   text-align: left;
-  font-size: 11px;
+  font-size: 11.5px;
   letter-spacing: 0.08em;
-  font-weight: 700;
+  font-weight: 600;
+  text-transform: uppercase;
   color: var(--label-text);
   background: var(--background);
-  padding: 15px 12px;
+  padding: 15px 20px;
   white-space: nowrap;
 }
 
-.ru-users-table thead th:first-child { padding-left: 28px; }
-.ru-users-table thead th:last-child { padding-right: 28px; text-align: center; }
+.ru-users-table thead th:first-child { padding-left: 24px; }
+.ru-users-table thead th:last-child { padding-right: 24px; text-align: center; }
 
 .ru-users-table tbody td {
-  padding: 20px 12px;
+  padding: 18px 20px;
   border-bottom: 1px solid var(--divider);
-  font-size: 13.5px;
+  font-size: 14px;
   color: var(--primary);
   vertical-align: middle;
 }
 
-.ru-users-table tbody td:first-child { padding-left: 28px; color: var(--muted-text); font-weight: 600; }
-.ru-users-table tbody td:last-child { padding-right: 28px; }
+.ru-users-table tbody td:first-child { padding-left: 24px; color: var(--muted-text); font-weight: 600; }
+.ru-users-table tbody td:last-child { padding-right: 24px; }
 .ru-users-table tbody tr:last-child td { border-bottom: none; }
 .ru-users-table tbody tr:hover { background: rgba(242, 233, 228, 0.35); }
 
@@ -315,7 +319,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 28px;
+  padding: 20px 24px;
   border-top: 1px solid var(--divider);
   flex-wrap: wrap;
   gap: 12px;

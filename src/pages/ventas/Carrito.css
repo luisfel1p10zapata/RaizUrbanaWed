@@ -21,6 +21,7 @@
   --green-bg: #e3f7ea; --green-bd: #a9e3c0;
   --serif: "Playfair Display", Georgia, serif;
 
+  padding: 48px 10px 90px;
   font-family: "Montserrat", -apple-system, "Segoe UI", sans-serif;
   color: var(--ink);
   min-height: 100vh;
@@ -30,8 +31,8 @@
 /* ------------------------------------------------------------------ */
 /* Página del carrito                                                  */
 /* ------------------------------------------------------------------ */
-.carrito-module .cart-page { padding: 34px 130px 60px; }
-.carrito-module .eyebrow { display: block; font-size: 12px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 5px; }
+
+.carrito-module .eyebrow { display: block; font-size: 12px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 9px; }
 .carrito-module .page-title { font-family: var(--serif); font-size: 44px; font-weight: 500; line-height: 1.15; margin: 0; }
 .carrito-module .cart-count { margin: 18px 0 20px; font-size: 14.5px; color: var(--ink-soft); }
 
@@ -75,7 +76,7 @@
 /* ------------------------------------------------------------------ */
 /* Resumen de compra                                                   */
 /* ------------------------------------------------------------------ */
-.carrito-module .summary-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 24px; position: sticky; top: 24px; }
+.carrito-module .summary-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 24px 26px; position: sticky; top: 24px; }
 .carrito-module .summary-title { font-family: inherit; font-size: 16px; font-weight: 700; margin: 0 0 16px; }
 .carrito-module .summary-row { display: flex; justify-content: space-between; align-items: baseline; font-size: 14px; color: var(--ink-soft); padding: 7px 0; }
 .carrito-module .summary-row--total { border-top: 1px solid var(--ink-soft); margin-top: 8px; padding-top: 14px; font-weight: 700; font-size: 15px; color: var(--ink); }
@@ -108,16 +109,16 @@
 .carrito-module .icon-btn--danger { color: var(--danger); }
 
 /* ------------------------------------------------------------------ */
-/* Modal — Registrar Venta (centrado)                                  */
+/* Modal — Registrar Venta (centrado, padding unificado)               */
 /* ------------------------------------------------------------------ */
 .carrito-module .modal-overlay { position: fixed; inset: 0; background: rgba(60, 50, 55, 0.35); backdrop-filter: blur(3px); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 24px; }
-.carrito-module .modal-card { background: #fff; border-radius: 16px; width: 100%; max-width: 720px; max-height: 92vh; display: flex; flex-direction: column; box-shadow: 0 24px 60px rgba(20, 16, 10, 0.25); overflow: hidden; }
-.carrito-module .modal-header { display: flex; justify-content: space-between; align-items: flex-start; padding: 24px 28px 18px; }
-.carrito-module .modal-eyebrow { display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 5px; }
-.carrito-module .modal-title { font-family: var(--serif); font-size: 24px; font-weight: 500; margin: 0; }
+.carrito-module .modal-card { background: #fff; border-radius: 22px; width: 100%; max-width: 720px; max-height: 92vh; display: flex; flex-direction: column; box-shadow: 0 24px 60px rgba(20, 16, 10, 0.25); overflow: hidden; }
+.carrito-module .modal-header { display: flex; justify-content: space-between; align-items: flex-start; padding: 26px 30px 18px; }
+.carrito-module .modal-eyebrow { display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 7px; }
+.carrito-module .modal-title { font-family: var(--serif); font-size: 26px; font-weight: 600; margin: 0; }
 
 /* Stepper */
-.carrito-module .stepper { display: flex; align-items: flex-start; padding: 0 28px 18px; }
+.carrito-module .stepper { display: flex; align-items: flex-start; padding: 0 30px 18px; }
 .carrito-module .step { display: flex; flex-direction: column; align-items: center; gap: 6px; flex-shrink: 0; }
 .carrito-module .step__circle { width: 27px; height: 27px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12.5px; font-weight: 700; border: 1px solid var(--border); background: #fff; color: var(--ink-soft); }
 .carrito-module .step--active .step__circle, .carrito-module .step--done .step__circle { background: var(--dark); border-color: var(--dark); color: #fff; }
@@ -127,7 +128,7 @@
 .carrito-module .step-connector--done { background: var(--dark); }
 
 /* Body */
-.carrito-module .modal-body { padding: 20px 28px; overflow-y: auto; flex: 1; border-top: 1px solid var(--border); display: flex; flex-direction: column; }
+.carrito-module .modal-body { padding: 24px 30px 8px; overflow-y: auto; flex: 1; border-top: 1px solid var(--border); display: flex; flex-direction: column; }
 .carrito-module .step-instruction { margin: 0 0 15px; font-size: 13.5px; color: var(--muted); }
 
 .carrito-module .section-label { display: flex; align-items: center; gap: 10px; font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-soft); margin: 18px 0 11px; }
@@ -187,7 +188,7 @@
 .carrito-module .badge--green { background: var(--green-bg); color: var(--success); border-color: var(--green-bd); }
 
 /* Footer */
-.carrito-module .modal-footer { display: flex; gap: 12px; padding: 18px 28px; border-top: 1px solid var(--border); }
+.carrito-module .modal-footer { display: flex; gap: 12px; padding: 18px 30px 26px; border-top: 1px solid var(--border); }
 .carrito-module .modal-footer .btn { flex: 1; }
 
 /* Responsive */
