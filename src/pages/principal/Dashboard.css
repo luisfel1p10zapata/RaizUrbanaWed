@@ -188,7 +188,7 @@ html, body {
   box-shadow: var(--shadow-card);
   display: flex;
   flex-direction: column;
-  height: 480px; /* Incrementado para dar más largo visual */
+  height: 540px; /* Más largo (antes 480px) */
   overflow: hidden;
 }
 
@@ -249,11 +249,16 @@ html, body {
   border-radius: 20px;
 }
 
+/* FIX: ru-chart-body ahora es flex-column para que el gráfico (flex:1)
+   y elementos extra como la leyenda (ru-legend-row) convivan sin que
+   ninguno se corte o se salga del card. */
 .ru-chart-body { 
   flex: 1; 
   padding: 18px 20px 12px 20px;
   width: 100%;
-  min-height: 320px;
+  min-height: 380px; /* Más largo (antes 320px) */
+  display: flex;
+  flex-direction: column;
 }
 
 /* Fix para Recharts ResponsiveContainer */
@@ -277,6 +282,7 @@ html, body {
   font-size: 12px;
   font-weight: 600;
   margin-top: 4px;
+  flex-shrink: 0; /* nunca se comprime, siempre visible debajo del chart */
 }
 
 .ru-legend-item {
@@ -411,7 +417,7 @@ html, body {
 }
 
 .ru-modal-chart { 
-  height: 300px; 
+  height: 340px; /* Más largo (antes 300px) */
   margin-bottom: 8px; 
   width: 100%;
 }
@@ -537,7 +543,7 @@ html, body {
   .ru-charts-grid { grid-template-columns: 1fr; }
   .ru-page { padding: 28px 16px 60px; }
   .ru-header h1 { font-size: 32px; }
-  .ru-chart-card { height: auto; min-height: 420px; }
+  .ru-chart-card { height: auto; min-height: 480px; }
   .ru-modal { max-width: 92vw; }
   .ru-modal-header { padding: 22px 20px 16px; }
   .ru-modal-body { padding: 20px 20px 8px; }
