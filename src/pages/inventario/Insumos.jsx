@@ -237,12 +237,10 @@ export default function Insumos() {
   const [categoryFilter, setCategoryFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [page, setPage] = useState(1);
-  const [modal, setModal] = useState(null); // 'register' | 'edit' | 'view' | 'delete'
+  const [modal, setModal] = useState(null);
   const [selectedInsumo, setSelectedInsumo] = useState(null);
-
   const fileInputRef = useRef(null);
 
-  // Formulario Insumo
   const [form, setForm] = useState({
     name: '',
     price: '',
@@ -276,7 +274,6 @@ export default function Insumos() {
     });
   }, [insumos, search, categoryFilter, statusFilter]);
 
-  // KPIs de Insumos
   const stats = useMemo(() => {
     const total = insumos.length;
     const active = insumos.filter((i) => i.status === 'Activo').length;
@@ -350,7 +347,6 @@ export default function Insumos() {
 
   const handleSave = () => {
     if (!form.name) return;
-
     if (modal === 'register') {
       const nextId = insumos.length > 0 ? Math.max(...insumos.map((i) => i.id)) + 1 : 1;
       const newInsumo = {
@@ -407,7 +403,6 @@ export default function Insumos() {
 
   return (
     <div className="insumos-page">
-      {/* Header del Módulo */}
       <header className="ins-page-header">
         <div>
           <span className="ins-module-label">MÓDULO</span>
@@ -420,7 +415,6 @@ export default function Insumos() {
         </button>
       </header>
 
-      {/* Grid de KPIs */}
       <section className="ins-kpi-grid">
         <div className="ins-kpi-card">
           <div className="ins-kpi-top">
@@ -430,7 +424,6 @@ export default function Insumos() {
           <strong>{stats.total}</strong>
           <small className="ins-neutral">Registrados en sistema</small>
         </div>
-
         <div className="ins-kpi-card">
           <div className="ins-kpi-top">
             <span>Insumos Activos</span>
@@ -439,7 +432,6 @@ export default function Insumos() {
           <strong>{stats.active}</strong>
           <small className="ins-positive">↗ Disponibles para uso</small>
         </div>
-
         <div className="ins-kpi-card">
           <div className="ins-kpi-top">
             <span>Stock Bajo (≤10)</span>
@@ -448,7 +440,6 @@ export default function Insumos() {
           <strong>{stats.lowStock}</strong>
           <small className="ins-negative">↘ Requiere reabastecimiento</small>
         </div>
-
         <div className="ins-kpi-card">
           <div className="ins-kpi-top">
             <span>Insumos Inactivos</span>
@@ -459,18 +450,18 @@ export default function Insumos() {
         </div>
       </section>
 
-      {/* Filtros */}
+      {/* FILTROS Y BÚSQUEDA (ESTILO HORIZONTAL EXACTO) */}
       <section className="ins-filters-card">
         <div className="ins-filters-title">
           <Filter size={15} />
-          <span>Filtros de búsqueda</span>
+          <span>Filtros y búsqueda</span>
         </div>
         <div className="ins-filters-row">
           <div className="ins-search">
             <Search size={15} />
             <input
               type="text"
-              placeholder="Buscar por código, nombre o categoría..."
+              placeholder="Buscar por nombre, categoría o ID..."
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -478,7 +469,6 @@ export default function Insumos() {
               }}
             />
           </div>
-
           <select
             value={categoryFilter}
             onChange={(e) => {
@@ -491,7 +481,6 @@ export default function Insumos() {
               <option key={c} value={c}>{c}</option>
             ))}
           </select>
-
           <select
             value={statusFilter}
             onChange={(e) => {
@@ -503,22 +492,9 @@ export default function Insumos() {
             <option value="Activo">Activo</option>
             <option value="Inactivo">Inactivo</option>
           </select>
-
-          <button
-            className="ins-clear-filters"
-            onClick={() => {
-              setSearch('');
-              setCategoryFilter('');
-              setStatusFilter('');
-              setPage(1);
-            }}
-          >
-            Limpiar filtros
-          </button>
         </div>
       </section>
 
-      {/* TABLA DE LISTADO DE INSUMOS DE REFERENCIA */}
       <section className="ins-ref-table-card">
         <div className="ins-ref-table-header">
           <div className="ins-ref-title">
@@ -529,7 +505,6 @@ export default function Insumos() {
             Página {page} de {totalPages}
           </span>
         </div>
-
         <div className="ins-ref-table-wrapper">
           <table className="ins-ref-table">
             <thead>
@@ -631,13 +606,11 @@ export default function Insumos() {
           </table>
         </div>
 
-        {/* Paginación Inferior Estilo Imagen */}
         <div className="ins-ref-pagination">
           <span className="ins-ref-total-text">
             Mostrando {filteredInsumos.length > 0 ? (page - 1) * pageSize + 1 : 0}-
             {Math.min(page * pageSize, filteredInsumos.length)} de {filteredInsumos.length} registros
           </span>
-
           <div className="ins-ref-pagination-controls">
             <button
               type="button"
@@ -655,7 +628,6 @@ export default function Insumos() {
             >
               <ChevronLeft size={15} />
             </button>
-
             {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
               <button
                 key={p}
@@ -666,7 +638,6 @@ export default function Insumos() {
                 {p}
               </button>
             ))}
-
             <button
               type="button"
               className="p-nav"
@@ -687,7 +658,6 @@ export default function Insumos() {
         </div>
       </section>
 
-      {/* MODAL REGISTRAR / EDITAR INSUMO - EXACTO A LA IMAGEN DE REFERENCIA */}
       {(modal === 'register' || modal === 'edit') && (
         <Modal
           eyebrow={
@@ -700,12 +670,10 @@ export default function Insumos() {
           className="ins-form-modal-custom"
         >
           <div className="ins-form-body-custom">
-            {/* SECCIÓN INFORMACIÓN BÁSICA */}
             <div className="ins-form-section">
               <div className="ins-section-divider">
                 <span>INFORMACIÓN BÁSICA</span>
               </div>
-
               <div className="ins-field-group full">
                 <label>NOMBRE DEL INSUMO</label>
                 <input
@@ -715,7 +683,6 @@ export default function Insumos() {
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                 />
               </div>
-
               <div className="ins-form-row-2">
                 <div className="ins-field-group">
                   <label>PRECIO UNITARIO ($)</label>
@@ -737,7 +704,6 @@ export default function Insumos() {
                   />
                 </div>
               </div>
-
               <div className="ins-form-row-2">
                 <div className="ins-field-group">
                   <label>UNIDAD DE MEDIDA</label>
@@ -764,7 +730,6 @@ export default function Insumos() {
               </div>
             </div>
 
-            {/* SECCIÓN CATEGORÍA DE INSUMO */}
             <div className="ins-form-section">
               <div className="ins-section-divider">
                 <span>CU.10.08 - CATEGORÍA DE INSUMO</span>
@@ -783,7 +748,6 @@ export default function Insumos() {
               </div>
             </div>
 
-            {/* SECCIÓN MATERIAL */}
             <div className="ins-form-section">
               <div className="ins-section-divider">
                 <span>CU.10.09 - MATERIAL</span>
@@ -802,7 +766,6 @@ export default function Insumos() {
               </div>
             </div>
 
-            {/* SECCIÓN TAMAÑO */}
             <div className="ins-form-section">
               <div className="ins-section-divider">
                 <span>CU.10.10 - TAMAÑO</span>
@@ -821,7 +784,6 @@ export default function Insumos() {
               </div>
             </div>
 
-            {/* SECCIÓN FOTO Y ESTADO */}
             <div className="ins-form-section">
               <div className="ins-section-divider">
                 <span>FOTO Y ESTADO</span>
@@ -851,7 +813,6 @@ export default function Insumos() {
                   </div>
                   <small className="upload-hint">PNG, JPG o WEBP. Max. 2MB</small>
                 </div>
-
                 <div className="ins-field-group">
                   <label>ESTADO DEL INSUMO</label>
                   <div className="ins-status-options">
@@ -876,7 +837,6 @@ export default function Insumos() {
               </div>
             </div>
           </div>
-
           <div className="ins-custom-modal-footer">
             <button type="button" className="btn-cancel-custom" onClick={closeModal}>
               Cancelar
@@ -888,7 +848,6 @@ export default function Insumos() {
         </Modal>
       )}
 
-      {/* MODAL CONSULTAR INSUMO - EXACTO A LA IMAGEN DE REFERENCIA */}
       {modal === 'view' && selectedInsumo && (
         <Modal
           eyebrow={`CU.10.04 · INSUMO ${selectedInsumo.code}`}
@@ -920,7 +879,6 @@ export default function Insumos() {
                 </div>
               </div>
             </div>
-
             <div className="ins-view-details-table">
               <div className="ins-view-row">
                 <span className="lbl">Precio unitario</span>
@@ -955,7 +913,6 @@ export default function Insumos() {
               </div>
             </div>
           </div>
-
           <div className="ins-custom-modal-footer">
             <button type="button" className="btn-cancel-custom" onClick={closeModal}>
               Cerrar
@@ -971,7 +928,6 @@ export default function Insumos() {
         </Modal>
       )}
 
-      {/* MODAL ELIMINAR */}
       {modal === 'delete' && selectedInsumo && (
         <Modal
           eyebrow="CONFIRMACIÓN"
