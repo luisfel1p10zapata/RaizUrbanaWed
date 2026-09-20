@@ -711,25 +711,6 @@ function PurchaseForm({
   onClose,
   onSave,
 }) {
-  const [form, setForm] = useState(
-    initialValue
-      ? {
-        ...initialValue,
-        products: initialValue.products.map(
-          (item) => ({ ...item })
-        ),
-      }
-      : {
-        date: new Date()
-          .toISOString()
-          .slice(0, 10),
-        provider: providers[0],
-        payment: paymentMethods[1],
-        status: 'Pendiente',
-        products: [],
-      }
-  );
-
   const [form, setForm] =
     useState(
       initialValue
@@ -849,13 +830,19 @@ function PurchaseForm({
     onSave(form);
   };
 
-  const total = form.products.reduce(
+
+  const total = (
+    Array.isArray(form.products)
+      ? form.products
+      : []
+  ).reduce(
     (sum, item) =>
       sum +
-      Number(item.quantity) *
-      Number(item.unitPrice),
+      (Number(item.quantity) || 0) *
+      (Number(item.unitPrice) || 0),
     0
   );
+
 
   return (
     <Modal
@@ -1293,66 +1280,97 @@ export default function ComprasInsumos() {
 
   }, [purchases]);
 
+
   const updateFilter = (setter, value) => {
     setter(value);
     setPage(1);
   };
 
 
+  /* =====================================================
+     FILTRADO
+  ===================================================== */
+
+  const filteredPurchases = useMemo(() => {
+
+    const normalizedSearch =
+      search.trim().toLowerCase();
+
+    return purchases.filter(
+      (purchase) => {
+
+        const products =
+          Array.isArray(
+            purchase?.products
+          )
+            ? purchase.products
+            : [];
+
+        const matchesSearch =
+          !normalizedSearch ||
+          String(
+            purchase?.id || ''
+          )
+            .toLowerCase()
+            .includes(
+              normalizedSearch
+            ) ||
+          String(
+            purchase?.number || ''
+          )
+            .toLowerCase()
+            .includes(
+              normalizedSearch
+            ) ||
+          String(
+            purchase?.provider || ''
+          )
+            .toLowerCase()
+            .includes(
+              normalizedSearch
+            ) ||
+          products.some(
+            (product) =>
+              String(
+                product?.supply || ''
+              )
+                .toLowerCase()
+                .includes(
+                  normalizedSearch
+                )
+          );
+
         return (
           matchesSearch &&
           (!statusFilter ||
             purchase.status ===
-            statusFilter) &&
+              statusFilter) &&
           (!providerFilter ||
             purchase.provider ===
-            providerFilter) &&
+              providerFilter) &&
           (!paymentFilter ||
             purchase.payment ===
-            paymentFilter) &&
+              paymentFilter) &&
           (!dateFilter ||
             purchase.date ===
-            dateFilter)
+              dateFilter)
         );
       }
     );
 
-
-          return (
-            matchesSearch &&
-
-            (!statusFilter ||
-              purchase.status ===
-                statusFilter) &&
-
-            (!providerFilter ||
-              purchase.provider ===
-                providerFilter) &&
-
-            (!paymentFilter ||
-              purchase.payment ===
-                paymentFilter) &&
-
-            (!dateFilter ||
-              purchase.date ===
-                dateFilter)
-          );
-        }
-      );
-
-    }, [
-      purchases,
-      search,
-      statusFilter,
-      providerFilter,
-      paymentFilter,
-      dateFilter,
-    ]);
+  }, [
+    purchases,
+    search,
+    statusFilter,
+    providerFilter,
+    paymentFilter,
+    dateFilter,
+  ]);
 
 
   /* =====================================================
      KPIs
-     
+
      Estos valores corresponden exactamente
      a la referencia solicitada.
   ===================================================== */
@@ -1379,7 +1397,7 @@ export default function ComprasInsumos() {
     1,
     Math.ceil(
       filteredPurchases.length /
-      pageSize
+        pageSize
     )
   );
 
@@ -1466,14 +1484,26 @@ export default function ComprasInsumos() {
   };
 
 
+  /* =====================================================
+     EDITAR
+  ===================================================== */
+
+  const updatePurchase = (
+    data
+  ) => {
+
+    if (!selectedPurchase) {
+      return;
+    }
+
     setPurchases((current) =>
       current.map((purchase) =>
         purchase.number ===
           selectedPurchase.number
-          ? {
-            ...purchase,
-            ...data,
-          }
+          ? normalizePurchase({
+              ...purchase,
+              ...data,
+            })
           : purchase
       )
     );
@@ -1489,6 +1519,10 @@ export default function ComprasInsumos() {
 
   const deletePurchase = () => {
 
+    if (!selectedPurchase) {
+      return;
+    }
+
     setPurchases(
       (current) =>
         current.filter(
@@ -1503,14 +1537,26 @@ export default function ComprasInsumos() {
   };
 
 
+  /* =====================================================
+     CAMBIAR ESTADO
+  ===================================================== */
+
+  const changeStatus = (
+    status
+  ) => {
+
+    if (!selectedPurchase) {
+      return;
+    }
+
     setPurchases((current) =>
       current.map((purchase) =>
         purchase.number ===
           selectedPurchase.number
           ? {
-            ...purchase,
-            status,
-          }
+              ...purchase,
+              status,
+            }
           : purchase
       )
     );
@@ -1520,9 +1566,9 @@ export default function ComprasInsumos() {
       (current) =>
         current
           ? {
-            ...current,
-            status,
-          }
+              ...current,
+              status,
+            }
           : null
     );
 
@@ -1978,7 +2024,6 @@ export default function ComprasInsumos() {
                       purchase.number
                     }
                   >
-
 
                     <td>
 
@@ -2680,39 +2725,28 @@ export default function ComprasInsumos() {
               {statuses.map(
                 (status) => (
 
-                <button
-                  key={status}
-                  className={`ci-status-option ${selectedPurchase.status ===
-                      status
-                      ? 'selected'
-                      : ''
-                    }`}
-                  onClick={() =>
-                    changeStatus(status)
-                  }
-                >
-
-                  <span
-                    className={`ci-option-dot ${getStatusClass(
+                  <button
+                    key={status}
+                    className={`ci-status-option ${
+                      selectedPurchase.status ===
                       status
                         ? 'selected'
                         : ''
                     }`}
                     onClick={() =>
-                      changeStatus(
-                        status
-                      )
+                      changeStatus(status)
                     }
                   >
 
-                  {selectedPurchase.status ===
-                    status && (
-                      <CheckCircle2
-                        size={16}
-                      />
-                    )}
+                    <span
+                      className={`ci-option-dot ${getStatusClass(
+                        status
+                      )}`}
+                    />
 
-                    {status}
+                    <span>
+                      {status}
+                    </span>
 
                     {selectedPurchase.status ===
                       status && (
