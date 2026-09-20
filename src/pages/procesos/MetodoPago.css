@@ -1,5 +1,7 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap');
+
 /* =========================================================
-   MÉTODOS DE PAGO - RAÍZ URBANA
+   PÁGINA GENERAL
 ========================================================= */
 
 .metodo-page {
@@ -19,7 +21,7 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 25px;
-  margin-bottom: 20px;
+  margin-bottom: 22px;
 }
 
 .metodo-header-info {
@@ -28,9 +30,9 @@
 
 .metodo-eyebrow {
   display: block;
-  margin-bottom: 3px;
+  margin-bottom: 4px;
   color: #4a4e69;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 1.05px;
   text-transform: uppercase;
@@ -39,16 +41,16 @@
 .metodo-header h1 {
   margin: 0;
   color: #22223b;
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: 30px;
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  font-size: 32px;
   font-weight: 400;
   line-height: 1.05;
 }
 
 .metodo-header p {
-  margin: 4px 0 0;
+  margin: 5px 0 0;
   color: #66708b;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.4;
 }
 
@@ -56,9 +58,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  min-height: 39px;
-  padding: 0 17px;
+  gap: 9px;
+  min-height: 41px;
+  padding: 0 18px;
   border: 0;
   border-radius: 9px;
   background: #22223b;
@@ -66,7 +68,7 @@
   box-shadow: 0 4px 8px rgba(34, 34, 59, 0.16);
   cursor: pointer;
   font-family: 'Montserrat', sans-serif;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.15px;
   transition: 0.2s ease;
@@ -85,53 +87,65 @@
 .metodo-kpis {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  margin-bottom: 17px;
+  gap: 13px;
+  margin-bottom: 18px;
 }
 
 .metodo-kpi-card {
-  min-height: 98px;
-  padding: 13px 13px 10px;
+  position: relative;
+  min-height: 105px;
+  padding: 16px 16px 14px 60px;
   border: 1px solid #d5b1a9;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 2px 4px rgba(34, 34, 59, 0.06);
+  border-radius: 13px;
+  background: #ffffff;
+  box-shadow: 0 2px 5px rgba(34, 34, 59, 0.06);
+  box-sizing: border-box;
 }
 
-.metodo-kpi-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  color: #66708b;
-  font-size: 9.5px;
-}
-
+/* Icono a la izquierda */
 .metodo-kpi-icon {
+  position: absolute;
+  top: 50%;
+  left: 15px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 27px;
-  height: 27px;
-  border-radius: 9px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   background: #ddd8d8;
   color: #34344e;
+  transform: translateY(-50%);
 }
 
+/* Contenido del KPI */
+.metodo-kpi-top {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 20px;
+  color: #66708b;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+/* Número */
 .metodo-kpi-card > strong {
   display: block;
   margin-top: 3px;
   color: #111735;
-  font-size: 17px;
+  font-size: 21px;
   font-weight: 700;
-  line-height: 1.1;
+  line-height: 1.15;
 }
 
+/* Texto inferior */
 .metodo-kpi-footer {
   display: flex;
   align-items: center;
-  gap: 3px;
-  margin-top: 4px;
-  font-size: 9px;
+  gap: 4px;
+  margin-top: 5px;
+  font-size: 10px;
 }
 
 .metodo-kpi-footer.positivo {
@@ -139,18 +153,18 @@
 }
 
 .metodo-kpi-footer span {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
 }
 
 .metodo-kpi-footer b {
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
 }
 
 .metodo-kpi-footer small {
   color: #72809b;
-  font-size: 8.5px;
+  font-size: 9.5px;
 }
 
 /* =========================================================
@@ -158,23 +172,23 @@
 ========================================================= */
 
 .metodo-search-card {
-  margin-bottom: 16px;
+  margin-bottom: 17px;
   overflow: hidden;
   border: 1px solid #d5b1a9;
-  border-radius: 11px;
-  background: rgba(255, 255, 255, 0.17);
+  border-radius: 12px;
+  background: #ffffff;
   box-shadow: 0 2px 4px rgba(34, 34, 59, 0.05);
 }
 
 .metodo-search-title {
   display: flex;
   align-items: center;
-  gap: 8px;
-  min-height: 35px;
-  padding: 0 14px;
+  gap: 9px;
+  min-height: 39px;
+  padding: 0 15px;
   border-bottom: 1px solid #d5b1a9;
   color: #22223b;
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 700;
 }
 
@@ -183,16 +197,16 @@
 }
 
 .metodo-search-content {
-  padding: 13px;
+  padding: 14px;
 }
 
 .metodo-search-input {
   display: flex;
   align-items: center;
-  width: 385px;
+  width: 405px;
   max-width: 100%;
-  height: 29px;
-  padding: 0 9px;
+  height: 32px;
+  padding: 0 10px;
   border: 1px solid #d5b1a9;
   border-radius: 8px;
   background: #ffffff;
@@ -208,13 +222,13 @@
 .metodo-search-input input {
   width: 100%;
   min-width: 0;
-  margin-left: 7px;
+  margin-left: 8px;
   border: 0;
   outline: none;
   background: transparent;
   color: #22223b;
   font-family: 'Montserrat', sans-serif;
-  font-size: 10px;
+  font-size: 12px;
 }
 
 .metodo-search-input input::placeholder {
@@ -225,8 +239,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 21px;
-  height: 21px;
+  width: 22px;
+  height: 22px;
   padding: 0;
   border: 0;
   border-radius: 50%;
@@ -242,8 +256,8 @@
 .metodo-table-card {
   overflow: hidden;
   border: 1px solid #d5b1a9;
-  border-radius: 11px;
-  background: rgba(255, 255, 255, 0.22);
+  border-radius: 12px;
+  background: #ffffff;
   box-shadow: 0 2px 5px rgba(34, 34, 59, 0.06);
 }
 
@@ -251,17 +265,17 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 35px;
-  padding: 0 14px;
+  min-height: 42px;
+  padding: 0 15px;
   border-bottom: 1px solid #d5b1a9;
 }
 
 .metodo-table-title {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
   color: #22223b;
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 700;
 }
 
@@ -269,19 +283,19 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 19px;
-  height: 17px;
+  min-width: 21px;
+  height: 18px;
   padding: 0 6px;
   border-radius: 7px;
   background: #e8e6e6;
   color: #5e6680;
-  font-size: 8px;
+  font-size: 9px;
   font-weight: 700;
 }
 
 .metodo-page-info {
   color: #7c849c;
-  font-size: 8.5px;
+  font-size: 10px;
 }
 
 .metodo-table-wrapper {
@@ -297,12 +311,12 @@
 }
 
 .metodo-table th {
-  height: 29px;
+  height: 34px;
   padding: 0 14px;
   border-bottom: 1px solid #d5b1a9;
-  background: rgba(255, 255, 255, 0.14);
+  background: #ffffff;
   color: #22223b;
-  font-size: 8.5px;
+  font-size: 10px;
   font-weight: 700;
   text-align: left;
   letter-spacing: 0.15px;
@@ -329,11 +343,11 @@
 }
 
 .metodo-table td {
-  height: 45px;
+  height: 52px;
   padding: 0 14px;
   border-bottom: 1px solid #d5b1a9;
   color: #4f5c79;
-  font-size: 10px;
+  font-size: 12px;
   vertical-align: middle;
 }
 
@@ -349,32 +363,40 @@
   background: rgba(255, 255, 255, 0.32);
 }
 
+/* =========================================================
+   ID
+========================================================= */
+
 .metodo-id {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 21px;
-  height: 14px;
-  padding: 0 5px;
+  min-width: 25px;
+  height: 17px;
+  padding: 0 6px;
   border-radius: 5px;
   background: #ebe9e9;
   color: #66708b;
-  font-size: 8px;
+  font-size: 9px;
   font-weight: 700;
 }
+
+/* =========================================================
+   NOMBRE
+========================================================= */
 
 .metodo-name-cell {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .metodo-row-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 25px;
-  height: 25px;
+  width: 30px;
+  height: 30px;
   flex-shrink: 0;
   border-radius: 8px;
   background: #e6e4e5;
@@ -383,34 +405,42 @@
 
 .metodo-name-cell strong {
   color: #111735;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 600;
 }
+
+/* =========================================================
+   NÚMERO DE CUENTA
+========================================================= */
 
 .metodo-account {
   display: inline-flex;
   align-items: center;
-  min-width: 18px;
-  min-height: 17px;
-  padding: 0 7px;
+  min-width: 20px;
+  min-height: 20px;
+  padding: 0 8px;
   border-radius: 5px;
   background: #eeeded;
   color: #69738c;
-  font-size: 9px;
+  font-size: 10px;
 }
+
+/* =========================================================
+   ESTADO
+========================================================= */
 
 .metodo-status {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  height: 20px;
-  padding: 0 9px;
+  height: 23px;
+  padding: 0 10px;
   border: 1px solid;
-  border-radius: 10px;
+  border-radius: 11px;
   background: transparent;
   cursor: pointer;
   font-family: 'Montserrat', sans-serif;
-  font-size: 8.5px;
+  font-size: 10px;
   font-weight: 600;
 }
 
@@ -440,10 +470,14 @@
   background: #9da5b5;
 }
 
+/* =========================================================
+   ACCIONES
+========================================================= */
+
 .metodo-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 11px;
 }
 
 .metodo-actions button {
@@ -482,8 +516,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 150px;
-  gap: 5px;
+  min-height: 160px;
+  gap: 6px;
   color: #68728b;
 }
 
@@ -491,8 +525,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 45px;
-  height: 45px;
+  width: 48px;
+  height: 48px;
   margin-bottom: 5px;
   border-radius: 12px;
   background: #e8e5e6;
@@ -501,11 +535,11 @@
 
 .metodo-empty strong {
   color: #22223b;
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .metodo-empty span {
-  font-size: 9px;
+  font-size: 10px;
 }
 
 /* =========================================================
@@ -516,11 +550,11 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 44px;
+  min-height: 48px;
   padding: 0 15px;
   border-top: 1px solid #d5b1a9;
   color: #778099;
-  font-size: 8.5px;
+  font-size: 10px;
 }
 
 .metodo-pagination {
@@ -533,8 +567,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   padding: 0;
   border: 0;
   border-radius: 7px;
@@ -557,12 +591,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   border-radius: 7px;
   background: #22223b;
   color: white;
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
 }
 
@@ -624,7 +658,7 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 20px;
-  padding: 20px 23px 17px;
+  padding: 21px 23px 18px;
   border-bottom: 1px solid #d5b1a9;
 }
 
@@ -632,7 +666,7 @@
   display: block;
   margin-bottom: 4px;
   color: #5e6680;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.8px;
   text-transform: uppercase;
@@ -641,8 +675,8 @@
 .metodo-modal-header h2 {
   margin: 0;
   color: #2c2c45;
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: 22px;
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  font-size: 23px;
   font-weight: 400;
   line-height: 1.1;
 }
@@ -651,8 +685,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 25px;
-  height: 25px;
+  width: 27px;
+  height: 27px;
   padding: 0;
   border: 0;
   background: transparent;
@@ -671,7 +705,7 @@
 ========================================================= */
 
 .metodo-form-content {
-  padding: 21px 23px 25px;
+  padding: 22px 23px 25px;
 }
 
 .metodo-form-group {
@@ -686,14 +720,14 @@
   display: block;
   margin-bottom: 7px;
   color: #525a74;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.65px;
 }
 
 .metodo-form-group input {
   width: 100%;
-  height: 43px;
+  height: 44px;
   box-sizing: border-box;
   padding: 0 13px;
   border: 1px solid #d5b1a9;
@@ -702,7 +736,7 @@
   background: #ffffff;
   color: #30304b;
   font-family: 'Montserrat', sans-serif;
-  font-size: 11px;
+  font-size: 12px;
   transition: 0.2s ease;
 }
 
@@ -719,7 +753,7 @@
   display: block;
   margin-top: 6px;
   color: #777e95;
-  font-size: 9px;
+  font-size: 10px;
 }
 
 /* =========================================================
@@ -741,11 +775,11 @@
 .metodo-btn-secondary,
 .metodo-btn-dark,
 .metodo-btn-danger {
-  min-height: 42px;
+  min-height: 43px;
   padding: 0 15px;
   border-radius: 10px;
   font-family: 'Montserrat', sans-serif;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   cursor: pointer;
   transition: 0.18s ease;
@@ -822,13 +856,13 @@
 
 .metodo-detail-name strong {
   color: #292941;
-  font-size: 18px;
+  font-size: 19px;
   font-weight: 700;
 }
 
 .metodo-detail-name span {
   color: #69718a;
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .metodo-detail-info {
@@ -839,11 +873,11 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 43px;
+  min-height: 44px;
   gap: 15px;
   border-bottom: 1px solid #ead9d5;
   color: #707991;
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .metodo-detail-row:last-child {
@@ -852,7 +886,7 @@
 
 .metodo-detail-row strong {
   color: #272741;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   text-align: right;
 }
@@ -877,7 +911,7 @@
   align-items: center;
   gap: 13px;
   width: 100%;
-  min-height: 64px;
+  min-height: 66px;
   padding: 0 14px;
   border: 1px solid #d5b1a9;
   border-radius: 12px;
@@ -908,12 +942,12 @@
 
 .metodo-status-option strong {
   color: #31314a;
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .metodo-status-option span {
   color: #747c92;
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .status-option-dot {
@@ -966,7 +1000,7 @@
 .metodo-delete-content h2 {
   margin: 0 0 9px;
   color: #292940;
-  font-size: 18px;
+  font-size: 19px;
   font-weight: 700;
 }
 
@@ -974,7 +1008,7 @@
   max-width: 330px;
   margin: 0;
   color: #737b92;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.5;
 }
 
@@ -992,7 +1026,17 @@
   }
 
   .metodo-header h1 {
-    font-size: 27px;
+    font-size: 29px;
+  }
+
+  .metodo-kpi-card {
+    padding-left: 55px;
+  }
+
+  .metodo-kpi-icon {
+    left: 13px;
+    width: 34px;
+    height: 34px;
   }
 }
 
@@ -1054,7 +1098,11 @@
 
 @media (max-width: 480px) {
   .metodo-header h1 {
-    font-size: 25px;
+    font-size: 27px;
+  }
+
+  .metodo-kpi-card {
+    min-height: 100px;
   }
 
   .metodo-modal-header {
@@ -1084,4 +1132,21 @@
   .metodo-modal-footer button {
     width: 100%;
   }
+}
+
+/* =========================================================
+   FUENTES GENERALES
+========================================================= */
+
+.metodo-page,
+.metodo-page button,
+.metodo-page input,
+.metodo-page textarea,
+.metodo-page select {
+  font-family: 'Montserrat', sans-serif;
+}
+
+.metodo-header h1,
+.metodo-modal-header h2 {
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
 }

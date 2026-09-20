@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import './Compras.css';
 
-const STORAGE_KEY = 'raiz-urbana-compras';
+const STORAGE_KEY = 'raiz-urbana-compras-v2';
 
 const providers = [
   'Textiles SA',
@@ -32,10 +32,10 @@ const providers = [
 ];
 
 const paymentMethods = [
-  'Bancolombia',
-  'Nequi',
-  'Daviplata',
+  'Transferencia',
+  'Tarjeta',
   'Efectivo',
+  'Cheque',
 ];
 
 const statuses = [
@@ -82,7 +82,7 @@ const initialPurchases = [
     id: 'COM01',
     date: '2026-06-01',
     provider: 'Textiles SA',
-    payment: 'Bancolombia',
+    payment: 'Transferencia',
     status: 'Recibida',
     products: [
       {
@@ -108,7 +108,7 @@ const initialPurchases = [
     id: 'COM02',
     date: '2026-06-05',
     provider: 'Moda Global',
-    payment: 'Nequi',
+    payment: 'Tarjeta',
     status: 'Aprobada',
     products: [
       {
@@ -152,7 +152,7 @@ const initialPurchases = [
     id: 'COM04',
     date: '2026-06-10',
     provider: 'Industrias Ropa',
-    payment: 'Bancolombia',
+    payment: 'Transferencia',
     status: 'Recibida',
     products: [
       {
@@ -169,7 +169,7 @@ const initialPurchases = [
         color: 'Blanco',
         size: 'M',
         quantity: 20,
-        unitPrice: 40.5,
+        unitPrice: 40,
       },
     ],
   },
@@ -178,7 +178,7 @@ const initialPurchases = [
     id: 'COM05',
     date: '2026-06-12',
     provider: 'Confecciones Norte',
-    payment: 'Daviplata',
+    payment: 'Cheque',
     status: 'Cancelada',
     products: [
       {
@@ -196,7 +196,7 @@ const initialPurchases = [
     id: 'COM06',
     date: '2026-06-15',
     provider: 'Moda Global',
-    payment: 'Bancolombia',
+    payment: 'Transferencia',
     status: 'Pendiente',
     products: [
       {
@@ -221,28 +221,57 @@ const money = (value) =>
 
 const formatDate = (date) => {
   if (!date) return '';
+
   const [year, month, day] = date.split('-');
+
   return `${year}-${month}-${day}`;
 };
 
-const totalPurchase = (purchase) =>
-  purchase.products.reduce(
-    (total, item) => total + item.quantity * item.unitPrice,
+const totalPurchase = (purchase) => {
+  const products = Array.isArray(purchase?.products)
+    ? purchase.products
+    : [];
+
+  return products.reduce(
+    (total, item) =>
+      total +
+      (Number(item?.quantity) || 0) *
+        (Number(item?.unitPrice) || 0),
     0
   );
+};
+
+function normalizePurchase(purchase) {
+  if (!purchase || typeof purchase !== 'object') {
+    return {
+      products: [],
+    };
+  }
+
+  return {
+    ...purchase,
+    products: Array.isArray(purchase.products)
+      ? purchase.products
+      : [],
+  };
+}
 
 function readPurchases() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
 
     if (saved) {
-      return JSON.parse(saved);
+      const parsed = JSON.parse(saved);
+
+      if (Array.isArray(parsed)) {
+        return parsed.map(normalizePurchase);
+      }
     }
   } catch (error) {
     console.error('Error leyendo compras:', error);
   }
 
-  return initialPurchases;
+  return initialPurchases.map(normalizePurchase);
 }
 
 function statusClass(status) {
@@ -257,16 +286,16 @@ function statusClass(status) {
 }
 
 function paymentIcon(payment) {
-  if (payment === 'Bancolombia') {
+  if (payment === 'Transferencia') {
     return <Landmark size={15} />;
   }
 
-  if (payment === 'Nequi') {
-    return <Banknote size={15} />;
+  if (payment === 'Tarjeta') {
+    return <CreditCard size={15} />;
   }
 
-  if (payment === 'Daviplata') {
-    return <CreditCard size={15} />;
+  if (payment === 'Efectivo') {
+    return <Banknote size={15} />;
   }
 
   return <Banknote size={15} />;
@@ -312,6 +341,7 @@ function Modal({
             className="icon-button"
             onClick={onClose}
             aria-label="Cerrar"
+            type="button"
           >
             <X size={20} />
           </button>
@@ -383,6 +413,7 @@ function ProductEditor({
             }
           >
             <option value="Ropa">Ropa</option>
+
             <option value="Accesorios">
               Accesorios
             </option>
@@ -493,6 +524,7 @@ function ProductEditor({
     </div>
   );
 }
+
 function PurchaseForm({
   initialValue,
   onSave,
@@ -500,8 +532,8 @@ function PurchaseForm({
   title,
   eyebrow,
 }) {
-  const [form, setForm] = useState(
-    initialValue || {
+  const [form, setForm] = useState(() => ({
+    ...(initialValue || {
       date: new Date()
         .toISOString()
         .slice(0, 10),
@@ -509,8 +541,11 @@ function PurchaseForm({
       payment: paymentMethods[0],
       status: 'Pendiente',
       products: [],
-    }
-  );
+    }),
+    products: Array.isArray(initialValue?.products)
+      ? initialValue.products
+      : [],
+  }));
 
   const [draftProduct, setDraftProduct] = useState({
     product: productCatalog[0].name,
@@ -533,7 +568,9 @@ function PurchaseForm({
     setForm((current) => ({
       ...current,
       products: [
-        ...current.products,
+        ...(Array.isArray(current.products)
+          ? current.products
+          : []),
         {
           ...draftProduct,
         },
@@ -544,7 +581,11 @@ function PurchaseForm({
   const removeProduct = (index) => {
     setForm((current) => ({
       ...current,
-      products: current.products.filter(
+      products: (
+        Array.isArray(current.products)
+          ? current.products
+          : []
+      ).filter(
         (_, itemIndex) => itemIndex !== index
       ),
     }));
@@ -555,6 +596,7 @@ function PurchaseForm({
       !form.date ||
       !form.provider ||
       !form.payment ||
+      !Array.isArray(form.products) ||
       form.products.length === 0
     ) {
       return;
@@ -563,9 +605,15 @@ function PurchaseForm({
     onSave(form);
   };
 
-  const total = form.products.reduce(
+  const total = (
+    Array.isArray(form.products)
+      ? form.products
+      : []
+  ).reduce(
     (sum, item) =>
-      sum + item.quantity * item.unitPrice,
+      sum +
+      (Number(item?.quantity) || 0) *
+        (Number(item?.unitPrice) || 0),
     0
   );
 
@@ -807,7 +855,6 @@ function PurchaseForm({
 }
 
 export default function Compras() {
-
   const [purchases, setPurchases] =
     useState(readPurchases);
 
@@ -835,6 +882,15 @@ export default function Compras() {
   const [selectedPurchase, setSelectedPurchase] =
     useState(null);
 
+  /*
+   * Estado temporal del modal "Cambiar Estado".
+   *
+   * Este estado permite seleccionar una opción
+   * sin modificar todavía la compra.
+   */
+  const [pendingStatus, setPendingStatus] =
+    useState('');
+
   useEffect(() => {
     localStorage.setItem(
       STORAGE_KEY,
@@ -853,13 +909,11 @@ export default function Compras() {
   ]);
 
   const filtered = useMemo(() => {
-
     const term =
       search.trim().toLowerCase();
 
     return purchases.filter(
       (purchase) => {
-
         const matchesSearch =
           !term ||
           `#${purchase.number}`
@@ -888,7 +942,6 @@ export default function Compras() {
         );
       }
     );
-
   }, [
     purchases,
     search,
@@ -911,7 +964,6 @@ export default function Compras() {
   );
 
   const stats = useMemo(() => {
-
     const total = purchases.reduce(
       (sum, purchase) =>
         sum + totalPurchase(purchase),
@@ -936,11 +988,9 @@ export default function Compras() {
       pending,
       received,
     };
-
   }, [purchases]);
 
   const registerPurchase = (data) => {
-
     const nextNumber =
       purchases.reduce(
         (max, item) =>
@@ -963,7 +1013,6 @@ export default function Compras() {
   };
 
   const updatePurchase = (data) => {
-
     setPurchases((current) =>
       current.map((purchase) =>
         purchase.number ===
@@ -980,7 +1029,35 @@ export default function Compras() {
     setModal(null);
   };
 
-  const changeStatus = (status) => {
+  /*
+   * Abre el modal de estado y prepara
+   * el estado actualmente seleccionado.
+   */
+  const openStatusModal = (purchase) => {
+    setSelectedPurchase(purchase);
+    setPendingStatus(purchase.status);
+    setModal('status');
+  };
+
+  /*
+   * Solo cambia la selección visual.
+   * NO modifica todavía la compra.
+   */
+  const selectPendingStatus = (status) => {
+    setPendingStatus(status);
+  };
+
+  /*
+   * Guarda definitivamente el estado
+   * seleccionado al presionar "Aplicar".
+   */
+  const applyStatus = () => {
+    if (
+      !selectedPurchase ||
+      !pendingStatus
+    ) {
+      return;
+    }
 
     setPurchases((current) =>
       current.map((purchase) =>
@@ -988,18 +1065,27 @@ export default function Compras() {
         selectedPurchase.number
           ? {
               ...purchase,
-              status,
+              status: pendingStatus,
             }
           : purchase
       )
     );
 
     setSelectedPurchase(null);
+    setPendingStatus('');
+    setModal(null);
+  };
+
+  /*
+   * Cierra el modal sin guardar cambios.
+   */
+  const cancelStatusChange = () => {
+    setSelectedPurchase(null);
+    setPendingStatus('');
     setModal(null);
   };
 
   const deletePurchase = () => {
-
     setPurchases((current) =>
       current.filter(
         (purchase) =>
@@ -1053,88 +1139,102 @@ export default function Compras() {
         </button>
 
       </header>
-            <section className="kpi-grid">
+
+      <section className="kpi-grid">
 
         <div className="kpi-card">
 
-          <div className="kpi-top">
-            <span>Total compras</span>
-
-            <div className="kpi-icon">
-              <ShoppingCart size={17} />
-            </div>
+          <div className="kpi-icon">
+            <ShoppingCart size={17} />
           </div>
 
-          <strong>
-            {stats.count}
-          </strong>
+          <div className="kpi-content">
 
-          <small className="positive">
-            ↗ +3 este mes
-          </small>
+            <div className="kpi-top">
+              <span>Total compras</span>
+            </div>
+
+            <strong>
+              {stats.count}
+            </strong>
+
+            <small className="positive">
+              Registradas
+            </small>
+
+          </div>
 
         </div>
 
         <div className="kpi-card">
 
-          <div className="kpi-top">
-            <span>Monto total</span>
-
-            <div className="kpi-icon">
-              $
-            </div>
+          <div className="kpi-icon">
+            $
           </div>
 
-          <strong>
-            {money(stats.total)}
-          </strong>
+          <div className="kpi-content">
 
-          <small className="positive">
-            ↗ +12.4% &nbsp;
-            <span>vs. mes anterior</span>
-          </small>
+            <div className="kpi-top">
+              <span>Monto total</span>
+            </div>
+
+            <strong>
+              {money(stats.total)}
+            </strong>
+
+            <small className="positive">
+              Mensual
+            </small>
+
+          </div>
 
         </div>
 
         <div className="kpi-card">
 
-          <div className="kpi-top">
-            <span>Pendientes</span>
-
-            <div className="kpi-icon">
-              <span>◷</span>
-            </div>
+          <div className="kpi-icon">
+            <span>◷</span>
           </div>
 
-          <strong>
-            {stats.pending}
-          </strong>
+          <div className="kpi-content">
 
-          <small className="negative">
-            ↘ +1 &nbsp;
-            <span>por procesar</span>
-          </small>
+            <div className="kpi-top">
+              <span>Pendientes</span>
+            </div>
+
+            <strong>
+              {stats.pending}
+            </strong>
+
+            <small className="negative">
+              por procesar
+            </small>
+
+          </div>
 
         </div>
 
         <div className="kpi-card">
 
-          <div className="kpi-top">
-            <span>Recibidas</span>
-
-            <div className="kpi-icon">
-              <CheckCircle2 size={17} />
-            </div>
+          <div className="kpi-icon">
+            <CheckCircle2 size={17} />
           </div>
 
-          <strong>
-            {stats.received}
-          </strong>
+          <div className="kpi-content">
 
-          <small className="positive">
-            ↗ +2 &nbsp;
-            <span>confirmadas</span>
-          </small>
+            <div className="kpi-top">
+              <span>Recibidas</span>
+            </div>
+
+            <strong>
+              {stats.received}
+            </strong>
+
+            <small className="positive">
+              confirmadas
+            </small>
+
+          </div>
 
         </div>
 
@@ -1144,6 +1244,7 @@ export default function Compras() {
 
         <div className="filters-title">
           <Filter size={17} />
+
           <strong>
             Filtros y búsqueda
           </strong>
@@ -1169,7 +1270,9 @@ export default function Compras() {
           <select
             value={statusFilter}
             onChange={(event) =>
-              setStatusFilter(event.target.value)
+              setStatusFilter(
+                event.target.value
+              )
             }
           >
             <option value="">
@@ -1254,12 +1357,14 @@ export default function Compras() {
             <button
               className="clear-filters"
               onClick={clearFilters}
+              type="button"
             >
               Limpiar
             </button>
           )}
 
         </div>
+
       </section>
 
       <section className="table-card">
@@ -1267,6 +1372,7 @@ export default function Compras() {
         <div className="table-card-header">
 
           <div>
+
             <strong>
               Listado de Compras
             </strong>
@@ -1274,6 +1380,7 @@ export default function Compras() {
             <span className="count-pill">
               {filtered.length}
             </span>
+
           </div>
 
           <span>
@@ -1308,6 +1415,7 @@ export default function Compras() {
                 <tr key={purchase.number}>
 
                   <td>
+
                     <div
                       className={`purchase-photo photo-${
                         (purchase.number % 4) + 1
@@ -1315,12 +1423,15 @@ export default function Compras() {
                     >
                       <Package size={19} />
                     </div>
+
                   </td>
 
                   <td>
+
                     <span className="id-pill">
                       #{purchase.number}
                     </span>
+
                   </td>
 
                   <td>
@@ -1338,8 +1449,12 @@ export default function Compras() {
                       </strong>
 
                       <span>
-                        {purchase.products.length}
-                        {' '}
+                        {(Array.isArray(
+                          purchase.products
+                        )
+                          ? purchase.products
+                          : []
+                        ).length}{' '}
                         producto(s)
                       </span>
 
@@ -1350,24 +1465,29 @@ export default function Compras() {
                   <td>
 
                     <span className="payment-cell">
+
                       {paymentIcon(
                         purchase.payment
                       )}
 
                       {purchase.payment}
+
                     </span>
 
                   </td>
 
                   <td>
+
                     <StatusBadge
                       status={
                         purchase.status
                       }
                     />
+
                   </td>
 
                   <td>
+
                     <strong>
                       {money(
                         totalPurchase(
@@ -1375,6 +1495,7 @@ export default function Compras() {
                         )
                       )}
                     </strong>
+
                   </td>
 
                   <td>
@@ -1383,10 +1504,12 @@ export default function Compras() {
 
                       <button
                         title="Ver detalle"
+                        type="button"
                         onClick={() => {
                           setSelectedPurchase(
                             purchase
                           );
+
                           setModal('detail');
                         }}
                       >
@@ -1395,10 +1518,12 @@ export default function Compras() {
 
                       <button
                         title="Editar"
+                        type="button"
                         onClick={() => {
                           setSelectedPurchase(
                             purchase
                           );
+
                           setModal('edit');
                         }}
                       >
@@ -1407,11 +1532,13 @@ export default function Compras() {
 
                       <button
                         title="Eliminar"
+                        type="button"
                         className="delete-action"
                         onClick={() => {
                           setSelectedPurchase(
                             purchase
                           );
+
                           setModal('delete');
                         }}
                       >
@@ -1423,7 +1550,6 @@ export default function Compras() {
                   </td>
 
                 </tr>
-
               ))}
 
               {visible.length === 0 && (
@@ -1481,6 +1607,7 @@ export default function Compras() {
               onClick={() =>
                 setPage(1)
               }
+              type="button"
             >
               <ChevronsLeft size={16} />
             </button>
@@ -1496,6 +1623,7 @@ export default function Compras() {
                     )
                 )
               }
+              type="button"
             >
               <ChevronLeft size={17} />
             </button>
@@ -1517,6 +1645,7 @@ export default function Compras() {
                     )
                 )
               }
+              type="button"
             >
               <ChevronRight size={17} />
             </button>
@@ -1528,6 +1657,7 @@ export default function Compras() {
               onClick={() =>
                 setPage(pageCount)
               }
+              type="button"
             >
               <ChevronsRight size={16} />
             </button>
@@ -1595,51 +1725,74 @@ export default function Compras() {
                 <div className="detail-list">
 
                   <div>
-                    <span>Fecha</span>
+
+                    <span>
+                      Fecha
+                    </span>
+
                     <strong>
                       {formatDate(
                         selectedPurchase.date
                       )}
                     </strong>
+
                   </div>
 
                   <div>
-                    <span>Proveedor</span>
+
+                    <span>
+                      Proveedor
+                    </span>
+
                     <strong>
                       {selectedPurchase.provider}
                     </strong>
+
                   </div>
 
                   <div>
+
                     <span>
                       Método de pago
                     </span>
 
                     <strong className="payment-cell">
+
                       {paymentIcon(
                         selectedPurchase.payment
                       )}
+
                       {selectedPurchase.payment}
+
                     </strong>
+
                   </div>
 
                   <div>
-                    <span>Estado</span>
+
+                    <span>
+                      Estado
+                    </span>
 
                     <button
                       type="button"
                       className="detail-status-button"
                       title="Cambiar estado"
                       onClick={() =>
-                        setModal('status')
+                        openStatusModal(
+                          selectedPurchase
+                        )
                       }
                     >
+
                       <StatusBadge
                         status={
                           selectedPurchase.status
                         }
                       />
+
                     </button>
+
                   </div>
 
                 </div>
@@ -1657,13 +1810,32 @@ export default function Compras() {
                 <div className="detail-products">
 
                   <div className="detail-products-head">
-                    <span>PRODUCTO</span>
-                    <span>VARIANTE</span>
-                    <span>CANT.</span>
-                    <span>P.UNIT.</span>
+
+                    <span>
+                      PRODUCTO
+                    </span>
+
+                    <span>
+                      VARIANTE
+                    </span>
+
+                    <span>
+                      CANT.
+                    </span>
+
+                    <span>
+                      P.UNIT.
+                    </span>
+
                   </div>
 
-                  {selectedPurchase.products.map(
+                  {(
+                    Array.isArray(
+                      selectedPurchase.products
+                    )
+                      ? selectedPurchase.products
+                      : []
+                  ).map(
                     (product, index) => (
 
                       <div
@@ -1672,6 +1844,7 @@ export default function Compras() {
                       >
 
                         <div>
+
                           <strong>
                             {product.product}
                           </strong>
@@ -1679,15 +1852,19 @@ export default function Compras() {
                           <small>
                             {product.category}
                           </small>
+
                         </div>
 
                         <span>
+
                           <small>
                             {product.color}
                           </small>{' '}
+
                           <small>
                             {product.size}
                           </small>
+
                         </span>
 
                         <span>
@@ -1731,6 +1908,7 @@ export default function Compras() {
 
               <button
                 className="secondary-button"
+                type="button"
                 onClick={() => {
                   setSelectedPurchase(null);
                   setModal(null);
@@ -1741,6 +1919,7 @@ export default function Compras() {
 
               <button
                 className="primary-button"
+                type="button"
                 onClick={() =>
                   setModal('edit')
                 }
@@ -1754,16 +1933,26 @@ export default function Compras() {
 
         )}
 
+      {/*
+       * =====================================================
+       * MODAL CAMBIAR ESTADO
+       * =====================================================
+       *
+       * Este modal funciona como en tu imagen:
+       *
+       * - El estado actual aparece seleccionado.
+       * - Al pulsar otro estado solamente cambia la selección.
+       * - "Cancelar" descarta.
+       * - "Aplicar" guarda.
+       */}
+
       {modal === 'status' &&
         selectedPurchase && (
 
           <Modal
             title="Cambiar Estado"
             eyebrow={`Compra #${selectedPurchase.number} · ${selectedPurchase.provider}`}
-            onClose={() => {
-              setSelectedPurchase(null);
-              setModal(null);
-            }}
+            onClose={cancelStatusChange}
             className="status-modal"
           >
 
@@ -1773,14 +1962,14 @@ export default function Compras() {
 
                 <button
                   key={status}
+                  type="button"
                   className={`status-option ${
-                    selectedPurchase.status ===
-                    status
+                    pendingStatus === status
                       ? 'selected'
                       : ''
                   }`}
                   onClick={() =>
-                    changeStatus(status)
+                    selectPendingStatus(status)
                   }
                 >
 
@@ -1790,10 +1979,11 @@ export default function Compras() {
                     )}`}
                   />
 
-                  {status}
+                  <span className="status-option-label">
+                    {status}
+                  </span>
 
-                  {selectedPurchase.status ===
-                    status && (
+                  {pendingStatus === status && (
                     <CheckCircle2 size={17} />
                   )}
 
@@ -1807,19 +1997,16 @@ export default function Compras() {
 
               <button
                 className="secondary-button"
-                onClick={() => {
-                  setSelectedPurchase(null);
-                  setModal(null);
-                }}
+                type="button"
+                onClick={cancelStatusChange}
               >
                 Cancelar
               </button>
 
               <button
                 className="primary-button"
-                onClick={() =>
-                  setModal(null)
-                }
+                type="button"
+                onClick={applyStatus}
               >
                 Aplicar
               </button>
@@ -1868,6 +2055,7 @@ export default function Compras() {
 
               <button
                 className="secondary-button"
+                type="button"
                 onClick={() => {
                   setSelectedPurchase(null);
                   setModal(null);
@@ -1878,6 +2066,7 @@ export default function Compras() {
 
               <button
                 className="danger-button"
+                type="button"
                 onClick={deletePurchase}
               >
                 Eliminar

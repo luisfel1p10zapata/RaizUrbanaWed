@@ -1,476 +1,341 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
-  Plus,
   Search,
+  Plus,
+  X,
+  FolderOpen,
+  CheckCircle2,
+  XCircle,
   Eye,
   Pencil,
   Trash2,
-  Power,
-  X,
+  Filter,
   ChevronLeft,
   ChevronRight,
-  Tag,
-  CheckCircle,
-  XCircle,
-  Package,
+  ChevronsLeft,
+  ChevronsRight,
+  CircleCheck,
 } from 'lucide-react';
 import './Categorias.css';
 
-const STORAGE_KEY = 'raiz-urbana-categorias';
-
-const initialCategories = [
-  {
-    id: 1,
-    name: 'Ropa',
-    active: true,
-    associatedProducts: 4,
-  },
-  {
-    id: 2,
-    name: 'Accesorios',
-    active: true,
-    associatedProducts: 8,
-  },
-  {
-    id: 3,
-    name: 'Calzado',
-    active: true,
-    associatedProducts: 2,
-  },
-  {
-    id: 4,
-    name: 'Complementos',
-    active: true,
-    associatedProducts: 6,
-  },
+const initialCategorias = [
+  { id: '#1', nombre: 'Ropa', estado: true },
+  { id: '#2', nombre: 'Accesorios', estado: true },
+  { id: '#3', nombre: 'Calzado', estado: true },
+  { id: '#4', nombre: 'Complementos', estado: true },
 ];
 
-const emptyForm = {
-  name: '',
-};
+function EstadoBadge({ activo }) {
+  return (
+    <span className={`categoria-status ${activo ? 'activo' : 'inactivo'}`}>
+      <span className="status-dot" />
+      {activo ? 'Activo' : 'Inactivo'}
+    </span>
+  );
+}
 
-const Categorias = () => {
-  const [categories, setCategories] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
+function ModalShell({ children, className = '' }) {
+  return (
+    <div className="ru-cat-modal-overlay">
+      <div className={`ru-cat-modal ${className}`}>
+        {children}
+      </div>
+    </div>
+  );
+}
 
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {
-        return initialCategories;
-      }
-    }
-
-    return initialCategories;
-  });
-
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('Todos');
-  const [currentPage, setCurrentPage] = useState(1);
-
+export default function Categorias() {
+  const [categorias, setCategorias] = useState(initialCategorias);
+  const [busqueda, setBusqueda] = useState('');
   const [modal, setModal] = useState(null);
-  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selected, setSelected] = useState(null);
+  const [formNombre, setFormNombre] = useState('');
+  const [formEstado, setFormEstado] = useState(true);
+  const [pagina, setPagina] = useState(1);
 
-  const [form, setForm] = useState(emptyForm);
-  const [formError, setFormError] = useState('');
+  const filtradas = useMemo(() => {
+    const texto = busqueda.trim().toLowerCase();
+    if (!texto) return categorias;
 
-  const itemsPerPage = 4;
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(categories));
-  }, [categories]);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [search, statusFilter]);
-
-  const totalCategories = categories.length;
-
-  const activeCategories = categories.filter(
-    (category) => category.active
-  ).length;
-
-  const inactiveCategories = categories.filter(
-    (category) => !category.active
-  ).length;
-
-  const totalProducts = categories.reduce(
-    (total, category) => total + Number(category.associatedProducts || 0),
-    0
-  );
-
-  const filteredCategories = useMemo(() => {
-    const normalizedSearch = search.trim().toLowerCase();
-
-    return categories.filter((category) => {
-      const matchesSearch =
-        !normalizedSearch ||
-        String(category.id).toLowerCase().includes(normalizedSearch) ||
-        category.name.toLowerCase().includes(normalizedSearch) ||
-        (category.active ? 'activo' : 'inactivo').includes(
-          normalizedSearch
-        );
-
-      const matchesStatus =
-        statusFilter === 'Todos' ||
-        (statusFilter === 'Activo' && category.active) ||
-        (statusFilter === 'Inactivo' && !category.active);
-
-      return matchesSearch && matchesStatus;
-    });
-  }, [categories, search, statusFilter]);
-
-  const totalPages = Math.max(
-    1,
-    Math.ceil(filteredCategories.length / itemsPerPage)
-  );
-
-  const safeCurrentPage = Math.min(currentPage, totalPages);
-
-  const paginatedCategories = filteredCategories.slice(
-    (safeCurrentPage - 1) * itemsPerPage,
-    safeCurrentPage * itemsPerPage
-  );
-
-  const openCreateModal = () => {
-    setForm(emptyForm);
-    setFormError('');
-    setModal('create');
-  };
-
-  const openDetailModal = (category) => {
-    setSelectedCategory(category);
-    setModal('detail');
-  };
-
-  const openEditModal = (category) => {
-    setSelectedCategory(category);
-    setForm({
-      name: category.name,
-    });
-    setFormError('');
-    setModal('edit');
-  };
-
-  const closeModal = () => {
-    setModal(null);
-    setSelectedCategory(null);
-    setForm(emptyForm);
-    setFormError('');
-  };
-
-  const handleInputChange = (event) => {
-    setForm({
-      ...form,
-      [event.target.name]: event.target.value,
-    });
-
-    if (formError) {
-      setFormError('');
-    }
-  };
-
-  const validateCategoryName = () => {
-    const cleanName = form.name.trim();
-
-    if (!cleanName) {
-      setFormError('El nombre de la categoría es obligatorio.');
-      return false;
-    }
-
-    const duplicate = categories.some(
-      (category) =>
-        category.name.trim().toLowerCase() === cleanName.toLowerCase() &&
-        category.id !== selectedCategory?.id
+    return categorias.filter((categoria) =>
+      `${categoria.id} ${categoria.nombre} ${
+        categoria.estado ? 'activo' : 'inactivo'
+      }`
+        .toLowerCase()
+        .includes(texto)
     );
+  }, [categorias, busqueda]);
 
-    if (duplicate) {
-      setFormError('Ya existe una categoría con ese nombre.');
-      return false;
-    }
+  const total = categorias.length;
+  const activas = categorias.filter((item) => item.estado).length;
+  const inactivas = categorias.filter((item) => !item.estado).length;
 
-    return true;
+  const abrirRegistrar = () => {
+    setFormNombre('');
+    setFormEstado(true);
+    setModal('registrar');
   };
 
-  const handleCreate = () => {
-    if (!validateCategoryName()) return;
-
-    const newId =
-      categories.length > 0
-        ? Math.max(...categories.map((category) => Number(category.id))) + 1
-        : 1;
-
-    const newCategory = {
-      id: newId,
-      name: form.name.trim(),
-      active: true,
-      associatedProducts: 0,
-    };
-
-    setCategories((previous) => [...previous, newCategory]);
-    closeModal();
+  const abrirDetalle = (categoria) => {
+    setSelected(categoria);
+    setModal('detalle');
   };
 
-  const handleEdit = () => {
-    if (!validateCategoryName()) return;
+  const abrirEditar = (categoria) => {
+    setSelected(categoria);
+    setFormNombre(categoria.nombre);
+    setFormEstado(categoria.estado);
+    setModal('editar');
+  };
 
-    setCategories((previous) =>
-      previous.map((category) =>
-        category.id === selectedCategory.id
-          ? {
-              ...category,
-              name: form.name.trim(),
-            }
-          : category
-      )
+  const abrirEstado = (categoria) => {
+    setSelected(categoria);
+    setFormEstado(categoria.estado);
+    setModal('estado');
+  };
+
+  const registrar = () => {
+    const nombre = formNombre.trim();
+    if (!nombre) return;
+
+    const existe = categorias.some(
+      (item) => item.nombre.toLowerCase() === nombre.toLowerCase()
     );
-
-    closeModal();
-  };
-
-  const toggleStatus = (category) => {
-    const action = category.active ? 'desactivar' : 'activar';
-
-    const confirmed = window.confirm(
-      `¿Deseas ${action} la categoría "${category.name}"?`
-    );
-
-    if (!confirmed) return;
-
-    setCategories((previous) =>
-      previous.map((item) =>
-        item.id === category.id
-          ? {
-              ...item,
-              active: !item.active,
-            }
-          : item
-      )
-    );
-  };
-
-  const deleteCategory = (category) => {
-    if (category.associatedProducts > 0) {
-      window.alert(
-        `No puedes eliminar "${category.name}" porque tiene ${category.associatedProducts} producto(s) asociado(s).`
-      );
+    if (existe) {
+      window.alert('La categoría ya existe.');
       return;
     }
 
-    const confirmed = window.confirm(
-      `¿Estás seguro de eliminar la categoría "${category.name}"?`
-    );
+    const siguienteId = `#${categorias.length + 1}`;
 
-    if (!confirmed) return;
-
-    setCategories((previous) =>
-      previous.filter((item) => item.id !== category.id)
-    );
+    setCategorias((prev) => [
+      ...prev,
+      { id: siguienteId, nombre, estado: true },
+    ]);
+    setModal(null);
   };
 
-  const clearFilters = () => {
-    setSearch('');
-    setStatusFilter('Todos');
+  const guardarCambios = () => {
+    const nombre = formNombre.trim();
+    if (!nombre || !selected) return;
+
+    const existe = categorias.some(
+      (item) =>
+        item.id !== selected.id &&
+        item.nombre.toLowerCase() === nombre.toLowerCase()
+    );
+
+    if (existe) {
+      window.alert('La categoría ya existe.');
+      return;
+    }
+
+    setCategorias((prev) =>
+      prev.map((item) =>
+        item.id === selected.id
+          ? { ...item, nombre, estado: formEstado }
+          : item
+      )
+    );
+
+    setSelected((prev) =>
+      prev ? { ...prev, nombre, estado: formEstado } : prev
+    );
+    setModal(null);
+  };
+
+  const aplicarEstado = () => {
+    if (!selected) return;
+
+    setCategorias((prev) =>
+      prev.map((item) =>
+        item.id === selected.id ? { ...item, estado: formEstado } : item
+      )
+    );
+
+    setSelected((prev) =>
+      prev ? { ...prev, estado: formEstado } : prev
+    );
+    setModal(null);
+  };
+
+  const abrirEliminar = (categoria) => {
+    setSelected(categoria);
+    setModal('eliminar');
+  };
+
+  const eliminar = () => {
+    if (!selected) return;
+
+    setCategorias((prev) => prev.filter((item) => item.id !== selected.id));
+    setModal(null);
+    setSelected(null);
+  };
+
+  const cambiarBusqueda = (value) => {
+    setBusqueda(value);
+    setPagina(1);
   };
 
   return (
     <div className="categorias-page">
-      <div className="categorias-header">
+      <header className="categorias-header">
         <div>
+          <span className="categorias-module-label">MÓDULO</span>
           <h1>Gestión de Categorías</h1>
-          <p>Administra las categorías de productos de Raíz Urbana.</p>
+          <p>Administra las categorías del catálogo de productos</p>
         </div>
 
-        <button className="categorias-primary-button" onClick={openCreateModal}>
-          <Plus size={19} />
-          Nueva categoría
+        <button className="categorias-primary-button" onClick={abrirRegistrar}>
+          <Plus size={17} strokeWidth={2.5} />
+          NUEVA CATEGORÍA
         </button>
-      </div>
+      </header>
 
-      <div className="categorias-kpis">
-        <div className="categoria-kpi-card">
-          <div className="categoria-kpi-icon">
-            <Tag size={22} />
-          </div>
-
+      <section className="categorias-kpis">
+        <article className="categoria-kpi-card">
           <div>
-            <span>Total categorías</span>
-            <strong>{totalCategories}</strong>
+            <span className="kpi-label">Total categorías</span>
+            <strong>{total}</strong>
+            <small>
+              <span className="kpi-trend positive"></span>
+               <span>Registradas</span>
+            </small>
           </div>
+          <div className="kpi-icon">
+            <FolderOpen size={16} />
+          </div>
+        </article>
+
+        <article className="categoria-kpi-card">
+          <div>
+            <span className="kpi-label">Activas</span>
+            <strong>{activas}</strong>
+            <small>
+               <span>Disponibles</span>
+            </small>
+          </div>
+          <div className="kpi-icon">
+            <CheckCircle2 size={16} />
+          </div>
+        </article>
+
+        <article className="categoria-kpi-card">
+          <div>
+            <span className="kpi-label">Inactivas</span>
+            <strong>{inactivas}</strong>
+            <small>
+              <span className="kpi-trend negative"></span>
+              <span>Deshabilitadas</span>
+            </small>
+          </div>
+          <div className="kpi-icon">
+            <XCircle size={16} />
+          </div>
+        </article>
+      </section>
+
+      <section className="categorias-search-card">
+        <div className="search-card-title">
+          <Filter size={15} strokeWidth={1.8} />
+          <span>Buscar categoría</span>
         </div>
 
-        <div className="categoria-kpi-card">
-          <div className="categoria-kpi-icon">
-            <CheckCircle size={22} />
-          </div>
-
-          <div>
-            <span>Categorías activas</span>
-            <strong>{activeCategories}</strong>
-          </div>
-        </div>
-
-        <div className="categoria-kpi-card">
-          <div className="categoria-kpi-icon">
-            <XCircle size={22} />
-          </div>
-
-          <div>
-            <span>Categorías inactivas</span>
-            <strong>{inactiveCategories}</strong>
-          </div>
-        </div>
-
-        <div className="categoria-kpi-card">
-          <div className="categoria-kpi-icon">
-            <Package size={22} />
-          </div>
-
-          <div>
-            <span>Productos asociados</span>
-            <strong>{totalProducts}</strong>
-          </div>
-        </div>
-      </div>
-
-      <div className="categorias-content-card">
-        <div className="categorias-toolbar">
-          <div className="categorias-search">
-            <Search size={19} />
+        <div className="search-card-body">
+          <div className="categorias-search-input">
+            <Search size={16} />
             <input
               type="text"
+              value={busqueda}
+              onChange={(e) => cambiarBusqueda(e.target.value)}
               placeholder="Buscar por ID, nombre o estado..."
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
             />
           </div>
+        </div>
+      </section>
 
-          <div className="categorias-filter">
-            <label htmlFor="statusFilter">Estado</label>
-
-            <select
-              id="statusFilter"
-              value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value)}
-            >
-              <option value="Todos">Todos</option>
-              <option value="Activo">Activo</option>
-              <option value="Inactivo">Inactivo</option>
-            </select>
+      <section className="categorias-table-card">
+        <div className="table-card-header">
+          <div className="table-title">
+            Listado de Categorías
+            <span>{filtradas.length}</span>
           </div>
-
-          {(search || statusFilter !== 'Todos') && (
-            <button
-              className="categorias-clear-button"
-              onClick={clearFilters}
-            >
-              Limpiar
-            </button>
-          )}
+          <span className="page-label">
+            Página {pagina} de 1
+          </span>
         </div>
 
         <div className="categorias-table-wrapper">
           <table className="categorias-table">
             <thead>
               <tr>
-                <th>ID</th>
-                <th>Categoría</th>
-                <th>Productos asociados</th>
-                <th>Estado</th>
-                <th>Acciones</th>
+                <th>ID CATEGORÍA</th>
+                <th>NOMBRE</th>
+                <th>ESTADO</th>
+                <th>ACCIONES</th>
               </tr>
             </thead>
 
             <tbody>
-              {paginatedCategories.length > 0 ? (
-                paginatedCategories.map((category) => (
-                  <tr key={category.id}>
-                    <td>
-                      <span className="categoria-id">
-                        CAT{String(category.id).padStart(2, '0')}
+              {filtradas.map((categoria) => (
+                <tr key={categoria.id}>
+                  <td>
+                    <span className="id-pill">{categoria.id}</span>
+                  </td>
+
+                  <td>
+                    <div className="categoria-name">
+                      <span className="folder-cell-icon">
+                        <FolderOpen size={17} />
                       </span>
-                    </td>
-
-                    <td>
-                      <div className="categoria-name-cell">
-                        <div className="categoria-table-icon">
-                          <Tag size={17} />
-                        </div>
-
-                        <span>{category.name}</span>
-                      </div>
-                    </td>
-
-                    <td>
-                      <span className="productos-count">
-                        {category.associatedProducts}
-                      </span>
-                    </td>
-
-                    <td>
-                      <span
-                        className={`categoria-status ${
-                          category.active ? 'active' : 'inactive'
-                        }`}
-                      >
-                        <span className="status-dot"></span>
-                        {category.active ? 'Activo' : 'Inactivo'}
-                      </span>
-                    </td>
-
-                    <td>
-                      <div className="categoria-actions">
-                        <button
-                          className="action-button view"
-                          title="Ver detalle"
-                          onClick={() => openDetailModal(category)}
-                        >
-                          <Eye size={17} />
-                        </button>
-
-                        <button
-                          className="action-button edit"
-                          title="Editar"
-                          onClick={() => openEditModal(category)}
-                        >
-                          <Pencil size={17} />
-                        </button>
-
-                        <button
-                          className="action-button status"
-                          title={category.active ? 'Desactivar' : 'Activar'}
-                          onClick={() => toggleStatus(category)}
-                        >
-                          <Power size={17} />
-                        </button>
-
-                        <button
-                          className="action-button delete"
-                          title="Eliminar"
-                          onClick={() => deleteCategory(category)}
-                        >
-                          <Trash2 size={17} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="5">
-                    <div className="categorias-empty">
-                      <Tag size={35} />
-                      <h3>No se encontraron categorías</h3>
-                      <p>
-                        No existen categorías que coincidan con la búsqueda.
-                      </p>
-
-                      {(search || statusFilter !== 'Todos') && (
-                        <button onClick={clearFilters}>
-                          Limpiar filtros
-                        </button>
-                      )}
+                      <strong>{categoria.nombre}</strong>
                     </div>
+                  </td>
+
+                  <td>
+                    <button
+                      className="categoria-status-button"
+                      title="Cambiar estado"
+                      onClick={() => abrirEstado(categoria)}
+                    >
+                      <EstadoBadge activo={categoria.estado} />
+                    </button>
+                  </td>
+
+                  <td>
+                    <div className="row-actions">
+                      <button
+                        className="action-view"
+                        title="Ver detalle"
+                        onClick={() => abrirDetalle(categoria)}
+                      >
+                        <Eye size={15} />
+                      </button>
+
+                      <button
+                        className="action-edit"
+                        title="Editar"
+                        onClick={() => abrirEditar(categoria)}
+                      >
+                        <Pencil size={15} />
+                      </button>
+
+                      <button
+                        className="action-delete"
+                        title="Eliminar"
+                        onClick={() => abrirEliminar(categoria)}
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+
+              {filtradas.length === 0 && (
+                <tr>
+                  <td colSpan="4" className="empty-state">
+                    No se encontraron categorías.
                   </td>
                 </tr>
               )}
@@ -478,266 +343,287 @@ const Categorias = () => {
           </table>
         </div>
 
-        <div className="categorias-footer">
+        <div className="table-pagination">
           <span>
-            Mostrando{' '}
-            {filteredCategories.length === 0
-              ? 0
-              : (safeCurrentPage - 1) * itemsPerPage + 1}{' '}
-            -{' '}
-            {Math.min(
-              safeCurrentPage * itemsPerPage,
-              filteredCategories.length
-            )}{' '}
-            de {filteredCategories.length} categorías
+            Mostrando {filtradas.length ? 1 : 0} a {filtradas.length} de{' '}
+            {filtradas.length} registros
           </span>
 
-          <div className="categorias-pagination">
-            <button
-              disabled={safeCurrentPage === 1}
-              onClick={() =>
-                setCurrentPage((page) => Math.max(1, page - 1))
-              }
-            >
-              <ChevronLeft size={18} />
+          <div className="pagination-controls">
+            <button disabled>
+              <ChevronsLeft size={15} />
             </button>
-
-            {Array.from({ length: totalPages }, (_, index) => index + 1).map(
-              (page) => (
-                <button
-                  key={page}
-                  className={safeCurrentPage === page ? 'selected' : ''}
-                  onClick={() => setCurrentPage(page)}
-                >
-                  {page}
-                </button>
-              )
-            )}
-
-            <button
-              disabled={safeCurrentPage === totalPages}
-              onClick={() =>
-                setCurrentPage((page) => Math.min(totalPages, page + 1))
-              }
-            >
-              <ChevronRight size={18} />
+            <button disabled>
+              <ChevronLeft size={15} />
+            </button>
+            <button className="current-page">1</button>
+            <button disabled={filtradas.length === 0}>
+              <ChevronRight size={15} />
+            </button>
+            <button disabled={filtradas.length === 0}>
+              <ChevronsRight size={15} />
             </button>
           </div>
         </div>
-      </div>
+      </section>
 
-      {modal === 'create' && (
-        <div className="categoria-modal-overlay" onMouseDown={closeModal}>
-          <div
-            className="categoria-modal"
-            onMouseDown={(event) => event.stopPropagation()}
-          >
-            <div className="categoria-modal-header">
-              <div>
-                <h2>Nueva categoría</h2>
-                <p>Registra una nueva categoría de productos.</p>
-              </div>
-
-              <button onClick={closeModal}>
-                <X size={21} />
-              </button>
+      {modal === 'registrar' && (
+        <ModalShell className="categoria-register-modal">
+          <div className="categoria-modal-header">
+            <div>
+              <span className="categoria-modal-eyebrow">ID AUTOGENERADO</span>
+              <h2>Registrar Categoría</h2>
             </div>
+            <button className="categoria-modal-close" onClick={() => setModal(null)}>
+              <X size={20} />
+            </button>
+          </div>
 
-            <div className="categoria-modal-body">
-              <div className="categoria-form-group">
-                <label>
-                  Nombre de la categoría <span>*</span>
-                </label>
+          <div className="categoria-modal-content">
+            <label>NOMBRE *</label>
+            <input
+              autoFocus
+              value={formNombre}
+              onChange={(e) => setFormNombre(e.target.value)}
+              placeholder="Ej: Outerwear, Dresses, Accessories..."
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') registrar();
+              }}
+            />
+            <p className="categoria-field-help">Obligatorio. Debe ser único.</p>
 
-                <input
-                  name="name"
-                  type="text"
-                  placeholder="Ej. Ropa"
-                  value={form.name}
-                  onChange={handleInputChange}
-                  autoFocus
-                />
-
-                {formError && (
-                  <small className="categoria-form-error">
-                    {formError}
-                  </small>
-                )}
-              </div>
-            </div>
-
-            <div className="categoria-modal-footer">
-              <button
-                className="categoria-secondary-button"
-                onClick={closeModal}
-              >
-                Cancelar
-              </button>
-
-              <button
-                className="categorias-primary-button"
-                onClick={handleCreate}
-              >
-                <Plus size={18} />
-                Crear categoría
-              </button>
+            <div className="categoria-default-status-message">
+              <CircleCheck size={16} />
+              <span>
+                La categoría se creará con
+                <strong>Activo</strong>
+                por defecto.
+              </span>
             </div>
           </div>
-        </div>
+
+          <div className="categoria-modal-footer">
+            <button className="categoria-secondary-button" onClick={() => setModal(null)}>
+              Cancelar
+            </button>
+            <button
+              className="categoria-primary-modal-button"
+              disabled={!formNombre.trim()}
+              onClick={registrar}
+            >
+              Registrar categoría
+            </button>
+          </div>
+        </ModalShell>
       )}
 
-      {modal === 'edit' && selectedCategory && (
-        <div className="categoria-modal-overlay" onMouseDown={closeModal}>
-          <div
-            className="categoria-modal"
-            onMouseDown={(event) => event.stopPropagation()}
-          >
-            <div className="categoria-modal-header">
-              <div>
-                <h2>Editar categoría</h2>
-                <p>Actualiza la información de la categoría.</p>
-              </div>
-
-              <button onClick={closeModal}>
-                <X size={21} />
-              </button>
+      {modal === 'estado' && selected && (
+        <ModalShell className="categoria-state-modal">
+          <div className="categoria-modal-header">
+            <div>
+              <span className="categoria-modal-eyebrow normal">{selected.nombre}</span>
+              <h2>Cambiar Estado</h2>
             </div>
-
-            <div className="categoria-modal-body">
-              <div className="categoria-readonly-field">
-                <label>ID</label>
-                <div>
-                  CAT{String(selectedCategory.id).padStart(2, '0')}
-                </div>
-              </div>
-
-              <div className="categoria-form-group">
-                <label>
-                  Nombre de la categoría <span>*</span>
-                </label>
-
-                <input
-                  name="name"
-                  type="text"
-                  value={form.name}
-                  onChange={handleInputChange}
-                  autoFocus
-                />
-
-                {formError && (
-                  <small className="categoria-form-error">
-                    {formError}
-                  </small>
-                )}
-              </div>
-            </div>
-
-            <div className="categoria-modal-footer">
-              <button
-                className="categoria-secondary-button"
-                onClick={closeModal}
-              >
-                Cancelar
-              </button>
-
-              <button
-                className="categorias-primary-button"
-                onClick={handleEdit}
-              >
-                <Pencil size={17} />
-                Guardar cambios
-              </button>
-            </div>
+            <button className="categoria-modal-close" onClick={() => setModal(null)}>
+              <X size={20} />
+            </button>
           </div>
-        </div>
+
+          <div className="categoria-modal-content categoria-state-content">
+            <div className="categoria-current-state">
+              Estado actual: <EstadoBadge activo={selected.estado} />
+            </div>
+
+            <button
+              className={`categoria-state-option ${formEstado ? 'selected' : ''}`}
+              onClick={() => setFormEstado(true)}
+            >
+              <span className="categoria-state-option-dot categoria-active-dot" />
+              <span>
+                <strong>Activo</strong>
+                <small>Disponible para nuevos productos</small>
+              </span>
+              {formEstado && <CircleCheck size={15} />}
+            </button>
+
+            <button
+              className={`categoria-state-option ${!formEstado ? 'selected' : ''}`}
+              onClick={() => setFormEstado(false)}
+            >
+              <span className="categoria-state-option-dot categoria-inactive-dot" />
+              <span>
+                <strong>Inactivo</strong>
+                <small>No disponible para nuevos productos</small>
+              </span>
+              {!formEstado && <CircleCheck size={15} />}
+            </button>
+          </div>
+
+          <div className="categoria-modal-footer">
+            <button className="categoria-secondary-button" onClick={() => setModal(null)}>
+              Cancelar
+            </button>
+            <button className="categoria-primary-modal-button" onClick={aplicarEstado}>
+              Aplicar
+            </button>
+          </div>
+        </ModalShell>
       )}
 
-      {modal === 'detail' && selectedCategory && (
-        <div className="categoria-modal-overlay" onMouseDown={closeModal}>
-          <div
-            className="categoria-modal detail-modal"
-            onMouseDown={(event) => event.stopPropagation()}
-          >
-            <div className="categoria-modal-header">
+      {modal === 'detalle' && selected && (
+        <ModalShell className="categoria-detail-modal">
+          <div className="categoria-modal-header">
+            <div>
+              <span className="categoria-modal-eyebrow">CONSULTA</span>
+              <h2>Detalle Categoría</h2>
+            </div>
+            <button className="categoria-modal-close" onClick={() => setModal(null)}>
+              <X size={20} />
+            </button>
+          </div>
+
+          <div className="categoria-detail-hero">
+            <div className="categoria-detail-folder-icon">
+              <FolderOpen size={25} />
+            </div>
+
+            <div className="categoria-detail-name">
+              <strong>{selected.nombre}</strong>
+              <span>ID Categoría {selected.id}</span>
+            </div>
+
+            <EstadoBadge activo={selected.estado} />
+          </div>
+
+          <div className="categoria-detail-fields">
+            <div>
+              <span>ID Categoría</span>
+              <strong>{selected.id}</strong>
+            </div>
+            <div>
+              <span>Nombre</span>
+              <strong>{selected.nombre}</strong>
+            </div>
+            <div>
+              <span>Estado</span>
+              <EstadoBadge activo={selected.estado} />
+            </div>
+          </div>
+
+          <div className="categoria-modal-footer">
+            <button className="categoria-secondary-button" onClick={() => setModal(null)}>
+              Cerrar
+            </button>
+            <button
+              className="categoria-primary-modal-button"
+              onClick={() => abrirEditar(selected)}
+            >
+              Editar
+            </button>
+          </div>
+        </ModalShell>
+      )}
+
+      {modal === 'eliminar' && selected && (
+        <ModalShell className="categoria-delete-modal">
+          <div className="categoria-delete-content">
+            <div className="categoria-delete-icon">
+              <Trash2 size={22} strokeWidth={2.2} />
+            </div>
+
+            <h2>¿Eliminar Categoría?</h2>
+
+            <p className="categoria-delete-question">
+              Estás a punto de eliminar la categoría <strong>\"{selected.nombre}\"</strong>.
+            </p>
+
+            <div className="categoria-delete-warning">
+              <div className="categoria-delete-warning-icon">
+                <XCircle size={16} strokeWidth={2} />
+              </div>
               <div>
-                <h2>Detalle de categoría</h2>
-                <p>Información de la categoría seleccionada.</p>
-              </div>
-
-              <button onClick={closeModal}>
-                <X size={21} />
-              </button>
-            </div>
-
-            <div className="categoria-detail-content">
-              <div className="categoria-detail-icon">
-                <Tag size={30} />
-              </div>
-
-              <div className="categoria-detail-title">
-                <h3>{selectedCategory.name}</h3>
-
-                <span
-                  className={`categoria-status ${
-                    selectedCategory.active ? 'active' : 'inactive'
-                  }`}
-                >
-                  <span className="status-dot"></span>
-                  {selectedCategory.active ? 'Activo' : 'Inactivo'}
-                </span>
-              </div>
-
-              <div className="categoria-detail-grid">
-                <div>
-                  <span>ID de categoría</span>
-                  <strong>
-                    CAT{String(selectedCategory.id).padStart(2, '0')}
-                  </strong>
-                </div>
-
-                <div>
-                  <span>Nombre</span>
-                  <strong>{selectedCategory.name}</strong>
-                </div>
-
-                <div>
-                  <span>Productos asociados</span>
-                  <strong>{selectedCategory.associatedProducts}</strong>
-                </div>
-
-                <div>
-                  <span>Estado</span>
-                  <strong>
-                    {selectedCategory.active ? 'Activo' : 'Inactivo'}
-                  </strong>
-                </div>
+                <strong>No se puede eliminar</strong>
+                <p>
+                  Esta categoría tiene <b>9 producto(s) asociado(s)</b>. Para
+                  eliminarla, primero debes reasignar o eliminar todos los
+                  productos que pertenecen a esta categoría.
+                </p>
               </div>
             </div>
+          </div>
 
-            <div className="categoria-modal-footer">
+          <div className="categoria-delete-footer">
+            <button className="categoria-secondary-button" onClick={() => setModal(null)}>
+              Cancelar
+            </button>
+            <button className="categoria-delete-disabled-button" disabled>
+              No se puede eliminar
+            </button>
+          </div>
+        </ModalShell>
+      )}
+
+      {modal === 'editar' && selected && (
+        <ModalShell className="categoria-edit-modal">
+          <div className="categoria-modal-header">
+            <div>
+              <span className="categoria-modal-eyebrow">CATEGORÍA {selected.id}</span>
+              <h2>Editar Categoría</h2>
+            </div>
+            <button className="categoria-modal-close" onClick={() => setModal(null)}>
+              <X size={20} />
+            </button>
+          </div>
+
+          <div className="categoria-modal-content categoria-edit-content">
+            <label>NOMBRE *</label>
+            <input
+              autoFocus
+              value={formNombre}
+              onChange={(e) => setFormNombre(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') guardarCambios();
+              }}
+            />
+            <p className="categoria-field-help">Obligatorio. Debe ser único.</p>
+
+            <label className="categoria-state-label">ESTADO</label>
+
+            <div className="categoria-edit-state-grid">
               <button
-                className="categoria-secondary-button"
-                onClick={closeModal}
+                className={`categoria-edit-state-option ${formEstado ? 'selected' : ''}`}
+                onClick={() => setFormEstado(true)}
               >
-                Cerrar
+                <span className="categoria-state-option-dot categoria-active-dot" />
+                <span>Activo</span>
+                {formEstado && <CircleCheck size={14} />}
               </button>
 
               <button
-                className="categorias-primary-button"
-                onClick={() => {
-                  closeModal();
-                  setTimeout(() => openEditModal(selectedCategory), 0);
-                }}
+                className={`categoria-edit-state-option ${!formEstado ? 'selected' : ''}`}
+                onClick={() => setFormEstado(false)}
               >
-                <Pencil size={17} />
-                Editar
+                <span className="categoria-state-option-dot categoria-inactive-dot" />
+                <span>Inactivo</span>
+                {!formEstado && <CircleCheck size={14} />}
               </button>
             </div>
           </div>
-        </div>
+
+          <div className="categoria-modal-footer">
+            <button className="categoria-secondary-button" onClick={() => setModal(null)}>
+              Cancelar
+            </button>
+            <button
+              className="categoria-primary-modal-button"
+              disabled={!formNombre.trim()}
+              onClick={guardarCambios}
+            >
+              Guardar cambios
+            </button>
+          </div>
+        </ModalShell>
       )}
     </div>
   );
-};
-
-export default Categorias;
+}
