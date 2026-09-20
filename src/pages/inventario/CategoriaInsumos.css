@@ -66,7 +66,7 @@
     background: var(--color-secondary);
 }
 
-/* Tarjeta de Búsqueda */
+/* Tarjeta de Búsqueda / Filtros (Estilo exacto de Insumos) */
 .cat-filters-card {
     background: #ffffff;
     border: 1px solid var(--color-border);
@@ -79,26 +79,36 @@
 .cat-filters-title {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     font-size: 12px;
     font-weight: 700;
     color: var(--color-secondary);
     margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-.cat-search-box {
+.cat-filters-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+}
+
+.cat-search {
     display: flex;
     align-items: center;
     gap: 8px;
     background: #ffffff;
     border: 1px solid var(--color-border);
     border-radius: 8px;
-    padding: 8px 14px;
-    max-width: 400px;
+    padding: 8px 12px;
+    flex: 1;
+    min-width: 240px;
     color: var(--color-muted);
 }
 
-.cat-search-box input {
+.cat-search input {
     border: none;
     outline: none;
     width: 100%;

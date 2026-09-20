@@ -701,5 +701,6 @@ function VerVentaModal({ venta, onClose }) {
         </div>
       </div>
     </div>
+    //hola
   );
 }
