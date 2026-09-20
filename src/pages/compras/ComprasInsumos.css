@@ -85,7 +85,9 @@
   min-height: 40px;
 }
 
-/* KPIS */
+/* =========================================================
+   KPIS
+========================================================= */
 
 .ci-kpi-grid {
   display: grid;
@@ -95,51 +97,54 @@
 }
 
 .ci-kpi-card {
-  min-height: 96px;
-  padding: 12px 14px 10px;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  min-height: 80px;
+  padding: 10px 14px;
   border: 1px solid #c9ada7;
   border-radius: 14px;
   background: #fff;
   box-shadow: 0 2px 4px rgba(34, 34, 59, .07);
 }
 
-.ci-kpi-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 3px;
-}
-
-.ci-kpi-top > span {
-  color: #4a4e69;
-  font-size: 10px;
-}
-
 .ci-kpi-icon {
+  flex-shrink: 0;
   display: grid;
   place-items: center;
-  width: 28px;
-  height: 28px;
+  width: 38px;
+  height: 38px;
   border-radius: 10px;
   background: #dedadb;
   color: #22223b;
-  font-size: 15px;
 }
 
-.ci-kpi-card > strong {
-  display: block;
-  margin-bottom: 2px;
-  color: #22223b;
-  font-size: 20px;
+.ci-kpi-content {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 1px;
+}
+
+.ci-kpi-content > span {
+  color: #4a4e69;
+  font-size: 10px;
   line-height: 1.2;
 }
 
-.ci-kpi-card small {
-  font-size: 10px;
+.ci-kpi-content > strong {
+  display: block;
+  color: #22223b;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.15;
 }
 
-.ci-kpi-card small span {
-  color: #4a4e69;
+.ci-kpi-content > small {
+  font-size: 9px;
+  line-height: 1.2;
 }
 
 .ci-positive {
@@ -149,7 +154,6 @@
 .ci-negative {
   color: #e43e4e;
 }
-
 /* FILTROS */
 
 .ci-filters-card {
