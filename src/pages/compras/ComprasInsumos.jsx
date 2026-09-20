@@ -711,6 +711,24 @@ function PurchaseForm({
   onClose,
   onSave,
 }) {
+  const [form, setForm] = useState(
+    initialValue
+      ? {
+        ...initialValue,
+        products: initialValue.products.map(
+          (item) => ({ ...item })
+        ),
+      }
+      : {
+        date: new Date()
+          .toISOString()
+          .slice(0, 10),
+        provider: providers[0],
+        payment: paymentMethods[1],
+        status: 'Pendiente',
+        products: [],
+      }
+  );
 
   const [form, setForm] =
     useState(
@@ -831,24 +849,13 @@ function PurchaseForm({
     onSave(form);
   };
 
-
-  const total =
-    (
-      Array.isArray(form.products)
-        ? form.products
-        : []
-    ).reduce(
-      (sum, item) =>
-        sum +
-        (Number(item?.quantity) ||
-          0) *
-          (Number(
-            item?.unitPrice
-          ) || 0),
-
-      0
-    );
-
+  const total = form.products.reduce(
+    (sum, item) =>
+      sum +
+      Number(item.quantity) *
+      Number(item.unitPrice),
+    0
+  );
 
   return (
     <Modal
@@ -1286,83 +1293,29 @@ export default function ComprasInsumos() {
 
   }, [purchases]);
 
-
-  /* =====================================================
-     PAGINACIÓN AL FILTRAR
-  ===================================================== */
-
-  useEffect(() => {
-
+  const updateFilter = (setter, value) => {
+    setter(value);
     setPage(1);
-
-  }, [
-    search,
-    statusFilter,
-    providerFilter,
-    paymentFilter,
-    dateFilter,
-  ]);
+  };
 
 
-  /* =====================================================
-     FILTROS
-  ===================================================== */
-
-  const filteredPurchases =
-    useMemo(() => {
-
-      const term =
-        search
-          .trim()
-          .toLowerCase();
-
-      return purchases.filter(
-        (purchase) => {
-
-          const products =
-            Array.isArray(
-              purchase?.products
-            )
-              ? purchase.products
-              : [];
-
-
-          const matchesSearch =
-            !term ||
-
-            String(
-              purchase?.number ?? ''
-            )
-              .toLowerCase()
-              .includes(term) ||
-
-            String(
-              purchase?.id ?? ''
-            )
-              .toLowerCase()
-              .includes(term) ||
-
-            String(
-              purchase?.provider ?? ''
-            )
-              .toLowerCase()
-              .includes(term) ||
-
-            String(
-              purchase?.status ?? ''
-            )
-              .toLowerCase()
-              .includes(term) ||
-
-            products.some(
-              (product) =>
-                String(
-                  product?.supply ??
-                    ''
-                )
-                  .toLowerCase()
-                  .includes(term)
-            );
+        return (
+          matchesSearch &&
+          (!statusFilter ||
+            purchase.status ===
+            statusFilter) &&
+          (!providerFilter ||
+            purchase.provider ===
+            providerFilter) &&
+          (!paymentFilter ||
+            purchase.payment ===
+            paymentFilter) &&
+          (!dateFilter ||
+            purchase.date ===
+            dateFilter)
+        );
+      }
+    );
 
 
           return (
@@ -1422,15 +1375,13 @@ export default function ComprasInsumos() {
 
   const pageSize = 5;
 
-  const totalPages =
-    Math.max(
-      1,
-      Math.ceil(
-        filteredPurchases.length /
-          pageSize
-      )
-    );
-
+  const totalPages = Math.max(
+    1,
+    Math.ceil(
+      filteredPurchases.length /
+      pageSize
+    )
+  );
 
   const currentPurchases =
     filteredPurchases.slice(
@@ -1515,28 +1466,16 @@ export default function ComprasInsumos() {
   };
 
 
-  /* =====================================================
-     ACTUALIZAR
-  ===================================================== */
-
-  const updatePurchase = (
-    data
-  ) => {
-
-    setPurchases(
-      (current) =>
-        current.map(
-          (purchase) =>
-            purchase.number ===
-            selectedPurchase.number
-
-              ? normalizePurchase({
-                  ...purchase,
-                  ...data,
-                })
-
-              : purchase
-        )
+    setPurchases((current) =>
+      current.map((purchase) =>
+        purchase.number ===
+          selectedPurchase.number
+          ? {
+            ...purchase,
+            ...data,
+          }
+          : purchase
+      )
     );
 
     closeModal();
@@ -1564,28 +1503,16 @@ export default function ComprasInsumos() {
   };
 
 
-  /* =====================================================
-     CAMBIAR ESTADO
-  ===================================================== */
-
-  const changeStatus = (
-    status
-  ) => {
-
-    setPurchases(
-      (current) =>
-        current.map(
-          (purchase) =>
-            purchase.number ===
-            selectedPurchase.number
-
-              ? {
-                  ...purchase,
-                  status,
-                }
-
-              : purchase
-        )
+    setPurchases((current) =>
+      current.map((purchase) =>
+        purchase.number ===
+          selectedPurchase.number
+          ? {
+            ...purchase,
+            status,
+          }
+          : purchase
+      )
     );
 
 
@@ -1593,9 +1520,9 @@ export default function ComprasInsumos() {
       (current) =>
         current
           ? {
-              ...current,
-              status,
-            }
+            ...current,
+            status,
+          }
           : null
     );
 
@@ -1825,7 +1752,8 @@ export default function ComprasInsumos() {
               placeholder="Buscar por ID, proveedor, insumo..."
               value={search}
               onChange={(event) =>
-                setSearch(
+                updateFilter(
+                  setSearch,
                   event.target.value
                 )
               }
@@ -1837,7 +1765,8 @@ export default function ComprasInsumos() {
           <select
             value={statusFilter}
             onChange={(event) =>
-              setStatusFilter(
+              updateFilter(
+                setStatusFilter,
                 event.target.value
               )
             }
@@ -1866,7 +1795,8 @@ export default function ComprasInsumos() {
           <select
             value={providerFilter}
             onChange={(event) =>
-              setProviderFilter(
+              updateFilter(
+                setProviderFilter,
                 event.target.value
               )
             }
@@ -1895,7 +1825,8 @@ export default function ComprasInsumos() {
           <select
             value={paymentFilter}
             onChange={(event) =>
-              setPaymentFilter(
+              updateFilter(
+                setPaymentFilter,
                 event.target.value
               )
             }
@@ -1927,7 +1858,8 @@ export default function ComprasInsumos() {
               type="date"
               value={dateFilter}
               onChange={(event) =>
-                setDateFilter(
+                updateFilter(
+                  setDateFilter,
                   event.target.value
                 )
               }
@@ -1948,16 +1880,14 @@ export default function ComprasInsumos() {
             dateFilter
           ) && (
 
-            <button
-              className="ci-clear-filters"
-              onClick={
-                clearFilters
-              }
-            >
-              Limpiar
-            </button>
+              <button
+                className="ci-clear-filters"
+                onClick={clearFilters}
+              >
+                Limpiar
+              </button>
 
-          )}
+            )}
 
         </div>
 
@@ -2241,34 +2171,30 @@ export default function ComprasInsumos() {
               {currentPurchases.length ===
                 0 && (
 
-                <tr>
+                  <tr>
 
-                  <td colSpan="8">
+                    <td colSpan="8">
 
-                    <div className="ci-no-results">
+                      <div className="ci-no-results">
 
-                      <Search
-                        size={22}
-                      />
+                        <Search size={22} />
 
-                      <strong>
-                        No se encontraron
-                        compras
-                      </strong>
+                        <strong>
+                          No se encontraron compras
+                        </strong>
 
-                      <span>
-                        Intenta cambiar
-                        los filtros de
-                        búsqueda.
-                      </span>
+                        <span>
+                          Intenta cambiar los filtros
+                          de búsqueda.
+                        </span>
 
-                    </div>
+                      </div>
 
-                  </td>
+                    </td>
 
-                </tr>
+                  </tr>
 
-              )}
+                )}
 
             </tbody>
 
@@ -2754,10 +2680,20 @@ export default function ComprasInsumos() {
               {statuses.map(
                 (status) => (
 
-                  <button
-                    key={status}
-                    className={`ci-status-option ${
-                      selectedPurchase.status ===
+                <button
+                  key={status}
+                  className={`ci-status-option ${selectedPurchase.status ===
+                      status
+                      ? 'selected'
+                      : ''
+                    }`}
+                  onClick={() =>
+                    changeStatus(status)
+                  }
+                >
+
+                  <span
+                    className={`ci-option-dot ${getStatusClass(
                       status
                         ? 'selected'
                         : ''
@@ -2769,11 +2705,12 @@ export default function ComprasInsumos() {
                     }
                   >
 
-                    <span
-                      className={`ci-option-dot ${getStatusClass(
-                        status
-                      )}`}
-                    />
+                  {selectedPurchase.status ===
+                    status && (
+                      <CheckCircle2
+                        size={16}
+                      />
+                    )}
 
                     {status}
 
