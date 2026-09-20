@@ -1,6 +1,5 @@
 /* =========================================================
    RAÍZ URBANA - GESTIÓN DE CATEGORÍAS
-   Replica visual del módulo entregado en las referencias.
    ========================================================= */
 
 .categorias-page {
@@ -107,7 +106,6 @@
   box-shadow: 0 2px 4px rgba(34, 34, 59, 0.05);
 }
 
-/* El ícono queda siempre a la izquierda, como en el módulo Compras. */
 .kpi-icon {
   order: 1;
   width: 35px;
@@ -500,9 +498,7 @@
 
 
 /* =========================================================
-   MODALES CATEGORÍAS — MEDIDAS FIJAS DE LAS REFERENCIAS
-   Todo está encapsulado para evitar conflictos con el resto
-   del proyecto.
+   MODALES CATEGORÍAS
    ========================================================= */
 
 .ru-cat-modal-overlay {
@@ -536,9 +532,10 @@
   box-shadow: 0 18px 45px rgba(34, 34, 59, 0.18) !important;
 }
 
-/* =========================
-   REGISTRAR — 404 × 354
-   ========================= */
+/* =========================================================
+   REGISTRAR — NO SE MODIFICA
+   404 × 354
+   ========================================================= */
 
 .ru-cat-modal.categoria-register-modal {
   width: 404px !important;
@@ -579,9 +576,9 @@
   gap: 10px !important;
 }
 
-/* =========================
+/* =========================================================
    CAMBIAR ESTADO — 346 × 344
-   ========================= */
+   ========================================================= */
 
 .ru-cat-modal.categoria-state-modal {
   width: 346px !important;
@@ -596,6 +593,11 @@
   min-height: 81px !important;
   padding: 17px 21px 15px !important;
   margin: 0 !important;
+  border-bottom: 1px solid #d6b9af !important;
+  position: relative !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
 }
 
 .ru-cat-modal.categoria-state-modal .categoria-modal-content.categoria-state-content {
@@ -604,6 +606,7 @@
   min-height: 194px !important;
   padding: 13px 21px 14px !important;
   margin: 0 !important;
+  border-bottom: 1px solid #d6b9af !important;
 }
 
 .ru-cat-modal.categoria-state-modal .categoria-modal-footer {
@@ -612,15 +615,15 @@
   min-height: 68px !important;
   padding: 15px 21px !important;
   margin: 0 !important;
-  border-top: 1px solid #d6b9af !important;
+  border-top: 0 !important;
   display: grid !important;
   grid-template-columns: 1fr 1.15fr !important;
   gap: 10px !important;
 }
 
-/* =========================
+/* =========================================================
    DETALLE — 346 × 393
-   ========================= */
+   ========================================================= */
 
 .ru-cat-modal.categoria-detail-modal {
   width: 346px !important;
@@ -635,6 +638,11 @@
   min-height: 80px !important;
   padding: 18px 21px 15px !important;
   margin: 0 !important;
+  border-bottom: 1px solid #d6b9af !important;
+  position: relative !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
 }
 
 .ru-cat-modal.categoria-detail-modal .categoria-detail-hero {
@@ -665,9 +673,9 @@
   gap: 10px !important;
 }
 
-/* =========================
+/* =========================================================
    EDITAR — 404 × 357
-   ========================= */
+   ========================================================= */
 
 .ru-cat-modal.categoria-edit-modal {
   width: 404px !important;
@@ -682,6 +690,11 @@
   min-height: 82px !important;
   padding: 18px 21px 15px !important;
   margin: 0 !important;
+  border-bottom: 1px solid #d6b9af !important;
+  position: relative !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
 }
 
 .ru-cat-modal.categoria-edit-modal .categoria-modal-content.categoria-edit-content {
@@ -690,6 +703,7 @@
   min-height: 201px !important;
   padding: 20px 21px 21px !important;
   margin: 0 !important;
+  border-bottom: 1px solid #d6b9af !important;
 }
 
 .ru-cat-modal.categoria-edit-modal .categoria-modal-footer {
@@ -698,15 +712,15 @@
   min-height: 74px !important;
   padding: 17px 20px !important;
   margin: 0 !important;
-  border-top: 1px solid #d6b9af !important;
+  border-top: 0 !important;
   display: grid !important;
   grid-template-columns: 1fr 1.15fr !important;
   gap: 10px !important;
 }
 
-/* =========================
+/* =========================================================
    ELIMINAR — 404 × 339
-   ========================= */
+   ========================================================= */
 
 .ru-cat-modal.categoria-delete-modal {
   width: 404px !important;
@@ -730,11 +744,14 @@
   padding: 14px 21px !important;
   margin: 0 !important;
   border-top: 1px solid #d6b9af !important;
+  display: grid !important;
+  grid-template-columns: 1fr 1.15fr !important;
+  gap: 10px !important;
 }
 
-/* =========================
-   CABECERA
-   ========================= */
+/* =========================================================
+   CABECERA GENERAL
+   ========================================================= */
 
 .ru-cat-modal .categoria-modal-header {
   box-sizing: border-box !important;
@@ -766,6 +783,43 @@
   font-weight: 400 !important;
   line-height: 1.1 !important;
 }
+
+/* =========================================================
+   X — ESTADO / EDITAR / DETALLE
+   ========================================================= */
+
+.ru-cat-modal.categoria-state-modal .categoria-modal-close,
+.ru-cat-modal.categoria-edit-modal .categoria-modal-close,
+.ru-cat-modal.categoria-detail-modal .categoria-modal-close {
+  position: absolute !important;
+  top: 17px !important;
+  right: 19px !important;
+  width: 24px !important;
+  height: 24px !important;
+  min-width: 24px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: #4a4e69 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  z-index: 5 !important;
+}
+
+.ru-cat-modal.categoria-state-modal .categoria-modal-close svg,
+.ru-cat-modal.categoria-edit-modal .categoria-modal-close svg,
+.ru-cat-modal.categoria-detail-modal .categoria-modal-close svg {
+  width: 18px !important;
+  height: 18px !important;
+  stroke-width: 1.8 !important;
+}
+
+/* =========================================================
+   X GENERAL
+   ========================================================= */
 
 .ru-cat-modal .categoria-modal-close {
   width: 24px !important;
@@ -833,9 +887,9 @@
   line-height: 1.2 !important;
 }
 
-/* =========================
+/* =========================================================
    REGISTRO — MENSAJE VERDE
-   ========================= */
+   ========================================================= */
 
 .ru-cat-modal .categoria-default-status-message {
   width: 100% !important;
@@ -865,9 +919,9 @@
   color: #07964f !important;
 }
 
-/* =========================
+/* =========================================================
    FOOTERS / BOTONES
-   ========================= */
+   ========================================================= */
 
 .ru-cat-modal .categoria-modal-footer {
   box-sizing: border-box !important;
@@ -909,9 +963,9 @@
   cursor: not-allowed !important;
 }
 
-/* =========================
+/* =========================================================
    ESTADO
-   ========================= */
+   ========================================================= */
 
 .ru-cat-modal .categoria-state-content {
   box-sizing: border-box !important;
@@ -997,9 +1051,9 @@
   background: #a6adbc !important;
 }
 
-/* =========================
+/* =========================================================
    DETALLE
-   ========================= */
+   ========================================================= */
 
 .ru-cat-modal .categoria-detail-hero {
   box-sizing: border-box !important;
@@ -1065,9 +1119,9 @@
   font-weight: 600 !important;
 }
 
-/* =========================
+/* =========================================================
    EDITAR
-   ========================= */
+   ========================================================= */
 
 .ru-cat-modal .categoria-edit-content .categoria-field-help {
   margin: 5px 0 14px !important;
@@ -1110,9 +1164,9 @@
   background: #f5f5f7 !important;
 }
 
-/* =========================
+/* =========================================================
    ELIMINAR
-   ========================= */
+   ========================================================= */
 
 .ru-cat-modal .categoria-delete-content {
   box-sizing: border-box !important;
@@ -1194,9 +1248,9 @@
   cursor: not-allowed !important;
 }
 
-/* =========================
+/* =========================================================
    RESPONSIVE
-   ========================= */
+   ========================================================= */
 
 @media (max-width: 650px) {
   .ru-cat-modal-overlay {
@@ -1214,6 +1268,7 @@
     width: min(346px, calc(100vw - 24px)) !important;
   }
 }
+
 /* =========================================================
    QUITAR RECUADRO EXTERNO DEL BOTÓN DE ESTADO
    ========================================================= */
