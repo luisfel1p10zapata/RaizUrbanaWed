@@ -565,20 +565,20 @@ function PurchaseForm({
   const [form, setForm] = useState(
     initialValue
       ? {
-          ...initialValue,
-          products: initialValue.products.map(
-            (item) => ({ ...item })
-          ),
-        }
+        ...initialValue,
+        products: initialValue.products.map(
+          (item) => ({ ...item })
+        ),
+      }
       : {
-          date: new Date()
-            .toISOString()
-            .slice(0, 10),
-          provider: providers[0],
-          payment: paymentMethods[1],
-          status: 'Pendiente',
-          products: [],
-        }
+        date: new Date()
+          .toISOString()
+          .slice(0, 10),
+        provider: providers[0],
+        payment: paymentMethods[1],
+        status: 'Pendiente',
+        products: [],
+      }
   );
 
   const [draft, setDraft] = useState({
@@ -640,7 +640,7 @@ function PurchaseForm({
     (sum, item) =>
       sum +
       Number(item.quantity) *
-        Number(item.unitPrice),
+      Number(item.unitPrice),
     0
   );
 
@@ -950,15 +950,10 @@ export default function ComprasInsumos() {
     );
   }, [purchases]);
 
-  useEffect(() => {
+  const updateFilter = (setter, value) => {
+    setter(value);
     setPage(1);
-  }, [
-    search,
-    statusFilter,
-    providerFilter,
-    paymentFilter,
-    dateFilter,
-  ]);
+  };
 
   const filteredPurchases = useMemo(() => {
 
@@ -993,16 +988,16 @@ export default function ComprasInsumos() {
           matchesSearch &&
           (!statusFilter ||
             purchase.status ===
-              statusFilter) &&
+            statusFilter) &&
           (!providerFilter ||
             purchase.provider ===
-              providerFilter) &&
+            providerFilter) &&
           (!paymentFilter ||
             purchase.payment ===
-              paymentFilter) &&
+            paymentFilter) &&
           (!dateFilter ||
             purchase.date ===
-              dateFilter)
+            dateFilter)
         );
       }
     );
@@ -1053,7 +1048,7 @@ export default function ComprasInsumos() {
     1,
     Math.ceil(
       filteredPurchases.length /
-        pageSize
+      pageSize
     )
   );
 
@@ -1101,11 +1096,11 @@ export default function ComprasInsumos() {
     setPurchases((current) =>
       current.map((purchase) =>
         purchase.number ===
-        selectedPurchase.number
+          selectedPurchase.number
           ? {
-              ...purchase,
-              ...data,
-            }
+            ...purchase,
+            ...data,
+          }
           : purchase
       )
     );
@@ -1131,11 +1126,11 @@ export default function ComprasInsumos() {
     setPurchases((current) =>
       current.map((purchase) =>
         purchase.number ===
-        selectedPurchase.number
+          selectedPurchase.number
           ? {
-              ...purchase,
-              status,
-            }
+            ...purchase,
+            status,
+          }
           : purchase
       )
     );
@@ -1144,9 +1139,9 @@ export default function ComprasInsumos() {
       (current) =>
         current
           ? {
-              ...current,
-              status,
-            }
+            ...current,
+            status,
+          }
           : null
     );
   };
@@ -1309,7 +1304,8 @@ export default function ComprasInsumos() {
               placeholder="Buscar por ID, proveedor, insumo..."
               value={search}
               onChange={(event) =>
-                setSearch(
+                updateFilter(
+                  setSearch,
                   event.target.value
                 )
               }
@@ -1320,7 +1316,8 @@ export default function ComprasInsumos() {
           <select
             value={statusFilter}
             onChange={(event) =>
-              setStatusFilter(
+              updateFilter(
+                setStatusFilter,
                 event.target.value
               )
             }
@@ -1342,7 +1339,8 @@ export default function ComprasInsumos() {
           <select
             value={providerFilter}
             onChange={(event) =>
-              setProviderFilter(
+              updateFilter(
+                setProviderFilter,
                 event.target.value
               )
             }
@@ -1364,7 +1362,8 @@ export default function ComprasInsumos() {
           <select
             value={paymentFilter}
             onChange={(event) =>
-              setPaymentFilter(
+              updateFilter(
+                setPaymentFilter,
                 event.target.value
               )
             }
@@ -1391,7 +1390,8 @@ export default function ComprasInsumos() {
               type="date"
               value={dateFilter}
               onChange={(event) =>
-                setDateFilter(
+                updateFilter(
+                  setDateFilter,
                   event.target.value
                 )
               }
@@ -1407,14 +1407,14 @@ export default function ComprasInsumos() {
             paymentFilter ||
             dateFilter) && (
 
-            <button
-              className="ci-clear-filters"
-              onClick={clearFilters}
-            >
-              Limpiar
-            </button>
+              <button
+                className="ci-clear-filters"
+                onClick={clearFilters}
+              >
+                Limpiar
+              </button>
 
-          )}
+            )}
 
         </div>
 
@@ -1599,30 +1599,30 @@ export default function ComprasInsumos() {
               {currentPurchases.length ===
                 0 && (
 
-                <tr>
+                  <tr>
 
-                  <td colSpan="8">
+                    <td colSpan="8">
 
-                    <div className="ci-no-results">
+                      <div className="ci-no-results">
 
-                      <Search size={22} />
+                        <Search size={22} />
 
-                      <strong>
-                        No se encontraron compras
-                      </strong>
+                        <strong>
+                          No se encontraron compras
+                        </strong>
 
-                      <span>
-                        Intenta cambiar los filtros
-                        de búsqueda.
-                      </span>
+                        <span>
+                          Intenta cambiar los filtros
+                          de búsqueda.
+                        </span>
 
-                    </div>
+                      </div>
 
-                  </td>
+                    </td>
 
-                </tr>
+                  </tr>
 
-              )}
+                )}
 
             </tbody>
 
@@ -1960,12 +1960,11 @@ export default function ComprasInsumos() {
 
                 <button
                   key={status}
-                  className={`ci-status-option ${
-                    selectedPurchase.status ===
-                    status
+                  className={`ci-status-option ${selectedPurchase.status ===
+                      status
                       ? 'selected'
                       : ''
-                  }`}
+                    }`}
                   onClick={() =>
                     changeStatus(status)
                   }
@@ -1981,10 +1980,10 @@ export default function ComprasInsumos() {
 
                   {selectedPurchase.status ===
                     status && (
-                    <CheckCircle2
-                      size={16}
-                    />
-                  )}
+                      <CheckCircle2
+                        size={16}
+                      />
+                    )}
 
                 </button>
 
