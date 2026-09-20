@@ -909,47 +909,56 @@ export default function Compras() {
   ]);
 
   const filtered = useMemo(() => {
-    const term =
-      search.trim().toLowerCase();
+  const term = search.trim().toLowerCase();
 
-    return purchases.filter(
-      (purchase) => {
-        const matchesSearch =
-          !term ||
-          `#${purchase.number}`
-            .toLowerCase()
-            .includes(term) ||
-          purchase.id
-            .toLowerCase()
-            .includes(term) ||
-          purchase.provider
-            .toLowerCase()
-            .includes(term) ||
-          purchase.status
-            .toLowerCase()
-            .includes(term);
+  return purchases.filter((purchase) => {
+    const number = String(purchase.number ?? '').toLowerCase();
+    const id = String(purchase.id ?? '').toLowerCase();
+    const provider = String(purchase.provider ?? '').toLowerCase();
+    const payment = String(purchase.payment ?? '').toLowerCase();
+    const status = String(purchase.status ?? '').toLowerCase();
+    const date = String(purchase.date ?? '').toLowerCase();
 
-        return (
-          matchesSearch &&
-          (!statusFilter ||
-            purchase.status === statusFilter) &&
-          (!providerFilter ||
-            purchase.provider === providerFilter) &&
-          (!paymentFilter ||
-            purchase.payment === paymentFilter) &&
-          (!dateFilter ||
-            purchase.date === dateFilter)
-        );
-      }
+    const productNames = Array.isArray(purchase.products)
+      ? purchase.products
+          .map((product) =>
+            String(product?.product ?? '').toLowerCase()
+          )
+          .join(' ')
+      : '';
+
+    const matchesSearch =
+      !term ||
+      number.includes(term) ||
+      `#${number}`.includes(term) ||
+      id.includes(term) ||
+      provider.includes(term) ||
+      payment.includes(term) ||
+      status.includes(term) ||
+      date.includes(term) ||
+      productNames.includes(term);
+
+    return (
+      matchesSearch &&
+      (!statusFilter ||
+        purchase.status === statusFilter) &&
+      (!providerFilter ||
+        purchase.provider === providerFilter) &&
+      (!paymentFilter ||
+        purchase.payment === paymentFilter) &&
+      (!dateFilter ||
+        purchase.date === dateFilter)
     );
-  }, [
-    purchases,
-    search,
-    statusFilter,
-    providerFilter,
-    paymentFilter,
-    dateFilter,
-  ]);
+  });
+}, [
+  purchases,
+  search,
+  statusFilter,
+  providerFilter,
+  paymentFilter,
+  dateFilter,
+]);
+
 
   const pageSize = 6;
 
@@ -1478,13 +1487,20 @@ export default function Compras() {
 
                   <td>
 
-                    <StatusBadge
-                      status={
-                        purchase.status
-                      }
-                    />
+  <button
+    type="button"
+    className="detail-status-button"
+    title="Cambiar estado"
+    onClick={() =>
+      openStatusModal(purchase)
+    }
+  >
+    <StatusBadge
+      status={purchase.status}
+    />
+  </button>
 
-                  </td>
+</td>
 
                   <td>
 

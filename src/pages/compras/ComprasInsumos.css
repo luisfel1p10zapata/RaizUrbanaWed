@@ -178,7 +178,8 @@
 
 .ci-filters-row {
   display: grid;
-  grid-template-columns: 1.65fr .78fr .9fr .82fr .78fr auto;
+  grid-template-columns: minmax(0, 1.65fr) minmax(0, .78fr) minmax(0, .9fr) minmax(0, .82fr) minmax(0, .78fr) auto;
+  min-width: 0;
   gap: 9px;
   padding: 15px 17px;
 }
@@ -200,6 +201,9 @@
   align-items: center;
   gap: 7px;
   padding: 0 10px;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .ci-search svg {
@@ -215,6 +219,7 @@
   color: #4a4e69;
   font-family: inherit;
   font-size: 10px;
+  box-sizing: border-box;
 }
 
 .ci-search input::placeholder {
@@ -225,6 +230,8 @@
   width: 100%;
   padding: 0 9px;
   outline: none;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .ci-filter-date {
@@ -568,7 +575,7 @@
 }
 
 .ci-modal {
-  width: min(730px, 100%);
+  width: min(430px, 100%);
   max-height: calc(100vh - 24px);
   overflow: hidden;
   border: 1px solid #c9ada7;
@@ -860,7 +867,7 @@
 /* DETALLE */
 
 .ci-detail-modal {
-  width: min(480px, 100%);
+  width: min(400px, 100%);
 }
 
 .ci-detail-content {
@@ -1045,7 +1052,7 @@
   }
 
   .ci-filters-row {
-    grid-template-columns: 1.5fr 1fr 1fr;
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1fr);
   }
 }
 
