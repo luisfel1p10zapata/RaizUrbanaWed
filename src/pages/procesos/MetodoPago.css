@@ -3,6 +3,8 @@
    Tipografías: Playfair Display (títulos) + Montserrat (interfaz)
    Sistema visual unificado con Ventas.css (prefijo metodo-)
    Los nombres de clase se conservan: no requiere cambios en el JSX.
+   Modo oscuro: se activa con [data-theme="dark"] y solo cambia las
+   variables del bloque de arriba (no hay colores sueltos en reglas).
    ================================================================== */
 @import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap");
 
@@ -23,6 +25,72 @@ html body .metodo-overlay {
   --red-bg: #fde6e3; --red-fg: #d8483a;
   --gray-bg: #f0eff1; --gray-fg: #6b6a72; --gray-bd: #dcdadf;
   --serif: "Playfair Display", Georgia, serif;
+
+  /* Variables extra (antes eran colores fijos) */
+  --field-bg: #ffffff;
+  --thead-bg: #f5f3f4;
+  --hover-bg: #f4eeeb;
+  --hover-soft: #f4f2f3;
+  --cancel-bg: #ffffff;
+  --cancel-hover: #faf6f4;
+  --hero-bg: #fbf9f8;
+  --border-soft: #d8d5da;
+  --placeholder: #a5a3ae;
+  --focus: #4b4b5a;
+  --edit-fg: #f0a020;
+  --danger: #d8483a;
+  --overlay-bg: rgba(60, 50, 55, 0.35);
+  --modal-border: transparent;
+  --modal-shadow: rgba(20, 16, 10, 0.25);
+}
+
+/* ---------------- MODO OSCURO ----------------
+   bg #12131C · surface #1C1E2E · primary #4A4E69
+   secondary #9A8C98 · accent #C9ADA7 · text #F2E9E4
+   Especificidad (0,2,0) > (0,1,2) del bloque claro, sin !important. */
+[data-theme="dark"] .metodo-page,
+[data-theme="dark"] .metodo-overlay {
+  color-scheme: dark;
+
+  --bg: #12131C;
+  --panel: #1C1E2E;
+  --border: #3A3D57;
+  --line: #2A2C40;
+  --ink: #F2E9E4;
+  --ink-soft: #C9ADA7;
+  --muted: #9A8C98;
+  --soft-bg: #252839;
+  --dark: #4A4E69;
+  --dark-hover: #5B6082;
+  --green-bg: rgba(34, 197, 94, 0.12); --green-fg: #4ade80; --green-bd: rgba(34, 197, 94, 0.3);
+  --blue-fg: #60a5fa;
+  --red-bg: rgba(239, 68, 68, 0.12); --red-fg: #fca5a5;
+  --gray-bg: rgba(154, 140, 152, 0.14); --gray-fg: #C9ADA7; --gray-bd: rgba(154, 140, 152, 0.25);
+
+  --field-bg: #161722;
+  --thead-bg: #1A1C2A;
+  --hover-bg: #252839;
+  --hover-soft: #252839;
+  --cancel-bg: transparent;
+  --cancel-hover: #252839;
+  --hero-bg: #252839;
+  --border-soft: #3A3D57;
+  --placeholder: #6f6a7a;
+  --focus: #5B6082;
+  --edit-fg: #fbbf24;
+  --danger: #b8455f;
+  --overlay-bg: rgba(8, 9, 15, 0.72);
+  --modal-border: #3A3D57;
+  --modal-shadow: rgba(0, 0, 0, 0.55);
+}
+
+/* Autofill de Chrome (solo oscuro) */
+[data-theme="dark"] .metodo-search-input input:-webkit-autofill,
+[data-theme="dark"] .metodo-form-group input:-webkit-autofill {
+  -webkit-text-fill-color: #F2E9E4;
+  -webkit-box-shadow: 0 0 0 1000px #161722 inset;
+  box-shadow: 0 0 0 1000px #161722 inset;
+  transition: background-color 9999s ease-out 0s;
 }
 
 html body .metodo-page {
@@ -56,11 +124,11 @@ html body .metodo-btn-dark svg,
 html body .metodo-btn-danger svg { width: 17px; height: 17px; flex-shrink: 0; }
 html body .metodo-btn-primary { padding: 15px 28px; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; background: var(--dark); border-color: var(--dark); color: #fff; }
 html body .metodo-btn-primary:hover { background: var(--dark-hover); }
-html body .metodo-btn-secondary { background: #fff; border-color: var(--border); color: var(--ink); }
-html body .metodo-btn-secondary:hover { background: #faf6f4; }
+html body .metodo-btn-secondary { background: var(--cancel-bg); border-color: var(--border); color: var(--ink); }
+html body .metodo-btn-secondary:hover { background: var(--cancel-hover); }
 html body .metodo-btn-dark { background: var(--dark); border-color: var(--dark); color: #fff; }
 html body .metodo-btn-dark:hover { background: var(--dark-hover); }
-html body .metodo-btn-danger { background: var(--red-fg); border-color: var(--red-fg); color: #fff; }
+html body .metodo-btn-danger { background: var(--danger); border-color: var(--danger); color: #fff; }
 html body .metodo-btn-danger:hover { opacity: .9; }
 
 /* ---------------- KPI cards ----------------
@@ -83,11 +151,11 @@ html body .metodo-search-card { background: var(--panel); border: 1px solid var(
 html body .metodo-search-title { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; padding: 18px 24px; margin: 0; font-size: 14.5px; font-weight: 600; color: var(--ink); border-bottom: 1px solid var(--border); }
 html body .metodo-search-title svg { width: 17px; height: 17px; flex-shrink: 0; color: var(--ink); }
 html body .metodo-search-content { padding: 24px 26px; }
-html body .metodo-search-input { display: flex; align-items: center; gap: 10px; width: 100%; max-width: 100%; min-width: 0; padding: 0 15px; background: #fff; color: var(--ink); border: 1px solid var(--border); border-radius: 10px; transition: border-color .15s ease; }
+html body .metodo-search-input { display: flex; align-items: center; gap: 10px; width: 100%; max-width: 100%; min-width: 0; padding: 0 15px; background: var(--field-bg); color: var(--ink); border: 1px solid var(--border); border-radius: 10px; transition: border-color .15s ease; }
 html body .metodo-search-input > svg { width: 16px; height: 16px; flex-shrink: 0; color: var(--ink); }
 html body .metodo-search-input input { width: 100%; min-width: 0; margin: 0; padding: 12px 0; font-size: 14.5px; color: var(--ink); background: transparent; border: none; outline: none; }
-html body .metodo-search-input input::placeholder { color: #a5a3ae; }
-html body .metodo-search-input:focus-within { border-color: var(--ink-soft); box-shadow: none; }
+html body .metodo-search-input input::placeholder { color: var(--placeholder); }
+html body .metodo-search-input:focus-within { border-color: var(--focus); box-shadow: none; }
 html body .metodo-search-clear { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 22px; height: 22px; padding: 0; border: none; border-radius: 50%; background: var(--soft-bg); color: var(--ink-soft); cursor: pointer; }
 html body .metodo-search-clear svg { width: 12px; height: 12px; }
 
@@ -99,10 +167,10 @@ html body .metodo-count { display: inline-flex; align-items: center; justify-con
 html body .metodo-page-info { margin-left: auto; font-size: 13px; font-weight: 400; color: var(--muted); }
 html body .metodo-table-wrapper { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 html body .metodo-table { width: 100%; min-width: 760px; border-collapse: collapse; table-layout: auto; font-size: 14px; text-align: left; }
-html body .metodo-table th { height: auto; padding: 15px 20px; font-size: 11.5px; font-weight: 600; letter-spacing: 0.08em; text-align: left; text-transform: uppercase; white-space: nowrap; color: var(--muted); background: #f5f3f4; border-bottom: 1px solid var(--border); }
+html body .metodo-table th { height: auto; padding: 15px 20px; font-size: 11.5px; font-weight: 600; letter-spacing: 0.08em; text-align: left; text-transform: uppercase; white-space: nowrap; color: var(--muted); background: var(--thead-bg); border-bottom: 1px solid var(--border); }
 html body .metodo-table th:nth-child(n) { width: auto; }
 html body .metodo-table th:nth-child(1) { width: 90px; }
-html body .metodo-table td { height: auto; padding: 18px 20px; font-size: 14px; vertical-align: middle; color: var(--ink); border-bottom: 1px solid var(--border); }
+html body .metodo-table td { height: auto; padding: 18px 20px; font-size: 14px; vertical-align: middle; color: var(--ink); background: var(--panel); border-bottom: 1px solid var(--border); }
 html body .metodo-table th:first-child,
 html body .metodo-table td:first-child { padding-left: 24px; }
 html body .metodo-table th:last-child,
@@ -121,7 +189,7 @@ html body .metodo-row-icon svg { width: 16px; height: 16px; }
 html body .metodo-name-cell strong { font-size: 14.5px; font-weight: 600; color: var(--ink); }
 
 /* Número de cuenta */
-html body .metodo-account { display: inline-flex; align-items: center; min-width: 0; min-height: 0; padding: 4px 10px; font-size: 12.5px; font-weight: 600; white-space: nowrap; color: var(--ink-soft); background: var(--soft-bg); border: 1px solid #d8d5da; border-radius: 6px; }
+html body .metodo-account { display: inline-flex; align-items: center; min-width: 0; min-height: 0; padding: 4px 10px; font-size: 12.5px; font-weight: 600; white-space: nowrap; color: var(--ink-soft); background: var(--soft-bg); border: 1px solid var(--border-soft); border-radius: 6px; }
 
 /* Estado */
 html body .metodo-status { display: inline-flex; align-items: center; gap: 6px; height: auto; padding: 5px 13px; font-size: 13px; font-weight: 600; white-space: nowrap; border: 1px solid transparent; border-radius: 999px; background: transparent; cursor: pointer; }
@@ -136,9 +204,9 @@ html body .metodo-actions { display: flex; align-items: center; justify-content:
 html body .metodo-table td:last-child { white-space: nowrap; }
 html body .metodo-actions button { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0; border: none; border-radius: 7px; background: none; color: var(--ink); cursor: pointer; transition: background .15s ease; }
 html body .metodo-actions button svg { width: 18px; height: 18px; }
-html body .metodo-actions button:hover { background: #f4eeeb; transform: none; }
+html body .metodo-actions button:hover { background: var(--hover-bg); transform: none; }
 html body .action-view { color: var(--blue-fg); }
-html body .action-edit { color: #f0a020; }
+html body .action-edit { color: var(--edit-fg); }
 html body .action-delete { color: var(--red-fg); }
 
 /* Vacío */
@@ -152,15 +220,15 @@ html body .metodo-table-footer { display: flex; align-items: center; justify-con
 html body .metodo-pagination { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
 html body .metodo-pagination button { display: inline-flex; align-items: center; justify-content: center; min-width: 32px; width: auto; height: 32px; padding: 0 6px; font-size: 14.5px; font-weight: 400; color: var(--ink); background: none; border: none; border-radius: 8px; cursor: pointer; }
 html body .metodo-pagination button svg { width: 16px; height: 16px; }
-html body .metodo-pagination button:hover:not(:disabled) { background: #f4eeeb; color: var(--ink); }
+html body .metodo-pagination button:hover:not(:disabled) { background: var(--hover-bg); color: var(--ink); }
 html body .metodo-pagination button:disabled { opacity: .35; cursor: not-allowed; }
 html body .metodo-current-page { display: inline-flex; align-items: center; justify-content: center; min-width: 32px; width: auto; height: 32px; padding: 0 6px; font-size: 14.5px; font-weight: 400; color: #fff; background: var(--dark); border-radius: 8px; }
 
 /* ---------------- Overlay y modal ---------------- */
-html body .metodo-overlay { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 24px; background: rgba(60, 50, 55, 0.35); backdrop-filter: blur(3px); color: var(--ink); font-family: "Montserrat", -apple-system, "Segoe UI", sans-serif; animation: metodoFadeIn .18s ease; }
+html body .metodo-overlay { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 24px; background: var(--overlay-bg); backdrop-filter: blur(3px); color: var(--ink); font-family: "Montserrat", -apple-system, "Segoe UI", sans-serif; animation: metodoFadeIn .18s ease; }
 @keyframes metodoFadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-html body .metodo-modal { width: 100%; max-width: 470px; max-height: 92vh; display: flex; flex-direction: column; background: #fff; border: none; border-radius: 22px; box-shadow: 0 24px 60px rgba(20, 16, 10, 0.25); overflow: hidden; animation: metodoModalIn .2s ease; }
+html body .metodo-modal { width: 100%; max-width: 470px; max-height: 92vh; display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--modal-border); border-radius: 22px; box-shadow: 0 24px 60px var(--modal-shadow); overflow: hidden; animation: metodoModalIn .2s ease; }
 @keyframes metodoModalIn { from { opacity: 0; transform: translateY(8px) scale(0.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
 html body .metodo-modal-detail { max-width: 460px; }
 html body .metodo-modal-status { max-width: 460px; }
@@ -171,7 +239,7 @@ html body .metodo-modal-eyebrow { display: block; margin-bottom: 7px; font-size:
 html body .metodo-modal-header h2 { margin: 0; font-family: var(--serif); font-size: 26px; font-weight: 600; line-height: 1.2; color: var(--ink); overflow-wrap: break-word; word-break: break-word; }
 html body .metodo-close { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 32px; height: 32px; padding: 0; border: none; border-radius: 7px; background: none; color: var(--ink); cursor: pointer; transition: background .15s ease; }
 html body .metodo-close svg { width: 18px; height: 18px; }
-html body .metodo-close:hover { background: #f4eeeb; color: var(--ink); transform: none; }
+html body .metodo-close:hover { background: var(--hover-bg); color: var(--ink); transform: none; }
 
 /* ---------------- Formulario ---------------- */
 html body .metodo-modal > form { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; margin: 0; }
@@ -179,17 +247,17 @@ html body .metodo-form-content { flex: 1; min-height: 0; padding: 24px 30px 8px;
 html body .metodo-form-group { display: flex; flex-direction: column; gap: 7px; margin-bottom: 13px; min-width: 0; }
 html body .metodo-form-group:last-child { margin-bottom: 13px; }
 html body .metodo-form-group label { display: block; margin: 0; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); }
-html body .metodo-form-group input { width: 100%; height: auto; padding: 12px 15px; font-size: 14.5px; color: var(--ink); background: #fff; border: 1px solid var(--border); border-radius: 10px; outline: none; transition: border-color .15s ease; }
-html body .metodo-form-group input:focus { border-color: var(--ink-soft); box-shadow: none; }
-html body .metodo-form-group input::placeholder { color: #a5a3ae; }
+html body .metodo-form-group input { width: 100%; height: auto; padding: 12px 15px; font-size: 14.5px; color: var(--ink); background: var(--field-bg); border: 1px solid var(--border); border-radius: 10px; outline: none; transition: border-color .15s ease; }
+html body .metodo-form-group input:focus { border-color: var(--focus); box-shadow: none; }
+html body .metodo-form-group input::placeholder { color: var(--placeholder); }
 html body .metodo-form-group small { display: block; margin-top: 0; font-size: 12.5px; color: var(--muted); }
 
 /* ---------------- Footer del modal ---------------- */
-html body .metodo-modal-footer { display: flex; flex-wrap: wrap; align-items: stretch; gap: 12px; padding: 18px 30px 26px; background: #fff; border-top: 1px solid var(--border); }
+html body .metodo-modal-footer { display: flex; flex-wrap: wrap; align-items: stretch; gap: 12px; padding: 18px 30px 26px; background: var(--panel); border-top: 1px solid var(--border); }
 html body .metodo-modal-footer button { flex: 1; min-width: 120px; min-height: 0; }
 
 /* ---------------- Modal detalle ---------------- */
-html body .metodo-detail-main { display: flex; align-items: center; gap: 16px; margin: 24px 30px 13px; padding: 18px; background: #fbf9f8; border: 1px solid var(--border); border-radius: 12px; }
+html body .metodo-detail-main { display: flex; align-items: center; gap: 16px; margin: 24px 30px 13px; padding: 18px; background: var(--hero-bg); border: 1px solid var(--border); border-radius: 12px; }
 html body .metodo-detail-icon { width: 56px; height: 56px; flex-shrink: 0; border-radius: 12px; background: var(--soft-bg); color: var(--ink); display: flex; align-items: center; justify-content: center; }
 html body .metodo-detail-name { display: flex; flex: 1; flex-direction: column; gap: 2px; min-width: 0; }
 html body .metodo-detail-name strong { font-family: var(--serif); font-size: 18px; font-weight: 600; color: var(--ink); word-break: break-word; }
@@ -201,13 +269,13 @@ html body .metodo-detail-row strong { font-size: 14px; font-weight: 600; text-al
 
 /* ---------------- Modal estado ---------------- */
 html body .metodo-status-options { display: flex; flex-direction: column; gap: 10px; padding: 24px 30px 26px; overflow-y: auto; min-height: 0; }
-html body .metodo-status-option { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 0; padding: 14px 17px; font-size: 14.5px; text-align: left; color: var(--ink); background: #fff; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: background .15s ease, border-color .15s ease; }
-html body .metodo-status-option:hover { background: #f4f2f3; }
+html body .metodo-status-option { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 0; padding: 14px 17px; font-size: 14.5px; text-align: left; color: var(--ink); background: var(--field-bg); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: background .15s ease, border-color .15s ease; }
+html body .metodo-status-option:hover { background: var(--hover-soft); }
 html body .metodo-status-option.selected { background: var(--soft-bg); border: 1.5px solid var(--dark); box-shadow: none; }
 html body .metodo-status-option > div:nth-child(2) { display: flex; flex: 1; flex-direction: column; gap: 3px; min-width: 0; }
 html body .metodo-status-option strong { font-size: 14.5px; font-weight: 600; color: var(--ink); }
 html body .metodo-status-option span { font-size: 12.5px; color: var(--muted); }
-html body .metodo-status-option > svg { width: 18px; height: 18px; flex-shrink: 0; color: var(--dark); }
+html body .metodo-status-option > svg { width: 18px; height: 18px; flex-shrink: 0; color: var(--ink); }
 html body .status-option-dot { width: 8px; height: 8px; flex-shrink: 0; border-radius: 50%; }
 html body .status-option-dot.active { background: #22c55e; }
 html body .status-option-dot.inactive { background: #9a99a3; }
@@ -225,16 +293,16 @@ html body .metodo-delete-content p strong { font-weight: 600; color: var(--ink);
    ================================================================== */
 @media (prefers-reduced-motion: reduce) {
   html body .metodo-overlay,
-html body .metodo-modal { animation: none !important; }
+  html body .metodo-modal { animation: none !important; }
   html body .metodo-btn-primary,
-html body .metodo-btn-secondary,
-html body .metodo-btn-dark,
-html body .metodo-btn-danger,
-html body .metodo-search-input,
-html body .metodo-actions button,
-html body .metodo-close,
-html body .metodo-form-group input,
-html body .metodo-status-option { transition: none !important; }
+  html body .metodo-btn-secondary,
+  html body .metodo-btn-dark,
+  html body .metodo-btn-danger,
+  html body .metodo-search-input,
+  html body .metodo-actions button,
+  html body .metodo-close,
+  html body .metodo-form-group input,
+  html body .metodo-status-option { transition: none !important; }
 }
 
 /* ==================================================================
@@ -250,11 +318,11 @@ html body .metodo-status-option { transition: none !important; }
   html body .metodo-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   html body .metodo-kpis > .metodo-kpi-card:last-child:nth-child(odd) { grid-column: 1 / -1; }
   html body .metodo-modal-header,
-html body .metodo-modal-footer { padding-left: 24px; padding-right: 24px; }
+  html body .metodo-modal-footer { padding-left: 24px; padding-right: 24px; }
   html body .metodo-form-content,
-html body .metodo-status-options,
-html body .metodo-delete-content,
-html body .metodo-detail-info { padding-left: 24px; padding-right: 24px; }
+  html body .metodo-status-options,
+  html body .metodo-delete-content,
+  html body .metodo-detail-info { padding-left: 24px; padding-right: 24px; }
   html body .metodo-detail-main { margin-left: 24px; margin-right: 24px; }
 }
 
@@ -270,27 +338,27 @@ html body .metodo-detail-info { padding-left: 24px; padding-right: 24px; }
   html body .metodo-kpi-card > strong { font-size: 17px; }
 
   html body .metodo-search-title,
-html body .metodo-table-header { padding: 16px 18px; }
+  html body .metodo-table-header { padding: 16px 18px; }
   html body .metodo-search-content { padding: 18px; }
 
   html body .metodo-table { min-width: 620px; }
   html body .metodo-table th { padding: 12px 14px; font-size: 11px; }
   html body .metodo-table td { padding: 14px; font-size: 13.5px; }
   html body .metodo-table th:first-child,
-html body .metodo-table td:first-child { padding-left: 18px; }
+  html body .metodo-table td:first-child { padding-left: 18px; }
   html body .metodo-table th:last-child,
-html body .metodo-table td:last-child { padding-right: 18px; }
+  html body .metodo-table td:last-child { padding-right: 18px; }
   html body .metodo-table-footer { padding: 14px 18px; }
 
   html body .metodo-overlay { padding: 14px; align-items: flex-end; }
   html body .metodo-modal,
-html body .metodo-modal-detail,
-html body .metodo-modal-status,
-html body .metodo-modal-delete { max-width: 100%; max-height: 94vh; border-radius: 22px 22px 0 0; }
+  html body .metodo-modal-detail,
+  html body .metodo-modal-status,
+  html body .metodo-modal-delete { max-width: 100%; max-height: 94vh; border-radius: 22px 22px 0 0; }
   html body .metodo-modal-header { padding: 22px 20px 14px; }
   html body .metodo-form-content,
-html body .metodo-status-options,
-html body .metodo-detail-info { padding-left: 20px; padding-right: 20px; }
+  html body .metodo-status-options,
+  html body .metodo-detail-info { padding-left: 20px; padding-right: 20px; }
   html body .metodo-form-content { padding-top: 18px; }
   html body .metodo-status-options { padding-top: 18px; padding-bottom: 20px; }
   html body .metodo-delete-content { padding: 24px 20px 16px; }
@@ -318,10 +386,10 @@ html body .metodo-detail-info { padding-left: 20px; padding-right: 20px; }
   html body .metodo-kpi-card { padding: 16px 14px 16px 60px; }
   html body .metodo-kpi-icon { top: 16px; left: 14px; }
   html body .metodo-kpi-top,
-html body .metodo-kpi-footer,
-html body .metodo-kpi-footer span,
-html body .metodo-kpi-footer b,
-html body .metodo-kpi-footer small { font-size: 12px; }
+  html body .metodo-kpi-footer,
+  html body .metodo-kpi-footer span,
+  html body .metodo-kpi-footer b,
+  html body .metodo-kpi-footer small { font-size: 12px; }
   html body .metodo-kpi-card > strong { font-size: 16px; }
 
   html body .metodo-table { min-width: 560px; }
@@ -335,8 +403,8 @@ html body .metodo-kpi-footer small { font-size: 12px; }
 @media (max-width: 380px) {
   html body .metodo-btn-primary { padding: 13px 18px; font-size: 13.5px; }
   html body .metodo-btn-secondary,
-html body .metodo-btn-dark,
-html body .metodo-btn-danger { padding: 12px 16px; font-size: 13.5px; }
+  html body .metodo-btn-dark,
+  html body .metodo-btn-danger { padding: 12px 16px; font-size: 13.5px; }
   html body .metodo-table { min-width: 520px; }
   html body .metodo-status-option { padding: 12px 14px; }
 }

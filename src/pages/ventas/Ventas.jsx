@@ -1,6 +1,18 @@
 import React, { useState, useMemo } from "react";
 import "./Ventas.css";
 
+/* Todas las clases del módulo llevan el prefijo "vt-" para no chocar con
+   los estilos de otros módulos. cx("a b", cond && "c") => "vt-a vt-b vt-c" */
+const cx = (...args) =>
+  args
+    .flat()
+    .filter(Boolean)
+    .join(" ")
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((n) => `vt-${n}`)
+    .join(" ");
+
 /* ------------------------------------------------------------------ */
 /*  DATOS DE PRUEBA                                                   */
 /* ------------------------------------------------------------------ */
@@ -71,8 +83,8 @@ const PAGE_SIZE = 8;
 const formatoMoneda = (valor) => `$${Number(valor).toLocaleString("es-CO")}`;
 
 const Badge = ({ children, variantClass }) => (
-  <span className={`badge ${variantClass}`}>
-    <span className="badge-dot" />
+  <span className={cx("badge", variantClass)}>
+    <span className={cx("badge-dot")} />
     {children}
   </span>
 );
@@ -176,38 +188,38 @@ export default function Ventas() {
   const hasta = Math.min(page * PAGE_SIZE, ventasFiltradas.length);
 
   return (
-    <div className="ventas-page">
-      <header className="ventas-header">
+    <div className={cx("ventas-page")}>
+      <div className={cx("ventas-header")}>
         <div>
-          <div className="eyebrow">Módulo</div>
-          <h1 className="page-title">Gestión de Ventas</h1>
-          <p className="page-subtitle">Registro y seguimiento de ventas y pagos</p>
+          <div className={cx("eyebrow")}>Módulo</div>
+          <h1 className={cx("page-title")}>Gestión de Ventas</h1>
+          <p className={cx("page-subtitle")}>Registro y seguimiento de ventas y pagos</p>
         </div>
-        <button className="btn btn-dark btn-register" onClick={() => setModalRegistrar(true)}>
+        <button className={cx("btn btn-dark btn-register")} onClick={() => setModalRegistrar(true)}>
           <Icons.Plus /> Registrar venta
         </button>
-      </header>
+      </div>
 
-      <section className="stats-grid">
+      <section className={cx("stats-grid")}>
         {[
           { Icon: Icons.Cart, label: "Ventas totales", value: metricas.ventasTotales, sub: "registradas" },
           { Icon: Icons.Clock, label: "Ventas del mes", value: metricas.ventasDelMes, sub: "este mes" },
           { Icon: Icons.Dollar, label: "Monto total", value: formatoMoneda(metricas.montoTotal), sub: "acumulado" },
           { Icon: Icons.Info, label: "Ventas pendientes", value: metricas.ventasPendientes, sub: "sin procesar" },
         ].map(({ Icon, label, value, sub }) => (
-          <div className="stat-card" key={label}>
-            <div className="stat-icon"><Icon /></div>
-            <div className="stat-label">{label}</div>
-            <div className="stat-value">{value}</div>
-            <div className="stat-sub">{sub}</div>
+          <div className={cx("stat-card")} key={label}>
+            <div className={cx("stat-icon")}><Icon /></div>
+            <div className={cx("stat-label")}>{label}</div>
+            <div className={cx("stat-value")}>{value}</div>
+            <div className={cx("stat-sub")}>{sub}</div>
           </div>
         ))}
       </section>
 
-      <section className="panel">
-        <div className="filter-heading"><Icons.Filter /> Buscar y filtrar</div>
-        <div className="filter-row">
-          <div className="input-icon grow">
+      <section className={cx("panel")}>
+        <div className={cx("filter-heading")}><Icons.Filter /> Buscar y filtrar</div>
+        <div className={cx("filter-row")}>
+          <div className={cx("input-icon grow")}>
             <Icons.Search />
             <input type="text" placeholder="Buscar por cliente, código o fecha..." value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
@@ -223,14 +235,14 @@ export default function Ventas() {
         </div>
       </section>
 
-      <section className="panel">
-        <div className="table-heading">
+      <section className={cx("panel")}>
+        <div className={cx("table-heading")}>
           <span>Listado de Ventas</span>
-          <span className="count-pill">{ventasFiltradas.length}</span>
-          <span className="page-info">Página {page} de {totalPaginas}</span>
+          <span className={cx("count-pill")}>{ventasFiltradas.length}</span>
+          <span className={cx("page-info")}>Página {page} de {totalPaginas}</span>
         </div>
 
-        <div className="table-scroll">
+        <div className={cx("table-scroll")}>
           <table>
             <thead>
               <tr>
@@ -240,28 +252,28 @@ export default function Ventas() {
             </thead>
             <tbody>
               {ventasPaginadas.length === 0 ? (
-                <tr><td colSpan="7" className="empty-cell">No se encontraron registros de ventas.</td></tr>
+                <tr><td colSpan="7" className={cx("empty-cell")}>No se encontraron registros de ventas.</td></tr>
               ) : (
                 ventasPaginadas.map((v) => (
                   <tr key={v.codigo}>
-                    <td><span className="code-pill">{v.codigo}</span></td>
+                    <td><span className={cx("code-pill")}>{v.codigo}</span></td>
                     <td>
-                      <span className="client-name">{v.cliente.nombre}</span>
-                      <span className="client-email">{v.cliente.email}</span>
+                      <span className={cx("client-name")}>{v.cliente.nombre}</span>
+                      <span className={cx("client-email")}>{v.cliente.email}</span>
                     </td>
                     <td>{v.fecha}</td>
-                    <td className="cell-total">{formatoMoneda(v.total)}</td>
+                    <td className={cx("cell-total")}>{formatoMoneda(v.total)}</td>
                     <td>
-                      <button className="badge-btn" onClick={() => setVentaCambiarEstado(v)} title="Cambiar estado">
+                      <button className={cx("badge-btn")} onClick={() => setVentaCambiarEstado(v)} title="Cambiar estado">
                         <Badge variantClass={ESTADO_VENTA_META[v.estadoVenta].colorClass}>{v.estadoVenta}</Badge>
                       </button>
                     </td>
                     <td><Badge variantClass={`${ESTADO_PAGO_META[v.estadoPago]} badge-plain`}>{v.estadoPago}</Badge></td>
                     <td>
-                      <div className="row-actions">
-                        <button className="icon-btn blue" onClick={() => setVentaVer(v)} title="Ver detalle"><Icons.Eye /></button>
-                        <button className="icon-btn orange" onClick={() => setVentaEditar(v)} title="Editar venta"><Icons.Pencil /></button>
-                        <button className="icon-btn red" onClick={() => handleEliminarVenta(v.codigo)} title="Eliminar venta"><Icons.Trash /></button>
+                      <div className={cx("row-actions")}>
+                        <button className={cx("icon-btn blue")} onClick={() => setVentaVer(v)} title="Ver detalle"><Icons.Eye /></button>
+                        <button className={cx("icon-btn orange")} onClick={() => setVentaEditar(v)} title="Editar venta"><Icons.Pencil /></button>
+                        <button className={cx("icon-btn red")} onClick={() => handleEliminarVenta(v.codigo)} title="Eliminar venta"><Icons.Trash /></button>
                       </div>
                     </td>
                   </tr>
@@ -271,13 +283,13 @@ export default function Ventas() {
           </table>
         </div>
 
-        <div className="table-footer">
+        <div className={cx("table-footer")}>
           <span>Mostrando {desde}–{hasta} de {ventasFiltradas.length} registros</span>
-          <div className="pagination">
+          <div className={cx("pagination")}>
             <button disabled={page === 1} onClick={() => setPage(1)} title="Primera página">«</button>
             <button disabled={page === 1} onClick={() => setPage((p) => p - 1)} title="Anterior">‹</button>
             {Array.from({ length: totalPaginas }, (_, i) => i + 1).map((n) => (
-              <button key={n} className={page === n ? "active" : ""} onClick={() => setPage(n)}>{n}</button>
+              <button key={n} className={cx(page === n && "active")} onClick={() => setPage(n)}>{n}</button>
             ))}
             <button disabled={page === totalPaginas} onClick={() => setPage((p) => p + 1)} title="Siguiente">›</button>
             <button disabled={page === totalPaginas} onClick={() => setPage(totalPaginas)} title="Última página">»</button>
@@ -297,40 +309,40 @@ export default function Ventas() {
 /*  PIEZAS COMPARTIDAS                                                */
 /* ------------------------------------------------------------------ */
 const Section = ({ children }) => (
-  <div className="section-label">{children}<div className="section-line" /></div>
+  <div className={cx("section-label")}>{children}<div className={cx("section-line")} /></div>
 );
 
 const ModalHeader = ({ eyebrow, title, onClose }) => (
-  <header className="modal-header">
+  <div className={cx("modal-header")}>
     <div>
-      <div className="modal-eyebrow">{eyebrow}</div>
-      <div className="modal-title">{title}</div>
+      <div className={cx("modal-eyebrow")}>{eyebrow}</div>
+      <div className={cx("modal-title")}>{title}</div>
     </div>
-    <button className="icon-btn" onClick={onClose}><Icons.Close /></button>
-  </header>
+    <button className={cx("icon-btn")} onClick={onClose}><Icons.Close /></button>
+  </div>
 );
 
 const ClienteBox = ({ cliente }) => (
-  <div className="summary-box">
-    <div className="avatar"><Icons.User /></div>
+  <div className={cx("summary-box")}>
+    <div className={cx("avatar")}><Icons.User /></div>
     <div>
-      <span className="client-name">{cliente?.nombre}</span>
-      <span className="client-email">{cliente?.email}</span>
+      <span className={cx("client-name")}>{cliente?.nombre}</span>
+      <span className={cx("client-email")}>{cliente?.email}</span>
     </div>
   </div>
 );
 
 const ProductosLista = ({ items }) =>
   items.map((it, idx) => (
-    <div key={idx} className="product-row">
-      <div className="product-left">
-        <div className="avatar"><Icons.Box /></div>
+    <div key={idx} className={cx("product-row")}>
+      <div className={cx("product-left")}>
+        <div className={cx("avatar")}><Icons.Box /></div>
         <div>
-          <span className="product-name">{it.producto.nombre}</span>
-          <span className="product-meta">Talla {it.talla} · {it.color} · x{it.cantidad}</span>
+          <span className={cx("product-name")}>{it.producto.nombre}</span>
+          <span className={cx("product-meta")}>Talla {it.talla} · {it.color} · x{it.cantidad}</span>
         </div>
       </div>
-      <span className="product-price">{formatoMoneda(it.subtotal)}</span>
+      <span className={cx("product-price")}>{formatoMoneda(it.subtotal)}</span>
     </div>
   ));
 
@@ -351,8 +363,8 @@ function RegistrarVentaModal({ onClose, onGuardar }) {
 
   const prodSel = PRODUCTOS.find((p) => p.id === Number(prodId));
   const total = items.reduce((s, it) => s + it.subtotal, 0);
-  const clientes = CLIENTES.filter((c) =>
-    `${c.nombre} ${c.email}`.toLowerCase().includes(busqueda.toLowerCase())
+  const clientes = CLIENTES.filter((cl) =>
+    `${cl.nombre} ${cl.email}`.toLowerCase().includes(busqueda.toLowerCase())
   );
 
   const agregar = () => {
@@ -370,43 +382,43 @@ function RegistrarVentaModal({ onClose, onGuardar }) {
   const pasos = ["Cliente", "Productos", "Pago", "Confirmar"];
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-card">
+    <div className={cx("modal-overlay")}>
+      <div className={cx("modal-card modal-register")}>
         <ModalHeader eyebrow="Nueva orden" title="Registrar Venta" onClose={onClose} />
 
-        <div className="stepper">
+        <div className={cx("stepper")}>
           {pasos.map((label, idx) => {
             const num = idx + 1;
             return (
               <React.Fragment key={num}>
-                <div className="stepper-item">
-                  <div className={`stepper-circle ${paso > num ? "done" : paso === num ? "active" : ""}`}>
+                <div className={cx("stepper-item")}>
+                  <div className={cx("stepper-circle", paso > num ? "done" : paso === num ? "active" : "")}>
                     {paso > num ? <Icons.Check /> : num}
                   </div>
-                  <span className={`stepper-label ${paso >= num ? "on" : ""}`}>{label}</span>
+                  <span className={cx("stepper-label", paso >= num && "on")}>{label}</span>
                 </div>
-                {idx < 3 && <div className={`stepper-line ${paso > num ? "filled" : ""}`} />}
+                {idx < 3 && <div className={cx("stepper-line", paso > num && "filled")} />}
               </React.Fragment>
             );
           })}
         </div>
 
-        <div className="modal-body">
+        <div className={cx("modal-body")}>
           {paso === 1 && (
             <>
-              <p className="modal-hint">Selecciona el cliente para esta venta.</p>
-              <div className="input-icon">
+              <p className={cx("modal-hint")}>Selecciona el cliente para esta venta.</p>
+              <div className={cx("input-icon")}>
                 <Icons.Search />
                 <input type="text" placeholder="Buscar cliente por nombre o email..." value={busqueda}
                   onChange={(e) => setBusqueda(e.target.value)} />
               </div>
-              <div className="client-list">
-                {clientes.map((c) => (
-                  <div key={c.id} className={`client-row ${clienteSel?.id === c.id ? "selected" : ""}`} onClick={() => setClienteSel(c)}>
-                    <div className="avatar"><Icons.User /></div>
+              <div className={cx("client-list")}>
+                {clientes.map((cl) => (
+                  <div key={cl.id} className={cx("client-row", clienteSel?.id === cl.id && "selected")} onClick={() => setClienteSel(cl)}>
+                    <div className={cx("avatar")}><Icons.User /></div>
                     <div>
-                      <span className="client-name">{c.nombre}</span>
-                      <span className="client-email">{c.email}</span>
+                      <span className={cx("client-name")}>{cl.nombre}</span>
+                      <span className={cx("client-email")}>{cl.email}</span>
                     </div>
                   </div>
                 ))}
@@ -416,11 +428,11 @@ function RegistrarVentaModal({ onClose, onGuardar }) {
 
           {paso === 2 && (
             <>
-              <p className="modal-hint">Agrega los productos a la venta.</p>
-              <div className="add-product-box">
-                <div className="add-product-title">Agregar producto</div>
-                <div className="form-grid">
-                  <div className="field">
+              <p className={cx("modal-hint")}>Agrega los productos a la venta.</p>
+              <div className={cx("add-product-box")}>
+                <div className={cx("add-product-title")}>Agregar producto</div>
+                <div className={cx("form-grid")}>
+                  <div className={cx("field")}>
                     <span>Producto <i>*</i></span>
                     <select value={prodId} onChange={(e) => {
                       setProdId(e.target.value);
@@ -430,32 +442,32 @@ function RegistrarVentaModal({ onClose, onGuardar }) {
                       {PRODUCTOS.map((p) => <option key={p.id} value={p.id}>{p.nombre} — {formatoMoneda(p.precio)}</option>)}
                     </select>
                   </div>
-                  <div className="field">
+                  <div className={cx("field")}>
                     <span>Cantidad <i>*</i></span>
                     <input type="number" min="1" value={cantidad} onChange={(e) => setCantidad(Number(e.target.value))} />
                   </div>
-                  <div className="field">
+                  <div className={cx("field")}>
                     <span>Talla <i>*</i></span>
                     <select value={talla} onChange={(e) => setTalla(e.target.value)}>
                       {prodSel?.tallas.map((t) => <option key={t}>{t}</option>)}
                     </select>
                   </div>
-                  <div className="field">
+                  <div className={cx("field")}>
                     <span>Color <i>*</i></span>
                     <select value={color} onChange={(e) => setColor(e.target.value)}>
-                      {prodSel?.colores.map((c) => <option key={c}>{c}</option>)}
+                      {prodSel?.colores.map((co) => <option key={co}>{co}</option>)}
                     </select>
                   </div>
                 </div>
-                <button type="button" className="btn btn-dark btn-block" onClick={agregar}>
+                <button type="button" className={cx("btn btn-dark btn-block")} onClick={agregar}>
                   <Icons.Plus /> Agregar producto
                 </button>
               </div>
 
               {items.length > 0 && (
                 <>
-                  <div className="product-summary"><ProductosLista items={items} /></div>
-                  <div className="box-total"><span>Total</span><span>{formatoMoneda(total)}</span></div>
+                  <div className={cx("product-summary")}><ProductosLista items={items} /></div>
+                  <div className={cx("box-total")}><span>Total</span><span>{formatoMoneda(total)}</span></div>
                 </>
               )}
             </>
@@ -463,17 +475,17 @@ function RegistrarVentaModal({ onClose, onGuardar }) {
 
           {paso === 3 && (
             <>
-              <p className="modal-hint">Selecciona el método de pago y el estado del pago.</p>
-              <div className="field-label">Método de pago *</div>
-              <div className="payment-grid">
+              <p className={cx("modal-hint")}>Selecciona el método de pago y el estado del pago.</p>
+              <div className={cx("field-label")}>Método de pago *</div>
+              <div className={cx("payment-grid")}>
                 {METODOS_PAGO.map((m) => (
-                  <button key={m} type="button" className={`payment-card ${metodoPago === m ? "selected" : ""}`} onClick={() => setMetodoPago(m)}>
+                  <button key={m} type="button" className={cx("payment-card", metodoPago === m && "selected")} onClick={() => setMetodoPago(m)}>
                     <Icons.Card /><span>{m}</span>
                   </button>
                 ))}
               </div>
-              <div className="info-box">
-                <div className="info-icon"><Icons.Check /></div>
+              <div className={cx("info-box")}>
+                <div className={cx("info-icon")}><Icons.Check /></div>
                 {metodoPago === "Efectivo" ? (
                   <>
                     <span>Efectivo no requiere comprobante. Estado de pago:</span>
@@ -488,15 +500,15 @@ function RegistrarVentaModal({ onClose, onGuardar }) {
 
           {paso === 4 && (
             <>
-              <p className="modal-hint">Revisa el resumen antes de confirmar la venta.</p>
+              <p className={cx("modal-hint")}>Revisa el resumen antes de confirmar la venta.</p>
               <Section>Cliente</Section>
               <ClienteBox cliente={clienteSel} />
               <Section>Productos</Section>
-              <div className="product-summary summary-list"><ProductosLista items={items} /></div>
-              <div className="box-total"><span>Total</span><span>{formatoMoneda(total)}</span></div>
+              <div className={cx("product-summary summary-list")}><ProductosLista items={items} /></div>
+              <div className={cx("box-total")}><span>Total</span><span>{formatoMoneda(total)}</span></div>
               <Section>Pago</Section>
-              <div className="kv-row"><span>Método</span><strong>{metodoPago}</strong></div>
-              <div className="kv-row">
+              <div className={cx("kv-row")}><span>Método</span><strong>{metodoPago}</strong></div>
+              <div className={cx("kv-row")}>
                 <span>Estado pago</span>
                 <Badge variantClass={ESTADO_PAGO_META.Pendiente}>Pendiente</Badge>
               </div>
@@ -504,14 +516,14 @@ function RegistrarVentaModal({ onClose, onGuardar }) {
           )}
         </div>
 
-        <footer className="modal-footer">
+        <div className={cx("modal-footer")}>
           {paso > 1
-            ? <button className="btn btn-outline" onClick={() => setPaso(paso - 1)}>Atrás</button>
-            : <button className="btn btn-outline" onClick={onClose}>Cancelar</button>}
+            ? <button className={cx("btn btn-outline")} onClick={() => setPaso(paso - 1)}>Atrás</button>
+            : <button className={cx("btn btn-outline")} onClick={onClose}>Cancelar</button>}
           {paso < 4
-            ? <button className="btn btn-dark" disabled={(paso === 1 && !clienteSel) || (paso === 2 && items.length === 0)} onClick={() => setPaso(paso + 1)}>Siguiente</button>
-            : <button className="btn btn-dark" onClick={confirmar}>Confirmar venta</button>}
-        </footer>
+            ? <button className={cx("btn btn-dark")} disabled={(paso === 1 && !clienteSel) || (paso === 2 && items.length === 0)} onClick={() => setPaso(paso + 1)}>Siguiente</button>
+            : <button className={cx("btn btn-dark")} onClick={confirmar}>Confirmar venta</button>}
+        </div>
       </div>
     </div>
   );
@@ -526,44 +538,44 @@ function EditarVentaModal({ venta, onClose, onGuardar }) {
   const [metodoPago, setMetodoPago] = useState(venta.metodoPago);
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-card modal-edit">
+    <div className={cx("modal-overlay")}>
+      <div className={cx("modal-card modal-edit")}>
         <ModalHeader eyebrow={`Editando ${venta.codigo}`} title="Editar Venta" onClose={onClose} />
 
-        <div className="modal-body">
+        <div className={cx("modal-body")}>
           <Section>Cliente</Section>
-          <div className="readonly-field">
-            {venta.cliente.nombre} <span className="dim">—</span> {venta.cliente.email}
+          <div className={cx("readonly-field")}>
+            {venta.cliente.nombre} <span className={cx("dim")}>—</span> {venta.cliente.email}
           </div>
 
           <Section>Productos</Section>
-          <div className="product-summary summary-list">
+          <div className={cx("product-summary summary-list")}>
             {venta.items.map((it, idx) => (
-              <div key={idx} className="product-row">
+              <div key={idx} className={cx("product-row")}>
                 <span>{it.producto.nombre} ({it.talla}, {it.color}) x{it.cantidad}</span>
-                <span className="product-price">{formatoMoneda(it.subtotal)}</span>
+                <span className={cx("product-price")}>{formatoMoneda(it.subtotal)}</span>
               </div>
             ))}
-            <div className="product-row total-row">
+            <div className={cx("product-row total-row")}>
               <span>Total</span><span>{formatoMoneda(venta.total)}</span>
             </div>
           </div>
 
-          <div className="form-grid" style={{ marginTop: 18 }}>
-            <div className="field">
+          <div className={cx("form-grid")} style={{ marginTop: 22 }}>
+            <div className={cx("field")}>
               <span>Estado venta <i>*</i></span>
               <select value={estadoVenta} onChange={(e) => setEstadoVenta(e.target.value)}>
                 {Object.keys(ESTADO_VENTA_META).map((e) => <option key={e}>{e}</option>)}
               </select>
             </div>
-            <div className="field">
+            <div className={cx("field")}>
               <span>Estado pago <i>*</i></span>
               <select value={estadoPago} onChange={(e) => setEstadoPago(e.target.value)}>
                 {Object.keys(ESTADO_PAGO_META).map((p) => <option key={p}>{p}</option>)}
               </select>
             </div>
           </div>
-          <div className="field">
+          <div className={cx("field")}>
             <span>Método de pago <i>*</i></span>
             <select value={metodoPago} onChange={(e) => setMetodoPago(e.target.value)}>
               {METODOS_PAGO.map((m) => <option key={m}>{m}</option>)}
@@ -571,10 +583,10 @@ function EditarVentaModal({ venta, onClose, onGuardar }) {
           </div>
         </div>
 
-        <footer className="modal-footer">
-          <button className="btn btn-outline" onClick={onClose}>Cancelar</button>
-          <button className="btn btn-dark" onClick={() => onGuardar({ ...venta, estadoVenta, estadoPago, metodoPago })}>Guardar cambios</button>
-        </footer>
+        <div className={cx("modal-footer")}>
+          <button className={cx("btn btn-outline")} onClick={onClose}>Cancelar</button>
+          <button className={cx("btn btn-dark")} onClick={() => onGuardar({ ...venta, estadoVenta, estadoPago, metodoPago })}>Guardar cambios</button>
+        </div>
       </div>
     </div>
   );
@@ -587,29 +599,29 @@ function CambiarEstadoModal({ venta, onClose, onGuardar }) {
   const [seleccion, setSeleccion] = useState(venta.estadoVenta);
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-card modal-status">
+    <div className={cx("modal-overlay")}>
+      <div className={cx("modal-card modal-status")}>
         <ModalHeader eyebrow={`Venta ${venta.codigo}`} title="Cambiar Estado" onClose={onClose} />
 
-        <div className="modal-body">
-          <div className="status-list">
+        <div className={cx("modal-body")}>
+          <div className={cx("status-list")}>
             {Object.entries(ESTADO_VENTA_META).map(([key, data]) => (
-              <div key={key} className={`status-row ${seleccion === key ? "selected" : ""}`} onClick={() => setSeleccion(key)}>
-                <span className="status-main">
-                  <span className={`status-dot ${data.dotClass}`} />
-                  <span className="status-name">{key}</span>
-                  <span className="status-desc">{data.desc}</span>
+              <div key={key} className={cx("status-row", seleccion === key && "selected")} onClick={() => setSeleccion(key)}>
+                <span className={cx("status-main")}>
+                  <span className={cx("status-dot", data.dotClass)} />
+                  <span className={cx("status-name")}>{key}</span>
+                  <span className={cx("status-desc")}>{data.desc}</span>
                 </span>
-                {seleccion === key && <span className="status-check"><Icons.Check /></span>}
+                {seleccion === key && <span className={cx("status-check")}><Icons.Check /></span>}
               </div>
             ))}
           </div>
         </div>
 
-        <footer className="modal-footer">
-          <button className="btn btn-outline" onClick={onClose}>Cancelar</button>
-          <button className="btn btn-dark" onClick={() => onGuardar({ ...venta, estadoVenta: seleccion })}>Aplicar</button>
-        </footer>
+        <div className={cx("modal-footer")}>
+          <button className={cx("btn btn-outline")} onClick={onClose}>Cancelar</button>
+          <button className={cx("btn btn-dark")} onClick={() => onGuardar({ ...venta, estadoVenta: seleccion })}>Aplicar</button>
+        </div>
       </div>
     </div>
   );
@@ -620,87 +632,86 @@ function CambiarEstadoModal({ venta, onClose, onGuardar }) {
 /* ------------------------------------------------------------------ */
 function VerVentaModal({ venta, onClose }) {
   return (
-    <div className="modal-overlay">
-      <div className="modal-card modal-view">
+    <div className={cx("modal-overlay")}>
+      <div className={cx("modal-card modal-view")}>
         <ModalHeader eyebrow={`Detalle ${venta.codigo}`} title="Ver Venta" onClose={onClose} />
 
-        <div className="modal-body">
+        <div className={cx("modal-body")}>
           <Section>Cliente</Section>
           <ClienteBox cliente={venta.cliente} />
 
           <Section>Productos</Section>
-          <div className="product-summary summary-list" style={{ marginTop: 0 }}>
+          <div className={cx("product-summary summary-list")} style={{ marginTop: 0 }}>
             <ProductosLista items={venta.items} />
-            <div className="product-row total-row">
+            <div className={cx("product-row total-row")}>
               <span>Total</span><span>{formatoMoneda(venta.total)}</span>
             </div>
           </div>
 
           <Section>Método de pago y estado</Section>
-          <div className="kv-row kv-plain"><span>Método de pago</span><strong>{venta.metodoPago}</strong></div>
-          <div className="kv-row kv-plain">
+          <div className={cx("kv-row kv-plain")}><span>Método de pago</span><strong>{venta.metodoPago}</strong></div>
+          <div className={cx("kv-row kv-plain")}>
             <span>Estado venta</span>
             <Badge variantClass={ESTADO_VENTA_META[venta.estadoVenta].colorClass}>{venta.estadoVenta}</Badge>
           </div>
-          <div className="kv-row kv-plain">
+          <div className={cx("kv-row kv-plain")}>
             <span>Estado pago</span>
             <Badge variantClass={ESTADO_PAGO_META[venta.estadoPago]}>{venta.estadoPago}</Badge>
           </div>
 
           <Section>Historial</Section>
-          <div className="timeline">
+          <div className={cx("timeline")}>
             {venta.historial.map((h, i) => (
-              <div key={i} className={`timeline-item ${h.color || "blue"}`}>
-                <div className="timeline-icon">{h.accion === "Creado" ? <Icons.Plus /> : <Icons.Pencil />}</div>
+              <div key={i} className={cx("timeline-item", h.color || "blue")}>
+                <div className={cx("timeline-icon")}>{h.accion === "Creado" ? <Icons.Plus /> : <Icons.Pencil />}</div>
                 <div><strong>{h.accion}</strong><small>{h.fecha}</small></div>
               </div>
             ))}
           </div>
 
           <Section>Comprobante de pago</Section>
-          <div className="warning-box">
-            <div className="warning-icon"><Icons.Info /></div>
+          <div className={cx("warning-box")}>
+            <div className={cx("warning-icon")}><Icons.Info /></div>
             <span>No se ha subido comprobante de pago. Estado: <strong>{venta.estadoPago.toUpperCase()}</strong></span>
           </div>
 
           <Section>Recibo</Section>
-          <div className="recibo-card">
-            <div className="recibo-title">Recibo de venta</div>
-            <div className="recibo-sub">Artesanías &amp; Accesorios</div>
-            <div className="recibo-sub">Fecha: {venta.fecha}</div>
+          <div className={cx("recibo-card")}>
+            <div className={cx("recibo-title")}>Recibo de venta</div>
+            <div className={cx("recibo-sub")}>Artesanías &amp; Accesorios</div>
+            <div className={cx("recibo-sub")}>Fecha: {venta.fecha}</div>
 
-            <div className="recibo-block">
-              <div className="recibo-label">Cliente</div>
-              <div className="recibo-line"><strong>{venta.cliente.nombre}</strong></div>
-              <div className="recibo-line"><span className="muted">{venta.cliente.email}</span></div>
+            <div className={cx("recibo-block")}>
+              <div className={cx("recibo-label")}>Cliente</div>
+              <div className={cx("recibo-line")}><strong>{venta.cliente.nombre}</strong></div>
+              <div className={cx("recibo-line")}><span className={cx("muted")}>{venta.cliente.email}</span></div>
             </div>
 
-            <div className="recibo-block">
-              <div className="recibo-label">Detalle</div>
+            <div className={cx("recibo-block")}>
+              <div className={cx("recibo-label")}>Detalle</div>
               {venta.items.map((it, idx) => (
-                <div key={idx} className="recibo-line">
-                  <span>{it.producto.nombre} <span className="muted">({it.talla}, {it.color}) x{it.cantidad}</span></span>
+                <div key={idx} className={cx("recibo-line")}>
+                  <span>{it.producto.nombre} <span className={cx("muted")}>({it.talla}, {it.color}) x{it.cantidad}</span></span>
                   <strong>{formatoMoneda(it.subtotal)}</strong>
                 </div>
               ))}
             </div>
 
-            <div className="recibo-total"><span>TOTAL</span><span>{formatoMoneda(venta.total)}</span></div>
+            <div className={cx("recibo-total")}><span>TOTAL</span><span>{formatoMoneda(venta.total)}</span></div>
 
-            <div className="recibo-meta">
+            <div className={cx("recibo-meta")}>
               <span>Método: <strong>{venta.metodoPago}</strong></span>
               <span>Pago: <strong>{venta.estadoPago}</strong></span>
             </div>
-            <div className="recibo-footer">Código: <strong>{venta.codigo}</strong> · ¡Gracias por su compra!</div>
+            <div className={cx("recibo-footer")}>Código: <strong>{venta.codigo}</strong> · ¡Gracias por su compra!</div>
           </div>
 
-          <button className="btn btn-outline btn-block" onClick={() => window.print()}>
+          <button className={cx("btn btn-outline btn-block")} onClick={() => window.print()}>
             <Icons.Print /> Imprimir / Descargar
           </button>
-          <button className="btn btn-outline btn-block" style={{ marginTop: 10 }} onClick={onClose}>Cerrar</button>
+          <button className={cx("btn btn-outline btn-block")} style={{ marginTop: 10 }} onClick={onClose}>Cerrar</button>
         </div>
       </div>
     </div>
-    //hola
   );
 }

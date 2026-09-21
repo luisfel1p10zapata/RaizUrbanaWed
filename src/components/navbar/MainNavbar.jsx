@@ -1,9 +1,11 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Moon, ShoppingBag , LayoutDashboard } from 'lucide-react';
+import { Moon, Sun, ShoppingBag } from 'lucide-react';
+import useTheme from '../hook/useTheme';
 import './MainNavbar.css';
 
 const MainNavbar = () => {
     const navigate = useNavigate();
+    const { theme, toggleTheme } = useTheme();
 
     return (
         <header className="main-navbar">
@@ -13,7 +15,7 @@ const MainNavbar = () => {
                     onClick={() => navigate('/inicio')}
                 >
                     <img
-                        src="/images/logo-ru.png"
+                        src={theme === 'dark' ? '/images/logoDark.png' : '/images/logo-ru.png'}
                         alt="Raíz Urbana"
                     />
                 </button>
@@ -33,8 +35,9 @@ const MainNavbar = () => {
                 <button
                     type="button"
                     aria-label="Cambiar modo"
+                    onClick={toggleTheme}
                 >
-                    <Moon size={19} />
+                    {theme === 'dark' ? <Sun size={19} /> : <Moon size={19} />}
                 </button>
 
                 <button
@@ -57,14 +60,6 @@ const MainNavbar = () => {
                 >
                     Registrarse
                 </NavLink>
-
-                <button
-                    type="button"
-                    className="main-navbar-admin"
-                    onClick={() => navigate('/dashboard')}
-                >
-                    <LayoutDashboard></LayoutDashboard>Administrador
-                </button>
             </div>
         </header>
     );

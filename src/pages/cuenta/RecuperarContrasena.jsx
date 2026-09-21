@@ -1,10 +1,15 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, ArrowLeft, Layers, Star, LayoutGrid } from 'lucide-react';
+import useTheme from '../../components/hook/useTheme';
 import './recuperarcontraseña.css';
 
 export default function RecuperarContrasena() {
   const [email, setEmail] = useState('');
+  const { theme } = useTheme();
+
+  // Selección de logo dinámico según el tema
+  const logoSrc = theme === 'dark' ? '/images/logoDark.png' : '/images/logo-ru.png';
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -15,7 +20,9 @@ export default function RecuperarContrasena() {
     <div className="auth-container">
       {/* Panel Izquierdo Hero */}
       <div className="auth-left-panel">
-        <div className="auth-brand-logo">R\U</div>
+        <div className="auth-brand-logo-container">
+          <img src={logoSrc} alt="Raíz Urbana" className="auth-brand-logo-img" />
+        </div>
 
         <div className="auth-hero-content">
           <div className="auth-hero-subtitle-tag">SISTEMA ADMINISTRATIVO</div>

@@ -1,19 +1,51 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
 
 :root {
+  /* Paleta original */
   --color-primary: #22223B;
   --color-secondary: #4A4E69;
   --color-accent: #9A8C98;
   --color-soft: #C9ADA7;
   --color-background: #F2E9E4;
 
-  font-family: 'Montserrat', sans-serif;
+  /* Sidebar y componentes */
+  --color-surface: #FFFFFF;
+  --color-border: #E5E5E5;
+  --color-text-muted: #555555;
+  --color-text-strong: #111111;
+  --color-hover: #F3F3F3;
+  --color-active-bg: #E8E8EB;
+  --color-active-text: #343449;
+  --color-scrollbar: #D0D0D0;
+  --color-shadow: rgba(17, 17, 17, 0.06);
 
+  font-family: 'Montserrat', sans-serif;
   color: var(--color-primary);
   background-color: var(--color-background);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
+}
+
+/* ============ MODO OSCURO (paleta "Dark Mode") ============ */
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-primary: #F2E9E4;      /* Text */
+  --color-secondary: #C9ADA7;    /* Accent de la paleta */
+  --color-accent: #9A8C98;       /* Secondary de la paleta */
+  --color-soft: #4A4E69;         /* Primary de la paleta */
+  --color-background: #12131C;   /* Background */
+
+  --color-surface: #1C1E2E;      /* Surface */
+  --color-border: #3A3D57;
+  --color-text-muted: #C9ADA7;
+  --color-text-strong: #F2E9E4;
+  --color-hover: #252839;
+  --color-active-bg: #2A2D45;
+  --color-active-text: #F2E9E4;
+  --color-scrollbar: #4A4E69;
+  --color-shadow: rgba(0, 0, 0, 0.4);
 }
 
 * {
@@ -26,6 +58,15 @@ body,
   width: 100%;
   min-height: 100%;
   margin: 0;
+  background-color: var(--color-background);
+}
+
+/* Contenedores del layout (el marco beige): fuerzan el fondo del tema
+   aunque su CSS tenga un color fijo */
+#root > div,
+#root > div > main,
+#root > div > div {
+  background-color: var(--color-background);
 }
 
 body {
@@ -36,6 +77,8 @@ body {
 
   background-color: var(--color-background);
   color: var(--color-primary);
+
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 button,
