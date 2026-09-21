@@ -1,820 +1,323 @@
-/* =========================================================
-   VARIABLES GLOBALES Y FUENTES DE MARCA (Raíz Urbana)
-   ========================================================= */
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..800;1,400..800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-
-:root {
-    --font-logo: 'Playfair Display', Georgia, serif;
-    --font-body: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-    --color-primary: #22223b;
-    --color-secondary: #4a4e69;
-    --color-muted: #9a8c98;
-    --color-border: #c9ada7;
-    --color-bg-light: #f7f5f4;
-}
-
-.tamanos-page {
-    padding: 24px;
-    max-width: 1280px;
-    margin: 0 auto;
-    font-family: var(--font-body);
-    color: var(--color-primary);
-    box-sizing: border-box;
-}
-
-/* Header del Módulo */
-.tam-page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 24px;
-}
-
-.tam-module-label {
-    font-size: 11px;
-    font-weight: 800;
-    color: var(--color-muted);
-    letter-spacing: 1px;
-}
-
-.tam-page-header h1 {
-    font-family: var(--font-logo);
-    font-size: 32px;
-    font-weight: 700;
-    color: var(--color-primary);
-    margin: 2px 0 4px 0;
-}
-
-.tam-page-header p {
-    font-size: 13px;
-    color: var(--color-secondary);
-    margin: 0;
-}
-
-.tam-primary-button {
-    background: var(--color-primary);
-    color: #ffffff;
-    border: none;
-    border-radius: 8px;
-    padding: 10px 18px;
-    font-size: 12px;
-    font-weight: 700;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-    transition: background 0.2s ease;
-    font-family: var(--font-body);
-}
-
-.tam-primary-button:hover {
-    background: var(--color-secondary);
-}
-
-/* Grid de KPIs */
-.tam-kpi-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 16px;
-    margin-bottom: 24px;
-}
-
-.tam-kpi-card {
-    background: #ffffff;
-    border: 1px solid var(--color-border);
-    border-radius: 12px;
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
-}
-
-.tam-kpi-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 12px;
-    color: var(--color-secondary);
-    font-weight: 600;
-}
-
-.tam-kpi-icon {
-    background: var(--color-bg-light);
-    color: var(--color-primary);
-    padding: 6px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.tam-kpi-card strong {
-    font-family: var(--font-logo);
-    font-size: 28px;
-    font-weight: 700;
-    color: var(--color-primary);
-}
-
-.tam-kpi-card small {
-    font-size: 11px;
-    font-weight: 600;
-}
-
-.tam-positive {
-    color: #2a9d8f;
-}
-
-.tam-neutral {
-    color: var(--color-muted);
-}
-
-/* Buscador (Solo Búsqueda) */
-.tam-filters-card {
-    background: #ffffff;
-    border: 1px solid var(--color-border);
-    border-radius: 12px;
-    padding: 16px;
-    margin-bottom: 24px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
-}
-
-.tam-filters-title {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--color-secondary);
-    margin-bottom: 12px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.tam-filters-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    align-items: center;
-}
-
-.tam-search {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: #ffffff;
-    border: 1px solid var(--color-border);
-    border-radius: 8px;
-    padding: 8px 12px;
-    flex: 1;
-    min-width: 240px;
-    color: var(--color-muted);
-}
-
-.tam-search input {
-    border: none;
-    outline: none;
-    width: 100%;
-    font-size: 12px;
-    color: var(--color-primary);
-    background: transparent;
-    font-family: var(--font-body);
-}
-
-.tam-clear-filters {
-    background: none;
-    border: none;
-    color: #e63946;
-    font-size: 12px;
-    font-weight: 700;
-    cursor: pointer;
-    padding: 8px 12px;
-    font-family: var(--font-body);
-}
-
-.tam-clear-filters:hover {
-    text-decoration: underline;
-}
-
-/* Tabla de Tamaños */
-.tam-ref-table-card {
-    background: #ffffff;
-    border: 1px solid var(--color-border);
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
-    overflow: hidden;
-}
-
-.tam-ref-table-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px 20px;
-    border-bottom: 1px solid #e2d7d5;
-}
-
-.tam-ref-title {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.tam-ref-title span:first-child {
-    font-family: var(--font-logo);
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--color-primary);
-}
-
-.tam-ref-badge {
-    background: #e2d7d5;
-    color: var(--color-secondary);
-    font-size: 11px;
-    font-weight: 700;
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-family: var(--font-body);
-}
-
-.tam-ref-page-counter {
-    font-size: 11px;
-    color: var(--color-muted);
-    font-weight: 500;
-}
-
-.tam-ref-table-wrapper {
-    overflow-x: auto;
-}
-
-.tam-ref-table {
-    width: 100%;
-    border-collapse: collapse;
-    text-align: left;
-}
-
-.tam-ref-table th {
-    background: var(--color-bg-light);
-    font-size: 10px;
-    font-weight: 800;
-    color: var(--color-secondary);
-    letter-spacing: 0.6px;
-    text-transform: uppercase;
-    padding: 12px 16px;
-    border-bottom: 1px solid #e2d7d5;
-}
-
-.tam-ref-table td {
-    padding: 14px 16px;
-    border-bottom: 1px solid #f2ecea;
-    vertical-align: middle;
-    font-size: 13px;
-    color: var(--color-primary);
-}
-
-.tam-ref-table tr:last-child td {
-    border-bottom: none;
-}
-
-.col-code {
-    font-size: 12px;
-    color: var(--color-muted);
-    font-weight: 600;
-}
-
-.tam-name-cell {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-weight: 700;
-    color: var(--color-primary);
-}
-
-.tam-icon-tag {
-    width: 32px;
-    height: 32px;
-    background: #f0ecea;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--color-secondary);
-    flex-shrink: 0;
-}
-
-.tam-desc-text {
-    font-size: 12px;
-    color: var(--color-secondary);
-    max-width: 380px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-/* Badges / Pills de Estado */
-.tam-status-toggle {
-    background: none;
-    border: none;
-    padding: 0;
-    cursor: pointer;
-}
-
-.tam-status-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 11px;
-    font-weight: 700;
-    padding: 4px 12px;
-    border-radius: 20px;
-    border: 1px solid transparent;
-}
-
-.tam-status-pill.activo {
-    background-color: #e8f7ee;
-    border-color: #b7e4c7;
-    color: #1b4332;
-}
-
-.tam-status-pill.inactivo {
-    background-color: #fdf2f2;
-    border-color: #f8d7da;
-    color: #721c24;
-}
-
-.tam-status-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background-color: currentColor;
-}
-
-/* Acciones */
-.tam-ref-actions {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 6px;
-}
-
-.btn-icon {
-    background: none;
-    border: none;
-    padding: 6px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.btn-icon.view {
-    color: #2a9d8f;
-}
-
-.btn-icon.edit {
-    color: #f4a261;
-}
-
-.btn-icon.delete {
-    color: #e63946;
-}
-
-.btn-icon:hover {
-    background: #f4ecea;
-}
-
-.empty-row {
-    text-align: center;
-    padding: 30px !important;
-    color: var(--color-muted);
-    font-style: italic;
-}
-
-/* Paginación */
-.tam-ref-pagination {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 14px 20px;
-    border-top: 1px solid #e2d7d5;
-}
-
-.tam-ref-total-text {
-    font-size: 11px;
-    color: var(--color-muted);
-}
-
-.tam-ref-pagination-controls {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.p-nav,
-.p-num {
-    background: #ffffff;
-    border: 1px solid #e2d7d5;
-    color: var(--color-secondary);
-    font-size: 11px;
-    font-weight: 600;
-    height: 28px;
-    min-width: 28px;
-    padding: 0 6px;
-    border-radius: 6px;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-family: var(--font-body);
-}
-
-.p-num.active {
-    background: var(--color-primary);
-    color: #ffffff;
-    border-color: var(--color-primary);
-}
-
-.p-nav:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-}
-
-/* Modales Modulares */
-.tam-modal-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 1000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 16px;
-    background-color: rgba(0, 0, 0, 0.45);
-    backdrop-filter: blur(3px);
-}
-
-.tam-modal {
-    background: #ffffff;
-    border-radius: 16px;
-    width: 100%;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-}
-
-.tam-form-modal-custom {
-    max-width: 460px;
-}
-
-.tam-view-modal-custom {
-    max-width: 440px;
-}
-
-.tam-delete-modal {
-    max-width: 380px;
-}
-
-.tam-modal-header {
-    padding: 20px 24px 12px 24px;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-}
-
-.tam-modal-eyebrow {
-    font-size: 10px;
-    font-weight: 800;
-    color: var(--color-secondary);
-    letter-spacing: 0.8px;
-    display: block;
-    margin-bottom: 2px;
-    text-transform: uppercase;
-}
-
-.tam-modal-title {
-    font-family: var(--font-logo);
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--color-primary);
-    margin: 0;
-}
-
-.tam-close-button {
-    background: none;
-    border: none;
-    color: var(--color-muted);
-    cursor: pointer;
-    padding: 4px;
-    border-radius: 6px;
-}
-
-.tam-close-button:hover {
-    background: var(--color-bg-light);
-    color: var(--color-primary);
-}
-
-.tam-form-body-custom {
-    padding: 0 24px 20px 24px;
-    max-height: 70vh;
-    overflow-y: auto;
-}
-
-.tam-field-group {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    margin-top: 14px;
-    width: 100%;
-}
-
-.tam-field-group label {
-    font-size: 10px;
-    font-weight: 800;
-    color: var(--color-secondary);
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-}
-
-.tam-field-group input,
-.tam-field-group textarea {
-    border: 1px solid var(--color-border);
-    border-radius: 8px;
-    padding: 9px 12px;
-    font-size: 12px;
-    color: var(--color-primary);
-    outline: none;
-    background: #ffffff;
-    font-family: var(--font-body);
-    width: 100%;
-    box-sizing: border-box;
-}
-
-.tam-field-group input:focus,
-.tam-field-group textarea:focus {
-    border-color: var(--color-primary);
-}
-
-.tam-field-hint {
-    font-size: 10px;
-    color: var(--color-muted);
-    margin-top: 2px;
-}
-
-.tam-status-box {
-    margin-top: 16px;
-    background: #e8f7ee;
-    border: 1px solid #b7e4c7;
-    color: #1b4332;
-    padding: 10px 14px;
-    border-radius: 10px;
-    font-size: 11px;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.tam-status-options {
-    display: flex;
-    gap: 12px;
-    margin-top: 8px;
-}
-
-.tam-status-radio-card {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 14px;
-    border: 1px solid var(--color-border);
-    border-radius: 10px;
-    background: #ffffff;
-    cursor: pointer;
-    font-size: 12px;
-    font-weight: 700;
-    transition: all 0.2s ease;
-    font-family: var(--font-body);
-}
-
-.tam-status-radio-card.active {
-    background: #f2ecea;
-    border-color: var(--color-primary);
-}
-
-.dot-active {
-    color: #2a9d8f;
-}
-
-.dot-inactive {
-    color: #e63946;
-}
-
-.radio-circle {
-    width: 14px;
-    height: 14px;
-    border: 1px solid var(--color-border);
-    border-radius: 50%;
-    display: inline-block;
-}
-
-.tam-status-radio-card.active .radio-circle {
-    border-color: var(--color-primary);
-    background: var(--color-primary);
-}
-
-.tam-custom-modal-footer {
-    display: flex;
-    gap: 12px;
-    padding: 16px 24px;
-    border-top: 1px solid #e2d7d5;
-    background: #ffffff;
-}
-
-.btn-cancel-custom {
-    flex: 1;
-    background: #ffffff;
-    border: 1px solid var(--color-border);
-    color: var(--color-primary);
-    font-size: 12px;
-    font-weight: 700;
-    padding: 10px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-family: var(--font-body);
-}
-
-.btn-cancel-custom:hover {
-    background: var(--color-bg-light);
-}
-
-.btn-dark-custom {
-    flex: 1;
-    background: var(--color-primary);
-    border: none;
-    color: #ffffff;
-    font-size: 12px;
-    font-weight: 700;
-    padding: 10px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-family: var(--font-body);
-}
-
-.btn-dark-custom:hover {
-    background: var(--color-secondary);
-}
-
-/* Modal Consultar / Ver */
-.tam-view-body-custom {
-    padding: 16px 20px;
-}
-
-.tam-view-hero-card {
-    background: var(--color-bg-light);
-    border-radius: 12px;
-    padding: 14px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
-}
-
-.tam-view-hero-left {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.tam-view-avatar {
-    width: 44px;
-    height: 44px;
-    background: #e2d7d5;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--color-primary);
-    flex-shrink: 0;
-}
-
-.tam-view-hero-details h3 {
-    font-family: var(--font-logo);
-    font-size: 17px;
-    font-weight: 700;
-    color: var(--color-primary);
-    margin: 0 0 2px 0;
-}
-
-.tam-view-hero-details p {
-    font-size: 11px;
-    color: var(--color-muted);
-    margin: 0;
-}
-
-.tam-view-details-table {
-    display: flex;
-    flex-direction: column;
-}
-
-.tam-view-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 0;
-    border-bottom: 1px solid #f2ecea;
-    font-size: 12px;
-}
-
-.tam-view-row:last-child {
-    border-bottom: none;
-}
-
-.tam-view-row .lbl {
-    color: var(--color-muted);
-}
-
-.tam-view-row .val {
-    color: var(--color-primary);
-    text-align: right;
-}
-
-.tam-view-row .val.bold {
-    font-weight: 700;
-}
-
-.tam-view-row .val.desc {
-    max-width: 240px;
-    font-size: 11px;
-    line-height: 1.4;
-    color: var(--color-secondary);
-}
-
-/* Modal Eliminar */
-.tam-delete-content {
-    padding: 24px;
-    text-align: center;
-}
-
-.tam-delete-icon {
-    width: 48px;
-    height: 48px;
-    background: #f8d7da;
-    color: #e63946;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 12px auto;
-}
-
-.tam-delete-content h3 {
-    font-family: var(--font-logo);
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--color-primary);
-    margin: 0 0 6px 0;
-}
-
-.tam-delete-content p {
-    font-size: 13px;
-    color: var(--color-secondary);
-    margin: 0;
-}
-
-.tam-modal-footer {
-    display: flex;
-    gap: 12px;
-    padding: 16px 24px;
-    border-top: 1px solid #e2d7d5;
-}
-
-.tam-secondary-button {
-    flex: 1;
-    background: #ffffff;
-    border: 1px solid var(--color-border);
-    color: var(--color-primary);
-    font-size: 12px;
-    font-weight: 700;
-    padding: 10px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-family: var(--font-body);
-}
-
-.tam-danger-button {
-    flex: 1;
-    background: #e63946;
-    border: none;
-    color: #ffffff;
-    font-size: 12px;
-    font-weight: 700;
-    padding: 10px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-family: var(--font-body);
-}
-
-.tam-danger-button:hover {
-    background: #c92a2a;
+/* ==================================================================
+   Tamanos.css — Módulo de Tamaños (Raíz Urbana)
+   Tipografías: Playfair Display (títulos) + Montserrat (interfaz)
+   Sistema visual unificado con Ventas.css (prefijo tam-)
+   NOTA: cada selector lleva el prefijo "html body" para ganar en
+   especificidad a CSS globales o copias viejas de otros módulos.
+   ================================================================== */
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap");
+
+html body .tamanos-page,
+html body .tam-modal-overlay {
+  --bg: #f3e8e3;
+  --panel: #ffffff;
+  --border: #c9aea7;
+  --line: #e6dcd8;
+  --ink: #1c1d36;
+  --ink-soft: #4b4b5a;
+  --muted: #7b7a88;
+  --soft-bg: #eceaee;
+  --dark: #1f2038;
+  --dark-hover: #2e2f4d;
+  --green-bg: #e3f7ea; --green-fg: #1f9d55; --green-bd: #a9e3c0;
+  --blue-fg: #2f6fed;
+  --red-bg: #fde6e3; --red-fg: #d8483a;
+  --gray-bg: #f0eff1; --gray-fg: #6b6a72; --gray-bd: #dcdadf;
+  --serif: "Playfair Display", Georgia, serif;
+}
+
+html body .tamanos-page {
+  font-family: "Montserrat", -apple-system, "Segoe UI", sans-serif;
+  color: var(--ink);
+  padding: 48px 10px 90px;
+  min-height: 100vh;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+}
+html body .tamanos-page *,
+html body .tam-modal-overlay * { box-sizing: border-box; font-family: inherit; }
+html body .tamanos-page h1 { margin: 0; }
+
+/* ---------------- Header ---------------- */
+html body .tam-page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 28px; flex-wrap: wrap; gap: 16px; }
+html body .tam-module-label { display: block; font-size: 12px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 9px; }
+html body .tam-page-header h1 { font-family: var(--serif) !important; font-size: 44px; font-weight: 500; line-height: 1.15; color: var(--ink); overflow-wrap: break-word; word-break: break-word; }
+html body .tam-page-header p { margin: 5px 0 0; font-size: 14.5px; color: var(--ink-soft); }
+
+/* ---------------- Buttons ---------------- */
+html body .tam-primary-button,
+html body .tam-secondary-button,
+html body .tam-danger-button,
+html body .btn-cancel-custom,
+html body .btn-dark-custom { display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-size: 14.5px; font-weight: 600; padding: 13px 22px; border-radius: 10px; border: 1px solid transparent; cursor: pointer; letter-spacing: 0; text-transform: none; transition: background .15s ease, border-color .15s ease, opacity .15s ease; }
+html body .tam-primary-button svg,
+html body .tam-secondary-button svg,
+html body .tam-danger-button svg { width: 17px; height: 17px; flex-shrink: 0; }
+html body .tam-primary-button { padding: 15px 28px; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; background: var(--dark); border-color: var(--dark); color: #fff; }
+html body .tam-primary-button:hover { background: var(--dark-hover); }
+html body .tam-secondary-button,
+html body .btn-cancel-custom { background: #fff; border-color: var(--border); color: var(--ink); }
+html body .tam-secondary-button:hover,
+html body .btn-cancel-custom:hover { background: #faf6f4; }
+html body .btn-dark-custom { background: var(--dark); border-color: var(--dark); color: #fff; }
+html body .btn-dark-custom:hover { background: var(--dark-hover); }
+html body .tam-danger-button { background: var(--red-fg); border-color: var(--red-fg); color: #fff; }
+html body .tam-danger-button:hover { opacity: .9; }
+
+/* ---------------- KPI cards ---------------- */
+html body .tam-kpi-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-bottom: 22px; }
+html body .tam-kpi-card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 24px 26px; display: grid; grid-template-columns: 42px 1fr; column-gap: 15px; align-items: start; min-width: 0; box-shadow: none; }
+html body .tam-kpi-top { display: contents; }
+html body .tam-kpi-top > :not(.tam-kpi-icon) { grid-column: 2; grid-row: 1; font-size: 13px; font-weight: 400; color: var(--muted); line-height: 1.3; }
+html body .tam-kpi-icon { grid-column: 1; grid-row: 1 / span 3; width: 38px; height: 38px; padding: 0; border-radius: 10px; background: var(--soft-bg); color: var(--ink); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+html body .tam-kpi-icon svg { width: 18px; height: 18px; }
+html body .tam-kpi-card strong { grid-column: 2; grid-row: 2; font-family: inherit; font-size: 19px; font-weight: 700; margin-top: 2px; color: var(--ink); word-break: break-word; }
+html body .tam-kpi-card small { grid-column: 2; grid-row: 3; font-size: 13px; font-weight: 400; color: var(--muted); }
+html body .tam-positive { color: var(--green-fg) !important; }
+html body .tam-neutral { color: var(--muted) !important; }
+
+/* ---------------- Buscador ---------------- */
+html body .tam-filters-card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 0; margin-bottom: 22px; overflow: hidden; box-shadow: none; }
+html body .tam-filters-title { display: flex; align-items: center; gap: 10px; font-size: 14.5px; font-weight: 600; padding: 18px 24px; margin: 0; border-bottom: 1px solid var(--border); color: var(--ink); text-transform: none; letter-spacing: 0; flex-wrap: wrap; }
+html body .tam-filters-title svg { width: 17px; height: 17px; flex-shrink: 0; }
+html body .tam-filters-row { display: flex; gap: 12px; padding: 24px 26px; flex-wrap: wrap; align-items: center; }
+html body .tam-search { display: flex; align-items: center; gap: 10px; flex: 3 1 220px; min-width: 0; padding: 0 15px; border: 1px solid var(--border); border-radius: 10px; background: #fff; color: var(--ink); transition: border-color .15s ease; }
+html body .tam-search svg { width: 16px; height: 16px; flex-shrink: 0; color: var(--ink); }
+html body .tam-search input { width: 100%; min-width: 0; border: none; outline: none; background: transparent; padding: 12px 0; font-size: 14.5px; color: var(--ink); box-shadow: none; }
+html body .tam-search input::placeholder { color: #a5a3ae; }
+html body .tam-search:focus-within { border-color: var(--ink-soft); }
+html body .tam-clear-filters { background: none; border: none; color: var(--red-fg); font-size: 14px; font-weight: 600; cursor: pointer; padding: 12px 8px; white-space: nowrap; }
+html body .tam-clear-filters:hover { text-decoration: underline; }
+
+/* ---------------- Tabla ---------------- */
+html body .tam-ref-table-card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; margin-bottom: 22px; overflow: hidden; box-shadow: none; }
+html body .tam-ref-table-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 18px 24px; border-bottom: 1px solid var(--border); flex-wrap: wrap; row-gap: 6px; }
+html body .tam-ref-title { display: flex; align-items: center; gap: 8px; }
+html body .tam-ref-title span:first-child { font-family: inherit; font-size: 14.5px; font-weight: 600; color: var(--ink); }
+html body .tam-ref-badge { background: var(--soft-bg); color: var(--ink); font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 999px; }
+html body .tam-ref-page-counter { margin-left: auto; font-size: 13px; font-weight: 400; color: var(--muted); }
+html body .tam-ref-table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+html body .tam-ref-table { width: 100%; min-width: 760px; border-collapse: collapse; font-size: 14px; text-align: left; }
+html body .tam-ref-table th { text-align: left; font-size: 11.5px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); padding: 15px 20px; background: #f5f3f4; border-bottom: 1px solid var(--border); white-space: nowrap; }
+html body .tam-ref-table td { padding: 18px 20px; border-bottom: 1px solid var(--border); vertical-align: middle; font-size: 14px; color: var(--ink); }
+html body .tam-ref-table th:first-child,
+html body .tam-ref-table td:first-child { padding-left: 24px; }
+html body .tam-ref-table th:last-child,
+html body .tam-ref-table td:last-child { padding-right: 24px; }
+html body .tam-ref-table th:last-child { text-align: center !important; min-width: 148px; }
+html body .tam-ref-table tr:last-child td { border-bottom: none; }
+html body .tamanos-page .col-code { width: 90px; font-size: 12.5px; font-weight: 600; color: var(--muted); }
+html body .tam-name-cell { display: flex; align-items: center; gap: 13px; font-weight: 600; font-size: 14.5px; color: var(--ink); }
+html body .tam-icon-tag { width: 34px; height: 34px; background: var(--soft-bg); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--ink); flex-shrink: 0; }
+html body .tam-icon-tag svg { width: 16px; height: 16px; }
+html body .tam-desc-text { display: block; max-width: 380px; font-size: 14px; color: var(--ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ---------------- Badges de estado ---------------- */
+html body .tam-status-toggle { background: none; border: none; padding: 0; cursor: pointer; }
+html body .tam-status-pill { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; padding: 5px 13px; border-radius: 999px; border: 1px solid transparent; white-space: nowrap; }
+html body .tam-status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+html body .tam-status-pill.activo { background: var(--green-bg); color: var(--green-fg); border-color: var(--green-bd); }
+html body .tam-status-pill.inactivo { background: var(--gray-bg); color: var(--gray-fg); border-color: var(--gray-bd); }
+
+/* ---------------- Acciones ---------------- */
+html body .tam-ref-actions { display: flex; gap: 4px; justify-content: center; flex-wrap: nowrap; align-items: center; }
+html body .tam-ref-table td:last-child { white-space: nowrap; }
+html body .tamanos-page .btn-icon { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0; border: none; border-radius: 7px; background: none; color: var(--ink); cursor: pointer; transition: background .15s ease, color .15s ease; }
+html body .tamanos-page .btn-icon svg { width: 18px; height: 18px; }
+html body .tamanos-page .btn-icon:hover { background: #f4eeeb; }
+html body .tamanos-page .btn-icon.view { color: var(--blue-fg); }
+html body .tamanos-page .btn-icon.edit { color: #f0a020; }
+html body .tamanos-page .btn-icon.delete { color: var(--red-fg); }
+html body .tamanos-page .empty-row { text-align: center; padding: 34px 0 !important; color: var(--muted); font-style: normal; }
+
+/* ---------------- Paginación ---------------- */
+html body .tam-ref-pagination { display: flex; align-items: center; justify-content: space-between; padding: 18px 24px; border-top: none; flex-wrap: wrap; gap: 10px; }
+html body .tam-ref-total-text { font-size: 12.5px; color: var(--muted); }
+html body .tam-ref-pagination-controls { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+html body .tamanos-page .p-nav,
+html body .tamanos-page .p-num { min-width: 32px; height: 32px; padding: 0 6px; display: inline-flex; align-items: center; justify-content: center; border: none; border-radius: 8px; background: none; color: var(--ink); font-size: 14.5px; font-weight: 400; cursor: pointer; transition: background .15s ease, color .15s ease; }
+html body .tamanos-page .p-nav:hover:not(:disabled),
+html body .tamanos-page .p-num:hover:not(.active) { background: #f4eeeb; }
+html body .tamanos-page .p-num.active { background: var(--dark); color: #fff; }
+html body .tamanos-page .p-nav:disabled { opacity: .35; cursor: not-allowed; }
+
+/* ---------------- Modal shell ---------------- */
+html body .tam-modal-overlay { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 24px; background: rgba(60, 50, 55, 0.35); backdrop-filter: blur(3px); color: var(--ink); font-family: "Montserrat", -apple-system, "Segoe UI", sans-serif; }
+html body .tam-modal,
+html body .tam-form-modal-custom,
+html body .tam-view-modal-custom,
+html body .tam-delete-modal { width: 100%; max-height: 92vh; display: flex; flex-direction: column; background: #fff; border-radius: 22px; box-shadow: 0 24px 60px rgba(20, 16, 10, 0.25); overflow: hidden; }
+/* Anchos máximos por tipo (antes no existían y el modal se estiraba) */
+html body .tam-modal,
+html body .tam-form-modal-custom { max-width: 470px; }
+html body .tam-view-modal-custom,
+html body .tam-delete-modal { max-width: 460px; }
+
+html body .tam-modal-header { display: flex; justify-content: space-between; align-items: flex-start; padding: 26px 30px 18px; gap: 12px; border-bottom: none; }
+html body .tam-modal-eyebrow { display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 7px; }
+html body .tam-modal-title { margin: 0; font-family: var(--serif); font-size: 26px; font-weight: 600; color: var(--ink); overflow-wrap: break-word; word-break: break-word; }
+html body .tam-close-button { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0; border: none; border-radius: 7px; background: none; color: var(--ink); cursor: pointer; flex-shrink: 0; transition: background .15s ease; }
+html body .tam-close-button svg { width: 18px; height: 18px; }
+html body .tam-close-button:hover { background: #f4eeeb; color: var(--ink); }
+
+html body .tam-modal > form { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; margin: 0; }
+html body .tam-form-body-custom,
+html body .tam-view-body-custom { padding: 24px 30px 8px; display: flex; flex-direction: column; gap: 13px; overflow-y: auto; border-top: 1px solid var(--border); flex: 1; min-height: 0; max-height: none; }
+
+html body .tam-modal-footer,
+html body .tam-custom-modal-footer { display: flex; gap: 12px; padding: 18px 30px 26px; border-top: 1px solid var(--border); flex-wrap: wrap; background: #fff; }
+html body .tam-modal-footer > *,
+html body .tam-custom-modal-footer > * { flex: 1; min-width: 120px; }
+
+/* ---------------- Formulario ---------------- */
+html body .tam-field-group { display: flex; flex-direction: column; gap: 7px; margin-top: 0; width: 100%; min-width: 0; }
+html body .tam-field-group label { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); }
+html body .tam-field-group input,
+html body .tam-field-group textarea { width: 100%; font-size: 14.5px; padding: 12px 15px; border-radius: 10px; border: 1px solid var(--border); background: #fff; color: var(--ink); outline: none; transition: border-color .15s ease; }
+html body .tam-field-group textarea { resize: vertical; min-height: 96px; }
+html body .tam-field-group input::placeholder,
+html body .tam-field-group textarea::placeholder { color: #a5a3ae; }
+html body .tam-field-group input:focus,
+html body .tam-field-group textarea:focus { border-color: var(--ink-soft); }
+html body .tam-field-hint { font-size: 12.5px; color: var(--muted); margin-top: 0; }
+
+html body .tam-status-box { margin-top: 0; display: flex; align-items: center; gap: 10px; background: var(--green-bg); border: 1px solid var(--green-bd); color: var(--green-fg); padding: 13px 15px; border-radius: 10px; font-size: 13.5px; font-weight: 600; line-height: 1.5; flex-wrap: wrap; }
+html body .tam-status-options { display: flex; gap: 10px; margin-top: 0; }
+html body .tam-status-radio-card { flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 17px; border: 1px solid var(--border); border-radius: 10px; background: #fff; cursor: pointer; font-size: 14.5px; font-weight: 600; color: var(--ink); transition: background .15s ease, border-color .15s ease; }
+html body .tam-status-radio-card:hover { background: #f4f2f3; }
+html body .tam-status-radio-card.active { background: var(--soft-bg); border: 1.5px solid var(--dark); }
+html body .tam-modal-overlay .dot-active { color: #22c55e; }
+html body .tam-modal-overlay .dot-inactive { color: #9a99a3; }
+html body .tam-modal-overlay .radio-circle { width: 16px; height: 16px; border: 1.5px solid var(--border); border-radius: 50%; display: inline-block; flex-shrink: 0; transition: border-color .15s ease, background-color .15s ease; }
+html body .tam-status-radio-card.active .radio-circle { border-color: var(--dark); background: var(--dark); box-shadow: inset 0 0 0 3px var(--soft-bg); }
+
+/* ---------------- Modal ver ---------------- */
+html body .tam-view-hero-card { background: #fbf9f8; border: 1px solid var(--border); border-radius: 12px; padding: 18px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 0; }
+html body .tam-view-hero-left { display: flex; align-items: center; gap: 16px; min-width: 0; }
+html body .tam-view-avatar { width: 56px; height: 56px; background: var(--soft-bg); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--ink); flex-shrink: 0; }
+html body .tam-view-hero-details h3 { font-family: var(--serif); font-size: 18px; font-weight: 600; color: var(--ink); margin: 0 0 2px; word-break: break-word; }
+html body .tam-view-hero-details p { font-size: 13px; color: var(--muted); margin: 0; }
+html body .tam-view-details-table { display: flex; flex-direction: column; }
+html body .tam-view-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; padding: 13px 2px; border-bottom: 1px solid var(--line); font-size: 14px; }
+html body .tam-view-row:last-child { border-bottom: none; }
+html body .tam-view-row .lbl { color: var(--ink-soft); }
+html body .tam-view-row .val { color: var(--ink); font-weight: 600; text-align: right; word-break: break-word; }
+html body .tam-view-row .val.bold { font-weight: 700; }
+html body .tam-view-row .val.desc { max-width: 240px; font-weight: 400; font-size: 14px; line-height: 1.45; color: var(--ink-soft); }
+
+/* ---------------- Modal eliminar ---------------- */
+html body .tam-delete-content { padding: 24px 30px 8px; text-align: center; border-top: 1px solid var(--border); }
+html body .tam-delete-content:first-child { border-top: none; padding-top: 30px; }
+html body .tam-delete-icon { width: 46px; height: 46px; background: var(--red-bg); color: var(--red-fg); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; }
+html body .tam-delete-content h3 { font-family: var(--serif); font-size: 20px; font-weight: 600; color: var(--ink); margin: 0 0 8px; overflow-wrap: break-word; word-break: break-word; }
+html body .tam-delete-content p { font-size: 14px; line-height: 1.55; color: var(--ink-soft); margin: 0; }
+
+/* ==================================================================
+   ACCESIBILIDAD — Preferencia de reducción de movimiento
+   ================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  html body .tam-primary-button,
+html body .tam-secondary-button,
+html body .tam-danger-button,
+html body .btn-cancel-custom,
+html body .btn-dark-custom,
+html body .tam-status-radio-card,
+html body .tam-search,
+html body .tam-close-button,
+html body .tam-field-group input,
+html body .tam-field-group textarea,
+html body .tamanos-page .btn-icon,
+html body .tamanos-page .p-nav,
+html body .tamanos-page .p-num { transition: none !important; }
+}
+
+/* ==================================================================
+   RESPONSIVE — breakpoints 1180 / 980 / 780 / 640 / 480 / 380
+   ================================================================== */
+@media (max-width: 1180px) {
+  html body .tamanos-page { padding: 40px 24px 80px; }
+}
+
+@media (max-width: 980px) {
+  html body .tamanos-page { padding: 32px 20px 70px; }
+  html body .tam-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  html body .tam-kpi-grid > .tam-kpi-card:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  html body .tam-modal-overlay { padding-left: 20px; padding-right: 20px; }
+  html body .tam-modal-header,
+html body .tam-modal-footer,
+html body .tam-custom-modal-footer { padding-left: 24px; padding-right: 24px; }
+  html body .tam-form-body-custom,
+html body .tam-view-body-custom,
+html body .tam-delete-content { padding-left: 24px; padding-right: 24px; }
+}
+
+@media (max-width: 780px) {
+  html body .tamanos-page { padding: 26px 16px 60px; }
+  html body .tam-page-header { flex-direction: column; align-items: stretch; gap: 14px; }
+  html body .tam-primary-button { width: 100%; }
+  html body .tam-page-header h1 { font-size: 34px; }
+  html body .tam-kpi-grid { gap: 12px; }
+  html body .tam-kpi-card { padding: 18px 16px; column-gap: 12px; }
+  html body .tam-kpi-icon { width: 34px; height: 34px; }
+  html body .tam-kpi-card strong { font-size: 17px; }
+  html body .tam-filters-title,
+html body .tam-ref-table-header { padding: 16px 18px; }
+  html body .tam-filters-row { padding: 18px; gap: 10px; }
+  html body .tam-search { flex: 1 1 100%; }
+  html body .tam-ref-table { min-width: 620px; }
+  html body .tam-ref-table th { padding: 12px 14px; font-size: 11px; }
+  html body .tam-ref-table td { padding: 14px; font-size: 13.5px; }
+  html body .tam-ref-table th:first-child,
+html body .tam-ref-table td:first-child { padding-left: 18px; }
+  html body .tam-ref-table th:last-child,
+html body .tam-ref-table td:last-child { padding-right: 18px; }
+  html body .tam-ref-pagination { padding: 14px 18px; }
+  html body .tam-modal-overlay { padding: 14px; align-items: flex-end; }
+  html body .tam-modal,
+html body .tam-form-modal-custom,
+html body .tam-view-modal-custom,
+html body .tam-delete-modal { max-width: 100%; max-height: 94vh; border-radius: 22px 22px 0 0; }
+  html body .tam-modal-header { padding: 22px 20px 14px; }
+  html body .tam-form-body-custom,
+html body .tam-view-body-custom,
+html body .tam-delete-content { padding: 18px 20px 8px; }
+  html body .tam-modal-footer,
+html body .tam-custom-modal-footer { padding: 14px 20px 20px; }
+}
+
+@media (max-width: 640px) {
+  html body .tam-kpi-grid { grid-template-columns: 1fr; }
+  html body .tam-kpi-grid > .tam-kpi-card:last-child:nth-child(odd) { grid-column: auto; }
+  html body .tam-kpi-card { grid-template-columns: 34px 1fr; }
+  html body .tam-modal-footer,
+html body .tam-custom-modal-footer { flex-direction: column; }
+  html body .tam-modal-footer > *,
+html body .tam-custom-modal-footer > * { width: 100%; }
+  html body .tam-status-options { flex-direction: column; }
+  html body .tam-ref-pagination { justify-content: center; text-align: center; }
+  html body .tam-ref-total-text { width: 100%; text-align: center; }
+  html body .tam-ref-pagination-controls { justify-content: center; width: 100%; }
+}
+
+@media (max-width: 480px) {
+  html body .tamanos-page { padding: 20px 12px 50px; }
+  html body .tam-page-header h1 { font-size: 28px; }
+  html body .tam-module-label { font-size: 11px; }
+  html body .tam-kpi-card { padding: 16px 14px; }
+  html body .tam-kpi-top > :not(.tam-kpi-icon),
+html body .tam-kpi-card small { font-size: 12px; }
+  html body .tam-kpi-card strong { font-size: 16px; }
+  html body .tam-ref-table { min-width: 560px; }
+  html body .tam-status-pill { font-size: 12px; padding: 4px 10px; }
+}
+
+@media (max-width: 380px) {
+  html body .tam-primary-button { padding: 13px 18px; font-size: 13.5px; }
+  html body .tam-secondary-button,
+html body .tam-danger-button,
+html body .btn-cancel-custom,
+html body .btn-dark-custom { padding: 12px 16px; font-size: 13.5px; }
+  html body .tam-ref-table { min-width: 520px; }
 }

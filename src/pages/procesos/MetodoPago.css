@@ -1,1152 +1,342 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap');
+/* ==================================================================
+   MetodoPago.css — Módulo de Métodos de Pago (Raíz Urbana)
+   Tipografías: Playfair Display (títulos) + Montserrat (interfaz)
+   Sistema visual unificado con Ventas.css (prefijo metodo-)
+   Los nombres de clase se conservan: no requiere cambios en el JSX.
+   ================================================================== */
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap");
 
-/* =========================================================
-   PÁGINA GENERAL
-========================================================= */
+html body .metodo-page,
+html body .metodo-overlay {
+  --bg: #f3e8e3;
+  --panel: #ffffff;
+  --border: #c9aea7;
+  --line: #e6dcd8;
+  --ink: #1c1d36;
+  --ink-soft: #4b4b5a;
+  --muted: #7b7a88;
+  --soft-bg: #eceaee;
+  --dark: #1f2038;
+  --dark-hover: #2e2f4d;
+  --green-bg: #e3f7ea; --green-fg: #1f9d55; --green-bd: #a9e3c0;
+  --blue-fg: #2f6fed;
+  --red-bg: #fde6e3; --red-fg: #d8483a;
+  --gray-bg: #f0eff1; --gray-fg: #6b6a72; --gray-bd: #dcdadf;
+  --serif: "Playfair Display", Georgia, serif;
+}
 
-.metodo-page {
+html body .metodo-page {
+  font-family: "Montserrat", -apple-system, "Segoe UI", sans-serif;
+  color: var(--ink);
   width: 100%;
-  min-height: 100%;
-  padding: 4px 0 35px;
-  color: #22223b;
-  font-family: 'Montserrat', sans-serif;
-}
-
-/* =========================================================
-   HEADER
-========================================================= */
-
-.metodo-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 25px;
-  margin-bottom: 22px;
-}
-
-.metodo-header-info {
-  min-width: 0;
-}
-
-.metodo-eyebrow {
-  display: block;
-  margin-bottom: 4px;
-  color: #4a4e69;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 1.05px;
-  text-transform: uppercase;
-}
-
-.metodo-header h1 {
-  margin: 0;
-  color: #22223b;
-  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
-  font-size: 32px;
-  font-weight: 400;
-  line-height: 1.05;
-}
-
-.metodo-header p {
-  margin: 5px 0 0;
-  color: #66708b;
-  font-size: 12px;
-  line-height: 1.4;
-}
-
-.metodo-btn-primary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 9px;
-  min-height: 41px;
-  padding: 0 18px;
-  border: 0;
-  border-radius: 9px;
-  background: #22223b;
-  color: #ffffff;
-  box-shadow: 0 4px 8px rgba(34, 34, 59, 0.16);
-  cursor: pointer;
-  font-family: 'Montserrat', sans-serif;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.15px;
-  transition: 0.2s ease;
-  white-space: nowrap;
-}
-
-.metodo-btn-primary:hover {
-  background: #2d2d4e;
-  transform: translateY(-1px);
-}
-
-/* =========================================================
-   KPIs
-========================================================= */
-
-.metodo-kpis {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 13px;
-  margin-bottom: 18px;
-}
-
-.metodo-kpi-card {
-  position: relative;
-  min-height: 105px;
-  padding: 16px 16px 14px 60px;
-  border: 1px solid #d5b1a9;
-  border-radius: 13px;
-  background: #ffffff;
-  box-shadow: 0 2px 5px rgba(34, 34, 59, 0.06);
+  padding: 48px 10px 90px;
+  min-height: 100vh;
   box-sizing: border-box;
 }
-
-/* Icono a la izquierda */
-.metodo-kpi-icon {
-  position: absolute;
-  top: 50%;
-  left: 15px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: #ddd8d8;
-  color: #34344e;
-  transform: translateY(-50%);
-}
-
-/* Contenido del KPI */
-.metodo-kpi-top {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  min-height: 20px;
-  color: #66708b;
-  font-size: 11px;
-  font-weight: 500;
-}
-
-/* Número */
-.metodo-kpi-card > strong {
-  display: block;
-  margin-top: 3px;
-  color: #111735;
-  font-size: 21px;
-  font-weight: 700;
-  line-height: 1.15;
-}
-
-/* Texto inferior */
-.metodo-kpi-footer {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  margin-top: 5px;
-  font-size: 10px;
-}
-
-.metodo-kpi-footer.positivo {
-  color: #15a46a;
-}
-
-.metodo-kpi-footer span {
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.metodo-kpi-footer b {
-  font-size: 10px;
-  font-weight: 700;
-}
-
-.metodo-kpi-footer small {
-  color: #72809b;
-  font-size: 9.5px;
-}
-
-/* =========================================================
-   BUSCADOR
-========================================================= */
-
-.metodo-search-card {
-  margin-bottom: 17px;
-  overflow: hidden;
-  border: 1px solid #d5b1a9;
-  border-radius: 12px;
-  background: #ffffff;
-  box-shadow: 0 2px 4px rgba(34, 34, 59, 0.05);
-}
-
-.metodo-search-title {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  min-height: 39px;
-  padding: 0 15px;
-  border-bottom: 1px solid #d5b1a9;
-  color: #22223b;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.metodo-search-title svg {
-  color: #4a4e69;
-}
-
-.metodo-search-content {
-  padding: 14px;
-}
-
-.metodo-search-input {
-  display: flex;
-  align-items: center;
-  width: 405px;
-  max-width: 100%;
-  height: 32px;
-  padding: 0 10px;
-  border: 1px solid #d5b1a9;
-  border-radius: 8px;
-  background: #ffffff;
-  color: #64708c;
-  transition: 0.2s ease;
-}
-
-.metodo-search-input:focus-within {
-  border-color: #22223b;
-  box-shadow: 0 0 0 2px rgba(34, 34, 59, 0.06);
-}
-
-.metodo-search-input input {
-  width: 100%;
-  min-width: 0;
-  margin-left: 8px;
-  border: 0;
-  outline: none;
-  background: transparent;
-  color: #22223b;
-  font-family: 'Montserrat', sans-serif;
-  font-size: 12px;
-}
-
-.metodo-search-input input::placeholder {
-  color: #98a0b4;
-}
-
-.metodo-search-clear {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background: #eeeeef;
-  color: #59617b;
-  cursor: pointer;
-}
-
-/* =========================================================
-   TABLA
-========================================================= */
-
-.metodo-table-card {
-  overflow: hidden;
-  border: 1px solid #d5b1a9;
-  border-radius: 12px;
-  background: #ffffff;
-  box-shadow: 0 2px 5px rgba(34, 34, 59, 0.06);
-}
-
-.metodo-table-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 42px;
-  padding: 0 15px;
-  border-bottom: 1px solid #d5b1a9;
-}
-
-.metodo-table-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #22223b;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.metodo-count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 21px;
-  height: 18px;
-  padding: 0 6px;
-  border-radius: 7px;
-  background: #e8e6e6;
-  color: #5e6680;
-  font-size: 9px;
-  font-weight: 700;
-}
-
-.metodo-page-info {
-  color: #7c849c;
-  font-size: 10px;
-}
-
-.metodo-table-wrapper {
-  width: 100%;
-  overflow-x: auto;
-}
-
-.metodo-table {
-  width: 100%;
-  min-width: 700px;
-  border-collapse: collapse;
-  table-layout: fixed;
-}
-
-.metodo-table th {
-  height: 34px;
-  padding: 0 14px;
-  border-bottom: 1px solid #d5b1a9;
-  background: #ffffff;
-  color: #22223b;
-  font-size: 10px;
-  font-weight: 700;
-  text-align: left;
-  letter-spacing: 0.15px;
-}
-
-.metodo-table th:nth-child(1) {
-  width: 10%;
-}
-
-.metodo-table th:nth-child(2) {
-  width: 27%;
-}
-
-.metodo-table th:nth-child(3) {
-  width: 26%;
-}
-
-.metodo-table th:nth-child(4) {
-  width: 23%;
-}
-
-.metodo-table th:nth-child(5) {
-  width: 14%;
-}
-
-.metodo-table td {
-  height: 52px;
-  padding: 0 14px;
-  border-bottom: 1px solid #d5b1a9;
-  color: #4f5c79;
-  font-size: 12px;
-  vertical-align: middle;
-}
-
-.metodo-table tbody tr:last-child td {
-  border-bottom: 0;
-}
-
-.metodo-table tbody tr {
-  transition: background 0.15s ease;
-}
-
-.metodo-table tbody tr:hover {
-  background: rgba(255, 255, 255, 0.32);
-}
-
-/* =========================================================
-   ID
-========================================================= */
-
-.metodo-id {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 25px;
-  height: 17px;
-  padding: 0 6px;
-  border-radius: 5px;
-  background: #ebe9e9;
-  color: #66708b;
-  font-size: 9px;
-  font-weight: 700;
-}
-
-/* =========================================================
-   NOMBRE
-========================================================= */
-
-.metodo-name-cell {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.metodo-row-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  flex-shrink: 0;
-  border-radius: 8px;
-  background: #e6e4e5;
-  color: #30304a;
-}
-
-.metodo-name-cell strong {
-  color: #111735;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-/* =========================================================
-   NÚMERO DE CUENTA
-========================================================= */
-
-.metodo-account {
-  display: inline-flex;
-  align-items: center;
-  min-width: 20px;
-  min-height: 20px;
-  padding: 0 8px;
-  border-radius: 5px;
-  background: #eeeded;
-  color: #69738c;
-  font-size: 10px;
-}
-
-/* =========================================================
-   ESTADO
-========================================================= */
-
-.metodo-status {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  height: 23px;
-  padding: 0 10px;
-  border: 1px solid;
-  border-radius: 11px;
-  background: transparent;
-  cursor: pointer;
-  font-family: 'Montserrat', sans-serif;
-  font-size: 10px;
-  font-weight: 600;
-}
-
-.metodo-status span {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-}
-
-.metodo-status.activo {
-  border-color: #91efbf;
-  background: #effff6;
-  color: #08a765;
-}
-
-.metodo-status.activo span {
-  background: #08d978;
-}
-
-.metodo-status.inactivo {
-  border-color: #cbd0d8;
-  background: #f4f5f6;
-  color: #727b8f;
-}
-
-.metodo-status.inactivo span {
-  background: #9da5b5;
-}
-
-/* =========================================================
-   ACCIONES
-========================================================= */
-
-.metodo-actions {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-}
-
-.metodo-actions button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  cursor: pointer;
-  transition: 0.15s ease;
-}
-
-.metodo-actions button:hover {
-  transform: scale(1.1);
-}
-
-.action-view {
-  color: #3485ff;
-}
-
-.action-edit {
-  color: #ff9800;
-}
-
-.action-delete {
-  color: #ff4050;
-}
-
-/* =========================================================
-   EMPTY
-========================================================= */
-
-.metodo-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 160px;
-  gap: 6px;
-  color: #68728b;
-}
-
-.metodo-empty-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  margin-bottom: 5px;
-  border-radius: 12px;
-  background: #e8e5e6;
-  color: #747c91;
-}
-
-.metodo-empty strong {
-  color: #22223b;
-  font-size: 12px;
-}
-
-.metodo-empty span {
-  font-size: 10px;
-}
-
-/* =========================================================
-   FOOTER TABLA
-========================================================= */
-
-.metodo-table-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 48px;
-  padding: 0 15px;
-  border-top: 1px solid #d5b1a9;
-  color: #778099;
-  font-size: 10px;
-}
-
-.metodo-pagination {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-}
-
-.metodo-pagination button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border: 0;
-  border-radius: 7px;
-  background: transparent;
-  color: #8990a3;
-  cursor: pointer;
-}
-
-.metodo-pagination button:hover:not(:disabled) {
-  background: #e9e7e7;
-  color: #22223b;
-}
-
-.metodo-pagination button:disabled {
-  cursor: default;
-  opacity: 0.4;
-}
-
-.metodo-current-page {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 7px;
-  background: #22223b;
-  color: white;
-  font-size: 10px;
-  font-weight: 700;
-}
-
-/* =========================================================
-   OVERLAY
-========================================================= */
-
-.metodo-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 25px;
-  background: rgba(28, 28, 43, 0.38);
-  backdrop-filter: blur(5px);
-  animation: metodoFadeIn 0.18s ease;
-}
-
-@keyframes metodoFadeIn {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
-
-/* =========================================================
-   MODAL GENERAL
-========================================================= */
-
-.metodo-modal {
-  width: min(100%, 460px);
-  overflow: hidden;
-  border: 1px solid #d5b1a9;
-  border-radius: 15px;
-  background: #ffffff;
-  box-shadow: 0 18px 50px rgba(34, 34, 59, 0.2);
-  animation: metodoModalIn 0.2s ease;
-}
-
-@keyframes metodoModalIn {
-  from {
-    opacity: 0;
-    transform: translateY(8px) scale(0.985);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.metodo-modal-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20px;
-  padding: 21px 23px 18px;
-  border-bottom: 1px solid #d5b1a9;
-}
-
-.metodo-modal-eyebrow {
-  display: block;
-  margin-bottom: 4px;
-  color: #5e6680;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
-}
-
-.metodo-modal-header h2 {
-  margin: 0;
-  color: #2c2c45;
-  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
-  font-size: 23px;
-  font-weight: 400;
-  line-height: 1.1;
-}
-
-.metodo-close {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 27px;
-  height: 27px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: #59617a;
-  cursor: pointer;
-  transition: 0.15s ease;
-}
-
-.metodo-close:hover {
-  color: #22223b;
-  transform: rotate(4deg);
-}
-
-/* =========================================================
-   FORMULARIOS
-========================================================= */
-
-.metodo-form-content {
-  padding: 22px 23px 25px;
-}
-
-.metodo-form-group {
-  margin-bottom: 18px;
-}
-
-.metodo-form-group:last-child {
-  margin-bottom: 0;
-}
-
-.metodo-form-group label {
-  display: block;
-  margin-bottom: 7px;
-  color: #525a74;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.65px;
-}
-
-.metodo-form-group input {
-  width: 100%;
-  height: 44px;
-  box-sizing: border-box;
-  padding: 0 13px;
-  border: 1px solid #d5b1a9;
-  border-radius: 10px;
-  outline: none;
-  background: #ffffff;
-  color: #30304b;
-  font-family: 'Montserrat', sans-serif;
-  font-size: 12px;
-  transition: 0.2s ease;
-}
-
-.metodo-form-group input:focus {
-  border-color: #22223b;
-  box-shadow: 0 0 0 3px rgba(34, 34, 59, 0.05);
-}
-
-.metodo-form-group input::placeholder {
-  color: #a1a4b2;
-}
-
-.metodo-form-group small {
-  display: block;
-  margin-top: 6px;
-  color: #777e95;
-  font-size: 10px;
-}
-
-/* =========================================================
-   MODAL FOOTER
-========================================================= */
-
-.metodo-modal-footer {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 13px 23px 17px;
-  border-top: 1px solid #d5b1a9;
-}
-
-.metodo-modal-footer button {
-  flex: 1;
-}
-
-.metodo-btn-secondary,
-.metodo-btn-dark,
-.metodo-btn-danger {
-  min-height: 43px;
-  padding: 0 15px;
-  border-radius: 10px;
-  font-family: 'Montserrat', sans-serif;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: 0.18s ease;
-}
-
-.metodo-btn-secondary {
-  border: 1px solid #d5b1a9;
-  background: #ffffff;
-  color: #25253f;
-}
-
-.metodo-btn-secondary:hover {
-  background: #f8f7f7;
-}
-
-.metodo-btn-dark {
-  border: 1px solid #22223b;
-  background: #22223b;
-  color: #ffffff;
-  box-shadow: 0 3px 7px rgba(34, 34, 59, 0.13);
-}
-
-.metodo-btn-dark:hover {
-  background: #2d2d4e;
-}
-
-.metodo-btn-danger {
-  border: 1px solid #df1741;
-  background: #df1741;
-  color: white;
-  box-shadow: 0 3px 7px rgba(223, 23, 65, 0.12);
-}
-
-.metodo-btn-danger:hover {
-  background: #c91238;
-}
-
-/* =========================================================
-   MODAL DETALLE
-========================================================= */
-
-.metodo-modal-detail {
-  width: min(100%, 455px);
-}
-
-.metodo-detail-main {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  padding: 20px 24px;
-  border-bottom: 1px solid #d5b1a9;
-  background: #f7f7f8;
-}
-
-.metodo-detail-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 56px;
-  height: 56px;
-  flex-shrink: 0;
-  border-radius: 14px;
-  background: #dfdddf;
-  color: #2e2e49;
-}
-
-.metodo-detail-name {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-}
-
-.metodo-detail-name strong {
-  color: #292941;
-  font-size: 19px;
-  font-weight: 700;
-}
-
-.metodo-detail-name span {
-  color: #69718a;
-  font-size: 11px;
-}
-
-.metodo-detail-info {
-  padding: 21px 24px 17px;
-}
-
-.metodo-detail-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 44px;
-  gap: 15px;
-  border-bottom: 1px solid #ead9d5;
-  color: #707991;
-  font-size: 12px;
-}
-
-.metodo-detail-row:last-child {
-  border-bottom: 0;
-}
-
-.metodo-detail-row strong {
-  color: #272741;
-  font-size: 12px;
-  font-weight: 600;
-  text-align: right;
-}
-
-/* =========================================================
-   MODAL ESTADO
-========================================================= */
-
-.metodo-modal-status {
-  width: min(100%, 410px);
-}
-
-.metodo-status-options {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 20px 20px 22px;
-}
-
-.metodo-status-option {
-  display: flex;
-  align-items: center;
-  gap: 13px;
-  width: 100%;
-  min-height: 66px;
-  padding: 0 14px;
-  border: 1px solid #d5b1a9;
-  border-radius: 12px;
-  background: #ffffff;
-  color: #2e2e49;
-  cursor: pointer;
-  font-family: 'Montserrat', sans-serif;
-  text-align: left;
-  transition: 0.18s ease;
-}
-
-.metodo-status-option:hover {
-  background: #faf9f9;
-}
-
-.metodo-status-option.selected {
-  border-color: #22223b;
-  background: #f0eff1;
-  box-shadow: 0 0 0 1px #22223b inset;
-}
-
-.metodo-status-option > div:nth-child(2) {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.metodo-status-option strong {
-  color: #31314a;
-  font-size: 13px;
-}
-
-.metodo-status-option span {
-  color: #747c92;
-  font-size: 11px;
-}
-
-.status-option-dot {
-  width: 8px;
-  height: 8px;
-  flex-shrink: 0;
-  border-radius: 50%;
-}
-
-.status-option-dot.active {
-  background: #0edc7a;
-}
-
-.status-option-dot.inactive {
-  background: #9ea6b5;
-}
-
-/* =========================================================
-   MODAL ELIMINAR
-========================================================= */
-
-.metodo-modal-delete {
-  width: min(100%, 385px);
-}
-
-.metodo-delete-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 23px 22px 20px;
-  text-align: center;
-}
-
-.metodo-delete-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 49px;
-  height: 49px;
-  margin-bottom: 13px;
-  border-radius: 13px;
-  background: #fff0f2;
-  color: #ff173f;
-}
-
-.metodo-delete-content .metodo-modal-eyebrow {
-  margin-bottom: 5px;
-}
-
-.metodo-delete-content h2 {
-  margin: 0 0 9px;
-  color: #292940;
-  font-size: 19px;
-  font-weight: 700;
-}
-
-.metodo-delete-content p {
-  max-width: 330px;
-  margin: 0;
-  color: #737b92;
-  font-size: 12px;
-  line-height: 1.5;
-}
-
-.metodo-delete-content p strong {
-  color: #41415b;
-}
-
-/* =========================================================
-   RESPONSIVE
-========================================================= */
-
-@media (max-width: 900px) {
-  .metodo-kpis {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  .metodo-header h1 {
-    font-size: 29px;
-  }
-
-  .metodo-kpi-card {
-    padding-left: 55px;
-  }
-
-  .metodo-kpi-icon {
-    left: 13px;
-    width: 34px;
-    height: 34px;
-  }
-}
-
-@media (max-width: 700px) {
-  .metodo-page {
-    padding: 3px 0 25px;
-  }
-
-  .metodo-header {
-    flex-direction: column;
-  }
-
-  .metodo-btn-primary {
-    width: 100%;
-  }
-
-  .metodo-kpis {
-    grid-template-columns: 1fr;
-  }
-
-  .metodo-search-input {
-    width: 100%;
-  }
-
-  .metodo-table-header {
-    min-width: 700px;
-  }
-
-  .metodo-table-card {
-    overflow-x: auto;
-  }
-
-  .metodo-table-wrapper {
-    overflow-x: auto;
-  }
-
-  .metodo-table-footer {
-    min-width: 700px;
-  }
-
-  .metodo-overlay {
-    align-items: center;
-    padding: 15px;
-  }
-
-  .metodo-modal {
-    max-height: 92vh;
-    overflow-y: auto;
-  }
-
-  .metodo-detail-main {
-    flex-wrap: wrap;
-  }
-
-  .metodo-detail-main > .metodo-status {
-    margin-left: 71px;
-  }
+html body .metodo-page *,
+html body .metodo-overlay * { box-sizing: border-box; font-family: inherit; }
+html body .metodo-page h1 { margin: 0; }
+
+/* ---------------- Header ---------------- */
+html body .metodo-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 28px; flex-wrap: wrap; gap: 16px; }
+html body .metodo-header-info { min-width: 0; }
+html body .metodo-eyebrow,
+html body .metodo-header .module-label { display: block; font-size: 12px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 9px; }
+html body .metodo-header h1 { font-family: var(--serif) !important; font-size: 44px; font-weight: 500; line-height: 1.15; color: var(--ink); overflow-wrap: break-word; word-break: break-word; }
+html body .metodo-header p { margin: 5px 0 0; font-size: 14.5px; line-height: 1.4; color: var(--ink-soft); }
+
+/* ---------------- Buttons ---------------- */
+html body .metodo-btn-primary,
+html body .metodo-btn-secondary,
+html body .metodo-btn-dark,
+html body .metodo-btn-danger { display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-size: 14.5px; font-weight: 600; padding: 13px 22px; border-radius: 10px; border: 1px solid transparent; cursor: pointer; letter-spacing: 0; text-transform: none; transition: background .15s ease, border-color .15s ease, opacity .15s ease; }
+html body .metodo-btn-primary svg,
+html body .metodo-btn-secondary svg,
+html body .metodo-btn-dark svg,
+html body .metodo-btn-danger svg { width: 17px; height: 17px; flex-shrink: 0; }
+html body .metodo-btn-primary { padding: 15px 28px; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; background: var(--dark); border-color: var(--dark); color: #fff; }
+html body .metodo-btn-primary:hover { background: var(--dark-hover); }
+html body .metodo-btn-secondary { background: #fff; border-color: var(--border); color: var(--ink); }
+html body .metodo-btn-secondary:hover { background: #faf6f4; }
+html body .metodo-btn-dark { background: var(--dark); border-color: var(--dark); color: #fff; }
+html body .metodo-btn-dark:hover { background: var(--dark-hover); }
+html body .metodo-btn-danger { background: var(--red-fg); border-color: var(--red-fg); color: #fff; }
+html body .metodo-btn-danger:hover { opacity: .9; }
+
+/* ---------------- KPI cards ----------------
+   El ícono conserva position:absolute (no depende del DOM) y se ubica
+   igual que en Ventas: 26px del borde izquierdo, 24px arriba. */
+html body .metodo-kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-bottom: 22px; }
+html body .metodo-kpi-card { position: relative; min-width: 0; padding: 24px 26px 24px 79px; background: var(--panel); border: 1px solid var(--border); border-radius: 14px; box-shadow: none; }
+html body .metodo-kpi-icon { position: absolute; top: 24px; left: 26px; width: 38px; height: 38px; border-radius: 10px; background: var(--soft-bg); color: var(--ink); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transform: none; }
+html body .metodo-kpi-icon svg { width: 18px; height: 18px; }
+html body .metodo-kpi-top { display: flex; align-items: center; justify-content: flex-start; font-size: 13px; font-weight: 400; line-height: 1.3; color: var(--muted); }
+html body .metodo-kpi-card > strong { display: block; margin-top: 2px; font-size: 19px; font-weight: 700; line-height: 1.3; color: var(--ink); word-break: break-word; }
+html body .metodo-kpi-footer { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; margin-top: 0; font-size: 13px; color: var(--muted); }
+html body .metodo-kpi-footer.positivo { color: var(--green-fg); }
+html body .metodo-kpi-footer span { font-size: 13px; font-weight: 700; }
+html body .metodo-kpi-footer b { font-size: 13px; font-weight: 700; }
+html body .metodo-kpi-footer small { font-size: 13px; font-weight: 400; color: var(--muted); }
+
+/* ---------------- Buscador ---------------- */
+html body .metodo-search-card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; margin-bottom: 22px; overflow: hidden; box-shadow: none; }
+html body .metodo-search-title { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; padding: 18px 24px; margin: 0; font-size: 14.5px; font-weight: 600; color: var(--ink); border-bottom: 1px solid var(--border); }
+html body .metodo-search-title svg { width: 17px; height: 17px; flex-shrink: 0; color: var(--ink); }
+html body .metodo-search-content { padding: 24px 26px; }
+html body .metodo-search-input { display: flex; align-items: center; gap: 10px; width: 100%; max-width: 100%; min-width: 0; padding: 0 15px; background: #fff; color: var(--ink); border: 1px solid var(--border); border-radius: 10px; transition: border-color .15s ease; }
+html body .metodo-search-input > svg { width: 16px; height: 16px; flex-shrink: 0; color: var(--ink); }
+html body .metodo-search-input input { width: 100%; min-width: 0; margin: 0; padding: 12px 0; font-size: 14.5px; color: var(--ink); background: transparent; border: none; outline: none; }
+html body .metodo-search-input input::placeholder { color: #a5a3ae; }
+html body .metodo-search-input:focus-within { border-color: var(--ink-soft); box-shadow: none; }
+html body .metodo-search-clear { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 22px; height: 22px; padding: 0; border: none; border-radius: 50%; background: var(--soft-bg); color: var(--ink-soft); cursor: pointer; }
+html body .metodo-search-clear svg { width: 12px; height: 12px; }
+
+/* ---------------- Tabla ---------------- */
+html body .metodo-table-card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; margin-bottom: 22px; overflow: hidden; box-shadow: none; }
+html body .metodo-table-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; row-gap: 6px; flex-wrap: wrap; padding: 18px 24px; min-height: 0; border-bottom: 1px solid var(--border); }
+html body .metodo-table-title { display: flex; align-items: center; gap: 8px; font-size: 14.5px; font-weight: 600; color: var(--ink); }
+html body .metodo-count { display: inline-flex; align-items: center; justify-content: center; min-width: 0; height: auto; padding: 2px 9px; font-size: 12px; font-weight: 600; color: var(--ink); background: var(--soft-bg); border-radius: 999px; }
+html body .metodo-page-info { margin-left: auto; font-size: 13px; font-weight: 400; color: var(--muted); }
+html body .metodo-table-wrapper { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+html body .metodo-table { width: 100%; min-width: 760px; border-collapse: collapse; table-layout: auto; font-size: 14px; text-align: left; }
+html body .metodo-table th { height: auto; padding: 15px 20px; font-size: 11.5px; font-weight: 600; letter-spacing: 0.08em; text-align: left; text-transform: uppercase; white-space: nowrap; color: var(--muted); background: #f5f3f4; border-bottom: 1px solid var(--border); }
+html body .metodo-table th:nth-child(n) { width: auto; }
+html body .metodo-table th:nth-child(1) { width: 90px; }
+html body .metodo-table td { height: auto; padding: 18px 20px; font-size: 14px; vertical-align: middle; color: var(--ink); border-bottom: 1px solid var(--border); }
+html body .metodo-table th:first-child,
+html body .metodo-table td:first-child { padding-left: 24px; }
+html body .metodo-table th:last-child,
+html body .metodo-table td:last-child { padding-right: 24px; }
+html body .metodo-table th:last-child { text-align: center; min-width: 148px; }
+html body .metodo-table tbody tr:last-child td { border-bottom: none; }
+html body .metodo-table tbody tr:hover { background: transparent; }
+
+/* ID */
+html body .metodo-id { display: inline-flex; align-items: center; justify-content: center; min-width: 0; height: auto; padding: 0; font-size: 12.5px; font-weight: 600; color: var(--muted); background: none; border-radius: 0; white-space: nowrap; }
+
+/* Nombre */
+html body .metodo-name-cell { display: flex; align-items: center; gap: 13px; min-width: 0; }
+html body .metodo-row-icon { width: 34px; height: 34px; border-radius: 8px; background: var(--soft-bg); color: var(--ink); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+html body .metodo-row-icon svg { width: 16px; height: 16px; }
+html body .metodo-name-cell strong { font-size: 14.5px; font-weight: 600; color: var(--ink); }
+
+/* Número de cuenta */
+html body .metodo-account { display: inline-flex; align-items: center; min-width: 0; min-height: 0; padding: 4px 10px; font-size: 12.5px; font-weight: 600; white-space: nowrap; color: var(--ink-soft); background: var(--soft-bg); border: 1px solid #d8d5da; border-radius: 6px; }
+
+/* Estado */
+html body .metodo-status { display: inline-flex; align-items: center; gap: 6px; height: auto; padding: 5px 13px; font-size: 13px; font-weight: 600; white-space: nowrap; border: 1px solid transparent; border-radius: 999px; background: transparent; cursor: pointer; }
+html body .metodo-status span { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+html body .metodo-status.activo { color: var(--green-fg); background: var(--green-bg); border-color: var(--green-bd); }
+html body .metodo-status.inactivo { color: var(--gray-fg); background: var(--gray-bg); border-color: var(--gray-bd); }
+html body .metodo-status.activo span,
+html body .metodo-status.inactivo span { background: currentColor; }
+
+/* Acciones */
+html body .metodo-actions { display: flex; align-items: center; justify-content: center; flex-wrap: nowrap; gap: 4px; }
+html body .metodo-table td:last-child { white-space: nowrap; }
+html body .metodo-actions button { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0; border: none; border-radius: 7px; background: none; color: var(--ink); cursor: pointer; transition: background .15s ease; }
+html body .metodo-actions button svg { width: 18px; height: 18px; }
+html body .metodo-actions button:hover { background: #f4eeeb; transform: none; }
+html body .action-view { color: var(--blue-fg); }
+html body .action-edit { color: #f0a020; }
+html body .action-delete { color: var(--red-fg); }
+
+/* Vacío */
+html body .metodo-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 0; padding: 34px 16px; text-align: center; color: var(--muted); }
+html body .metodo-empty-icon { width: 48px; height: 48px; margin-bottom: 5px; border-radius: 12px; background: var(--soft-bg); color: var(--muted); display: flex; align-items: center; justify-content: center; }
+html body .metodo-empty strong { font-size: 14.5px; font-weight: 600; color: var(--ink); }
+html body .metodo-empty span { font-size: 13px; color: var(--muted); }
+
+/* ---------------- Footer / Paginación ---------------- */
+html body .metodo-table-footer { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; min-height: 0; padding: 18px 24px; font-size: 12.5px; color: var(--muted); border-top: none; }
+html body .metodo-pagination { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
+html body .metodo-pagination button { display: inline-flex; align-items: center; justify-content: center; min-width: 32px; width: auto; height: 32px; padding: 0 6px; font-size: 14.5px; font-weight: 400; color: var(--ink); background: none; border: none; border-radius: 8px; cursor: pointer; }
+html body .metodo-pagination button svg { width: 16px; height: 16px; }
+html body .metodo-pagination button:hover:not(:disabled) { background: #f4eeeb; color: var(--ink); }
+html body .metodo-pagination button:disabled { opacity: .35; cursor: not-allowed; }
+html body .metodo-current-page { display: inline-flex; align-items: center; justify-content: center; min-width: 32px; width: auto; height: 32px; padding: 0 6px; font-size: 14.5px; font-weight: 400; color: #fff; background: var(--dark); border-radius: 8px; }
+
+/* ---------------- Overlay y modal ---------------- */
+html body .metodo-overlay { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 24px; background: rgba(60, 50, 55, 0.35); backdrop-filter: blur(3px); color: var(--ink); font-family: "Montserrat", -apple-system, "Segoe UI", sans-serif; animation: metodoFadeIn .18s ease; }
+@keyframes metodoFadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+html body .metodo-modal { width: 100%; max-width: 470px; max-height: 92vh; display: flex; flex-direction: column; background: #fff; border: none; border-radius: 22px; box-shadow: 0 24px 60px rgba(20, 16, 10, 0.25); overflow: hidden; animation: metodoModalIn .2s ease; }
+@keyframes metodoModalIn { from { opacity: 0; transform: translateY(8px) scale(0.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+html body .metodo-modal-detail { max-width: 460px; }
+html body .metodo-modal-status { max-width: 460px; }
+html body .metodo-modal-delete { max-width: 460px; }
+
+html body .metodo-modal-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 26px 30px 18px; border-bottom: 1px solid var(--border); }
+html body .metodo-modal-eyebrow { display: block; margin-bottom: 7px; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); }
+html body .metodo-modal-header h2 { margin: 0; font-family: var(--serif); font-size: 26px; font-weight: 600; line-height: 1.2; color: var(--ink); overflow-wrap: break-word; word-break: break-word; }
+html body .metodo-close { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 32px; height: 32px; padding: 0; border: none; border-radius: 7px; background: none; color: var(--ink); cursor: pointer; transition: background .15s ease; }
+html body .metodo-close svg { width: 18px; height: 18px; }
+html body .metodo-close:hover { background: #f4eeeb; color: var(--ink); transform: none; }
+
+/* ---------------- Formulario ---------------- */
+html body .metodo-modal > form { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; margin: 0; }
+html body .metodo-form-content { flex: 1; min-height: 0; padding: 24px 30px 8px; overflow-y: auto; }
+html body .metodo-form-group { display: flex; flex-direction: column; gap: 7px; margin-bottom: 13px; min-width: 0; }
+html body .metodo-form-group:last-child { margin-bottom: 13px; }
+html body .metodo-form-group label { display: block; margin: 0; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); }
+html body .metodo-form-group input { width: 100%; height: auto; padding: 12px 15px; font-size: 14.5px; color: var(--ink); background: #fff; border: 1px solid var(--border); border-radius: 10px; outline: none; transition: border-color .15s ease; }
+html body .metodo-form-group input:focus { border-color: var(--ink-soft); box-shadow: none; }
+html body .metodo-form-group input::placeholder { color: #a5a3ae; }
+html body .metodo-form-group small { display: block; margin-top: 0; font-size: 12.5px; color: var(--muted); }
+
+/* ---------------- Footer del modal ---------------- */
+html body .metodo-modal-footer { display: flex; flex-wrap: wrap; align-items: stretch; gap: 12px; padding: 18px 30px 26px; background: #fff; border-top: 1px solid var(--border); }
+html body .metodo-modal-footer button { flex: 1; min-width: 120px; min-height: 0; }
+
+/* ---------------- Modal detalle ---------------- */
+html body .metodo-detail-main { display: flex; align-items: center; gap: 16px; margin: 24px 30px 13px; padding: 18px; background: #fbf9f8; border: 1px solid var(--border); border-radius: 12px; }
+html body .metodo-detail-icon { width: 56px; height: 56px; flex-shrink: 0; border-radius: 12px; background: var(--soft-bg); color: var(--ink); display: flex; align-items: center; justify-content: center; }
+html body .metodo-detail-name { display: flex; flex: 1; flex-direction: column; gap: 2px; min-width: 0; }
+html body .metodo-detail-name strong { font-family: var(--serif); font-size: 18px; font-weight: 600; color: var(--ink); word-break: break-word; }
+html body .metodo-detail-name span { font-size: 13px; color: var(--muted); }
+html body .metodo-detail-info { padding: 0 30px 14px; overflow-y: auto; min-height: 0; }
+html body .metodo-detail-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; min-height: 0; padding: 13px 2px; font-size: 14px; color: var(--ink-soft); border-bottom: 1px solid var(--line); }
+html body .metodo-detail-row:last-child { border-bottom: none; }
+html body .metodo-detail-row strong { font-size: 14px; font-weight: 600; text-align: right; color: var(--ink); word-break: break-word; }
+
+/* ---------------- Modal estado ---------------- */
+html body .metodo-status-options { display: flex; flex-direction: column; gap: 10px; padding: 24px 30px 26px; overflow-y: auto; min-height: 0; }
+html body .metodo-status-option { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 0; padding: 14px 17px; font-size: 14.5px; text-align: left; color: var(--ink); background: #fff; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: background .15s ease, border-color .15s ease; }
+html body .metodo-status-option:hover { background: #f4f2f3; }
+html body .metodo-status-option.selected { background: var(--soft-bg); border: 1.5px solid var(--dark); box-shadow: none; }
+html body .metodo-status-option > div:nth-child(2) { display: flex; flex: 1; flex-direction: column; gap: 3px; min-width: 0; }
+html body .metodo-status-option strong { font-size: 14.5px; font-weight: 600; color: var(--ink); }
+html body .metodo-status-option span { font-size: 12.5px; color: var(--muted); }
+html body .metodo-status-option > svg { width: 18px; height: 18px; flex-shrink: 0; color: var(--dark); }
+html body .status-option-dot { width: 8px; height: 8px; flex-shrink: 0; border-radius: 50%; }
+html body .status-option-dot.active { background: #22c55e; }
+html body .status-option-dot.inactive { background: #9a99a3; }
+
+/* ---------------- Modal eliminar ---------------- */
+html body .metodo-delete-content { display: flex; flex-direction: column; align-items: center; padding: 28px 30px 20px; text-align: center; }
+html body .metodo-delete-icon { width: 46px; height: 46px; margin: 0 auto 14px; border-radius: 50%; background: var(--red-bg); color: var(--red-fg); display: flex; align-items: center; justify-content: center; }
+html body .metodo-delete-content .metodo-modal-eyebrow { margin-bottom: 7px; }
+html body .metodo-delete-content h2 { margin: 0 0 8px; font-family: var(--serif); font-size: 20px; font-weight: 600; color: var(--ink); overflow-wrap: break-word; word-break: break-word; }
+html body .metodo-delete-content p { max-width: 360px; margin: 0; font-size: 14px; line-height: 1.55; color: var(--ink-soft); }
+html body .metodo-delete-content p strong { font-weight: 600; color: var(--ink); }
+
+/* ==================================================================
+   ACCESIBILIDAD — Preferencia de reducción de movimiento
+   ================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  html body .metodo-overlay,
+html body .metodo-modal { animation: none !important; }
+  html body .metodo-btn-primary,
+html body .metodo-btn-secondary,
+html body .metodo-btn-dark,
+html body .metodo-btn-danger,
+html body .metodo-search-input,
+html body .metodo-actions button,
+html body .metodo-close,
+html body .metodo-form-group input,
+html body .metodo-status-option { transition: none !important; }
+}
+
+/* ==================================================================
+   RESPONSIVE — breakpoints 1180 / 980 / 780 / 640 / 480 / 380
+   ================================================================== */
+@media (max-width: 1180px) {
+  html body .metodo-page { padding: 40px 24px 80px; }
+}
+
+/* 3 KPIs: pasan a 2 columnas y la última ocupa el ancho completo */
+@media (max-width: 980px) {
+  html body .metodo-page { padding: 32px 20px 70px; }
+  html body .metodo-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  html body .metodo-kpis > .metodo-kpi-card:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  html body .metodo-modal-header,
+html body .metodo-modal-footer { padding-left: 24px; padding-right: 24px; }
+  html body .metodo-form-content,
+html body .metodo-status-options,
+html body .metodo-delete-content,
+html body .metodo-detail-info { padding-left: 24px; padding-right: 24px; }
+  html body .metodo-detail-main { margin-left: 24px; margin-right: 24px; }
+}
+
+@media (max-width: 780px) {
+  html body .metodo-page { padding: 26px 16px 60px; }
+  html body .metodo-header { flex-direction: column; align-items: stretch; gap: 14px; }
+  html body .metodo-btn-primary { width: 100%; }
+  html body .metodo-header h1 { font-size: 34px; }
+
+  html body .metodo-kpis { gap: 12px; }
+  html body .metodo-kpi-card { padding: 18px 16px 18px 62px; }
+  html body .metodo-kpi-icon { top: 18px; left: 16px; width: 34px; height: 34px; }
+  html body .metodo-kpi-card > strong { font-size: 17px; }
+
+  html body .metodo-search-title,
+html body .metodo-table-header { padding: 16px 18px; }
+  html body .metodo-search-content { padding: 18px; }
+
+  html body .metodo-table { min-width: 620px; }
+  html body .metodo-table th { padding: 12px 14px; font-size: 11px; }
+  html body .metodo-table td { padding: 14px; font-size: 13.5px; }
+  html body .metodo-table th:first-child,
+html body .metodo-table td:first-child { padding-left: 18px; }
+  html body .metodo-table th:last-child,
+html body .metodo-table td:last-child { padding-right: 18px; }
+  html body .metodo-table-footer { padding: 14px 18px; }
+
+  html body .metodo-overlay { padding: 14px; align-items: flex-end; }
+  html body .metodo-modal,
+html body .metodo-modal-detail,
+html body .metodo-modal-status,
+html body .metodo-modal-delete { max-width: 100%; max-height: 94vh; border-radius: 22px 22px 0 0; }
+  html body .metodo-modal-header { padding: 22px 20px 14px; }
+  html body .metodo-form-content,
+html body .metodo-status-options,
+html body .metodo-detail-info { padding-left: 20px; padding-right: 20px; }
+  html body .metodo-form-content { padding-top: 18px; }
+  html body .metodo-status-options { padding-top: 18px; padding-bottom: 20px; }
+  html body .metodo-delete-content { padding: 24px 20px 16px; }
+  html body .metodo-detail-main { margin: 18px 20px 13px; }
+  html body .metodo-modal-footer { padding: 14px 20px 20px; }
+}
+
+@media (max-width: 640px) {
+  html body .metodo-kpis { grid-template-columns: 1fr; }
+  html body .metodo-kpis > .metodo-kpi-card:last-child:nth-child(odd) { grid-column: auto; }
+
+  html body .metodo-modal-footer { flex-direction: column; }
+  html body .metodo-modal-footer button { width: 100%; flex: none; }
+
+  html body .metodo-table-footer { justify-content: center; text-align: center; }
+  html body .metodo-table-footer > *:first-child { width: 100%; text-align: center; }
+  html body .metodo-pagination { justify-content: center; width: 100%; }
 }
 
 @media (max-width: 480px) {
-  .metodo-header h1 {
-    font-size: 27px;
-  }
+  html body .metodo-page { padding: 20px 12px 50px; }
+  html body .metodo-header h1 { font-size: 28px; }
+  html body .metodo-eyebrow { font-size: 11px; }
 
-  .metodo-kpi-card {
-    min-height: 100px;
-  }
+  html body .metodo-kpi-card { padding: 16px 14px 16px 60px; }
+  html body .metodo-kpi-icon { top: 16px; left: 14px; }
+  html body .metodo-kpi-top,
+html body .metodo-kpi-footer,
+html body .metodo-kpi-footer span,
+html body .metodo-kpi-footer b,
+html body .metodo-kpi-footer small { font-size: 12px; }
+  html body .metodo-kpi-card > strong { font-size: 16px; }
 
-  .metodo-modal-header {
-    padding: 17px;
-  }
+  html body .metodo-table { min-width: 560px; }
+  html body .metodo-status { padding: 4px 10px; font-size: 12px; }
 
-  .metodo-form-content,
-  .metodo-detail-info {
-    padding-left: 17px;
-    padding-right: 17px;
-  }
-
-  .metodo-modal-footer {
-    padding-left: 17px;
-    padding-right: 17px;
-  }
-
-  .metodo-status-options {
-    padding-left: 15px;
-    padding-right: 15px;
-  }
-
-  .metodo-modal-footer {
-    flex-direction: column;
-  }
-
-  .metodo-modal-footer button {
-    width: 100%;
-  }
+  html body .metodo-detail-main { flex-wrap: wrap; }
+  html body .metodo-detail-name { flex: 1 1 calc(100% - 72px); }
+  html body .metodo-detail-main > .metodo-status { margin-left: 72px; }
 }
 
-/* =========================================================
-   FUENTES GENERALES
-========================================================= */
-
-.metodo-page,
-.metodo-page button,
-.metodo-page input,
-.metodo-page textarea,
-.metodo-page select {
-  font-family: 'Montserrat', sans-serif;
-}
-
-.metodo-header h1,
-.metodo-modal-header h2 {
-  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+@media (max-width: 380px) {
+  html body .metodo-btn-primary { padding: 13px 18px; font-size: 13.5px; }
+  html body .metodo-btn-secondary,
+html body .metodo-btn-dark,
+html body .metodo-btn-danger { padding: 12px 16px; font-size: 13.5px; }
+  html body .metodo-table { min-width: 520px; }
+  html body .metodo-status-option { padding: 12px 14px; }
 }
