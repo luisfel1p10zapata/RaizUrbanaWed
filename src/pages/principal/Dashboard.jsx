@@ -96,6 +96,32 @@ const FECHA_HOY = new Intl.DateTimeFormat("es-CO", {
 const FECHA_HOY_CAP = FECHA_HOY.charAt(0).toUpperCase() + FECHA_HOY.slice(1);
 
 /* ============================================================
+   COLORES DE GRÁFICAS
+   Recharts pinta con atributos SVG (fill/stroke), no con clases CSS,
+   así que se referencian directamente las variables definidas en
+   Dashboard.css. El navegador las resuelve según data-theme y se
+   actualizan solas al cambiar de tema, sin necesidad de JS.
+   ============================================================ */
+const CHART = {
+  grid: "var(--chart-grid)",
+  tick: "var(--chart-tick)",
+  tickAlt: "var(--chart-tick-alt)",
+  c1: "var(--chart-1)", // navy — serie principal
+  c2: "var(--chart-2)", // rosa suave — serie secundaria
+  c3: "var(--chart-3)", // pizarra — fabricados / Dije
+  c4: "var(--chart-4)", // malva — Cierre
+  c5: "var(--chart-5)", // dorado — Cadena
+};
+
+const TAG_COLORS = {
+  Vestidos: { fg: "var(--tag-vestidos-fg)", bg: "var(--tag-vestidos-bg)" },
+  Blusas: { fg: "var(--tag-blusas-fg)", bg: "var(--tag-blusas-bg)" },
+  Pantalones: { fg: "var(--tag-pantalones-fg)", bg: "var(--tag-pantalones-bg)" },
+  Chaquetas: { fg: "var(--tag-chaquetas-fg)", bg: "var(--tag-chaquetas-bg)" },
+  Faldas: { fg: "var(--tag-faldas-fg)", bg: "var(--tag-faldas-bg)" },
+};
+
+/* ============================================================
    SMALL BUILDING BLOCKS
    ============================================================ */
 
@@ -177,17 +203,17 @@ function ModalTopClientes({ onClose }) {
       <div className="ru-modal-chart">
         <ResponsiveContainer width="100%" height="100%">
           <ScatterChart margin={{ top: 10, right: 55, bottom: 0, left: -10 }}>
-            <CartesianGrid stroke="#ecdcd3" strokeDasharray="3 3" />
+            <CartesianGrid stroke={CHART.grid} strokeDasharray="3 3" />
             <XAxis type="number" dataKey="x" name="N° compras" domain={[0, 26]} ticks={[0, 6, 12, 18, 24]}
-              tick={{ fontSize: 11, fill: "#8D8A96" }} axisLine={{ stroke: "#ecdcd3" }} tickLine={false}
-              label={{ value: "N.° compras", position: "insideBottom", offset: -4, fontSize: 11, fill: "#8D8A96" }} />
+              tick={{ fontSize: 11, fill: CHART.tick }} axisLine={{ stroke: CHART.grid }} tickLine={false}
+              label={{ value: "N.° compras", position: "insideBottom", offset: -4, fontSize: 11, fill: CHART.tick }} />
             <YAxis type="number" dataKey="y" name="Gastado" domain={[0, 140000]}
-              tickFormatter={(v) => `$${v / 1000}k`} tick={{ fontSize: 11, fill: "#8D8A96" }}
+              tickFormatter={(v) => `$${v / 1000}k`} tick={{ fontSize: 11, fill: CHART.tick }}
               axisLine={false} tickLine={false} />
             <Tooltip cursor={{ strokeDasharray: "3 3" }}
               formatter={(v, n) => (n === "y" ? fmt(v) : v)}
               labelFormatter={() => ""} />
-            <Scatter data={data} fill="#171a34">
+            <Scatter data={data} fill={CHART.c1}>
               <LabelList dataKey="nombre" content={ClienteLabel} />
             </Scatter>
           </ScatterChart>
@@ -218,8 +244,8 @@ function ModalTopClientes({ onClose }) {
         </table>
       </div>
       <div className="ru-modal-summary-line">
-        <div>Cliente top<br /><b style={{ color: "#171a34", fontSize: 13 }}>{top.nombre}</b><br />{fmt(top.gastado)}</div>
-        <div style={{ textAlign: "right" }}>Promedio por cliente<br /><b style={{ color: "#171a34", fontSize: 13 }}>{fmt(promedio)}</b><br />total gastado</div>
+        <div>Cliente top<br /><b style={{ color: "var(--primary)", fontSize: 13 }}>{top.nombre}</b><br />{fmt(top.gastado)}</div>
+        <div style={{ textAlign: "right" }}>Promedio por cliente<br /><b style={{ color: "var(--primary)", fontSize: 13 }}>{fmt(promedio)}</b><br />total gastado</div>
       </div>
     </Modal>
   );
@@ -228,26 +254,25 @@ function ModalTopClientes({ onClose }) {
 function ModalProductosVendidos({ onClose }) {
   const totalIngresos = PRODUCTOS_VENDIDOS.reduce((s, p) => s + p.ingresos, 0);
   const lider = PRODUCTOS_VENDIDOS[0];
-  const tagColor = { Vestidos: "#7C6FA3", Blusas: "#C9ADA7", Pantalones: "#D1495B", Chaquetas: "#C89B4B", Faldas: "#4E9E7A" };
   return (
     <Modal eyebrow="ESTADÍSTICA · PRODUCTOS" title="Productos más vendidos" onClose={onClose}>
       <div className="ru-modal-chart">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={PRODUCTOS_VENDIDOS} margin={{ top: 10, right: 8, bottom: 0, left: -18 }}>
-            <CartesianGrid stroke="#ecdcd3" strokeDasharray="3 3" vertical={false} />
-            <XAxis dataKey="producto" tick={{ fontSize: 11, fill: "#8D8A96" }} axisLine={{ stroke: "#ecdcd3" }} tickLine={false} />
-            <YAxis yAxisId="left" tick={{ fontSize: 10, fill: "#8D8A96" }} axisLine={false} tickLine={false} />
+            <CartesianGrid stroke={CHART.grid} strokeDasharray="3 3" vertical={false} />
+            <XAxis dataKey="producto" tick={{ fontSize: 11, fill: CHART.tick }} axisLine={{ stroke: CHART.grid }} tickLine={false} />
+            <YAxis yAxisId="left" tick={{ fontSize: 10, fill: CHART.tick }} axisLine={false} tickLine={false} />
             <YAxis yAxisId="right" orientation="right" tickFormatter={(v) => `$${v / 1000}k`}
-              tick={{ fontSize: 10, fill: "#8D8A96" }} axisLine={false} tickLine={false} />
+              tick={{ fontSize: 10, fill: CHART.tick }} axisLine={false} tickLine={false} />
             <Tooltip formatter={(v, n) => [n === "uds" ? `${v} uds` : fmt(v), n === "uds" ? "Unidades" : "Ingresos"]} />
-            <Bar yAxisId="left" dataKey="uds" fill="#171a34" radius={[3, 3, 0, 0]} barSize={16} />
-            <Bar yAxisId="right" dataKey="ingresos" fill="#C9ADA7" radius={[3, 3, 0, 0]} barSize={16} />
+            <Bar yAxisId="left" dataKey="uds" fill={CHART.c1} radius={[3, 3, 0, 0]} barSize={16} />
+            <Bar yAxisId="right" dataKey="ingresos" fill={CHART.c2} radius={[3, 3, 0, 0]} barSize={16} />
           </BarChart>
         </ResponsiveContainer>
       </div>
       <div className="ru-legend-row">
-        <span className="ru-legend-item"><span className="sq" style={{ background: "#171a34" }} /><span style={{ color: "#171a34" }}>Unidades</span></span>
-        <span className="ru-legend-item"><span className="sq" style={{ background: "#C9ADA7" }} /><span style={{ color: "#C9ADA7" }}>Ingresos</span></span>
+        <span className="ru-legend-item"><span className="sq" style={{ background: CHART.c1 }} /><span style={{ color: "var(--primary)" }}>Unidades</span></span>
+        <span className="ru-legend-item"><span className="sq" style={{ background: CHART.c2 }} /><span style={{ color: "var(--soft)" }}>Ingresos</span></span>
       </div>
       <div className="ru-table-wrap">
         <table className="ru-table">
@@ -257,7 +282,7 @@ function ModalProductosVendidos({ onClose }) {
               <tr key={p.producto}>
                 <td>
                   <div className="ru-client-name">{p.nombreCompleto}</div>
-                  <span className="ru-tag" style={{ background: `${tagColor[p.tag]}22`, color: tagColor[p.tag] }}>{p.tag}</span>
+                  <span className="ru-tag" style={{ background: TAG_COLORS[p.tag].bg, color: TAG_COLORS[p.tag].fg }}>{p.tag}</span>
                 </td>
                 <td>{p.uds} uds</td>
                 <td>{fmt(p.ingresos)}</td>
@@ -267,8 +292,8 @@ function ModalProductosVendidos({ onClose }) {
         </table>
       </div>
       <div className="ru-modal-summary-line">
-        <div>Producto líder<br /><b style={{ color: "#171a34", fontSize: 13 }}>{lider.nombreCompleto}</b><br />{lider.uds} unidades</div>
-        <div style={{ textAlign: "right" }}>Ingresos totales<br /><b style={{ color: "#171a34", fontSize: 13 }}>{fmt(totalIngresos)}</b><br />top 5 productos</div>
+        <div>Producto líder<br /><b style={{ color: "var(--primary)", fontSize: 13 }}>{lider.nombreCompleto}</b><br />{lider.uds} unidades</div>
+        <div style={{ textAlign: "right" }}>Ingresos totales<br /><b style={{ color: "var(--primary)", fontSize: 13 }}>{fmt(totalIngresos)}</b><br />top 5 productos</div>
       </div>
     </Modal>
   );
@@ -281,11 +306,11 @@ function ModalProductosFabricados({ onClose }) {
       <div className="ru-modal-chart" style={{ height: 190 }}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={PRODUCTOS_FABRICADOS} layout="vertical" margin={{ top: 4, right: 20, bottom: 0, left: 10 }}>
-            <CartesianGrid stroke="#ecdcd3" strokeDasharray="3 3" horizontal={false} />
-            <XAxis type="number" domain={[0, 320]} tick={{ fontSize: 10, fill: "#8D8A96" }} axisLine={{ stroke: "#ecdcd3" }} tickLine={false} />
-            <YAxis type="category" dataKey="accesorio" width={100} tick={{ fontSize: 10.5, fill: "#4A4E69" }} axisLine={false} tickLine={false} />
+            <CartesianGrid stroke={CHART.grid} strokeDasharray="3 3" horizontal={false} />
+            <XAxis type="number" domain={[0, 320]} tick={{ fontSize: 10, fill: CHART.tick }} axisLine={{ stroke: CHART.grid }} tickLine={false} />
+            <YAxis type="category" dataKey="accesorio" width={100} tick={{ fontSize: 10.5, fill: CHART.tickAlt }} axisLine={false} tickLine={false} />
             <Tooltip formatter={(v) => [`${v} uds`, "Fabricadas"]} />
-            <Bar dataKey="uds" fill="#4A4E69" radius={[0, 4, 4, 0]} barSize={16} />
+            <Bar dataKey="uds" fill={CHART.c3} radius={[0, 4, 4, 0]} barSize={16} />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -317,11 +342,11 @@ function ModalGananciasMensuales({ onClose }) {
       <div className="ru-modal-chart">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={GANANCIAS_MENSUALES} margin={{ top: 10, right: 16, bottom: 0, left: -10 }}>
-            <CartesianGrid stroke="#ecdcd3" strokeDasharray="3 3" vertical={false} />
-            <XAxis dataKey="mes" tick={{ fontSize: 10.5, fill: "#8D8A96" }} axisLine={{ stroke: "#ecdcd3" }} tickLine={false} />
-            <YAxis tickFormatter={(v) => `$${v / 1000}k`} tick={{ fontSize: 10.5, fill: "#8D8A96" }} axisLine={false} tickLine={false} />
+            <CartesianGrid stroke={CHART.grid} strokeDasharray="3 3" vertical={false} />
+            <XAxis dataKey="mes" tick={{ fontSize: 10.5, fill: CHART.tick }} axisLine={{ stroke: CHART.grid }} tickLine={false} />
+            <YAxis tickFormatter={(v) => `$${v / 1000}k`} tick={{ fontSize: 10.5, fill: CHART.tick }} axisLine={false} tickLine={false} />
             <Tooltip formatter={(v) => fmt(v)} />
-            <Line type="monotone" dataKey="ganancia" stroke="#171a34" strokeWidth={2} dot={{ r: 3, fill: "#171a34" }} activeDot={{ r: 5 }} />
+            <Line type="monotone" dataKey="ganancia" stroke={CHART.c1} strokeWidth={2} dot={{ r: 3, fill: CHART.c1 }} activeDot={{ r: 5 }} />
           </LineChart>
         </ResponsiveContainer>
       </div>
@@ -336,9 +361,9 @@ function ModalGananciasMensuales({ onClose }) {
         </table>
       </div>
       <div className="ru-modal-summary-line">
-        <div>Mes actual<br /><b style={{ color: "#171a34", fontSize: 13 }}>{fmt(mesActual.ganancia)}</b></div>
-        <div style={{ textAlign: "center" }}>Mejor mes<br /><b style={{ color: "#171a34", fontSize: 13 }}>{fmt(mejorMes.ganancia)}</b></div>
-        <div style={{ textAlign: "right" }}>Total anual<br /><b style={{ color: "#171a34", fontSize: 13 }}>{fmt(totalAnual)}</b></div>
+        <div>Mes actual<br /><b style={{ color: "var(--primary)", fontSize: 13 }}>{fmt(mesActual.ganancia)}</b></div>
+        <div style={{ textAlign: "center" }}>Mejor mes<br /><b style={{ color: "var(--primary)", fontSize: 13 }}>{fmt(mejorMes.ganancia)}</b></div>
+        <div style={{ textAlign: "right" }}>Total anual<br /><b style={{ color: "var(--primary)", fontSize: 13 }}>{fmt(totalAnual)}</b></div>
       </div>
     </Modal>
   );
@@ -352,11 +377,11 @@ function ModalProduccionMensual({ onClose }) {
       <div className="ru-modal-chart">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={PRODUCCION_MENSUAL} margin={{ top: 10, right: 8, bottom: 0, left: -18 }}>
-            <CartesianGrid stroke="#ecdcd3" strokeDasharray="3 3" vertical={false} />
-            <XAxis dataKey="mes" tick={{ fontSize: 10.5, fill: "#8D8A96" }} axisLine={{ stroke: "#ecdcd3" }} tickLine={false} />
-            <YAxis tick={{ fontSize: 10.5, fill: "#8D8A96" }} axisLine={false} tickLine={false} />
+            <CartesianGrid stroke={CHART.grid} strokeDasharray="3 3" vertical={false} />
+            <XAxis dataKey="mes" tick={{ fontSize: 10.5, fill: CHART.tick }} axisLine={{ stroke: CHART.grid }} tickLine={false} />
+            <YAxis tick={{ fontSize: 10.5, fill: CHART.tick }} axisLine={false} tickLine={false} />
             <Tooltip />
-            <Bar dataKey="produccion" fill="#171a34" radius={[3, 3, 0, 0]} barSize={20} />
+            <Bar dataKey="produccion" fill={CHART.c1} radius={[3, 3, 0, 0]} barSize={20} />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -376,8 +401,8 @@ function ModalProduccionMensual({ onClose }) {
         </table>
       </div>
       <div className="ru-modal-summary-line">
-        <div>Total producido<br /><b style={{ color: "#171a34", fontSize: 13 }}>{totalProducido} uds</b><br />Ene – Ago 2026</div>
-        <div style={{ textAlign: "right" }}>Total vendido<br /><b style={{ color: "#171a34", fontSize: 13 }}>{totalVendido} uds</b><br />Ene – Ago 2026</div>
+        <div>Total producido<br /><b style={{ color: "var(--primary)", fontSize: 13 }}>{totalProducido} uds</b><br />Ene – Ago 2026</div>
+        <div style={{ textAlign: "right" }}>Total vendido<br /><b style={{ color: "var(--primary)", fontSize: 13 }}>{totalVendido} uds</b><br />Ene – Ago 2026</div>
       </div>
     </Modal>
   );
@@ -387,15 +412,15 @@ function ModalInsumos({ onClose }) {
   const total = INSUMOS_TABLA.reduce((s, m) => s + m.uds, 0);
   const mejorMes = INSUMOS_TABLA.reduce((a, b) => (b.uds > a.uds ? b : a));
   const promedio = Math.round(total / INSUMOS_TABLA.length);
-  const colors = { Hilo: "#171a34", Dije: "#4A4E69", Cierre: "#9A8C98", Cadena: "#C89B4B", Tela: "#C9ADA7" };
+  const colors = { Hilo: CHART.c1, Dije: CHART.c3, Cierre: CHART.c4, Cadena: CHART.c5, Tela: CHART.c2 };
   return (
     <Modal eyebrow="ESTADÍSTICA · CONSUMO ESTIMADO SEGÚN FICHA TÉCNICA" title="Insumos más utilizados" onClose={onClose}>
       <div className="ru-modal-chart">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={INSUMOS_SERIES} margin={{ top: 10, right: 16, bottom: 0, left: -10 }}>
-            <CartesianGrid stroke="#ecdcd3" strokeDasharray="3 3" vertical={false} />
-            <XAxis dataKey="mes" tick={{ fontSize: 10.5, fill: "#8D8A96" }} axisLine={{ stroke: "#ecdcd3" }} tickLine={false} />
-            <YAxis tick={{ fontSize: 10.5, fill: "#8D8A96" }} axisLine={false} tickLine={false} />
+            <CartesianGrid stroke={CHART.grid} strokeDasharray="3 3" vertical={false} />
+            <XAxis dataKey="mes" tick={{ fontSize: 10.5, fill: CHART.tick }} axisLine={{ stroke: CHART.grid }} tickLine={false} />
+            <YAxis tick={{ fontSize: 10.5, fill: CHART.tick }} axisLine={false} tickLine={false} />
             <Tooltip />
             {Object.keys(colors).map((k) => (
               <Line key={k} type="monotone" dataKey={k} stroke={colors[k]} strokeWidth={2} dot={{ r: 2.5 }} activeDot={{ r: 4 }} />
@@ -407,7 +432,7 @@ function ModalInsumos({ onClose }) {
         {Object.keys(colors).map((k) => (
           <span className="ru-legend-item" key={k}>
             <span className="sq" style={{ background: colors[k] }} />
-            <span style={{ color: colors[k] }}>{k}</span>
+            <span style={{ color: "var(--primary)" }}>{k}</span>
           </span>
         ))}
       </div>
@@ -427,8 +452,8 @@ function ModalInsumos({ onClose }) {
         </table>
       </div>
       <div className="ru-modal-summary-line">
-        <div>Mes de mayor consumo<br /><b style={{ color: "#171a34", fontSize: 13 }}>{mejorMes.mesLargo}</b><br />{mejorMes.uds} unidades</div>
-        <div style={{ textAlign: "right" }}>Promedio mensual<br /><b style={{ color: "#171a34", fontSize: 13 }}>{promedio} uds</b><br />por mes</div>
+        <div>Mes de mayor consumo<br /><b style={{ color: "var(--primary)", fontSize: 13 }}>{mejorMes.mesLargo}</b><br />{mejorMes.uds} unidades</div>
+        <div style={{ textAlign: "right" }}>Promedio mensual<br /><b style={{ color: "var(--primary)", fontSize: 13 }}>{promedio} uds</b><br />por mes</div>
       </div>
     </Modal>
   );
@@ -507,14 +532,14 @@ export default function Dashboard() {
           >
             <ResponsiveContainer width="100%" height="100%">
               <ScatterChart margin={{ top: 10, right: 55, bottom: 6, left: -10 }}>
-                <CartesianGrid stroke="#ecdcd3" strokeDasharray="3 3" />
+                <CartesianGrid stroke={CHART.grid} strokeDasharray="3 3" />
                 <XAxis type="number" dataKey="x" domain={[0, 26]} ticks={[0, 6, 12, 18, 24]}
-                  tick={{ fontSize: 10.5, fill: "#8D8A96" }} axisLine={{ stroke: "#ecdcd3" }} tickLine={false}
-                  label={{ value: "N.° compras", position: "insideBottom", offset: -2, fontSize: 10.5, fill: "#8D8A96" }} />
+                  tick={{ fontSize: 10.5, fill: CHART.tick }} axisLine={{ stroke: CHART.grid }} tickLine={false}
+                  label={{ value: "N.° compras", position: "insideBottom", offset: -2, fontSize: 10.5, fill: CHART.tick }} />
                 <YAxis type="number" dataKey="y" domain={[0, 140000]} tickFormatter={(v) => `$${v / 1000}k`}
-                  tick={{ fontSize: 10.5, fill: "#8D8A96" }} axisLine={false} tickLine={false} />
+                  tick={{ fontSize: 10.5, fill: CHART.tick }} axisLine={false} tickLine={false} />
                 <Tooltip formatter={(v, n) => (n === "y" ? fmt(v) : v)} />
-                <Scatter data={scatterData} fill="#171a34">
+                <Scatter data={scatterData} fill={CHART.c1}>
                   <LabelList dataKey="nombre" content={ClienteLabel} />
                 </Scatter>
               </ScatterChart>
@@ -529,19 +554,19 @@ export default function Dashboard() {
           >
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={PRODUCTOS_VENDIDOS} margin={{ top: 10, right: 4, bottom: 0, left: -18 }}>
-                <CartesianGrid stroke="#ecdcd3" strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="producto" tick={{ fontSize: 10.5, fill: "#8D8A96" }} axisLine={{ stroke: "#ecdcd3" }} tickLine={false} />
-                <YAxis yAxisId="left" tick={{ fontSize: 10, fill: "#8D8A96" }} axisLine={false} tickLine={false} />
+                <CartesianGrid stroke={CHART.grid} strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="producto" tick={{ fontSize: 10.5, fill: CHART.tick }} axisLine={{ stroke: CHART.grid }} tickLine={false} />
+                <YAxis yAxisId="left" tick={{ fontSize: 10, fill: CHART.tick }} axisLine={false} tickLine={false} />
                 <YAxis yAxisId="right" orientation="right" tickFormatter={(v) => `$${v / 1000}k`}
-                  tick={{ fontSize: 10, fill: "#8D8A96" }} axisLine={false} tickLine={false} />
+                  tick={{ fontSize: 10, fill: CHART.tick }} axisLine={false} tickLine={false} />
                 <Tooltip formatter={(v, n) => [n === "uds" ? `${v} uds` : fmt(v), n === "uds" ? "Unidades" : "Ingresos"]} />
-                <Bar yAxisId="left" dataKey="uds" fill="#171a34" radius={[3, 3, 0, 0]} barSize={14} />
-                <Bar yAxisId="right" dataKey="ingresos" fill="#C9ADA7" radius={[3, 3, 0, 0]} barSize={14} />
+                <Bar yAxisId="left" dataKey="uds" fill={CHART.c1} radius={[3, 3, 0, 0]} barSize={14} />
+                <Bar yAxisId="right" dataKey="ingresos" fill={CHART.c2} radius={[3, 3, 0, 0]} barSize={14} />
               </BarChart>
             </ResponsiveContainer>
             <div className="ru-legend-row">
-              <span className="ru-legend-item"><span className="sq" style={{ background: "#171a34" }} /><span style={{ color: "#171a34" }}>Unidades</span></span>
-              <span className="ru-legend-item"><span className="sq" style={{ background: "#C9ADA7" }} /><span style={{ color: "#C9ADA7" }}>Ingresos</span></span>
+              <span className="ru-legend-item"><span className="sq" style={{ background: CHART.c1 }} /><span style={{ color: "var(--primary)" }}>Unidades</span></span>
+              <span className="ru-legend-item"><span className="sq" style={{ background: CHART.c2 }} /><span style={{ color: "var(--soft)" }}>Ingresos</span></span>
             </div>
           </ChartCard>
 
@@ -553,11 +578,11 @@ export default function Dashboard() {
           >
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={PRODUCTOS_FABRICADOS} layout="vertical" margin={{ top: 4, right: 20, bottom: 0, left: 8 }}>
-                <CartesianGrid stroke="#ecdcd3" strokeDasharray="3 3" horizontal={false} />
-                <XAxis type="number" domain={[0, 320]} tick={{ fontSize: 10, fill: "#8D8A96" }} axisLine={{ stroke: "#ecdcd3" }} tickLine={false} />
-                <YAxis type="category" dataKey="accesorio" width={92} tick={{ fontSize: 9.5, fill: "#4A4E69" }} axisLine={false} tickLine={false} />
+                <CartesianGrid stroke={CHART.grid} strokeDasharray="3 3" horizontal={false} />
+                <XAxis type="number" domain={[0, 320]} tick={{ fontSize: 10, fill: CHART.tick }} axisLine={{ stroke: CHART.grid }} tickLine={false} />
+                <YAxis type="category" dataKey="accesorio" width={92} tick={{ fontSize: 9.5, fill: CHART.tickAlt }} axisLine={false} tickLine={false} />
                 <Tooltip formatter={(v) => [`${v} uds`, "Fabricadas"]} />
-                <Bar dataKey="uds" fill="#4A4E69" radius={[0, 4, 4, 0]} barSize={14} />
+                <Bar dataKey="uds" fill={CHART.c3} radius={[0, 4, 4, 0]} barSize={14} />
               </BarChart>
             </ResponsiveContainer>
           </ChartCard>
@@ -571,11 +596,11 @@ export default function Dashboard() {
           >
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={GANANCIAS_MENSUALES} margin={{ top: 10, right: 16, bottom: 0, left: -10 }}>
-                <CartesianGrid stroke="#ecdcd3" strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="mes" tick={{ fontSize: 10, fill: "#8D8A96" }} axisLine={{ stroke: "#ecdcd3" }} tickLine={false} />
-                <YAxis tickFormatter={(v) => `$${v / 1000}k`} tick={{ fontSize: 10, fill: "#8D8A96" }} axisLine={false} tickLine={false} />
+                <CartesianGrid stroke={CHART.grid} strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="mes" tick={{ fontSize: 10, fill: CHART.tick }} axisLine={{ stroke: CHART.grid }} tickLine={false} />
+                <YAxis tickFormatter={(v) => `$${v / 1000}k`} tick={{ fontSize: 10, fill: CHART.tick }} axisLine={false} tickLine={false} />
                 <Tooltip formatter={(v) => fmt(v)} />
-                <Line type="monotone" dataKey="ganancia" stroke="#171a34" strokeWidth={2} dot={{ r: 2.5, fill: "#171a34" }} activeDot={{ r: 5 }} />
+                <Line type="monotone" dataKey="ganancia" stroke={CHART.c1} strokeWidth={2} dot={{ r: 2.5, fill: CHART.c1 }} activeDot={{ r: 5 }} />
               </LineChart>
             </ResponsiveContainer>
           </ChartCard>
@@ -585,20 +610,20 @@ export default function Dashboard() {
             title="Producción mensual"
             subtitle="Producción vs. ventas por mes"
             badge={
-              <span style={{ display: "flex", gap: 10, marginLeft: "auto", fontSize: 11, color: "#4A4E69" }}>
-                <span><span className="dot" style={{ display: "inline-block", width: 7, height: 7, borderRadius: "50%", background: "#171a34", marginRight: 4 }} />Producción</span>
-                <span><span className="dot" style={{ display: "inline-block", width: 7, height: 7, borderRadius: "50%", background: "#C9ADA7", marginRight: 4 }} />Ventas</span>
+              <span style={{ display: "flex", gap: 10, marginLeft: "auto", fontSize: 11, color: "var(--muted-text)" }}>
+                <span><span className="dot" style={{ display: "inline-block", width: 7, height: 7, borderRadius: "50%", background: CHART.c1, marginRight: 4 }} />Producción</span>
+                <span><span className="dot" style={{ display: "inline-block", width: 7, height: 7, borderRadius: "50%", background: CHART.c2, marginRight: 4 }} />Ventas</span>
               </span>
             }
             onView={() => setModal("produccion")}
           >
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={PRODUCCION_MENSUAL} margin={{ top: 10, right: 4, bottom: 0, left: -18 }}>
-                <CartesianGrid stroke="#ecdcd3" strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="mes" tick={{ fontSize: 10, fill: "#8D8A96" }} axisLine={{ stroke: "#ecdcd3" }} tickLine={false} />
-                <YAxis tick={{ fontSize: 10, fill: "#8D8A96" }} axisLine={false} tickLine={false} />
+                <CartesianGrid stroke={CHART.grid} strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="mes" tick={{ fontSize: 10, fill: CHART.tick }} axisLine={{ stroke: CHART.grid }} tickLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: CHART.tick }} axisLine={false} tickLine={false} />
                 <Tooltip />
-                <Bar dataKey="produccion" fill="#171a34" radius={[3, 3, 0, 0]} barSize={16} />
+                <Bar dataKey="produccion" fill={CHART.c1} radius={[3, 3, 0, 0]} barSize={16} />
               </BarChart>
             </ResponsiveContainer>
           </ChartCard>
@@ -611,15 +636,15 @@ export default function Dashboard() {
           >
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={INSUMOS_SERIES} margin={{ top: 10, right: 16, bottom: 0, left: -10 }}>
-                <CartesianGrid stroke="#ecdcd3" strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="mes" tick={{ fontSize: 10, fill: "#8D8A96" }} axisLine={{ stroke: "#ecdcd3" }} tickLine={false} />
-                <YAxis tick={{ fontSize: 10, fill: "#8D8A96" }} axisLine={false} tickLine={false} />
+                <CartesianGrid stroke={CHART.grid} strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="mes" tick={{ fontSize: 10, fill: CHART.tick }} axisLine={{ stroke: CHART.grid }} tickLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: CHART.tick }} axisLine={false} tickLine={false} />
                 <Tooltip />
-                <Line type="monotone" dataKey="Hilo" stroke="#171a34" strokeWidth={1.6} dot={false} />
-                <Line type="monotone" dataKey="Dije" stroke="#4A4E69" strokeWidth={1.6} dot={false} />
-                <Line type="monotone" dataKey="Cierre" stroke="#9A8C98" strokeWidth={1.6} dot={false} />
-                <Line type="monotone" dataKey="Cadena" stroke="#C89B4B" strokeWidth={1.6} dot={false} />
-                <Line type="monotone" dataKey="Tela" stroke="#C9ADA7" strokeWidth={1.6} dot={false} />
+                <Line type="monotone" dataKey="Hilo" stroke={CHART.c1} strokeWidth={1.6} dot={false} />
+                <Line type="monotone" dataKey="Dije" stroke={CHART.c3} strokeWidth={1.6} dot={false} />
+                <Line type="monotone" dataKey="Cierre" stroke={CHART.c4} strokeWidth={1.6} dot={false} />
+                <Line type="monotone" dataKey="Cadena" stroke={CHART.c5} strokeWidth={1.6} dot={false} />
+                <Line type="monotone" dataKey="Tela" stroke={CHART.c2} strokeWidth={1.6} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </ChartCard>

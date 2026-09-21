@@ -2,6 +2,8 @@
    Proveedores.css — Módulo de Gestión de Proveedores (Raíz Urbana)
    Tipografías: Playfair Display (títulos) + Montserrat (interfaz)
    Sistema visual unificado con Ventas.css
+   Modo oscuro: se activa con [data-theme="dark"] y solo cambia
+   las variables de abajo (no hay colores sueltos en las reglas).
    ================================================================== */
 @import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap");
 
@@ -23,6 +25,63 @@
   --red-bg: #fde6e3; --red-fg: #d8483a; --red-bd: #f5b8b1;
   --gray-bg: #f0eff1; --gray-fg: #6b6a72; --gray-bd: #dcdadf;
   --serif: "Playfair Display", Georgia, serif;
+
+  /* Variables extra (antes eran colores fijos) */
+  --field-bg: #ffffff;
+  --thead-bg: #f5f3f4;
+  --hover-bg: #f4eeeb;
+  --hover-soft: #f4f2f3;
+  --cancel-bg: #ffffff;
+  --cancel-hover: #faf6f4;
+  --hero-bg: #fbf9f8;
+  --border-soft: #d8d5da;
+  --placeholder: #a5a3ae;
+  --focus: #4b4b5a;
+  --edit-fg: #f0a020;
+  --danger: #d8483a;
+  --overlay-bg: rgba(60, 50, 55, 0.35);
+  --modal-border: transparent;
+  --modal-shadow: rgba(20, 16, 10, 0.25);
+}
+
+/* ---------------- MODO OSCURO ----------------
+   bg #12131C · surface #1C1E2E · primary #4A4E69
+   secondary #9A8C98 · accent #C9ADA7 · text #F2E9E4          */
+[data-theme="dark"] .proveedores-page,
+[data-theme="dark"] .modal-overlay {
+  color-scheme: dark;
+
+  --bg: #12131C;
+  --panel: #1C1E2E;
+  --border: #3A3D57;
+  --line: #2A2C40;
+  --ink: #F2E9E4;
+  --ink-soft: #C9ADA7;
+  --muted: #9A8C98;
+  --soft-bg: #252839;
+  --dark: #4A4E69;
+  --dark-hover: #5B6082;
+  --green-bg: rgba(34, 197, 94, 0.12);  --green-fg: #4ade80; --green-bd: rgba(34, 197, 94, 0.3);
+  --blue-bg: rgba(59, 130, 246, 0.12);  --blue-fg: #60a5fa;  --blue-bd: rgba(59, 130, 246, 0.3);
+  --amber-bg: rgba(245, 158, 11, 0.12); --amber-fg: #fbbf24; --amber-bd: rgba(245, 158, 11, 0.3);
+  --red-bg: rgba(239, 68, 68, 0.12);    --red-fg: #fca5a5;   --red-bd: rgba(239, 68, 68, 0.3);
+  --gray-bg: rgba(154, 140, 152, 0.14); --gray-fg: #C9ADA7;  --gray-bd: rgba(154, 140, 152, 0.25);
+
+  --field-bg: #161722;
+  --thead-bg: #1A1C2A;
+  --hover-bg: #252839;
+  --hover-soft: #252839;
+  --cancel-bg: transparent;
+  --cancel-hover: #252839;
+  --hero-bg: #252839;
+  --border-soft: #3A3D57;
+  --placeholder: #6f6a7a;
+  --focus: #5B6082;
+  --edit-fg: #fbbf24;
+  --danger: #b8455f;
+  --overlay-bg: rgba(8, 9, 15, 0.72);
+  --modal-border: #3A3D57;
+  --modal-shadow: rgba(0, 0, 0, 0.55);
 }
 
 .proveedores-page {
@@ -65,12 +124,13 @@
 .proveedores-search { flex: 3 1 220px; max-width: none; height: auto; position: relative; display: flex; align-items: center; min-width: 0; }
 .proveedores-search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--ink); pointer-events: none; }
 .proveedores-search-input,
-.proveedores-filter-select { width: 100%; height: auto; padding: 12px 15px; outline: none; border: 1px solid var(--border); border-radius: 10px; background: #fff; color: var(--ink); font-size: 14.5px; min-width: 0; }
+.proveedores-filter-select { width: 100%; height: auto; padding: 12px 15px; outline: none; border: 1px solid var(--border); border-radius: 10px; background: var(--field-bg); color: var(--ink); font-size: 14.5px; min-width: 0; }
 .proveedores-search-input { padding-left: 40px; }
-.proveedores-search-input::placeholder { color: #a5a3ae; }
+.proveedores-search-input::placeholder { color: var(--placeholder); }
 .proveedores-filter-select { width: auto; flex: 1 1 150px; min-width: 150px; cursor: pointer; }
+.proveedores-filter-select option { background: var(--panel); color: var(--ink); }
 .proveedores-search-input:focus,
-.proveedores-filter-select:focus { border-color: var(--ink-soft); }
+.proveedores-filter-select:focus { border-color: var(--focus); }
 
 /* ---------------- Tabla ---------------- */
 .proveedores-table-card { width: 100%; margin-bottom: 22px; overflow: hidden; background: var(--panel); border: 1px solid var(--border); border-radius: 14px; }
@@ -81,9 +141,9 @@
 
 .proveedores-table-wrapper { width: 100%; overflow-x: auto; overflow-y: visible; -webkit-overflow-scrolling: touch; }
 .proveedores-table { width: 100%; min-width: 980px; border-collapse: collapse; font-size: 14px; }
-.proveedores-table thead tr { background: #f5f3f4; border-bottom: 1px solid var(--border); }
+.proveedores-table thead tr { background: var(--thead-bg); border-bottom: 1px solid var(--border); }
 .proveedores-table th { height: auto; padding: 15px 20px; color: var(--muted); font-size: 11.5px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; text-align: left; vertical-align: middle; white-space: nowrap; }
-.proveedores-table td { height: auto; padding: 18px 20px; background: #fff; border-bottom: 1px solid var(--border); color: var(--ink-soft); font-size: 14px; vertical-align: middle; }
+.proveedores-table td { height: auto; padding: 18px 20px; background: var(--panel); border-bottom: 1px solid var(--border); color: var(--ink-soft); font-size: 14px; vertical-align: middle; }
 .proveedores-table th:first-child, .proveedores-table td:first-child { padding-left: 24px; }
 .proveedores-table th:last-child, .proveedores-table td:last-child { padding-right: 24px; }
 .proveedores-table th:last-child { text-align: center; }
@@ -91,7 +151,7 @@
 .proveedores-table th:nth-child(1), .proveedores-table td:nth-child(1) { width: 90px; }
 
 /* ---------------- Celdas ---------------- */
-.proveedores-id span { display: inline-flex; align-items: center; background: var(--soft-bg); border: 1px solid #d8d5da; border-radius: 6px; padding: 4px 10px; font-size: 12.5px; font-weight: 600; color: var(--ink-soft); white-space: nowrap; }
+.proveedores-id span { display: inline-flex; align-items: center; background: var(--soft-bg); border: 1px solid var(--border-soft); border-radius: 6px; padding: 4px 10px; font-size: 12.5px; font-weight: 600; color: var(--ink-soft); white-space: nowrap; }
 .proveedores-name-wrapper { display: flex; align-items: center; gap: 13px; min-width: 0; }
 .proveedores-name-icon { width: 34px; height: 34px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-radius: 8px; background: var(--soft-bg); color: var(--ink); }
 .proveedores-name-icon svg { width: 16px; height: 16px; }
@@ -112,9 +172,9 @@
 .proveedores-actions { display: flex; align-items: center; justify-content: center; gap: 4px; flex-wrap: wrap; }
 .proveedores-action-button { width: 32px; height: 32px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border: none; border-radius: 7px; background: transparent; cursor: pointer; transition: background .15s; }
 .proveedores-action-button svg { width: 18px; height: 18px; }
-.proveedores-action-button:hover { background: #f4eeeb; opacity: 1; }
+.proveedores-action-button:hover { background: var(--hover-bg); opacity: 1; }
 .proveedores-action-view { color: var(--blue-fg); }
-.proveedores-action-edit { color: #f0a020; }
+.proveedores-action-edit { color: var(--edit-fg); }
 .proveedores-action-delete { color: var(--red-fg); }
 
 /* ---------------- Paginación ---------------- */
@@ -122,7 +182,7 @@
 .proveedores-pagination-info { margin: 0; color: var(--muted); font-size: 12.5px; }
 .proveedores-pagination-controls { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
 .proveedores-pagination-button { min-width: 32px; width: auto; height: 32px; padding: 0 6px; display: inline-flex; align-items: center; justify-content: center; border: none; border-radius: 8px; background: none; color: var(--ink); font-size: 14.5px; cursor: pointer; }
-.proveedores-pagination-button:hover:not(:disabled) { background: #f4eeeb; }
+.proveedores-pagination-button:hover:not(:disabled) { background: var(--hover-bg); }
 .proveedores-pagination-button.active { background: var(--dark); color: #fff; }
 .proveedores-pagination-button:disabled { cursor: not-allowed; opacity: .35; }
 
@@ -133,8 +193,8 @@
    Nota: las clases .modal-* son genéricas; se dejan con los mismos
    valores que Ventas.css para que no haya conflicto al cargar ambos.
    ================================================================== */
-.modal-overlay { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 24px; background: rgba(60, 50, 55, 0.35); backdrop-filter: blur(3px); color: var(--ink); }
-.modal-container { width: 100%; max-width: 720px; max-height: 92vh; display: flex; flex-direction: column; background: #fff; border: none; border-radius: 22px; box-shadow: 0 24px 60px rgba(20, 16, 10, 0.25); overflow: hidden; margin: 0; }
+.modal-overlay { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 24px; background: var(--overlay-bg); backdrop-filter: blur(3px); color: var(--ink); }
+.modal-container { width: 100%; max-width: 720px; max-height: 92vh; display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--modal-border); border-radius: 22px; box-shadow: 0 24px 60px var(--modal-shadow); overflow: hidden; margin: 0; }
 .modal-view-container { max-width: 460px; }
 .modal-delete-container { max-width: 460px; }
 
@@ -143,14 +203,14 @@
 .modal-title { margin: 0; font-family: var(--serif); font-size: 26px; font-weight: 600; color: var(--ink); }
 .modal-close-btn { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0; border: none; border-radius: 7px; background: none; color: var(--ink); cursor: pointer; flex-shrink: 0; }
 .modal-close-btn svg { width: 18px; height: 18px; }
-.modal-close-btn:hover { background: #f4eeeb; }
+.modal-close-btn:hover { background: var(--hover-bg); }
 
 .modal-body { padding: 24px 30px 8px; display: flex; flex-direction: column; overflow-y: auto; border-top: 1px solid var(--border); flex: 1; }
 .modal-container .modal-body { gap: 13px; }
 .modal-container .modal-body.modal-body-view { padding: 0; gap: 0; }
 .modal-body-view { display: flex; flex-direction: column; }
 
-.modal-footer { display: flex; gap: 12px; padding: 18px 30px 26px; border-top: 1px solid var(--border); flex-wrap: wrap; background: #fff; justify-content: stretch; }
+.modal-footer { display: flex; gap: 12px; padding: 18px 30px 26px; border-top: 1px solid var(--border); flex-wrap: wrap; background: var(--panel); justify-content: stretch; }
 .modal-footer > * { flex: 1; min-width: 120px; }
 
 /* Secciones y formulario */
@@ -162,14 +222,15 @@
 .form-group { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
 .grid-2-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
 .form-label { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); }
-.modal-input { width: 100%; padding: 12px 15px; border-radius: 10px; border: 1px solid var(--border); background: #fff; font-size: 14.5px; color: var(--ink); outline: none; min-width: 0; }
-.modal-input::placeholder { color: #a5a3ae; }
-.modal-input:focus { border-color: var(--ink-soft); }
+.modal-input { width: 100%; padding: 12px 15px; border-radius: 10px; border: 1px solid var(--border); background: var(--field-bg); font-size: 14.5px; color: var(--ink); outline: none; min-width: 0; }
+.modal-input::placeholder { color: var(--placeholder); }
+.modal-input:focus { border-color: var(--focus); }
+.modal-input option { background: var(--panel); color: var(--ink); }
 
 /* Selector de estado */
 .estado-options-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.estado-card { width: 100%; padding: 14px 17px; border-radius: 10px; border: 1px solid var(--border); background: #fff; display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; font-size: 14.5px; font-weight: 600; color: var(--ink); }
-.estado-card:hover { background: #f4f2f3; }
+.estado-card { width: 100%; padding: 14px 17px; border-radius: 10px; border: 1px solid var(--border); background: var(--field-bg); display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; font-size: 14.5px; font-weight: 600; color: var(--ink); }
+.estado-card:hover { background: var(--hover-soft); }
 .estado-card.selected { background: var(--soft-bg); border: 1.5px solid var(--dark); }
 .estado-content { display: flex; align-items: center; gap: 12px; }
 .dot-green, .dot-gray { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
@@ -180,21 +241,21 @@
 .btn-modal-cancel,
 .btn-modal-submit,
 .btn-delete-submit { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 13px 22px; border-radius: 10px; border: 1px solid transparent; font-size: 14.5px; font-weight: 600; cursor: pointer; transition: background .15s, opacity .15s; }
-.btn-modal-cancel { background: #fff; border-color: var(--border); color: var(--ink); }
-.btn-modal-cancel:hover { background: #faf6f4; }
+.btn-modal-cancel { background: var(--cancel-bg); border-color: var(--border); color: var(--ink); }
+.btn-modal-cancel:hover { background: var(--cancel-hover); }
 .btn-modal-submit { background: var(--dark); border-color: var(--dark); color: #fff; }
 .btn-modal-submit:hover { background: var(--dark-hover); }
-.btn-delete-submit { background: var(--red-fg); border-color: var(--red-fg); color: #fff; }
+.btn-delete-submit { background: var(--danger); border-color: var(--danger); color: #fff; }
 .btn-delete-submit:hover { opacity: .9; }
 
 /* Modal ver proveedor */
-.view-card-hero { background: #fbf9f8; padding: 22px 30px; display: flex; gap: 16px; border-bottom: 1px solid var(--border); }
+.view-card-hero { background: var(--hero-bg); padding: 22px 30px; display: flex; gap: 16px; border-bottom: 1px solid var(--border); }
 .view-icon-box { width: 56px; height: 56px; border-radius: 12px; background: var(--soft-bg); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .view-package-icon { width: 22px; height: 22px; color: var(--ink); }
 .view-hero-details { display: flex; flex-direction: column; justify-content: center; min-width: 0; }
 .view-product-title { font-size: 17px; font-weight: 700; color: var(--ink); margin-bottom: 6px; word-break: break-word; }
 .view-badges-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.view-info-list { padding: 18px 30px 8px; display: flex; flex-direction: column; gap: 0; background: #fff; }
+.view-info-list { padding: 18px 30px 8px; display: flex; flex-direction: column; gap: 0; background: var(--panel); }
 .view-info-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; padding: 13px 2px; border-bottom: 1px solid var(--line); }
 .view-info-row:last-child { border-bottom: none; }
 .view-label-icon { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--ink-soft); }
@@ -208,6 +269,11 @@
 .delete-title { font-family: var(--serif); font-size: 20px; font-weight: 600; color: var(--ink); margin: 0 0 8px; }
 .delete-text { font-size: 14px; color: var(--ink-soft); margin: 0; line-height: 1.55; }
 .delete-footer { justify-content: stretch; }
+
+/* Scrollbar del modal (solo se nota en oscuro) */
+[data-theme="dark"] .modal-body::-webkit-scrollbar { width: 6px; }
+[data-theme="dark"] .modal-body::-webkit-scrollbar-track { background: #161722; }
+[data-theme="dark"] .modal-body::-webkit-scrollbar-thumb { background: #3A3D57; border-radius: 4px; }
 
 /* ==================================================================
    RESPONSIVE — breakpoints 1180 / 980 / 780 / 640 / 480 / 380

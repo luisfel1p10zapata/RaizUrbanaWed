@@ -7,6 +7,7 @@ import {
   ShoppingBag,
   Sparkles,
 } from 'lucide-react';
+import useTheme from '../../components/hook/useTheme';
 
 const categories = [
   {
@@ -51,6 +52,8 @@ const features = [
 ];
 
 const Inicio = () => {
+  const { theme } = useTheme();
+
   return (
     <main className="inicio-page">
 
@@ -254,7 +257,7 @@ const Inicio = () => {
 
             <div className="inicio-logo">
               <img
-                src="/images/logo-ru.png"
+                src={theme === 'dark' ? '/images/logoDark.png' : '/images/logo-ru.png'}
                 alt="Raíz Urbana"
               />
             </div>

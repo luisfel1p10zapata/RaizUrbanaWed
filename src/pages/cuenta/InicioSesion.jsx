@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, ArrowLeft, Layers, Star, LayoutGrid } from 'lucide-react';
+import useTheme from '../../components/hook/useTheme';
 import './iniciosesion.css';
 
 export default function InicioSesion() {
@@ -8,6 +9,9 @@ export default function InicioSesion() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
+  const { theme } = useTheme();
+
+  const logoSrc = theme === 'dark' ? '/images/logoDark.png' : '/images/logo-ru.png';
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -19,7 +23,9 @@ export default function InicioSesion() {
     <div className="auth-container">
       {/* Panel Izquierdo Hero */}
       <div className="auth-left-panel">
-        <div className="auth-brand-logo">R\U</div>
+        <div className="auth-brand-logo">
+          <img src={logoSrc} alt="Raíz Urbana" />
+        </div>
 
         <div className="auth-hero-content">
           <div className="auth-hero-subtitle-tag">SISTEMA ADMINISTRATIVO</div>
@@ -60,7 +66,9 @@ export default function InicioSesion() {
 
         <div className="auth-card-wrapper">
           <div className="auth-card">
-            <div className="auth-card-logo">R\U</div>
+            <div className="auth-card-logo">
+              <img src={logoSrc} alt="Raíz Urbana" />
+            </div>
             <div className="auth-card-subtitle">BIENVENIDO DE VUELTA</div>
             <h2 className="auth-card-title">Iniciar sesión</h2>
             <p className="auth-card-desc">Accede a tu cuenta de Raíz Urbana</p>
