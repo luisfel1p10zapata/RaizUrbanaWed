@@ -1,301 +1,351 @@
-/* =========================================================
-   TIPO DE PRODUCTO - ESTRUCTURA GENERAL
-   ========================================================= */
+/* ==================================================================
+   TipoProducto.css — Módulo de Tipos de Producto (Raíz Urbana)
+   Alineado al sistema visual de Ventas.css
+   Tipografías: Playfair Display (títulos) + Montserrat (interfaz)
+   ================================================================== */
+
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap");
+
+/* ==================================================================
+   VARIABLES / BASE
+   ================================================================== */
 
 .tipo-producto-page {
+  --bg: #f3e8e3;
+  --panel: #ffffff;
+  --border: #c9aea7;
+  --line: #e6dcd8;
+
+  --ink: #1c1d36;
+  --ink-soft: #4b4b5a;
+  --muted: #7b7a88;
+
+  --soft-bg: #eceaee;
+  --dark: #1f2038;
+  --dark-hover: #2e2f4d;
+
+  --green-bg: #e3f7ea; --green-fg: #1f9d55; --green-bd: #a9e3c0;
+  --blue-bg: #e6effd;  --blue-fg: #2f6fed;  --blue-bd: #b7cef8;
+  --amber-bg: #fdf3d3; --amber-fg: #b7790a; --amber-bd: #f2dc95;
+  --red-bg: #fde6e3;   --red-fg: #d8483a;   --red-bd: #f5b8b1;
+  --gray-bg: #f0eff1;  --gray-fg: #6b6a72;  --gray-bd: #dcdadf;
+
+  --serif: "Playfair Display", Georgia, serif;
+
   width: 100%;
-  min-height: calc(100vh - 64px);
+  min-height: 100vh;
+  padding: 48px 10px 90px;
   box-sizing: border-box;
-  color: #171735;
-  font-family: 'Montserrat', sans-serif;
+
+  background: transparent;
+  color: var(--ink);
+
+  font-family: "Montserrat", -apple-system, "Segoe UI", sans-serif;
 }
 
-/* =========================================================
-   HEADER SUPERIOR
-   ========================================================= */
+.tipo-producto-page *,
+.tipo-producto-page *::before,
+.tipo-producto-page *::after { box-sizing: border-box; }
+
+/* ==================================================================
+   HEADER
+   ================================================================== */
 
 .tipo-producto-header {
   width: 100%;
-  margin-bottom: 24px;
+  margin-bottom: 28px;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
-.tipo-producto-header-info {
-  display: flex;
-  flex-direction: column;
-}
+.tipo-producto-header-info { display: flex; flex-direction: column; min-width: 0; }
 
 .tipo-producto-eyebrow {
   display: block;
-  margin: 0 0 7px;
-  color: #252545;
-  font-size: 9px;
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: 1.2px;
+  margin: 0 0 9px;
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
 .tipo-producto-title {
   margin: 0;
-  color: #171735;
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: 38px;
-  font-weight: 400;
-  line-height: 1;
-  letter-spacing: -1px;
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 44px;
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: 0;
 }
 
 .tipo-producto-description {
-  margin: 7px 0 0;
-  color: #77748a;
-  font-size: 12px;
+  margin: 5px 0 0;
+  color: var(--ink-soft);
+  font-size: 14.5px;
   font-weight: 400;
-  line-height: 1.3;
+  line-height: 1.4;
 }
 
 .tipo-producto-register-button {
-  height: 48px;
-  padding: 0 23px;
-  display: flex;
+  height: auto;
+  min-width: 218px;
+  padding: 15px 28px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  border: none;
-  border-radius: 9px;
-  background-color: #20203d;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background-color: var(--dark);
   color: #ffffff;
-  font-family: 'Montserrat', sans-serif;
-  font-size: 12px;
-  font-weight: 700;
+  font-family: inherit;
+  font-size: 14.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
   cursor: pointer;
-  box-shadow: 0 3px 6px rgba(32, 32, 61, 0.18);
-  transition: background-color 0.2s ease;
+  box-shadow: none;
+  transition: background-color .15s ease, border-color .15s ease, opacity .15s ease;
 }
 
-.tipo-producto-register-button:hover {
-  background-color: #17172f;
-}
+.tipo-producto-register-button:hover { background-color: var(--dark-hover); }
+.tipo-producto-register-button svg { width: 17px; height: 17px; flex-shrink: 0; }
 
-/* =========================================================
-   ESTADÍSTICAS / KPIS (3 COLUMNAS)
-   ========================================================= */
+/* ==================================================================
+   KPIS
+   ================================================================== */
 
 .tipo-producto-stats {
   width: 100%;
-  margin-bottom: 24px;
+  margin-bottom: 22px;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 16px;
 }
 
 .tipo-producto-stat-card {
-  min-height: 106px;
-  padding: 20px;
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  background-color: #ffffff;
-  border: 1px solid #d8b6ae;
-  border-radius: 11px;
+  min-height: 0;
+  min-width: 0;
+  padding: 24px 26px;
+  display: grid;
+  grid-template-columns: 42px 1fr;
+  column-gap: 15px;
+  align-items: start;
+  background-color: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
 }
 
 .tipo-producto-stat-icon {
-  width: 40px;
-  height: 40px;
+  grid-row: 1 / span 3;
+  width: 38px;
+  height: 38px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 10px;
-  background-color: #e9e9ed;
-  color: #30304b;
+  background-color: var(--soft-bg);
+  color: var(--ink);
 }
 
+.tipo-producto-stat-icon svg { width: 18px; height: 18px; }
+
 .tipo-producto-stat-info {
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  justify-content: center;
 }
 
 .tipo-producto-stat-label {
   margin: 0;
-  color: #77748a;
-  font-size: 11px;
+  color: var(--muted);
+  font-size: 13px;
   line-height: 1.2;
 }
 
 .tipo-producto-stat-value {
-  margin: 5px 0 0;
-  color: #171735;
-  font-size: 20px;
+  margin: 2px 0 0;
+  color: var(--ink);
+  font-size: 19px;
   font-weight: 700;
-  line-height: 1;
+  line-height: 1.2;
+  word-break: break-word;
 }
 
 .tipo-producto-stat-description {
-  margin: 5px 0 0;
-  color: #77748a;
-  font-size: 10px;
-  line-height: 1;
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.2;
 }
 
-/* =========================================================
+/* ==================================================================
    BUSCADOR Y FILTROS
-   ========================================================= */
+   ================================================================== */
 
 .tipo-producto-filters-card {
   width: 100%;
-  margin-bottom: 24px;
-  box-sizing: border-box;
+  margin-bottom: 22px;
   overflow: hidden;
-  background-color: #ffffff;
-  border: 1px solid #d8b6ae;
-  border-radius: 11px;
+  background-color: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
 }
 
 .tipo-producto-filter-header {
-  height: 52px;
-  padding: 0 20px;
-  box-sizing: border-box;
+  height: auto;
+  padding: 18px 24px;
   display: flex;
   align-items: center;
-  gap: 9px;
-  background-color: #ffffff;
-  border-bottom: 1px solid #d8b6ae;
-  color: #171735;
-  font-size: 12px;
+  gap: 10px;
+  flex-wrap: wrap;
+  background-color: var(--panel);
+  border-bottom: 1px solid var(--border);
+  color: var(--ink);
+  font-size: 14.5px;
   font-weight: 600;
 }
 
+.tipo-producto-filter-header svg { width: 17px; height: 17px; color: var(--ink); flex-shrink: 0; }
+
 .tipo-producto-filters {
-  min-height: 82px;
-  padding: 20px;
-  box-sizing: border-box;
+  min-height: 0;
+  padding: 24px 26px;
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .tipo-producto-search {
-  flex: 1;
-  max-width: 576px;
-  height: 42px;
+  flex: 3 1 220px;
+  max-width: none;
+  height: auto;
+  min-width: 0;
   position: relative;
+  display: flex;
+  align-items: center;
 }
 
 .tipo-producto-search-icon {
   position: absolute;
   left: 14px;
-  top: 13px;
-  color: #68667d;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  color: var(--ink);
+  pointer-events: none;
 }
 
 .tipo-producto-search-input {
   width: 100%;
-  height: 100%;
-  padding: 0 15px 0 40px;
-  box-sizing: border-box;
+  height: auto;
+  min-width: 0;
+  padding: 12px 15px 12px 40px;
   outline: none;
-  border: 1px solid #d8b6ae;
-  border-radius: 99px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
   background-color: #ffffff;
-  color: #55536b;
-  font-family: 'Montserrat', sans-serif;
-  font-size: 12px;
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 14.5px;
+  transition: border-color .15s ease;
 }
 
-.tipo-producto-search-input::placeholder {
-  color: #aaa6b4;
-}
-
-.tipo-producto-search-input:focus {
-  border-color: #bd958c;
-}
+.tipo-producto-search-input::placeholder { color: #a5a3ae; }
+.tipo-producto-search-input:focus { border-color: var(--ink-soft); }
 
 .tipo-producto-filter-select {
-  height: 42px;
-  min-width: 200px;
-  padding: 0 15px;
-  box-sizing: border-box;
+  height: auto;
+  min-width: 150px;
+  flex: 1 1 150px;
+  padding: 12px 15px;
   outline: none;
-  border: 1px solid #d8b6ae;
-  border-radius: 99px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
   background-color: #ffffff;
-  color: #55536b;
-  font-family: 'Montserrat', sans-serif;
-  font-size: 12px;
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 14.5px;
   cursor: pointer;
+  transition: border-color .15s ease;
 }
 
-.tipo-producto-filter-select:focus {
-  border-color: #bd958c;
-}
+.tipo-producto-filter-select:focus { border-color: var(--ink-soft); }
 
-/* =========================================================
-   TABLA PRINCIPAL
-   ========================================================= */
+/* ==================================================================
+   TABLA
+   ================================================================== */
 
 .tipo-producto-table-card {
   width: 100%;
-  box-sizing: border-box;
+  margin-bottom: 22px;
   overflow: hidden;
-  background-color: #ffffff;
-  border: 1px solid #d8b6ae;
-  border-radius: 11px;
+  background-color: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
 }
 
 .tipo-producto-table-header {
-  height: 53px;
-  padding: 0 24px;
-  box-sizing: border-box;
+  height: auto;
+  padding: 18px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background-color: #ffffff;
-  border-bottom: 1px solid #d8b6ae;
+  gap: 8px;
+  flex-wrap: wrap;
+  row-gap: 6px;
+  background-color: var(--panel);
+  border-bottom: 1px solid var(--border);
 }
 
 .tipo-producto-table-title {
   display: flex;
   align-items: center;
-  gap: 9px;
-  color: #171735;
+  gap: 8px;
+  color: var(--ink);
+  font-size: 14.5px;
+  font-weight: 600;
+}
+
+.tipo-producto-table-title svg { width: 17px; height: 17px; flex-shrink: 0; }
+
+.tipo-producto-table-count {
+  min-width: auto;
+  height: auto;
+  padding: 2px 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background-color: var(--soft-bg);
+  color: var(--ink-soft);
   font-size: 12px;
   font-weight: 600;
 }
 
-.tipo-producto-table-count {
-  min-width: 20px;
-  height: 20px;
-  padding: 0 6px;
-  box-sizing: border-box;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 7px;
-  background-color: #e9e9ed;
-  color: #68667b;
-  font-size: 10px;
-  font-weight: 600;
-}
-
 .tipo-producto-table-page {
-  color: #77748a;
-  font-size: 10px;
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 400;
 }
-
-/* =========================================================
-   TABLA INTERNA Y ENCABEZADOS (THEAD)
-   ========================================================= */
 
 .tipo-producto-table-wrapper {
   width: 100%;
   overflow-x: auto;
-  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
 }
 
 .tipo-producto-table {
@@ -303,249 +353,342 @@
   min-width: 850px;
   border-collapse: collapse;
   table-layout: fixed;
+  font-size: 14px;
 }
 
-.tipo-producto-table thead tr {
-  background-color: #faf9f9;
-  border-bottom: 1px solid #d8b6ae;
-}
-
-.tipo-producto-table th {
-  height: 44px;
-  padding: 0 20px;
-  box-sizing: border-box;
-  color: #30304b;
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.8px;
+.tipo-producto-table thead th {
+  height: auto;
+  padding: 15px 20px;
+  background-color: #f5f3f4;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   text-align: left;
   vertical-align: middle;
+  white-space: nowrap;
 }
 
-.tipo-producto-table td {
-  height: 68px;
-  padding: 0 20px;
-  box-sizing: border-box;
+.tipo-producto-table thead th:first-child { padding-left: 24px; }
+.tipo-producto-table thead th:last-child { padding-right: 24px; text-align: center; }
+
+.tipo-producto-table tbody td {
+  height: auto;
+  padding: 18px 20px;
   background-color: #ffffff;
-  border-bottom: 1px solid #e1c4be;
-  color: #77748a;
-  font-size: 10px;
+  border-bottom: 1px solid var(--border);
+  color: var(--ink);
+  font-size: 14px;
   vertical-align: middle;
 }
 
-.tipo-producto-table tbody tr:last-child td {
-  border-bottom: none;
-}
+.tipo-producto-table tbody td:first-child { padding-left: 24px; }
+.tipo-producto-table tbody td:last-child { padding-right: 24px; }
+.tipo-producto-table tbody tr:last-child td { border-bottom: none; }
 
-/* Distribución exacta de columnas */
-.tipo-producto-table th:nth-child(1), .tipo-producto-table td:nth-child(1) { width: 50px; }
-.tipo-producto-table th:nth-child(2), .tipo-producto-table td:nth-child(2) { width: 340px; }
-.tipo-producto-table th:nth-child(3), .tipo-producto-table td:nth-child(3) { width: 180px; }
-.tipo-producto-table th:nth-child(4), .tipo-producto-table td:nth-child(4) { width: 110px; }
-.tipo-producto-table th:nth-child(5), .tipo-producto-table td:nth-child(5) { width: 90px; }
+/* Distribución de columnas (proporcional) */
+.tipo-producto-table th:nth-child(1), .tipo-producto-table td:nth-child(1) { width: 8%; }
+.tipo-producto-table th:nth-child(2), .tipo-producto-table td:nth-child(2) { width: 40%; }
+.tipo-producto-table th:nth-child(3), .tipo-producto-table td:nth-child(3) { width: 23%; }
+.tipo-producto-table th:nth-child(4), .tipo-producto-table td:nth-child(4) { width: 15%; }
+.tipo-producto-table th:nth-child(5), .tipo-producto-table td:nth-child(5) { width: 14%; }
 
-/* =========================================================
-   CELDAS ESPECÍFICAS
-   ========================================================= */
+/* ==================================================================
+   CELDAS
+   ================================================================== */
 
 /* ID */
 .tipo-producto-id span {
   display: inline-flex;
   align-items: center;
-  padding: 3px 7px;
-  border-radius: 5px;
-  background-color: #eeeeF1;
-  color: #77748a;
-  font-size: 9px;
+  padding: 4px 10px;
+  border: 1px solid #d8d5da;
+  border-radius: 6px;
+  background-color: var(--soft-bg);
+  color: var(--ink-soft);
+  font-size: 12.5px;
   font-weight: 600;
+  white-space: nowrap;
 }
 
-/* NOMBRE Y SUBTÍTULO */
+/* NOMBRE */
 .tipo-producto-name-wrapper {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 13px;
+  min-width: 0;
 }
 
 .tipo-producto-name-icon {
-  width: 36px;
-  height: 36px;
-  flex-shrink: 0;
-  display: flex;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 9px;
-  background-color: #e9e9ed;
-  color: #41415a;
+  border-radius: 10px;
+  background-color: var(--soft-bg);
+  color: var(--ink);
 }
 
-.tipo-producto-info-text {
-  display: flex;
-  flex-direction: column;
-}
+.tipo-producto-name-icon svg { width: 18px; height: 18px; }
+
+.tipo-producto-info-text { display: flex; flex-direction: column; min-width: 0; }
 
 .tipo-producto-name {
-  color: #171735;
-  font-size: 11px;
+  color: var(--ink);
+  font-size: 14.5px;
   font-weight: 600;
-  line-height: 1.2;
+  line-height: 1.25;
+  word-break: break-word;
 }
 
 .tipo-producto-subtext {
-  margin-top: 2px;
-  color: #77748a;
-  font-size: 9px;
+  margin-top: 1px;
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.25;
 }
 
 /* ETIQUETA CATEGORÍA */
 .tipo-producto-category-pill {
-  height: 25px;
-  padding: 0 10px;
-  box-sizing: border-box;
+  height: auto;
+  padding: 5px 13px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  border: 1px solid #d8b6ae;
-  border-radius: 7px;
-  background-color: #faf9f9;
-  color: #55536b;
-  font-size: 9px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background-color: var(--soft-bg);
+  color: var(--ink-soft);
+  font-size: 13px;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 /* ESTADO */
 .tipo-producto-status {
-  height: 25px;
-  padding: 0 10px;
-  box-sizing: border-box;
+  height: auto;
+  padding: 5px 13px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  border: 1px solid #9be4bf;
-  border-radius: 20px;
-  background-color: #f5fff9;
-  color: #25ad6c;
-  font-size: 9px;
+  border: 1px solid var(--green-bd);
+  border-radius: 999px;
+  background-color: var(--green-bg);
+  color: var(--green-fg);
+  font-size: 13px;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .tipo-producto-status-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background-color: #28c77a;
+  background-color: currentColor;
+  flex-shrink: 0;
 }
 
 .tipo-producto-status.inactive {
-  border-color: #dfb2aa;
-  background-color: #fffafa;
-  color: #b36f66;
+  border-color: var(--gray-bd);
+  background-color: var(--gray-bg);
+  color: var(--gray-fg);
 }
 
-.tipo-producto-status.inactive .tipo-producto-status-dot {
-  background-color: #b36f66;
-}
+.tipo-producto-status.inactive .tipo-producto-status-dot { background-color: currentColor; }
 
 /* ACCIONES */
 .tipo-producto-actions {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: 17px;
+  justify-content: center;
+  gap: 4px;
+  flex-wrap: wrap;
 }
 
 .tipo-producto-action-button {
-  width: 18px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
   padding: 0;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   border: none;
+  border-radius: 7px;
   background: transparent;
   cursor: pointer;
-  transition: opacity 0.2s ease;
+  transition: background-color .15s ease;
 }
 
-.tipo-producto-action-view { color: #4287ff; }
-.tipo-producto-action-edit { color: #f0a03d; }
-.tipo-producto-action-delete { color: #f28d8d; }
+.tipo-producto-action-button svg { width: 18px; height: 18px; }
+.tipo-producto-action-button:hover { background-color: #f4eeeb; opacity: 1; }
 
-.tipo-producto-action-button:hover { opacity: 0.65; }
+.tipo-producto-action-view { color: var(--blue-fg); }
+.tipo-producto-action-edit { color: #f0a020; }
+.tipo-producto-action-delete { color: var(--red-fg); }
 
-/* =========================================================
+/* ==================================================================
    PAGINACIÓN
-   ========================================================= */
+   ================================================================== */
 
 .tipo-producto-pagination {
-  height: 58px;
-  padding: 0 24px;
-  box-sizing: border-box;
+  height: auto;
+  padding: 18px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background-color: #ffffff;
-  border-top: 1px solid #d8b6ae;
+  gap: 10px;
+  flex-wrap: wrap;
+  background-color: var(--panel);
+  border-top: 1px solid var(--border);
 }
 
 .tipo-producto-pagination-info {
   margin: 0;
-  color: #858197;
-  font-size: 9px;
+  color: var(--muted);
+  font-size: 12.5px;
 }
 
 .tipo-producto-pagination-controls {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
+  flex-wrap: wrap;
 }
 
 .tipo-producto-pagination-button {
-  width: 26px;
-  height: 30px;
-  padding: 0;
-  display: flex;
+  min-width: 32px;
+  width: auto;
+  height: 32px;
+  padding: 0 6px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   background-color: transparent;
-  color: #aaa7b4;
-  font-size: 10px;
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 14.5px;
   cursor: pointer;
+  transition: background-color .15s ease;
 }
+
+.tipo-producto-pagination-button:hover:not(:disabled) { background-color: #f4eeeb; }
 
 .tipo-producto-pagination-button.active {
-  background-color: #20203d;
+  background-color: var(--dark);
   color: #ffffff;
+  font-weight: 600;
 }
 
-.tipo-producto-pagination-button:disabled {
-  cursor: default;
-  opacity: 0.45;
-}
+.tipo-producto-pagination-button:disabled { cursor: not-allowed; opacity: .35; }
+
+/* ==================================================================
+   SIN RESULTADOS
+   ================================================================== */
 
 .tipo-producto-empty {
-  height: 100px;
+  height: auto;
+  padding: 34px 0;
   text-align: center;
-  color: #858197;
-  font-size: 11px;
+  color: var(--muted);
+  font-size: 14px;
 }
 
-/* =========================================================
-   RESPONSIVE
-   ========================================================= */
+/* ==================================================================
+   RESPONSIVE — 1180
+   ================================================================== */
 
-@media (max-width: 1000px) {
+@media (max-width: 1180px) {
+  .tipo-producto-page { padding: 40px 24px 80px; }
+  .tipo-producto-stats { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ==================================================================
+   RESPONSIVE — 980
+   ================================================================== */
+
+@media (max-width: 980px) {
+  .tipo-producto-page { padding: 32px 20px 70px; }
+  .tipo-producto-stats { grid-template-columns: repeat(2, 1fr); }
+  .tipo-producto-filter-select { flex: 1 1 45%; min-width: 140px; }
+}
+
+/* ==================================================================
+   RESPONSIVE — 780
+   ================================================================== */
+
+@media (max-width: 780px) {
+  .tipo-producto-page { padding: 26px 16px 60px; }
+
+  .tipo-producto-header { flex-direction: column; align-items: stretch; gap: 14px; }
+  .tipo-producto-register-button { width: 100%; min-width: 0; }
+  .tipo-producto-title { font-size: 34px; }
+
+  .tipo-producto-stats { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .tipo-producto-stat-card { padding: 18px 16px; column-gap: 12px; }
+  .tipo-producto-stat-icon { width: 34px; height: 34px; }
+  .tipo-producto-stat-value { font-size: 17px; }
+
+  .tipo-producto-filter-header, .tipo-producto-table-header { padding: 16px 18px; }
+  .tipo-producto-filters { padding: 18px; gap: 10px; flex-direction: column; align-items: stretch; }
+  .tipo-producto-search { flex: 1 1 100%; width: 100%; }
+  .tipo-producto-filter-select { flex: 1 1 100%; width: 100%; }
+
+  .tipo-producto-table-wrapper { margin: 0 -1px; }
+  .tipo-producto-table { min-width: 700px; }
+  .tipo-producto-table thead th { padding: 12px 14px; font-size: 11px; }
+  .tipo-producto-table thead th:first-child { padding-left: 18px; }
+  .tipo-producto-table thead th:last-child { padding-right: 18px; }
+  .tipo-producto-table tbody td { padding: 14px; font-size: 13.5px; }
+  .tipo-producto-table tbody td:first-child { padding-left: 18px; }
+  .tipo-producto-table tbody td:last-child { padding-right: 18px; }
+  .tipo-producto-pagination { padding: 14px 18px; }
+}
+
+/* ==================================================================
+   RESPONSIVE — 640
+   ================================================================== */
+
+@media (max-width: 640px) {
   .tipo-producto-stats { grid-template-columns: 1fr; }
-  .tipo-producto-header { gap: 20px; }
-  .tipo-producto-filters { flex-direction: column; align-items: stretch; }
-  .tipo-producto-search { width: 100%; max-width: 100%; }
+  .tipo-producto-stat-card { grid-template-columns: 34px 1fr; }
+
+  .tipo-producto-pagination { justify-content: center; text-align: center; }
+  .tipo-producto-pagination-info { width: 100%; text-align: center; }
+  .tipo-producto-pagination-controls { justify-content: center; width: 100%; }
 }
 
-@media (max-width: 700px) {
-  .tipo-producto-header { flex-direction: column; }
-  .tipo-producto-title { font-size: 32px; }
-  .tipo-producto-register-button { height: 42px; width: 100%; margin-top: 12px; }
+/* ==================================================================
+   RESPONSIVE — 480
+   ================================================================== */
+
+@media (max-width: 480px) {
+  .tipo-producto-page { padding: 20px 12px 50px; }
+  .tipo-producto-title { font-size: 28px; }
+  .tipo-producto-eyebrow { font-size: 11px; }
+
+  .tipo-producto-stat-card { padding: 16px 14px; }
+  .tipo-producto-stat-label { font-size: 12px; }
+  .tipo-producto-stat-value { font-size: 16px; }
+  .tipo-producto-stat-description { font-size: 12px; }
+
+  .tipo-producto-table { min-width: 620px; }
+  .tipo-producto-name { font-size: 13.5px; }
+  .tipo-producto-status,
+  .tipo-producto-category-pill { font-size: 12px; padding: 4px 10px; }
+}
+
+/* ==================================================================
+   RESPONSIVE — 380
+   ================================================================== */
+
+@media (max-width: 380px) {
+  .tipo-producto-page { padding-left: 10px; padding-right: 10px; }
+  .tipo-producto-register-button { padding: 13px 18px; font-size: 13.5px; }
+  .tipo-producto-table { min-width: 560px; }
 }

@@ -1,3 +1,6 @@
+
+
+
 /* ========================= */
 /* MAIN NAVBAR */
 /* ========================= */
@@ -15,6 +18,8 @@
     border-bottom: 1px solid #e8e8e8;
 
     box-sizing: border-box;
+
+    position: relative;
 }
 
 /* ========================= */
@@ -224,17 +229,194 @@
     border-color: #b8b6bd !important;
 }
 
-/* ========================= */
-/* AJUSTE PARA PANTALLAS */
-/* ========================= */
+/* ==================================================================
+   BOTÓN HAMBURGUESA (nuevo, solo visible en mobile/tablet)
+   ================================================================== */
+
+.main-navbar-mobile-toggle {
+    display: none;
+
+    width: 40px;
+    height: 40px;
+
+    padding: 0;
+
+    align-items: center;
+    justify-content: center;
+
+    border: none;
+    border-radius: 8px;
+
+    background-color: transparent;
+    color: #22223B;
+
+    cursor: pointer;
+
+    transition: background-color 0.2s ease;
+}
+
+.main-navbar-mobile-toggle:hover {
+    background-color: #f3f3f5;
+}
+
+.main-navbar-mobile-toggle svg {
+    width: 22px;
+    height: 22px;
+}
+
+/* ==================================================================
+   PANEL DESPLEGABLE (nuevo, solo visible en mobile/tablet)
+   ================================================================== */
+
+.main-navbar-mobile-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+
+    z-index: 999;
+
+    display: none;
+
+    max-height: 0;
+    overflow: hidden;
+
+    background-color: #ffffff;
+    border-bottom: 1px solid #e8e8e8;
+
+    box-shadow: 0 16px 32px rgba(17, 17, 27, 0.12);
+
+    transition: max-height 0.28s ease;
+}
+
+.main-navbar-mobile-menu.open {
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.main-navbar-mobile-links {
+    display: flex;
+    flex-direction: column;
+
+    padding: 12px;
+
+    gap: 3px;
+}
+
+.main-navbar-mobile-links a {
+    padding: 13px 14px;
+
+    border-radius: 9px;
+
+    color: #4A4E69;
+
+    text-decoration: none;
+
+    font-size: 14.5px;
+    font-weight: 500;
+
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.main-navbar-mobile-links a:hover {
+    background-color: #f3f3f5;
+    color: #22223B;
+}
+
+.main-navbar-mobile-links a.active {
+    background-color: #e9e9eb;
+    color: #22223B;
+}
+
+.main-navbar-mobile-actions {
+    display: flex;
+    flex-direction: column;
+
+    padding: 12px;
+
+    gap: 8px;
+
+    border-top: 1px solid #e8e8e8;
+}
+
+.main-navbar-mobile-actions a,
+.main-navbar-mobile-actions button {
+    width: 100%;
+
+    padding: 13px 14px;
+
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    border: none;
+    border-radius: 9px;
+
+    background-color: transparent;
+    color: #4A4E69;
+
+    text-decoration: none;
+
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+
+    cursor: pointer;
+
+    box-sizing: border-box;
+
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.main-navbar-mobile-actions a:hover,
+.main-navbar-mobile-actions button:hover {
+    background-color: #f3f3f5;
+    color: #22223B;
+}
+
+.main-navbar-mobile-actions .main-navbar-register {
+    justify-content: center;
+
+    background-color: #22223B;
+    color: #ffffff !important;
+}
+
+.main-navbar-mobile-actions .main-navbar-register:hover {
+    background-color: #30304d !important;
+}
+
+.main-navbar-mobile-actions .main-navbar-admin {
+    justify-content: flex-start !important;
+
+    width: 100% !important;
+
+    border: 1px solid #c9c7cc !important;
+}
+
+/* ==================================================================
+   RESPONSIVE
+   Breakpoints: 1024 / 900 / 860 / 640 / 420
+   ================================================================== */
+
+/* Pantallas intermedias: se comprime el espaciado, todo sigue igual */
+@media (max-width: 1024px) {
+    .main-navbar {
+        padding: 0 32px;
+    }
+
+    .main-navbar-links {
+        gap: 12px;
+    }
+
+    .main-navbar-links a {
+        padding: 9px 13px;
+        font-size: 13.5px;
+    }
+}
 
 @media (max-width: 900px) {
     .main-navbar {
         padding: 0 24px;
-    }
-
-    .main-navbar-links {
-        gap: 24px;
     }
 
     .main-navbar-actions {
@@ -245,13 +427,101 @@
         margin: 0;
     }
 
-    /* ========================= */
-    /* POSICIÓN SUPERIOR */
-    /* ========================= */
-
     .main-navbar {
         position: sticky;
         top: 0;
         z-index: 1000;
+    }
+}
+
+/* Mobile / tablet vertical: modo hamburguesa completo */
+@media (max-width: 860px) {
+    .main-navbar {
+        padding: 0 18px;
+    }
+
+    /* Se ocultan los links centrales y las acciones de escritorio */
+    .main-navbar-links {
+        display: none;
+    }
+
+    .main-navbar-actions > a,
+    .main-navbar-actions > button:not(.main-navbar-mobile-toggle) {
+        display: none;
+    }
+
+    .main-navbar-divider {
+        display: none;
+    }
+
+    /* Se muestran los controles mobile */
+    .main-navbar-mobile-toggle {
+        display: flex;
+    }
+
+    .main-navbar-mobile-menu {
+        display: block;
+    }
+
+    .main-navbar-actions {
+        gap: 4px;
+    }
+
+    .main-navbar-logo img {
+        width: 52px;
+        height: 52px;
+    }
+}
+
+/* Mobile estándar */
+@media (max-width: 640px) {
+    .main-navbar {
+        height: 60px;
+        padding: 0 16px;
+    }
+
+    .main-navbar-logo button {
+        width: 38px;
+        height: 38px;
+    }
+
+    .main-navbar-logo img {
+        width: 46px;
+        height: 46px;
+    }
+
+    .main-navbar-mobile-toggle {
+        width: 38px;
+        height: 38px;
+    }
+
+    .main-navbar-mobile-links a,
+    .main-navbar-mobile-actions a,
+    .main-navbar-mobile-actions button {
+        font-size: 14px;
+    }
+}
+
+/* Mobile chico */
+@media (max-width: 420px) {
+    .main-navbar {
+        padding: 0 12px;
+    }
+
+    .main-navbar-mobile-links,
+    .main-navbar-mobile-actions {
+        padding: 10px;
+    }
+
+    .main-navbar-mobile-menu.open {
+        max-height: 85vh;
+    }
+}
+
+/* Accesibilidad: respeta reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .main-navbar-mobile-menu,
+    .main-navbar-register {
+        transition: none;
     }
 }

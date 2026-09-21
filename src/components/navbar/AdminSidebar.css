@@ -1,3 +1,30 @@
+/* ==================================================================
+   admin-sidebar.css
+   ------------------------------------------------------------------
+   COMPORTAMIENTO POR TAMAÑO DE PANTALLA:
+
+   Desktop (> 768px): sidebar fijo a la izquierda, como siempre.
+   El botón .admin-sidebar-toggle colapsa/expande a modo icono
+   (clase "collapsed").
+
+   Mobile (≤ 768px): el sidebar se convierte en una BARRA SUPERIOR
+   fija (logo + título + botón), siempre visible. El MISMO botón
+   .admin-sidebar-toggle (el que ya tenías conectado para "collapsed")
+   ahora funciona como hamburguesa: al activarlo, despliega todo el
+   menú hacia abajo en un panel que ocupa el ancho completo.
+
+   → NO necesitas agregar clases ni markup nuevo: se reutiliza la
+     clase "collapsed" que ya está wireada al botón. En mobile,
+     "collapsed" = menú desplegado (abierto), y su ausencia = barra
+     superior compacta (cerrada). Es intencional que el significado
+     se invierta respecto a desktop; solo importa que sea la misma
+     clase que tu botón ya alterna.
+
+   Si preferís un ícono de hamburguesa distinto al de colapsar en
+   desktop, podés condicionar el ícono que renderiza el botón según
+   el ancho de pantalla en tu componente — el CSS no depende de eso.
+   ================================================================== */
+
 .admin-sidebar {
   width: 260px;
   height: 100vh;
@@ -7,12 +34,14 @@
   display: flex;
   flex-direction: column;
 
-  transition: width 0.25s ease;
+  transition: width 0.25s ease, max-height 0.3s ease;
 
   position: fixed;
   top: 0;
   left: 0;
   z-index: 1000;
+
+  box-sizing: border-box;
 }
 
 .admin-sidebar.collapsed {
@@ -32,6 +61,8 @@
   gap: 12px;
 
   border-bottom: 1px solid #e5e5e5;
+
+  flex-shrink: 0;
 }
 
 .admin-sidebar-logo {
@@ -67,7 +98,7 @@
 }
 
 /* ========================= */
-/* BOTÓN COLAPSAR */
+/* BOTÓN COLAPSAR / HAMBURGUESA */
 /* ========================= */
 
 .admin-sidebar-toggle {
@@ -172,7 +203,6 @@
 /* ========================= */
 
 .sidebar-item {
-  /* CAMBIO: necesario para posicionar la línea del activo */
   position: relative;
 
   min-height: 42px;
@@ -211,7 +241,6 @@
   color: #343449;
 }
 
-/* Línea lateral del elemento activo */
 .sidebar-item.active::before {
   content: "";
 
@@ -234,7 +263,7 @@
 }
 
 /* ========================= */
-/* SIDEBAR COLAPSADO */
+/* SIDEBAR COLAPSADO (desktop, modo icono) */
 /* ========================= */
 
 .admin-sidebar.collapsed .admin-sidebar-header {
@@ -303,6 +332,8 @@
   flex-direction: column;
 
   gap: 3px;
+
+  flex-shrink: 0;
 }
 
 .admin-sidebar-bottom-item {
@@ -344,10 +375,6 @@
   white-space: nowrap;
 }
 
-/* ========================= */
-/* SIDEBAR COLAPSADO */
-/* ========================= */
-
 .admin-sidebar.collapsed .admin-sidebar-bottom {
   padding: 12px 10px;
 }
@@ -365,4 +392,173 @@
 
 .admin-sidebar.collapsed .admin-sidebar-bottom-item span {
   display: none;
+}
+
+/* ==================================================================
+   RESPONSIVE
+   Breakpoints: 1024 / 768 / 480 / 380
+   ================================================================== */
+
+/* Tablet: sidebar angosto, sigue como columna lateral fija */
+@media (max-width: 1024px) {
+  .admin-sidebar {
+    width: 226px;
+  }
+
+  .admin-sidebar.collapsed {
+    width: 72px;
+  }
+}
+
+/* ------------------------------------------------------------------
+   Mobile / tablet vertical: el sidebar se convierte en BARRA
+   SUPERIOR fija. Cerrado = solo header visible (64px). Abierto
+   (clase "collapsed", reutilizada) = despliega nav + bottom hacia
+   abajo, con scroll si el contenido no entra en la pantalla.
+   ------------------------------------------------------------------ */
+@media (max-width: 768px) {
+  .admin-sidebar {
+    width: 100%;
+    max-width: 100%;
+
+    height: auto;
+    max-height: 64px;
+
+    flex-direction: column;
+
+    border-right: none;
+    border-bottom: 1px solid #e5e5e5;
+
+    overflow: hidden;
+
+    box-shadow: 0 4px 16px rgba(17, 17, 17, 0.06);
+  }
+
+  .admin-sidebar-header {
+    min-height: 64px;
+    padding: 0 16px;
+  }
+
+  .admin-sidebar-title {
+    font-size: 15px;
+  }
+
+  /* Estado ABIERTO en mobile: reutiliza "collapsed" */
+  .admin-sidebar.collapsed {
+    width: 100%;
+    max-width: 100%;
+    max-height: 100vh;
+  }
+
+  /* En mobile, "collapsed" NO debe verse en modo icono: se anulan
+     los estilos de compactación de escritorio y se despliega
+     completo, con etiquetas, como un menú normal. */
+  .admin-sidebar.collapsed .admin-sidebar-header {
+    padding: 0 16px;
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+  }
+
+  .admin-sidebar.collapsed .admin-sidebar-nav {
+    padding: 14px 14px 6px;
+  }
+
+  .admin-sidebar-nav {
+    max-height: calc(100vh - 64px - 130px);
+  }
+
+  .admin-sidebar.collapsed .sidebar-item {
+    width: 100%;
+    height: auto;
+    min-height: 46px;
+    padding: 0 12px;
+    justify-content: flex-start;
+    gap: 12px;
+    font-size: 14.5px;
+  }
+
+  .admin-sidebar.collapsed .sidebar-item-label {
+    display: block;
+  }
+
+  .admin-sidebar.collapsed .admin-sidebar-bottom {
+    padding: 12px 14px 16px;
+  }
+
+  .admin-sidebar.collapsed .admin-sidebar-bottom-item {
+    width: 100%;
+    height: auto;
+    min-height: 46px;
+    padding: 0 12px;
+    justify-content: flex-start;
+    gap: 12px;
+    font-size: 14.5px;
+  }
+
+  .admin-sidebar.collapsed .admin-sidebar-bottom-item span {
+    display: inline;
+  }
+
+  /* Rota el ícono del botón para indicar "abierto", por si es una
+     flecha/chevron; si es un ícono de 3 líneas no afecta en nada. */
+  .admin-sidebar.collapsed .admin-sidebar-toggle {
+    transform: rotate(180deg);
+  }
+}
+
+/* Mobile estándar */
+@media (max-width: 480px) {
+  .admin-sidebar-header {
+    padding: 0 14px;
+  }
+
+  .admin-sidebar-title {
+    font-size: 14.5px;
+  }
+
+  .sidebar-section-header {
+    font-size: 11.5px;
+  }
+
+  .admin-sidebar.collapsed .admin-sidebar-header {
+    padding: 0 14px;
+  }
+
+  .admin-sidebar.collapsed .admin-sidebar-nav {
+    padding: 12px 12px 6px;
+  }
+
+  .admin-sidebar.collapsed .admin-sidebar-bottom {
+    padding: 12px 12px 16px;
+  }
+}
+
+/* Mobile chico */
+@media (max-width: 380px) {
+  .admin-sidebar-logo {
+    width: 42px;
+    height: 42px;
+  }
+
+  .admin-sidebar-header {
+    gap: 10px;
+    padding: 0 12px;
+  }
+
+  .admin-sidebar.collapsed .admin-sidebar-header {
+    padding: 0 12px;
+  }
+
+  .admin-sidebar.collapsed .sidebar-item,
+  .admin-sidebar.collapsed .admin-sidebar-bottom-item {
+    padding: 0 10px;
+  }
+}
+
+/* Accesibilidad: respeta reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .admin-sidebar,
+  .admin-sidebar-toggle {
+    transition: none;
+  }
 }

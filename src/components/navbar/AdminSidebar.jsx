@@ -2,19 +2,22 @@ import {
     PanelLeftClose,
     PanelLeftOpen,
     Moon,
+    Sun,
     User,
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
+import { useState } from 'react';
 
 import './AdminSidebar.css';
 
-import { useState } from 'react';
+import useTheme from '../hook/useTheme';
 import navigationConfig from './NavigationConfig';
 import SidebarSection from './SidebarSection';
 import SidebarItem from './SidebarItem';
 
 const AdminSidebar = ({ collapsed, setCollapsed }) => {
     const [openSection, setOpenSection] = useState('Principal');
+    const { theme, toggleTheme } = useTheme();
 
     const toggleSidebar = () => {
         setCollapsed((prev) => !prev);
@@ -28,8 +31,7 @@ const AdminSidebar = ({ collapsed, setCollapsed }) => {
 
     return (
         <aside
-            className={`admin-sidebar ${collapsed ? 'collapsed' : ''
-                }`}
+            className={`admin-sidebar ${collapsed ? 'collapsed' : ''}`}
         >
             <div className="admin-sidebar-header">
                 <div className="admin-sidebar-logo">
@@ -99,12 +101,23 @@ const AdminSidebar = ({ collapsed, setCollapsed }) => {
                 <button
                     type="button"
                     className="admin-sidebar-bottom-item"
-                    aria-label="Modo oscuro"
+                    onClick={toggleTheme}
+                    aria-label={
+                        theme === 'dark'
+                            ? 'Activar modo claro'
+                            : 'Activar modo oscuro'
+                    }
                 >
-                    <Moon size={18} />
+                    {theme === 'dark' ? (
+                        <Sun size={18} />
+                    ) : (
+                        <Moon size={18} />
+                    )}
 
                     {!collapsed && (
-                        <span>Modo oscuro</span>
+                        <span>
+                            {theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}
+                        </span>
                     )}
                 </button>
 
