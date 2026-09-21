@@ -893,42 +893,24 @@
 /* =========================================================
    TAMAÑOS DE MODALES DE COMPRAS
    ========================================================= */
+  /* =========================================================
+   TAMAÑOS DE MODALES DE COMPRAS
+   ========================================================= */
 
 .purchase-form-modal {
-  width: min(404px, 100%);
+  width: min(520px, 100%);
 }
 
 .detail-modal {
-  width: min(346px, 100%);
+  width: min(520px, 100%);
 }
 
 .status-modal {
-  width: min(346px, 100%);
+  width: min(400px, 100%);
 }
 
 .delete-modal {
-  width: min(404px, 100%);
-}
-
-.purchase-form-modal .compras-modal-body {
-  padding: 16px 18px;
-}
-
-.purchase-form-modal .compras-modal-header {
-  padding: 17px 19px 15px;
-}
-
-.purchase-form-modal .compras-modal-footer {
-  padding: 12px 18px 15px;
-}
-
-.detail-modal .compras-modal-header,
-.status-modal .compras-modal-header {
-  padding: 17px 19px 15px;
-}
-
-.detail-modal .compras-modal-body {
-  padding: 16px 18px;
+  width: min(500px, 100%);
 }
 
 /* =========================================================
