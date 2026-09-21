@@ -309,7 +309,9 @@ const MetodoPago = () => {
       ========================== */}
       <div className="metodo-header">
         <div className="metodo-header-info">
-
+          <span className="module-label">
+            MÓDULO
+          </span>
           <h1>Métodos de Pago</h1>
 
           <p>Administra los métodos de pago disponibles en el sistema</p>
