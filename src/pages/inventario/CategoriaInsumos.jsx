@@ -1,71 +1,102 @@
 import { useState } from 'react';
+import {
+  Plus, Search, Tag, Eye, Edit2, Trash2, X, Filter
+} from 'lucide-react';
 import './CategoriaInsumos.css';
 
-const categoriasData = [
-  {
-    id: '#1',
-    nombre: 'Balines',
-    descripcion: 'Pequeñas esferas metálicas utilizadas como separadores en acce...',
-  },
-  {
-    id: '#2',
-    nombre: 'Chaquiras',
-    descripcion: 'Cuentas pequeñas de vidrio, plástico o acrílico para manillas y pul...',
-  },
-  {
-    id: '#3',
-    nombre: 'Dijes',
-    descripcion: 'Figuras decorativas colgantes para collares, pulseras y manillas',
-  },
-  {
-    id: '#4',
-    nombre: 'Argollas',
-    descripcion: 'Aros metálicos de unión para cadenas, collares y tobilleras',
-  },
-  {
-    id: '#5',
-    nombre: 'Broches',
-    descripcion: 'Cierres tipo langosta o mariposa para unir los extremos de un acc...',
-  },
+const initialCategories = [
+  { id: 1, nombre: 'Balines', descripcion: 'Pequeñas esferas metálicas utilizadas como separadores en accesorios' },
+  { id: 2, nombre: 'Chaquiras', descripcion: 'Cuentas pequeñas de vidrio, plástico o acrílico para manualidades...' },
+  { id: 3, nombre: 'Dijes', descripcion: 'Figuras decorativas colgantes para collares, pulseras y más...' },
+  { id: 4, nombre: 'Argollas', descripcion: 'Aros metálicos de unión para cadenas, collares y tobilleras...' },
+  { id: 5, nombre: 'Broches', descripcion: 'Cierres tipo langosta o mariposa para unir los extremos...' },
+  { id: 6, nombre: 'Cierres para accesorios', descripcion: 'Sistemas de cierre especializados para cadenas y pulseras...' },
 ];
 
-export const CategoriaInsumos = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+export default function CategoriaInsumos() {
+  const [categories, setCategories] = useState(initialCategories);
   const [searchTerm, setSearchTerm] = useState('');
 
+  // Modales states
+  const [activeModal, setActiveModal] = useState(null); // 'create', 'view', 'edit', 'delete'
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [formData, setFormData] = useState({ nombre: '', descripcion: '' });
+
+  // Manejo de Filtro de Búsqueda
+  const filteredCategories = categories.filter(c =>
+    c.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    c.id.toString().includes(searchTerm)
+  );
+
+  // Abrir Modal Crear
+  const handleOpenCreate = () => {
+    setFormData({ nombre: '', descripcion: '' });
+    setActiveModal('create');
+  };
+
+  // Abrir Modal Ver
+  const handleOpenView = (cat) => {
+    setSelectedCategory(cat);
+    setActiveModal('view');
+  };
+
+  // Abrir Modal Editar
+  const handleOpenEdit = (cat) => {
+    setSelectedCategory(cat);
+    setFormData({ nombre: cat.nombre, descripcion: cat.descripcion });
+    setActiveModal('edit');
+  };
+
+  // Abrir Modal Eliminar
+  const handleOpenDelete = (cat) => {
+    setSelectedCategory(cat);
+    setActiveModal('delete');
+  };
+
+  // Guardar/Crear
+  const handleSave = (e) => {
+    e.preventDefault();
+    if (activeModal === 'create') {
+      const newCat = {
+        id: categories.length + 1,
+        ...formData
+      };
+      setCategories([...categories, newCat]);
+    } else if (activeModal === 'edit') {
+      setCategories(categories.map(c => c.id === selectedCategory.id ? { ...c, ...formData } : c));
+    }
+    setActiveModal(null);
+  };
+
+  // Eliminar
+  const handleDelete = () => {
+    setCategories(categories.filter(c => c.id !== selectedCategory.id));
+    setActiveModal(null);
+  };
+
   return (
-    <div className="categoria-insumos-page">
-      {/* CABECERA SUPERIOR */}
-      <header className="page-header">
-        <div className="header-title-group">
-          <h1 className="page-title">Categoría de Insumos</h1>
-          <p className="page-subtitle">
-            Administra las categorías de insumos para fabricación de accesorios artesanales
-          </p>
+    <div className="cat-insumos-page">
+      {/* HEADER DE MÓDULO */}
+      <header className="cat-page-header">
+        <div>
+          <h1>Categoría de Insumos</h1>
+          <p>Administra las categorías de insumos para fabricación de accesorios artesanales</p>
         </div>
-        <button className="btn-register" onClick={() => setIsModalOpen(true)}>
-          + NUEVA CATEGORÍA
+        <button className="cat-primary-button" onClick={handleOpenCreate}>
+          <Plus size={16} /> Nueva Categoría
         </button>
       </header>
 
-      {/* TARJETA DE BÚSQUEDA */}
-      <section className="categoria-card filters-card">
-        <div className="filters-header">
-          <svg className="icon-filter" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
-          </svg>
-          <span className="filters-title">Buscar categoría de insumo</span>
+      {/* FILTROS / BÚSQUEDA (Estilo guía unificado) */}
+      <section className="cat-filters-card">
+        <div className="cat-filters-title">
+          <Filter size={14} /> Buscar categoría de insumo
         </div>
-
-        <div className="filters-form">
-          <div className="input-search-container">
-            <svg className="icon-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
+        <div className="cat-filters-row">
+          <div className="cat-search">
+            <Search size={16} />
             <input
               type="text"
-              className="input-field search-input"
               placeholder="Buscar por ID o nombre..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -75,64 +106,47 @@ export const CategoriaInsumos = () => {
       </section>
 
       {/* TABLA DE CATEGORÍAS */}
-      <section className="categoria-card table-card">
-        <div className="table-top-bar">
-          <div className="table-title-group">
-            <h2 className="table-main-title">Listado Categoría Insumos</h2>
-            <span className="count-badge">5</span>
+      <section className="cat-table-card">
+        <div className="cat-table-header">
+          <div className="cat-table-title">
+            Listado Categoría Insumos
+            <span className="cat-badge-count">{filteredCategories.length}</span>
           </div>
-          <span className="pagination-info">Página 1 de 1</span>
+          <span className="cat-page-counter">Página 1 de 1</span>
         </div>
-
-        <div className="table-responsive">
-          <table className="custom-table">
+        <div className="cat-table-wrapper">
+          <table className="cat-table">
             <thead>
               <tr>
-                <th className="col-id">#</th>
-                <th className="col-nombre">NOMBRE</th>
-                <th className="col-descripcion">DESCRIPCIÓN</th>
-                <th className="col-acciones">ACCIONES</th>
+                <th className="col-cat-id">#</th>
+                <th>NOMBRE</th>
+                <th>DESCRIPCIÓN</th>
+                <th style={{ textAlign: 'right', paddingRight: '24px' }}>ACCIONES</th>
               </tr>
             </thead>
             <tbody>
-              {categoriasData.map((item) => (
-                <tr key={item.id}>
+              {filteredCategories.map((cat) => (
+                <tr key={cat.id}>
+                  <td className="col-cat-id">#{cat.id}</td>
                   <td>
-                    <span className="tag-id">{item.id}</span>
-                  </td>
-                  <td>
-                    <div className="category-name-cell">
-                      <div className="tag-icon-box">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
-                          <line x1="7" y1="7" x2="7.01" y2="7" />
-                        </svg>
-                      </div>
-                      <span className="category-name-text">{item.nombre}</span>
+                    <div className="cat-name-cell">
+                      <div className="cat-icon-tag"><Tag size={16} /></div>
+                      {cat.nombre}
                     </div>
                   </td>
                   <td>
-                    <span className="category-desc-text">{item.descripcion}</span>
+                    <div className="cat-desc-cell">{cat.descripcion}</div>
                   </td>
                   <td>
-                    <div className="actions-group">
-                      <button className="action-btn btn-view" title="Ver">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                          <circle cx="12" cy="12" r="3" />
-                        </svg>
+                    <div className="cat-actions" style={{ justifyContent: 'flex-end' }}>
+                      <button className="btn-icon-cat view" title="Consultar" onClick={() => handleOpenView(cat)}>
+                        <Eye size={16} />
                       </button>
-                      <button className="action-btn btn-edit" title="Editar">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M12 20h9" />
-                          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-                        </svg>
+                      <button className="btn-icon-cat edit" title="Editar" onClick={() => handleOpenEdit(cat)}>
+                        <Edit2 size={16} />
                       </button>
-                      <button className="action-btn btn-delete" title="Eliminar">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <polyline points="3 6 5 6 21 6" />
-                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                        </svg>
+                      <button className="btn-icon-cat delete" title="Eliminar" onClick={() => handleOpenDelete(cat)}>
+                        <Trash2 size={16} />
                       </button>
                     </div>
                   </td>
@@ -143,64 +157,136 @@ export const CategoriaInsumos = () => {
         </div>
 
         {/* PAGINACIÓN */}
-        <div className="table-footer">
-          <span className="footer-records-text">Mostrando 1-5 de 5 registros</span>
-          <div className="pagination-nav">
-            <button className="nav-arrow disabled">«</button>
-            <button className="nav-arrow disabled">‹</button>
-            <button className="nav-page active">1</button>
-            <button className="nav-arrow disabled">›</button>
-            <button className="nav-arrow disabled">»</button>
+        <div className="cat-pagination">
+          <span className="cat-total-text">Mostrando 1-{filteredCategories.length} de {filteredCategories.length} registros</span>
+          <div className="cat-pagination-controls">
+            <button className="p-nav-cat" disabled>&lt;&lt;</button>
+            <button className="p-nav-cat" disabled>&lt;</button>
+            <button className="p-num-cat active">1</button>
+            <button className="p-nav-cat" disabled>&gt;</button>
+            <button className="p-nav-cat" disabled>&gt;&gt;</button>
           </div>
         </div>
       </section>
 
-      {/* MODAL: FORMULARIO CU.3.02 - NUEVA CATEGORÍA */}
-      {isModalOpen && (
-        <div className="modal-overlay-centered">
-          <div className="modal-content-centered">
-            <div className="modal-header">
+      {/* MODAL: REGISTRAR / EDITAR */}
+      {(activeModal === 'create' || activeModal === 'edit') && (
+        <div className="cat-modal-overlay">
+          <div className="cat-modal">
+            <div className="cat-modal-header">
               <div>
-                <span className="modal-subtitle">CU.3.02 · NUEVA CATEGORÍA</span>
-                <h2 className="modal-title">Registrar Categoría</h2>
+                <span className="cat-modal-eyebrow">
+                  {activeModal === 'create' ? 'CU.3.02 · NUEVA CATEGORÍA' : `CU.3.03 · CATEGORÍA #${selectedCategory?.id}`}
+                </span>
+                <h2 className="cat-modal-title">
+                  {activeModal === 'create' ? 'Registrar Categoría' : 'Editar Categoría'}
+                </h2>
               </div>
-              <button className="btn-close-modal" onClick={() => setIsModalOpen(false)}>
-                ×
+              <button className="cat-close-button" onClick={() => setActiveModal(null)}>
+                <X size={18} />
               </button>
             </div>
-
-            <div className="modal-body">
-              <div className="form-group">
-                <label className="required-label">NOMBRE *</label>
-                <input
-                  type="text"
-                  placeholder="Ej: Balines, Chaquiras..."
-                  className="modal-input"
-                />
-                <span className="input-help-text">Obligatorio. Debe ser único.</span>
+            <form onSubmit={handleSave}>
+              <div className="cat-modal-body">
+                <div className="cat-field-group">
+                  <label>NOMBRE *</label>
+                  <input
+                    type="text"
+                    placeholder="Ej: Balines, Chaquiras..."
+                    value={formData.nombre}
+                    onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+                    required
+                  />
+                  {activeModal === 'create' && <span className="cat-field-hint">Obligatorio. Debe ser único.</span>}
+                </div>
+                <div className="cat-field-group">
+                  <label>DESCRIPCIÓN</label>
+                  <textarea
+                    rows={3}
+                    placeholder="Describe esta categoría de insumo..."
+                    value={formData.descripcion}
+                    onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
+                  />
+                </div>
               </div>
+              <div className="cat-modal-footer">
+                <button type="button" className="btn-cat-cancel" onClick={() => setActiveModal(null)}>
+                  Cancelar
+                </button>
+                <button type="submit" className="btn-cat-submit">
+                  {activeModal === 'create' ? 'Registrar categoría' : 'Guardar cambios'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
-              <div className="form-group">
-                <label>DESCRIPCIÓN</label>
-                <textarea
-                  placeholder="Describe esta categoría de insumo..."
-                  className="modal-input textarea-modal"
-                  rows="4"
-                ></textarea>
+      {/* MODAL: CONSULTAR */}
+      {activeModal === 'view' && selectedCategory && (
+        <div className="cat-modal-overlay">
+          <div className="cat-modal">
+            <div className="cat-modal-header">
+              <div>
+                <span className="cat-modal-eyebrow">CU.3.06 · CATEGORÍA #{selectedCategory.id}</span>
+                <h2 className="cat-modal-title">Consultar Categoría</h2>
+              </div>
+              <button className="cat-close-button" onClick={() => setActiveModal(null)}>
+                <X size={18} />
+              </button>
+            </div>
+            <div className="cat-modal-body">
+              <div className="cat-view-hero">
+                <div className="cat-view-avatar">
+                  <Tag size={24} />
+                </div>
+                <div className="cat-view-hero-info">
+                  <h3>{selectedCategory.nombre}</h3>
+                  <p>ID Categoria #{selectedCategory.id}</p>
+                </div>
+              </div>
+              <div className="cat-view-details">
+                <div className="cat-view-row">
+                  <span className="lbl">ID Categoría</span>
+                  <span className="val">#{selectedCategory.id}</span>
+                </div>
+                <div className="cat-view-row">
+                  <span className="lbl">Nombre</span>
+                  <span className="val">{selectedCategory.nombre}</span>
+                </div>
+                <div className="cat-view-row">
+                  <span className="lbl">Descripción</span>
+                  <span className="val" style={{ maxWidth: '200px' }}>{selectedCategory.descripcion}</span>
+                </div>
               </div>
             </div>
+            <div className="cat-modal-footer">
+              <button className="btn-cat-cancel" onClick={() => setActiveModal(null)}>Cerrar</button>
+              <button className="btn-cat-submit" onClick={() => handleOpenEdit(selectedCategory)}>Editar</button>
+            </div>
+          </div>
+        </div>
+      )}
 
-            <div className="modal-footer">
-              <button className="btn-modal-cancel" onClick={() => setIsModalOpen(false)}>
-                Cancelar
-              </button>
-              <button className="btn-modal-submit">Registrar categoría</button>
+      {/* MODAL: ELIMINAR */}
+      {activeModal === 'delete' && selectedCategory && (
+        <div className="cat-modal-overlay">
+          <div className="cat-modal">
+            <div className="cat-delete-body">
+              <div className="cat-delete-icon-wrapper">
+                <Trash2 size={24} />
+              </div>
+              <span className="cat-modal-eyebrow">CU.3.04 · Eliminar categoría</span>
+              <h3>Confirmar eliminación</h3>
+              <p>¿Estás seguro de eliminar <strong>"{selectedCategory.nombre}"</strong>? Esta acción no se puede deshacer.</p>
+            </div>
+            <div className="cat-modal-footer">
+              <button className="btn-cat-cancel" onClick={() => setActiveModal(null)}>Cancelar</button>
+              <button className="btn-cat-danger" onClick={handleDelete}>Eliminar</button>
             </div>
           </div>
         </div>
       )}
     </div>
   );
-};
-
-export default CategoriaInsumos;
+}

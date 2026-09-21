@@ -1,278 +1,589 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import {
+  Plus,
+  Search,
+  Eye,
+  Edit2,
+  Trash2,
+  X,
+  Tag,
+  AlertTriangle,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight
+} from 'lucide-react';
 import './Tamanos.css';
 
-const tamanosData = [
-  {
-    id: '#1',
-    nombre: 'Pequeño',
-    descripcion: 'Tamaño pequeño utilizado para manillas infantiles y a...',
-    estado: 'Activo',
-  },
-  {
-    id: '#2',
-    nombre: 'Mediano',
-    descripcion: 'Tamaño estándar para la mayoría de pulseras y manill...',
-    estado: 'Activo',
-  },
-  {
-    id: '#4',
-    nombre: 'Ajustable',
-    descripcion: 'Tamaño regulable para accesorios con cierre o elástico...',
-    estado: 'Activo',
-  },
-  {
-    id: '#5',
-    nombre: '16 cm',
-    descripcion: 'Medida estándar de 16 cm para manillas infantiles y p...',
-    estado: 'Activo',
-  },
-  {
-    id: '#6',
-    nombre: '18 cm',
-    descripcion: 'Medida de 18 cm, tamaño estándar para pulseras de ...',
-    estado: 'Activo',
-  },
+const INITIAL_TAMANOS = [
+  { id: 1, nombre: 'Pequeño', descripcion: 'Tamaño pequeño utilizado para manillas infantiles y accesorios delicados', estado: 'Activo' },
+  { id: 2, nombre: 'Mediano', descripcion: 'Tamaño estándar para la mayoría de pulseras y manillas de adulto', estado: 'Activo' },
+  { id: 3, nombre: 'Grande', descripcion: 'Tamaño grande para cadenas y tobilleras de uso general', estado: 'Activo' },
+  { id: 4, nombre: 'Ajustable', descripcion: 'Tamaño regulable para accesorios con cierre o elástico adaptable', estado: 'Activo' },
+  { id: 5, nombre: '16 cm', descripcion: 'Medida estándar de 16 cm para manillas infantiles y muñecas delgadas', estado: 'Activo' },
+  { id: 6, nombre: '18 cm', descripcion: 'Medida de 18 cm, tamaño estándar para pulseras de mujer', estado: 'Activo' },
+  { id: 7, nombre: '20 cm', descripcion: 'Medida de 20 cm para pulseras de hombre y collares ajustados', estado: 'Activo' },
+  { id: 10, nombre: '50 cm', descripcion: 'Medida de 50 cm para collares largos y cadenas decorativas', estado: 'Inactivo' }
 ];
 
-export const Tamanos = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+export default function Tamanos() {
+  // Estados principales
+  const [tamanos, setTamanos] = useState(INITIAL_TAMANOS);
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Modales
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isViewOpen, setIsViewOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+
+  // Selección actual
+  const [selectedTamano, setSelectedTamano] = useState(null);
+
+  // Formulario (Crear / Editar)
+  const [formData, setFormData] = useState({
+    nombre: '',
+    descripcion: '',
+    estado: 'Activo'
+  });
+
+  // KPIs calculados
+  const totalTamanos = tamanos.length;
+  const activosCount = useMemo(() => tamanos.filter(t => t.estado === 'Activo').length, [tamanos]);
+  const inactivosCount = useMemo(() => tamanos.filter(t => t.estado === 'Inactivo').length, [tamanos]);
+
+  // Filtrado de la lista (Solo por búsqueda)
+  const filteredTamanos = useMemo(() => {
+    return tamanos.filter(tam => {
+      return (
+        tam.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        tam.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        `#${tam.id}`.includes(searchTerm)
+      );
+    });
+  }, [tamanos, searchTerm]);
+
+  // Cambiar estado desde la tabla
+  const handleToggleEstado = (id) => {
+    setTamanos(prev =>
+      prev.map(t =>
+        t.id === id ? { ...t, estado: t.estado === 'Activo' ? 'Inactivo' : 'Activo' } : t
+      )
+    );
+  };
+
+  // Resetear Formulario
+  const resetForm = () => {
+    setFormData({ nombre: '', descripcion: '', estado: 'Activo' });
+    setSelectedTamano(null);
+  };
+
+  // Abrir Crear
+  const handleOpenCreate = () => {
+    resetForm();
+    setIsCreateOpen(true);
+  };
+
+  // Crear Tamaño
+  const handleCreateSubmit = (e) => {
+    e.preventDefault();
+    if (!formData.nombre.trim()) return;
+
+    const newId = tamanos.length > 0 ? Math.max(...tamanos.map(t => t.id)) + 1 : 1;
+    const newTamano = {
+      id: newId,
+      nombre: formData.nombre.trim(),
+      descripcion: formData.descripcion.trim(),
+      estado: 'Activo'
+    };
+
+    setTamanos([...tamanos, newTamano]);
+    setIsCreateOpen(false);
+    resetForm();
+  };
+
+  // Abrir Editar
+  const handleOpenEdit = (tamano) => {
+    setSelectedTamano(tamano);
+    setFormData({
+      nombre: tamano.nombre,
+      descripcion: tamano.descripcion,
+      estado: tamano.estado
+    });
+    setIsEditOpen(true);
+  };
+
+  // Editar Tamaño
+  const handleEditSubmit = (e) => {
+    e.preventDefault();
+    if (!formData.nombre.trim()) return;
+
+    setTamanos(prev =>
+      prev.map(t =>
+        t.id === selectedTamano.id
+          ? { ...t, nombre: formData.nombre.trim(), descripcion: formData.descripcion.trim(), estado: formData.estado }
+          : t
+      )
+    );
+    setIsEditOpen(false);
+    resetForm();
+  };
+
+  // Abrir Consultar
+  const handleOpenView = (tamano) => {
+    setSelectedTamano(tamano);
+    setIsViewOpen(true);
+  };
+
+  // Abrir Eliminar
+  const handleOpenDelete = (tamano) => {
+    setSelectedTamano(tamano);
+    setIsDeleteOpen(true);
+  };
+
+  // Confirmar Eliminar
+  const handleDeleteConfirm = () => {
+    if (!selectedTamano) return;
+    setTamanos(prev => prev.filter(t => t.id !== selectedTamano.id));
+    setIsDeleteOpen(false);
+    setSelectedTamano(null);
+  };
 
   return (
     <div className="tamanos-page">
-      {/* CABECERA SUPERIOR */}
-      <header className="page-header">
-        <div className="header-title-group">
-          <h1 className="page-title">Gestión de Tamaños</h1>
-          <p className="page-subtitle">
-            Administra los tamaños disponibles para la asignación de variantes en el sistema
-          </p>
+      {/* Header del Módulo */}
+      <header className="tam-page-header">
+        <div>
+          <span className="tam-module-label">CONFIGURACIÓN</span>
+          <h1>Gestión de Tamaños</h1>
+          <p>Administra los tamaños disponibles para la asignación de variantes en el sistema</p>
         </div>
-        <button className="btn-register" onClick={() => setIsModalOpen(true)}>
-          + NUEVO TAMAÑO
+        <button className="tam-primary-button" onClick={handleOpenCreate}>
+          <Plus size={16} />
+          NUEVO TAMAÑO
         </button>
       </header>
 
-      {/* TARJETAS KPI (3 TARJETAS BEIGE CON ÍCONO DE REGLA) */}
-      <div className="metrics-grid">
-        {/* TOTAL TAMAÑOS */}
-        <div className="kpi-card">
-          <div className="kpi-content-box">
-            <div className="kpi-icon-badge gray-badge">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.4 2.4 0 0 1 0-3.4l2.6-2.6a2.4 2.4 0 0 1 3.4 0l12.6 12.6z" />
-                <path d="m14.5 12.5 2-2" />
-                <path d="m11.5 9.5 2-2" />
-                <path d="m8.5 6.5 2-2" />
-                <path d="m17.5 15.5 2-2" />
-              </svg>
-            </div>
-            <div className="kpi-text-box">
-              <span className="kpi-value">5</span>
-              <span className="kpi-label">Total tamaños</span>
+      {/* Grid de KPIs */}
+      <section className="tam-kpi-grid">
+        <div className="tam-kpi-card">
+          <div className="tam-kpi-top">
+            <span>Total tamaños</span>
+            <div className="tam-kpi-icon">
+              <Tag size={16} />
             </div>
           </div>
+          <strong>{totalTamanos}</strong>
+          <small className="tam-neutral">Registrados en catálogo</small>
         </div>
 
-        {/* ACTIVOS */}
-        <div className="kpi-card">
-          <div className="kpi-content-box">
-            <div className="kpi-icon-badge green-badge">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.4 2.4 0 0 1 0-3.4l2.6-2.6a2.4 2.4 0 0 1 3.4 0l12.6 12.6z" />
-                <path d="m14.5 12.5 2-2" />
-                <path d="m11.5 9.5 2-2" />
-                <path d="m8.5 6.5 2-2" />
-                <path d="m17.5 15.5 2-2" />
-              </svg>
-            </div>
-            <div className="kpi-text-box">
-              <span className="kpi-value">5</span>
-              <span className="kpi-label">Activos</span>
+        <div className="tam-kpi-card">
+          <div className="tam-kpi-top">
+            <span>Activos</span>
+            <div className="tam-kpi-icon">
+              <Tag size={16} />
             </div>
           </div>
+          <strong>{activosCount}</strong>
+          <small className="tam-positive">Disponibles para uso</small>
         </div>
 
-        {/* INACTIVOS */}
-        <div className="kpi-card">
-          <div className="kpi-content-box">
-            <div className="kpi-icon-badge gray-badge">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.4 2.4 0 0 1 0-3.4l2.6-2.6a2.4 2.4 0 0 1 3.4 0l12.6 12.6z" />
-                <path d="m14.5 12.5 2-2" />
-                <path d="m11.5 9.5 2-2" />
-                <path d="m8.5 6.5 2-2" />
-                <path d="m17.5 15.5 2-2" />
-              </svg>
-            </div>
-            <div className="kpi-text-box">
-              <span className="kpi-value">0</span>
-              <span className="kpi-label">Inactivos</span>
+        <div className="tam-kpi-card">
+          <div className="tam-kpi-top">
+            <span>Inactivos</span>
+            <div className="tam-kpi-icon">
+              <Tag size={16} />
             </div>
           </div>
+          <strong>{inactivosCount}</strong>
+          <small className="tam-neutral">Deshabilitados temporalmente</small>
         </div>
-      </div>
+      </section>
 
-      {/* TARJETA DE BÚSQUEDA Y FILTROS */}
-      <section className="tamanos-card filters-card">
-        <div className="filters-header">
-          <svg className="icon-filter" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
-          </svg>
-          <span className="filters-title">Buscar y filtrar tamaños</span>
+      {/* Buscador (Sin selector de filtros) */}
+      <section className="tam-filters-card">
+        <div className="tam-filters-title">
+          <Search size={14} />
+          <span>Buscar tamaños</span>
         </div>
-
-        <div className="filters-form">
-          <div className="input-search-container">
-            <svg className="icon-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
+        <div className="tam-filters-row">
+          <div className="tam-search">
+            <Search size={16} />
             <input
               type="text"
-              className="input-field search-input"
               placeholder="Buscar por ID, nombre o descripción..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
+          {searchTerm && (
+            <button
+              className="tam-clear-filters"
+              onClick={() => setSearchTerm('')}
+            >
+              Limpiar búsqueda
+            </button>
+          )}
         </div>
       </section>
 
-      {/* TABLA DE TAMAÑOS */}
-      <section className="tamanos-card table-card">
-        <div className="table-top-bar">
-          <div className="table-title-group">
-            <h2 className="table-main-title">Listado de Tamaños</h2>
-            <span className="count-badge">5</span>
+      {/* Tabla Principal */}
+      <section className="tam-ref-table-card">
+        <div className="tam-ref-table-header">
+          <div className="tam-ref-title">
+            <span>Listado de Tamaños</span>
+            <span className="tam-ref-badge">{filteredTamanos.length}</span>
           </div>
-          <span className="pagination-info">Página 1 de 1</span>
+          <span className="tam-ref-page-counter">Página 1 de 1</span>
         </div>
 
-        <div className="table-responsive">
-          <table className="custom-table">
+        <div className="tam-ref-table-wrapper">
+          <table className="tam-ref-table">
             <thead>
               <tr>
-                <th className="col-id">ID</th>
-                <th className="col-nombre">NOMBRE</th>
-                <th className="col-descripcion">DESCRIPCIÓN</th>
-                <th className="col-estado">ESTADO</th>
-                <th className="col-acciones">ACCIONES</th>
+                <th style={{ width: '80px' }}>ID</th>
+                <th>NOMBRE</th>
+                <th>DESCRIPCIÓN</th>
+                <th style={{ width: '130px' }}>ESTADO</th>
+                <th style={{ width: '120px', textAlign: 'right' }}>ACCIONES</th>
               </tr>
             </thead>
             <tbody>
-              {tamanosData.map((item) => (
-                <tr key={item.id}>
-                  <td>
-                    <span className="tag-id">{item.id}</span>
-                  </td>
-                  <td>
-                    <div className="tamano-name-cell">
-                      <div className="tag-icon-box">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z" />
-                          <path d="M7 7h.01" />
-                        </svg>
+              {filteredTamanos.length > 0 ? (
+                filteredTamanos.map((tam) => (
+                  <tr key={tam.id}>
+                    <td className="col-code">#{tam.id}</td>
+                    <td>
+                      <div className="tam-name-cell">
+                        <div className="tam-icon-tag">
+                          <Tag size={16} />
+                        </div>
+                        <span>{tam.nombre}</span>
                       </div>
-                      <span className="tamano-name-text">{item.nombre}</span>
-                    </div>
-                  </td>
-                  <td>
-                    <span className="tamano-desc-text">{item.descripcion}</span>
-                  </td>
-                  <td>
-                    <span className="status-pill status-active">
-                      <span className="status-indicator"></span>
-                      {item.estado}
-                    </span>
-                  </td>
-                  <td>
-                    <div className="actions-group">
-                      <button className="action-btn btn-view" title="Ver">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                          <circle cx="12" cy="12" r="3" />
-                        </svg>
+                    </td>
+                    <td>
+                      <span className="tam-desc-text" title={tam.descripcion}>
+                        {tam.descripcion || 'Sin descripción'}
+                      </span>
+                    </td>
+                    <td>
+                      <button
+                        className="tam-status-toggle"
+                        onClick={() => handleToggleEstado(tam.id)}
+                        title="Haga clic para cambiar estado"
+                      >
+                        <span className={`tam-status-pill ${tam.estado.toLowerCase()}`}>
+                          <span className="tam-status-dot"></span>
+                          {tam.estado}
+                        </span>
                       </button>
-                      <button className="action-btn btn-edit" title="Editar">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M12 20h9" />
-                          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-                        </svg>
-                      </button>
-                      <button className="action-btn btn-delete" title="Eliminar">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <polyline points="3 6 5 6 21 6" />
-                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                        </svg>
-                      </button>
-                    </div>
+                    </td>
+                    <td>
+                      <div className="tam-ref-actions">
+                        <button
+                          className="btn-icon view"
+                          title="Consultar"
+                          onClick={() => handleOpenView(tam)}
+                        >
+                          <Eye size={16} />
+                        </button>
+                        <button
+                          className="btn-icon edit"
+                          title="Editar"
+                          onClick={() => handleOpenEdit(tam)}
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                        <button
+                          className="btn-icon delete"
+                          title="Eliminar"
+                          onClick={() => handleOpenDelete(tam)}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="5" className="empty-row">
+                    No se encontraron tamaños registrados.
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
 
-        {/* PAGINACIÓN */}
-        <div className="table-footer">
-          <span className="footer-records-text">Mostrando 1-5 de 5 registros</span>
-          <div className="pagination-nav">
-            <button className="nav-arrow disabled">«</button>
-            <button className="nav-arrow disabled">‹</button>
-            <button className="nav-page active">1</button>
-            <button className="nav-arrow disabled">›</button>
-            <button className="nav-arrow disabled">»</button>
+        {/* Paginación */}
+        <div className="tam-ref-pagination">
+          <span className="tam-ref-total-text">
+            Mostrando 1-{filteredTamanos.length} de {filteredTamanos.length} registros
+          </span>
+          <div className="tam-ref-pagination-controls">
+            <button className="p-nav" disabled><ChevronsLeft size={14} /></button>
+            <button className="p-nav" disabled><ChevronLeft size={14} /></button>
+            <button className="p-num active">1</button>
+            <button className="p-nav" disabled><ChevronRight size={14} /></button>
+            <button className="p-nav" disabled><ChevronsRight size={14} /></button>
           </div>
         </div>
       </section>
 
-      {/* MODAL: REGISTRAR TAMAÑO */}
-      {isModalOpen && (
-        <div className="modal-overlay-centered">
-          <div className="modal-content-centered">
-            <div className="modal-header">
+      {/* MODAL 1: REGISTRAR TAMAÑO */}
+      {isCreateOpen && (
+        <div className="tam-modal-overlay">
+          <div className="tam-modal tam-form-modal-custom">
+            <div className="tam-modal-header">
               <div>
-                <span className="modal-subtitle">CU.3.10 · NUEVO TAMAÑO</span>
-                <h2 className="modal-title">Registrar Tamaño</h2>
+                <span className="tam-modal-eyebrow">NUEVO · ID AUTOGENERADO</span>
+                <h2 className="tam-modal-title">Registrar Tamaño</h2>
               </div>
-              <button className="btn-close-modal" onClick={() => setIsModalOpen(false)}>
-                ×
+              <button className="tam-close-button" onClick={() => setIsCreateOpen(false)}>
+                <X size={18} />
               </button>
             </div>
 
-            <div className="modal-body">
-              <div className="form-group">
-                <label className="required-label">NOMBRE *</label>
-                <input
-                  type="text"
-                  placeholder="Ej: Pequeño, Mediano, 18 cm..."
-                  className="modal-input"
-                />
-                <span className="input-help-text">Obligatorio. Debe ser único.</span>
+            <form onSubmit={handleCreateSubmit}>
+              <div className="tam-form-body-custom">
+                <div className="tam-field-group">
+                  <label>NOMBRE *</label>
+                  <input
+                    type="text"
+                    placeholder="Ej: XS (2mm), M (10mm), Rollo 50m..."
+                    value={formData.nombre}
+                    onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+                    required
+                  />
+                  <span className="tam-field-hint">Obligatorio. Debe ser único en el sistema.</span>
+                </div>
+
+                <div className="tam-field-group">
+                  <label>DESCRIPCIÓN</label>
+                  <textarea
+                    rows="3"
+                    placeholder="Describe este tamaño..."
+                    value={formData.descripcion}
+                    onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
+                  ></textarea>
+                  <span className="tam-field-hint">Describe las características o usos principales de este tamaño.</span>
+                </div>
+
+                <div className="tam-status-box">
+                  <CheckCircle2 size={16} />
+                  <span>Se creará con estado <strong>Activo</strong> por defecto.</span>
+                </div>
               </div>
 
-              <div className="form-group">
-                <label>DESCRIPCIÓN</label>
-                <textarea
-                  placeholder="Describe este tamaño..."
-                  className="modal-input textarea-modal"
-                  rows="4"
-                ></textarea>
+              <div className="tam-custom-modal-footer">
+                <button
+                  type="button"
+                  className="btn-cancel-custom"
+                  onClick={() => setIsCreateOpen(false)}
+                >
+                  Cancelar
+                </button>
+                <button type="submit" className="btn-dark-custom">
+                  Registrar tamaño
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 2: EDITAR TAMAÑO */}
+      {isEditOpen && selectedTamano && (
+        <div className="tam-modal-overlay">
+          <div className="tam-modal tam-form-modal-custom">
+            <div className="tam-modal-header">
+              <div>
+                <span className="tam-modal-eyebrow">EDITAR · TAMAÑO #{selectedTamano.id}</span>
+                <h2 className="tam-modal-title">Editar Tamaño</h2>
+              </div>
+              <button className="tam-close-button" onClick={() => setIsEditOpen(false)}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleEditSubmit}>
+              <div className="tam-form-body-custom">
+                <div className="tam-field-group">
+                  <label>NOMBRE *</label>
+                  <input
+                    type="text"
+                    value={formData.nombre}
+                    onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+                    required
+                  />
+                  <span className="tam-field-hint">Obligatorio. Debe ser único.</span>
+                </div>
+
+                <div className="tam-field-group">
+                  <label>DESCRIPCIÓN</label>
+                  <textarea
+                    rows="3"
+                    value={formData.descripcion}
+                    onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
+                  ></textarea>
+                </div>
+
+                <div className="tam-field-group">
+                  <label>ESTADO</label>
+                  <div className="tam-status-options">
+                    <div
+                      className={`tam-status-radio-card ${formData.estado === 'Activo' ? 'active' : ''}`}
+                      onClick={() => setFormData({ ...formData, estado: 'Activo' })}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span className="dot-active">●</span>
+                        <span>Activo</span>
+                      </div>
+                      <span className="radio-circle"></span>
+                    </div>
+
+                    <div
+                      className={`tam-status-radio-card ${formData.estado === 'Inactivo' ? 'active' : ''}`}
+                      onClick={() => setFormData({ ...formData, estado: 'Inactivo' })}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span className="dot-inactive">●</span>
+                        <span>Inactivo</span>
+                      </div>
+                      <span className="radio-circle"></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="tam-custom-modal-footer">
+                <button
+                  type="button"
+                  className="btn-cancel-custom"
+                  onClick={() => setIsEditOpen(false)}
+                >
+                  Cancelar
+                </button>
+                <button type="submit" className="btn-dark-custom">
+                  Guardar cambios
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 3: CONSULTAR / DETALLE */}
+      {isViewOpen && selectedTamano && (
+        <div className="tam-modal-overlay">
+          <div className="tam-modal tam-view-modal-custom">
+            <div className="tam-modal-header">
+              <div>
+                <span className="tam-modal-eyebrow">CONSULTA · SOLO LECTURA</span>
+                <h2 className="tam-modal-title">Detalle Tamaño</h2>
+              </div>
+              <button className="tam-close-button" onClick={() => setIsViewOpen(false)}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="tam-view-body-custom">
+              <div className="tam-view-hero-card">
+                <div className="tam-view-hero-left">
+                  <div className="tam-view-avatar">
+                    <Tag size={22} />
+                  </div>
+                  <div className="tam-view-hero-details">
+                    <h3>{selectedTamano.nombre}</h3>
+                    <p>ID Tamaño #{selectedTamano.id}</p>
+                  </div>
+                </div>
+                <span className={`tam-status-pill ${selectedTamano.estado.toLowerCase()}`}>
+                  <span className="tam-status-dot"></span>
+                  {selectedTamano.estado}
+                </span>
+              </div>
+
+              <div className="tam-view-details-table">
+                <div className="tam-view-row">
+                  <span className="lbl">ID Tamaño</span>
+                  <span className="val bold">#{selectedTamano.id}</span>
+                </div>
+                <div className="tam-view-row">
+                  <span className="lbl">Nombre</span>
+                  <span className="val bold">{selectedTamano.nombre}</span>
+                </div>
+                <div className="tam-view-row">
+                  <span className="lbl">Descripción</span>
+                  <span className="val desc">{selectedTamano.descripcion || 'Sin descripción asignada'}</span>
+                </div>
+                <div className="tam-view-row">
+                  <span className="lbl">Estado</span>
+                  <span className="val">
+                    <span className={`tam-status-pill ${selectedTamano.estado.toLowerCase()}`}>
+                      <span className="tam-status-dot"></span>
+                      {selectedTamano.estado}
+                    </span>
+                  </span>
+                </div>
               </div>
             </div>
 
-            <div className="modal-footer">
-              <button className="btn-modal-cancel" onClick={() => setIsModalOpen(false)}>
+            <div className="tam-custom-modal-footer">
+              <button
+                className="btn-cancel-custom"
+                onClick={() => setIsViewOpen(false)}
+              >
+                Cerrar
+              </button>
+              <button
+                className="btn-dark-custom"
+                onClick={() => {
+                  setIsViewOpen(false);
+                  handleOpenEdit(selectedTamano);
+                }}
+              >
+                Editar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 4: ELIMINAR TAMAÑO */}
+      {isDeleteOpen && selectedTamano && (
+        <div className="tam-modal-overlay">
+          <div className="tam-modal tam-delete-modal">
+            <div className="tam-delete-content">
+              <div className="tam-delete-icon">
+                <AlertTriangle size={24} />
+              </div>
+              <h3>¿Eliminar tamaño?</h3>
+              <p>
+                ¿Estás seguro de que deseas eliminar el tamaño <strong>"{selectedTamano.nombre}"</strong> (#
+                {selectedTamano.id})? Esta acción no se puede deshacer.
+              </p>
+            </div>
+
+            <div className="tam-modal-footer">
+              <button
+                className="tam-secondary-button"
+                onClick={() => setIsDeleteOpen(false)}
+              >
                 Cancelar
               </button>
-              <button className="btn-modal-submit">Registrar tamaño</button>
+              <button
+                className="tam-danger-button"
+                onClick={handleDeleteConfirm}
+              >
+                Eliminar
+              </button>
             </div>
           </div>
         </div>
       )}
     </div>
   );
-};
-
-export default Tamanos;
+}

@@ -1,0 +1,220 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..700;1,400..700&family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&display=swap');
+
+:root {
+    --bg-cream: #f4eee9;
+    --dark-navy: #1b1b28;
+    --card-bg: #ffffff;
+    --text-primary: #1b1b28;
+    --text-muted: #737791;
+    --border-color: #e8dfd8;
+    --font-serif: 'Playfair Display', serif;
+    --font-sans: 'Plus Jakarta Sans', sans-serif;
+}
+
+.profile-page-container {
+    min-height: 100vh;
+    background-color: var(--bg-cream);
+    font-family: var(--font-sans);
+    padding: 40px 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.profile-content-wrapper {
+    width: 100%;
+    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.profile-back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--text-primary);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.profile-header-titles {
+    text-align: left;
+}
+
+.profile-subtitle-tag {
+    text-transform: uppercase;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--text-muted);
+    font-weight: 700;
+}
+
+.profile-title {
+    font-family: var(--font-serif);
+    font-size: 28px;
+    color: var(--text-primary);
+    margin-top: 2px;
+    font-weight: 500;
+}
+
+.profile-desc {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+/* Tarjeta Avatar / Encabezado */
+.profile-user-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.profile-avatar-circle {
+    width: 54px;
+    height: 54px;
+    background-color: var(--dark-navy);
+    color: #ffffff;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.profile-user-info-main {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.profile-user-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.profile-user-email {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.profile-badge-active {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background-color: #e6f4ea;
+    color: #137333;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    width: fit-content;
+}
+
+.profile-badge-dot {
+    width: 5px;
+    height: 5px;
+    background-color: #137333;
+    border-radius: 50%;
+}
+
+/* Tarjeta Detalles de Información */
+.profile-details-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 24px;
+}
+
+.profile-details-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 20px;
+}
+
+.profile-info-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.profile-info-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.profile-info-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.profile-info-icon-box {
+    color: #a0aec0;
+    display: flex;
+    align-items: center;
+}
+
+.profile-info-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.profile-info-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.profile-info-value {
+    font-size: 12px;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+/* Alerta de Contraseña */
+.profile-security-alert {
+    background-color: #edf5ff;
+    border: 1px solid #cce5ff;
+    border-radius: 8px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 11px;
+    color: #004085;
+}
+
+/* Botón Cerrar Sesión */
+.profile-logout-btn {
+    width: 100%;
+    padding: 12px;
+    background-color: #fff0f0;
+    border: 1px solid #ffcdd2;
+    color: #d32f2f;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background-color 0.2s;
+}
+
+.profile-logout-btn:hover {
+    background-color: #ffe0e0;
+}

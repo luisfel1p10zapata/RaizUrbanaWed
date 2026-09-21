@@ -1,10 +1,25 @@
+/* =========================================================
+   RAÍZ URBANA - MÓDULO COMPRAS
+   ========================================================= */
+
 .compras-page {
   min-height: 100%;
   padding: 22px 21px 35px;
   background: transparent;
   color: #22223b;
-  font-family: inherit;
+  font-family: 'Montserrat', sans-serif;
 }
+
+.compras-page button,
+.compras-page input,
+.compras-page select,
+.compras-page textarea {
+  font-family: 'Montserrat', sans-serif;
+}
+
+/* =========================================================
+   ENCABEZADO
+   ========================================================= */
 
 .compras-page-header {
   display: flex;
@@ -26,7 +41,7 @@
 .compras-page-header h1 {
   margin: 0;
   color: #22223b;
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
   font-size: 40px;
   font-weight: 400;
   line-height: 1.05;
@@ -38,6 +53,10 @@
   font-size: 13px;
 }
 
+/* =========================================================
+   BOTONES
+   ========================================================= */
+
 .primary-button,
 .secondary-button,
 .danger-button {
@@ -48,7 +67,7 @@
   min-height: 40px;
   padding: 0 18px;
   border-radius: 10px;
-  font-family: inherit;
+  font-family: 'Montserrat', sans-serif;
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
@@ -69,6 +88,7 @@
   border: 1px solid #c9ada7;
   background: #fff;
   color: #22223b;
+  font-weight: 600;
 }
 
 .secondary-button:hover {
@@ -90,7 +110,30 @@
 }
 
 /* =========================================================
-   KPI CARDS - ESTRUCTURA ESTÁNDAR
+   BOTONES VARIANTES
+   ========================================================= */
+
+.compras-page .outline-button {
+  background: transparent;
+  border: 1px solid #22223b;
+  color: #22223b;
+}
+
+.compras-page .ghost-button {
+  background: transparent;
+  border: 0;
+  color: #22223b;
+}
+
+.compras-page .clear-filters {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+}
+
+/* =========================================================
+   KPI CARDS
+   4 TARJETAS IGUALES
+   ICONO IZQUIERDA + CONTENIDO DERECHA
    ========================================================= */
 
 .kpi-grid {
@@ -101,111 +144,164 @@
   margin-bottom: 19px;
 }
 
+/* =========================================================
+   TARJETA KPI
+   ========================================================= */
+
 .kpi-card {
   position: relative;
-  min-width: 0;
-  height: 100px;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  align-items: stretch;
-  padding: 12px 14px 10px;
-  border: 1px solid #c9ada7;
-  border-radius: 14px;
-  background: #fff;
-  box-shadow: 0 2px 4px rgba(34, 34, 59, .07);
-  text-align: left;
-}
-
-/* FILA SUPERIOR:
-   ETIQUETA A LA IZQUIERDA + ICONO A LA DERECHA */
-
-.kpi-top {
   width: 100%;
-  min-height: 28px;
-  margin: 0;
+  height: 82px;
+  min-width: 0;
+  box-sizing: border-box;
   padding: 0;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  text-align: left;
+  border: 1px solid #c9ada7;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: none;
+  overflow: hidden;
 }
 
-/* ETIQUETA SIEMPRE A LA IZQUIERDA */
+/* =========================================================
+   ICONO KPI
+   ========================================================= */
 
-.kpi-top > span {
-  display: block;
-  flex: 1;
-  margin: 0;
-  padding: 0;
-  color: #4a4e69;
-  font-size: 10px;
-  font-weight: 400;
-  line-height: 1.2;
-  text-align: left;
-}
+.kpi-card .kpi-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  right: auto;
+  bottom: auto;
+  transform: translateY(-50%);
 
-/* ICONO SIEMPRE A LA DERECHA */
-
-.kpi-icon {
   display: grid;
   place-items: center;
-  flex: 0 0 30px;
-  width: 30px;
-  height: 30px;
-  margin-left: auto;
+
+  width: 35px;
+  height: 35px;
+
+  margin: 0;
+  padding: 0;
+
   border-radius: 10px;
   background: #dedadb;
   color: #22223b;
-  font-size: 15px;
+
+  font-size: 16px;
   line-height: 1;
-  text-align: center;
+  z-index: 2;
 }
 
-/* VALOR SIEMPRE A LA IZQUIERDA */
+/* =========================================================
+   CONTENIDO KPI
+   ========================================================= */
 
-.kpi-card > strong {
-  display: block;
-  width: 100%;
+.kpi-card .kpi-content {
+  position: absolute;
+  left: 60px;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+
+  width: auto;
+  height: auto;
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+
   margin: 0;
   padding: 0;
-  color: #22223b;
-  font-size: 22px;
-  font-weight: 700;
-  line-height: 1.1;
+
+  z-index: 1;
+}
+
+/* =========================================================
+   TÍTULO KPI
+   ========================================================= */
+
+.kpi-card .kpi-top {
+  display: block;
+  width: 100%;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
   text-align: left;
+  line-height: 1;
 }
 
-/* VARIACIÓN SIEMPRE A LA IZQUIERDA */
-
-.kpi-card small {
+.kpi-card .kpi-top > span {
   display: block;
   width: 100%;
   margin: 0;
   padding: 0;
+
+  color: #4a4e69;
   font-size: 10px;
   font-weight: 400;
   line-height: 1.2;
+
   text-align: left;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.kpi-card small span {
+/* =========================================================
+   VALOR KPI
+   ========================================================= */
+
+.kpi-card .kpi-content > strong {
+  display: block;
+  width: 100%;
+  margin: 2px 0 0;
+  padding: 0;
+
+  color: #22223b;
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.05;
+
+  text-align: left;
+
+  white-space: nowrap;
+}
+
+/* =========================================================
+   DESCRIPCIÓN KPI
+   ========================================================= */
+
+.kpi-card .kpi-content > small {
+  display: block;
+  width: 100%;
+  margin: 2px 0 0;
+  padding: 0;
+
   color: #4a4e69;
+  font-size: 9px;
+  font-weight: 400;
+  line-height: 1.05;
+
+  text-align: left;
+
+  white-space: nowrap;
 }
 
-/* VARIACIÓN POSITIVA */
+/* =========================================================
+   COLORES
+   ========================================================= */
 
 .positive {
   color: #00a95a;
 }
 
-/* VARIACIÓN NEGATIVA */
-
 .negative {
   color: #e53b47;
 }
+
 /* =========================================================
    FILTROS
    ========================================================= */
@@ -213,9 +309,12 @@
 .filters-card {
   overflow: hidden;
   margin-bottom: 19px;
+
   border: 1px solid #c9ada7;
   border-radius: 15px;
+
   background: #fff;
+
   box-shadow: 0 2px 4px rgba(34, 34, 59, .06);
 }
 
@@ -223,9 +322,12 @@
   display: flex;
   align-items: center;
   gap: 8px;
+
   min-height: 42px;
   padding: 0 17px;
+
   border-bottom: 1px solid #c9ada7;
+
   color: #22223b;
   font-size: 12px;
 }
@@ -236,20 +338,34 @@
 
 .filters-row {
   display: grid;
-  grid-template-columns: 1.65fr .78fr .9fr .82fr .78fr auto;
+  grid-template-columns:
+    minmax(0, 1.65fr)
+    minmax(0, .78fr)
+    minmax(0, .9fr)
+    minmax(0, .82fr)
+    minmax(0, .78fr)
+    auto;
   gap: 9px;
   padding: 15px 17px;
+  min-width: 0;
 }
+
+/* =========================================================
+   CONTROLES DE FILTRO
+   ========================================================= */
 
 .search-control,
 .filters-row select,
 .date-control {
   height: 35px;
+
   border: 1px solid #c9ada7;
   border-radius: 9px;
+
   background: #fff;
   color: #4a4e69;
-  font-family: inherit;
+
+  font-family: 'Montserrat', sans-serif;
   font-size: 10px;
 }
 
@@ -258,6 +374,9 @@
   align-items: center;
   gap: 9px;
   padding: 0 13px;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .search-control svg {
@@ -268,10 +387,14 @@
 .search-control input {
   width: 100%;
   min-width: 0;
+  box-sizing: border-box;
+
   border: 0;
   outline: 0;
+
   color: #4a4e69;
-  font-family: inherit;
+
+  font-family: 'Montserrat', sans-serif;
   font-size: 12px;
 }
 
@@ -281,12 +404,15 @@
 
 .filters-row select {
   width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   padding: 0 9px;
   outline: none;
 }
 
 .date-control {
   position: relative;
+
   display: flex;
   align-items: center;
 }
@@ -294,27 +420,35 @@
 .date-control input {
   width: 100%;
   height: 100%;
+
   padding: 0 37px 0 12px;
+
   border: 0;
   outline: 0;
+
   background: transparent;
   color: #4a4e69;
-  font-family: inherit;
+
+  font-family: 'Montserrat', sans-serif;
   font-size: 12px;
 }
 
 .date-control svg {
   position: absolute;
   right: 9px;
+
   color: #22223b;
+
   pointer-events: none;
 }
 
 .clear-filters {
   border: 0;
   background: transparent;
+
   color: #e43e4e;
-  font-family: inherit;
+
+  font-family: 'Montserrat', sans-serif;
   font-size: 10px;
   cursor: pointer;
 }
@@ -325,9 +459,12 @@
 
 .table-card {
   overflow: hidden;
+
   border: 1px solid #c9ada7;
   border-radius: 16px;
+
   background: #fff;
+
   box-shadow: 0 2px 5px rgba(34, 34, 59, .07);
 }
 
@@ -335,8 +472,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+
   min-height: 53px;
   padding: 0 15px;
+
   border-bottom: 1px solid #c9ada7;
 }
 
@@ -356,19 +495,32 @@
   font-size: 11px;
 }
 
+/* =========================================================
+   CONTADOR
+   ========================================================= */
+
 .count-pill {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+
   min-width: 23px;
   height: 21px;
+
   padding: 0 7px;
+
   border-radius: 50px;
+
   background: #e7e5e6;
   color: #4a4e69;
+
   font-size: 10px;
   font-weight: 700;
 }
+
+/* =========================================================
+   CONTENEDOR TABLA
+   ========================================================= */
 
 .purchase-table-wrap {
   width: 100%;
@@ -378,29 +530,49 @@
 .purchase-table {
   width: 100%;
   min-width: 950px;
+
   border-collapse: collapse;
   table-layout: fixed;
 }
 
+/* =========================================================
+   ENCABEZADOS TABLA
+   ========================================================= */
+
 .purchase-table th {
   height: 44px;
   padding: 0 20px;
+
   border-bottom: 1px solid #c9ada7;
+
   background: #f8f8f8;
   color: #22223b;
+
   font-size: 10px;
   font-weight: 700;
   letter-spacing: .7px;
+
   text-align: left;
 }
+
+/* =========================================================
+   CELDAS TABLA
+   ========================================================= */
 
 .purchase-table td {
   height: 68px;
   padding: 0 20px;
+
   border-bottom: 1px solid #dec9c5;
+
   color: #4a4e69;
+
   font-size: 12px;
 }
+
+/* =========================================================
+   ANCHOS COLUMNAS
+   ========================================================= */
 
 .purchase-table th:nth-child(1),
 .purchase-table td:nth-child(1) {
@@ -442,12 +614,19 @@
   width: 115px;
 }
 
+/* =========================================================
+   FOTOS
+   ========================================================= */
+
 .purchase-photo {
   display: grid;
   place-items: center;
+
   width: 40px;
   height: 40px;
+
   border-radius: 12px;
+
   color: #4a4e69;
 }
 
@@ -467,14 +646,26 @@
   background: #dcecff;
 }
 
+/* =========================================================
+   ID
+   ========================================================= */
+
 .id-pill {
   display: inline-flex;
+
   padding: 3px 7px;
+
   border-radius: 6px;
+
   background: #eceaec;
   color: #4a4e69;
+
   font-weight: 700;
 }
+
+/* =========================================================
+   PROVEEDOR
+   ========================================================= */
 
 .provider-cell {
   display: flex;
@@ -492,20 +683,32 @@
   font-size: 11px;
 }
 
+/* =========================================================
+   MÉTODO DE PAGO
+   ========================================================= */
+
 .payment-cell {
   display: inline-flex;
   align-items: center;
   gap: 7px;
+
   color: #4a4e69;
 }
+
+/* =========================================================
+   ESTADOS
+   ========================================================= */
 
 .status-badge {
   display: inline-flex;
   align-items: center;
   gap: 7px;
+
   min-height: 27px;
   padding: 0 11px;
+
   border-radius: 50px;
+
   font-size: 11px;
   font-weight: 700;
 }
@@ -513,7 +716,9 @@
 .status-dot {
   width: 7px;
   height: 7px;
+
   border-radius: 50%;
+
   background: currentColor;
 }
 
@@ -541,6 +746,10 @@
   color: #f04d5d;
 }
 
+/* =========================================================
+   ACCIONES
+   ========================================================= */
+
 .actions-cell {
   display: flex;
   align-items: center;
@@ -550,10 +759,14 @@
 .actions-cell button {
   display: grid;
   place-items: center;
+
   padding: 0;
+
   border: 0;
   background: transparent;
+
   color: #1478ff;
+
   cursor: pointer;
 }
 
@@ -565,15 +778,25 @@
   color: #ff253e;
 }
 
+/* =========================================================
+   FOOTER TABLA
+   ========================================================= */
+
 .table-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
+
   min-height: 69px;
   padding: 0 24px;
+
   color: #4a4e69;
   font-size: 11px;
 }
+
+/* =========================================================
+   PAGINACIÓN
+   ========================================================= */
 
 .pagination {
   display: flex;
@@ -585,12 +808,16 @@
 .current-page {
   display: grid;
   place-items: center;
+
   width: 34px;
   height: 36px;
+
   border: 0;
   border-radius: 8px;
+
   background: transparent;
   color: #4a4e69;
+
   cursor: pointer;
 }
 
@@ -605,13 +832,19 @@
   font-weight: 700;
 }
 
+/* =========================================================
+   TABLA VACÍA
+   ========================================================= */
+
 .table-empty {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+
   min-height: 220px;
   gap: 7px;
+
   color: #9a8c98;
 }
 
@@ -631,35 +864,74 @@
   position: fixed;
   z-index: 1000;
   inset: 0;
+
   display: flex;
   align-items: center;
   justify-content: center;
+
   padding: 20px;
+
   background: rgba(34, 34, 59, .24);
+
   backdrop-filter: blur(5px);
 }
 
 .compras-modal {
   width: min(760px, 100%);
   max-height: calc(100vh - 40px);
+
   overflow: hidden;
+
   border: 1px solid #c9ada7;
   border-radius: 17px;
+
   background: #fff;
+
   box-shadow: 0 18px 45px rgba(34, 34, 59, .23);
 }
+
+/* =========================================================
+   TAMAÑOS DE MODALES DE COMPRAS
+   ========================================================= */
+  /* =========================================================
+   TAMAÑOS DE MODALES DE COMPRAS
+   ========================================================= */
+
+.purchase-form-modal {
+  width: min(520px, 100%);
+}
+
+.detail-modal {
+  width: min(520px, 100%);
+}
+
+.status-modal {
+  width: min(400px, 100%);
+}
+
+.delete-modal {
+  width: min(500px, 100%);
+}
+
+/* =========================================================
+   HEADER MODAL
+   ========================================================= */
 
 .compras-modal-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
+
   padding: 20px 22px 18px;
+
   border-bottom: 1px solid #c9ada7;
 }
 
 .compras-modal-header h2 {
   margin: 3px 0 0;
-  color: transparent;
+
+  color: #22223b;
+
   font-family: Georgia, 'Times New Roman', serif;
   font-size: 25px;
   font-weight: 400;
@@ -667,27 +939,43 @@
 
 .compras-eyebrow {
   color: #4a4e69;
+
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 1px;
   text-transform: uppercase;
 }
 
+/* =========================================================
+   BOTÓN ICONO
+   ========================================================= */
+
 .icon-button {
   display: grid;
   place-items: center;
+
   width: 32px;
   height: 32px;
+
   padding: 0;
+
   border: 0;
   background: transparent;
+
   color: #4a4e69;
+
   cursor: pointer;
 }
 
+/* =========================================================
+   CUERPO MODAL
+   ========================================================= */
+
 .compras-modal-body {
   max-height: calc(100vh - 180px);
+
   overflow-y: auto;
+
   padding: 18px 21px;
 }
 
@@ -700,20 +988,34 @@
   border-radius: 10px;
 }
 
+/* =========================================================
+   FOOTER MODAL
+   ========================================================= */
+
 .compras-modal-footer {
   display: grid;
   grid-template-columns: 1fr 1fr;
+
   gap: 11px;
+
   padding: 13px 21px 17px;
+
   border-top: 1px solid #c9ada7;
 }
+
+/* =========================================================
+   SECCIONES FORMULARIO
+   ========================================================= */
 
 .section-divider {
   display: flex;
   align-items: center;
   gap: 9px;
+
   margin: 0 0 14px;
+
   color: #4a4e69;
+
   font-size: 11px;
   font-weight: 700;
   letter-spacing: .7px;
@@ -722,7 +1024,9 @@
 .section-divider::before,
 .section-divider::after {
   content: '';
+
   height: 1px;
+
   background: #c9ada7;
 }
 
@@ -737,6 +1041,10 @@
 .form-section + .form-section {
   margin-top: 20px;
 }
+
+/* =========================================================
+   FORMULARIOS
+   ========================================================= */
 
 .form-grid {
   display: grid;
@@ -761,10 +1069,15 @@
 .form-grid label > span,
 .product-editor label > span {
   color: #22223b;
+
   font-size: 10px;
   font-weight: 600;
   letter-spacing: .5px;
 }
+
+/* =========================================================
+   INPUTS
+   ========================================================= */
 
 .form-grid input,
 .form-grid select,
@@ -772,13 +1085,18 @@
 .product-editor select {
   width: 100%;
   height: 35px;
+
   border: 1px solid #c9ada7;
   border-radius: 9px;
+
   padding: 0 12px;
+
   outline: 0;
+
   background: #fff;
   color: #4a4e69;
-  font-family: inherit;
+
+  font-family: 'Montserrat', sans-serif;
   font-size: 11px;
 }
 
@@ -787,8 +1105,13 @@
 .product-editor input:focus,
 .product-editor select:focus {
   border-color: #4a4e69;
+
   box-shadow: 0 0 0 2px rgba(74, 78, 105, .08);
 }
+
+/* =========================================================
+   INPUT CON ICONO
+   ========================================================= */
 
 .input-with-icon {
   position: relative;
@@ -800,14 +1123,22 @@
 
 .input-with-icon svg {
   position: absolute;
+
   top: 9px;
   right: 10px;
+
   color: #22223b;
+
   pointer-events: none;
 }
 
+/* =========================================================
+   EDITOR PRODUCTOS
+   ========================================================= */
+
 .product-editor {
   padding: 13px;
+
   border: 1px solid #c9ada7;
   border-radius: 11px;
 }
@@ -819,7 +1150,9 @@
 
 .product-price-grid {
   grid-template-columns: 1fr 1fr;
+
   align-items: end;
+
   margin-top: 10px;
 }
 
@@ -828,21 +1161,35 @@
   min-height: 35px;
 }
 
+/* =========================================================
+   PRODUCTOS VACÍOS
+   ========================================================= */
+
 .empty-products {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+
   min-height: 84px;
+
   gap: 7px;
+
   border: 1px dashed #c9ada7;
   border-radius: 10px;
+
   color: #9a8c98;
+
   font-size: 11px;
 }
 
+/* =========================================================
+   PRODUCTOS AGREGADOS
+   ========================================================= */
+
 .products-added {
   overflow: hidden;
+
   border: 1px solid #c9ada7;
   border-radius: 10px;
 }
@@ -850,16 +1197,28 @@
 .products-added-head,
 .products-added-row {
   display: grid;
-  grid-template-columns: 1.25fr 1fr 1.25fr .55fr .8fr .45fr;
+
+  grid-template-columns:
+    1.25fr
+    1fr
+    1.25fr
+    .55fr
+    .8fr
+    .45fr;
+
   align-items: center;
+
   min-height: 43px;
+
   border-bottom: 1px solid #dec9c5;
 }
 
 .products-added-head {
   min-height: 37px;
+
   background: #f8f8f8;
   color: #4a4e69;
+
   font-size: 9px;
   font-weight: 700;
 }
@@ -877,35 +1236,59 @@
 .products-added-row small,
 .detail-products-row small {
   display: inline-block;
+
   padding: 3px 5px;
+
   border-radius: 4px;
+
   background: #eceaec;
   color: #4a4e69;
+
   font-size: 9px;
 }
+
+/* =========================================================
+   BOTÓN ELIMINAR PRODUCTO
+   ========================================================= */
 
 .danger-icon {
   display: grid;
   place-items: center;
+
   width: 30px;
   height: 30px;
+
   border: 0;
   background: transparent;
+
   color: #ff253e;
+
   cursor: pointer;
 }
+
+/* =========================================================
+   TOTAL PRODUCTOS
+   ========================================================= */
 
 .products-total,
 .detail-total {
   display: flex;
   align-items: center;
   justify-content: space-between;
+
   min-height: 42px;
+
   padding: 0 10px;
+
   background: #f8f8f8;
   color: #22223b;
+
   font-size: 11px;
 }
+
+/* =========================================================
+   DETALLE COMPRA
+   ========================================================= */
 
 .detail-section + .detail-section {
   margin-top: 21px;
@@ -914,10 +1297,15 @@
 .detail-list > div {
   display: grid;
   grid-template-columns: 1fr auto;
+
   align-items: center;
+
   min-height: 34px;
+
   border-bottom: 1px solid #dec9c5;
+
   color: #4a4e69;
+
   font-size: 11px;
 }
 
@@ -926,8 +1314,13 @@
   font-weight: 500;
 }
 
+/* =========================================================
+   PRODUCTOS DEL DETALLE
+   ========================================================= */
+
 .detail-products {
   overflow: hidden;
+
   border: 1px solid #c9ada7;
   border-radius: 10px;
 }
@@ -935,24 +1328,37 @@
 .detail-products-head,
 .detail-products-row {
   display: grid;
-  grid-template-columns: 1.4fr 1.3fr .55fr .75fr;
+
+  grid-template-columns:
+    1.4fr
+    1.3fr
+    .55fr
+    .75fr;
+
   align-items: center;
 }
 
 .detail-products-head {
   min-height: 33px;
+
   padding: 0 10px;
+
   background: #f8f8f8;
   color: #4a4e69;
+
   font-size: 9px;
   font-weight: 700;
 }
 
 .detail-products-row {
   min-height: 50px;
+
   padding: 0 10px;
+
   border-top: 1px solid #dec9c5;
+
   color: #4a4e69;
+
   font-size: 10px;
 }
 
@@ -968,21 +1374,31 @@
 
 .detail-products-row div small {
   padding: 0;
+
   background: transparent;
 }
 
+/* =========================================================
+   CAMBIO DE ESTADO
+   ========================================================= */
+
 .detail-status-button {
   justify-self: end;
+
   border: 0;
   padding: 0;
+
   background: transparent;
+
   cursor: pointer;
 }
 
 .status-options {
   display: flex;
   flex-direction: column;
+
   gap: 8px;
+
   padding: 20px;
 }
 
@@ -990,15 +1406,22 @@
   display: flex;
   align-items: center;
   gap: 12px;
+
   min-height: 47px;
+
   padding: 0 15px;
+
   border: 1px solid #c9ada7;
   border-radius: 11px;
+
   background: #fff;
   color: #4a4e69;
-  font-family: inherit;
+
+  font-family: 'Montserrat', sans-serif;
   font-size: 12px;
+
   text-align: left;
+
   cursor: pointer;
 }
 
@@ -1011,6 +1434,10 @@
   margin-left: auto;
   color: #22223b;
 }
+
+/* =========================================================
+   COLORES DOT ESTADO
+   ========================================================= */
 
 .status-dot.pending {
   color: #e7ad00;
@@ -1028,38 +1455,50 @@
   color: #f04d5d;
 }
 
+/* =========================================================
+   MODAL ELIMINAR
+   ========================================================= */
+
 .delete-modal {
-  width: min(410px, 100%);
+  width: min(404px, 100%);
 }
 
 .delete-content {
   padding: 20px 22px 8px;
+
   text-align: center;
 }
 
 .delete-icon {
   display: grid;
   place-items: center;
+
   width: 40px;
   height: 40px;
+
   margin: 0 auto 13px;
+
   border-radius: 50%;
+
   background: #fff0f2;
   color: #ff253e;
 }
 
 .delete-content p {
   margin: 0;
+
   color: #4a4e69;
+
   font-size: 12px;
   line-height: 1.55;
 }
 
 /* =========================================================
-   RESPONSIVE
+   RESPONSIVE - TABLET
    ========================================================= */
 
 @media (max-width: 1100px) {
+
   .kpi-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1069,7 +1508,12 @@
   }
 }
 
+/* =========================================================
+   RESPONSIVE - MÓVIL
+   ========================================================= */
+
 @media (max-width: 760px) {
+
   .compras-page {
     padding: 17px 13px 25px;
   }
@@ -1125,58 +1569,10 @@
 
   .table-footer {
     gap: 15px;
+
     flex-direction: column;
     align-items: flex-start;
+
     padding: 15px;
   }
-}
-
-/* =========================================================
-   SISTEMA VISUAL
-   ========================================================= */
-
-.compras-page {
-  background: transparent;
-  font-family: 'Montserrat', sans-serif;
-}
-
-.compras-page button,
-.compras-page input,
-.compras-page select,
-.compras-page textarea {
-  font-family: 'Montserrat', sans-serif;
-}
-
-.compras-page .primary-button {
-  font-family: 'Montserrat', sans-serif;
-  font-weight: 700;
-}
-
-.compras-page .secondary-button {
-  font-family: 'Montserrat', sans-serif;
-  font-weight: 600;
-}
-
-.compras-page .danger-button {
-  font-family: 'Montserrat', sans-serif;
-  font-weight: 700;
-}
-
-.compras-page .clear-filters {
-  font-family: 'Montserrat', sans-serif;
-  font-weight: 600;
-}
-
-/* Variantes visuales disponibles */
-
-.compras-page .outline-button {
-  background: transparent;
-  border: 1px solid #22223B;
-  color: #22223B;
-}
-
-.compras-page .ghost-button {
-  background: transparent;
-  border: 0;
-  color: #22223B;
 }

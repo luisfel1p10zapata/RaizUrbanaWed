@@ -85,7 +85,9 @@
   min-height: 40px;
 }
 
-/* KPIS */
+/* =========================================================
+   KPIS
+========================================================= */
 
 .ci-kpi-grid {
   display: grid;
@@ -95,51 +97,54 @@
 }
 
 .ci-kpi-card {
-  min-height: 96px;
-  padding: 12px 14px 10px;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  min-height: 80px;
+  padding: 10px 14px;
   border: 1px solid #c9ada7;
   border-radius: 14px;
   background: #fff;
   box-shadow: 0 2px 4px rgba(34, 34, 59, .07);
 }
 
-.ci-kpi-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 3px;
-}
-
-.ci-kpi-top > span {
-  color: #4a4e69;
-  font-size: 10px;
-}
-
 .ci-kpi-icon {
+  flex-shrink: 0;
   display: grid;
   place-items: center;
-  width: 28px;
-  height: 28px;
+  width: 38px;
+  height: 38px;
   border-radius: 10px;
   background: #dedadb;
   color: #22223b;
-  font-size: 15px;
 }
 
-.ci-kpi-card > strong {
-  display: block;
-  margin-bottom: 2px;
-  color: #22223b;
-  font-size: 20px;
+.ci-kpi-content {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 1px;
+}
+
+.ci-kpi-content > span {
+  color: #4a4e69;
+  font-size: 10px;
   line-height: 1.2;
 }
 
-.ci-kpi-card small {
-  font-size: 10px;
+.ci-kpi-content > strong {
+  display: block;
+  color: #22223b;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.15;
 }
 
-.ci-kpi-card small span {
-  color: #4a4e69;
+.ci-kpi-content > small {
+  font-size: 9px;
+  line-height: 1.2;
 }
 
 .ci-positive {
@@ -149,7 +154,6 @@
 .ci-negative {
   color: #e43e4e;
 }
-
 /* FILTROS */
 
 .ci-filters-card {
@@ -174,7 +178,8 @@
 
 .ci-filters-row {
   display: grid;
-  grid-template-columns: 1.65fr .78fr .9fr .82fr .78fr auto;
+  grid-template-columns: minmax(0, 1.65fr) minmax(0, .78fr) minmax(0, .9fr) minmax(0, .82fr) minmax(0, .78fr) auto;
+  min-width: 0;
   gap: 9px;
   padding: 15px 17px;
 }
@@ -196,6 +201,9 @@
   align-items: center;
   gap: 7px;
   padding: 0 10px;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .ci-search svg {
@@ -211,6 +219,7 @@
   color: #4a4e69;
   font-family: inherit;
   font-size: 10px;
+  box-sizing: border-box;
 }
 
 .ci-search input::placeholder {
@@ -221,6 +230,8 @@
   width: 100%;
   padding: 0 9px;
   outline: none;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .ci-filter-date {
@@ -564,7 +575,7 @@
 }
 
 .ci-modal {
-  width: min(730px, 100%);
+  width: min(430px, 100%);
   max-height: calc(100vh - 24px);
   overflow: hidden;
   border: 1px solid #c9ada7;
@@ -573,6 +584,40 @@
   box-shadow: 0 18px 45px rgba(34, 34, 59, .2);
 }
 
+/* =========================================================
+   MODAL REGISTRAR / EDITAR
+   ========================================================= */
+
+.ci-modal:not(.ci-detail-modal):not(.ci-status-modal):not(.ci-delete-modal) {
+  width: min(500px, 100%);
+}
+
+
+/* =========================================================
+   MODAL CONSULTAR / DETALLE
+   ========================================================= */
+
+.ci-detail-modal {
+  width: min(500px, 100%);
+}
+
+
+/* =========================================================
+   MODAL ESTADO
+   ========================================================= */
+
+.ci-status-modal {
+  width: min(380px, 100%);
+}
+
+
+/* =========================================================
+   MODAL ELIMINAR
+   ========================================================= */
+
+.ci-delete-modal {
+  width: min(330px, 100%);
+}
 .ci-modal-header {
   display: flex;
   align-items: flex-start;
@@ -856,7 +901,7 @@
 /* DETALLE */
 
 .ci-detail-modal {
-  width: min(480px, 100%);
+  width: min(400px, 100%);
 }
 
 .ci-detail-content {
@@ -1041,7 +1086,7 @@
   }
 
   .ci-filters-row {
-    grid-template-columns: 1.5fr 1fr 1fr;
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1fr);
   }
 }
 
