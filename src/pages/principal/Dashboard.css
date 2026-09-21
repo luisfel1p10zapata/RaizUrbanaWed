@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Montserrat:wght@400;500;600;700&display=swap');
+/* Fuentes: Georgia (serif) + system-ui (sans) */
 
 /* ============ GLOBAL RESET & BODY BACKGROUND ============ */
 html, body {
@@ -25,9 +25,8 @@ html, body {
   --negative: #c14f4f;
   --divider: #f0e2da;
 
-  /* Fuentes unificadas con Usuarios / Ventas / Carrito */
-  --font-logo: 'Playfair Display', Georgia, serif;
-  --font-ui: 'Montserrat', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-logo: Georgia, "Times New Roman", serif;
+  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 
   --radius-lg: 16px;
   --radius-md: 10px;
@@ -45,9 +44,9 @@ html, body {
 
 
 .ru-page {
-  max-width: 100%;
+  max-width: 1880px;
   margin: 0 auto;
-  padding: 48px 10px 90px;
+ 
 }
 
 /* ============ HEADER ============ */
@@ -57,11 +56,11 @@ html, body {
 
 .ru-header h1 {
   font-family: var(--font-logo);
-  font-weight: 500;
-  font-size: 44px;
-  line-height: 1.15;
+  font-weight: 600;
+  font-size: 46px;
   color: var(--primary);
-  margin: 0 0 9px 0;
+  margin: 0 0 8px 0;
+  letter-spacing: -0.01em;
 }
 
 .ru-header-sub {
@@ -69,7 +68,7 @@ html, body {
   color: var(--secondary);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 20px;
 }
 
 .ru-header-sub .dot { 
@@ -87,11 +86,11 @@ html, body {
 }
 
 .ru-eyebrow {
-  font-size: 12px;
-  letter-spacing: 0.12em;
+  font-size: 11.5px;
+  letter-spacing: 0.14em;
   color: var(--accent);
   font-weight: 600;
-  margin-bottom: 9px;
+  margin-bottom: 7px;
   text-transform: uppercase;
 }
 
@@ -113,7 +112,7 @@ html, body {
 .ru-kpi-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
+  gap: 5px;
   margin-bottom: 32px;
 }
 
@@ -121,7 +120,7 @@ html, body {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
   border-radius: var(--radius-lg);
-  padding: 24px 26px;
+  padding: 26px;
   box-shadow: var(--shadow-card);
 }
 
@@ -189,7 +188,7 @@ html, body {
   box-shadow: var(--shadow-card);
   display: flex;
   flex-direction: column;
-  height: 540px;
+  height: 540px; /* Más largo (antes 480px) */
   overflow: hidden;
 }
 
@@ -197,7 +196,7 @@ html, body {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 18px 24px;
+  padding: 16px 20px;
   border-bottom: 1px solid var(--divider);
 }
 
@@ -250,15 +249,11 @@ html, body {
   border-radius: 20px;
 }
 
-/* ru-chart-body es flex-column para que el gráfico (flex:1)
-   y elementos extra como la leyenda (ru-legend-row) convivan sin cortarse. */
 .ru-chart-body { 
   flex: 1; 
-  padding: 18px 24px 12px 24px;
+  padding: 18px 20px 12px 20px;
   width: 100%;
-  min-height: 380px;
-  display: flex;
-  flex-direction: column;
+  min-height: 380px; /* Más largo (antes 320px) */
 }
 
 /* Fix para Recharts ResponsiveContainer */
@@ -282,7 +277,6 @@ html, body {
   font-size: 12px;
   font-weight: 600;
   margin-top: 4px;
-  flex-shrink: 0;
 }
 
 .ru-legend-item {
@@ -308,7 +302,7 @@ html, body {
 }
 
 .ru-chart-footer {
-  padding: 0 24px 24px 24px;
+  padding: 0 20px 20px 20px;
 }
 
 .ru-view-btn {
@@ -357,7 +351,7 @@ html, body {
 
 .ru-modal {
   background: var(--card-bg);
-  border-radius: 22px;
+  border-radius: 24px;
   width: 100%;
   max-width: 720px;
   max-height: 92vh;
@@ -367,26 +361,25 @@ html, body {
   overflow: hidden;
 }
 
-/* Padding de modal unificado con Usuarios / Ventas / Carrito */
 .ru-modal-header {
-  padding: 26px 30px 18px;
+  padding: 30px 34px 20px;
   border-bottom: 1px solid var(--divider);
   flex-shrink: 0;
   position: relative;
 }
 
 .ru-modal-eyebrow {
-  font-size: 11px;
+  font-size: 11.5px;
   letter-spacing: 0.1em;
   color: var(--accent);
   font-weight: 600;
-  margin-bottom: 7px;
+  margin-bottom: 8px;
   text-transform: uppercase;
 }
 
 .ru-modal-title {
   font-family: var(--font-logo);
-  font-size: 26px;
+  font-size: 30px;
   font-weight: 600;
   color: var(--primary);
   margin: 0;
@@ -394,8 +387,8 @@ html, body {
 
 .ru-modal-close {
   position: absolute;
-  top: 22px;
-  right: 24px;
+  top: 24px;
+  right: 26px;
   width: 32px;
   height: 32px;
   border-radius: 50%;
@@ -412,13 +405,13 @@ html, body {
 .ru-modal-close:hover { background: var(--background); }
 
 .ru-modal-body {
-  padding: 24px 30px 8px;
+  padding: 26px 34px 8px;
   overflow-y: auto;
   flex: 1;
 }
 
 .ru-modal-chart { 
-  height: 340px;
+  height: 340px; /* Más largo (antes 300px) */
   margin-bottom: 8px; 
   width: 100%;
 }
@@ -444,8 +437,8 @@ html, body {
 
 .ru-table thead th {
   text-align: left;
-  font-size: 11.5px;
-  letter-spacing: 0.08em;
+  font-size: 11px;
+  letter-spacing: 0.06em;
   color: var(--label-text);
   font-weight: 600;
   padding: 14px 6px 10px;
@@ -503,7 +496,7 @@ html, body {
 .ru-delta-flat { color: var(--muted-text); }
 
 .ru-modal-footer {
-  padding: 18px 30px 26px;
+  padding: 20px 34px 28px;
   border-top: 1px solid var(--divider);
   flex-shrink: 0;
 }
@@ -543,7 +536,7 @@ html, body {
   .ru-kpi-grid { grid-template-columns: 1fr 1fr; }
   .ru-charts-grid { grid-template-columns: 1fr; }
   .ru-page { padding: 28px 16px 60px; }
-  .ru-header h1 { font-size: 34px; }
+  .ru-header h1 { font-size: 32px; }
   .ru-chart-card { height: auto; min-height: 480px; }
   .ru-modal { max-width: 92vw; }
   .ru-modal-header { padding: 22px 20px 16px; }
