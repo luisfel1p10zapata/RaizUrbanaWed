@@ -9,32 +9,26 @@
 
    Mobile (≤ 768px): el sidebar se convierte en una BARRA SUPERIOR
    fija (logo + título + botón), siempre visible. El MISMO botón
-   .admin-sidebar-toggle (el que ya tenías conectado para "collapsed")
-   ahora funciona como hamburguesa: al activarlo, despliega todo el
-   menú hacia abajo en un panel que ocupa el ancho completo.
+   .admin-sidebar-toggle ahora funciona como hamburguesa: al activarlo,
+   despliega todo el menú hacia abajo.
 
-   → NO necesitas agregar clases ni markup nuevo: se reutiliza la
-     clase "collapsed" que ya está wireada al botón. En mobile,
-     "collapsed" = menú desplegado (abierto), y su ausencia = barra
-     superior compacta (cerrada). Es intencional que el significado
-     se invierta respecto a desktop; solo importa que sea la misma
-     clase que tu botón ya alterna.
+   En mobile, "collapsed" = menú desplegado (abierto).
 
-   Si preferís un ícono de hamburguesa distinto al de colapsar en
-   desktop, podés condicionar el ícono que renderiza el botón según
-   el ancho de pantalla en tu componente — el CSS no depende de eso.
+   COLORES: todos vienen de variables CSS (ver CSS global) para
+   soportar modo claro/oscuro con [data-theme="dark"].
    ================================================================== */
 
 .admin-sidebar {
   width: 260px;
   height: 100vh;
-  background-color: #ffffff;
-  border-right: 1px solid #e5e5e5;
+  background-color: var(--color-surface);
+  border-right: 1px solid var(--color-border);
 
   display: flex;
   flex-direction: column;
 
-  transition: width 0.25s ease, max-height 0.3s ease;
+  transition: width 0.25s ease, max-height 0.3s ease,
+    background-color 0.2s ease, border-color 0.2s ease;
 
   position: fixed;
   top: 0;
@@ -60,7 +54,7 @@
   align-items: center;
   gap: 12px;
 
-  border-bottom: 1px solid #e5e5e5;
+  border-bottom: 1px solid var(--color-border);
 
   flex-shrink: 0;
 }
@@ -92,7 +86,7 @@
 
   font-size: 16px;
   font-weight: 600;
-  color: #111111;
+  color: var(--color-text-strong);
 
   white-space: nowrap;
 }
@@ -114,7 +108,7 @@
   border: none;
   background: transparent;
 
-  color: #666666;
+  color: var(--color-text-muted);
 
   cursor: pointer;
 
@@ -126,8 +120,8 @@
 }
 
 .admin-sidebar-toggle:hover {
-  background-color: #f2f2f2;
-  color: #111111;
+  background-color: var(--color-hover);
+  color: var(--color-text-strong);
 }
 
 /* ========================= */
@@ -164,7 +158,7 @@
   border: none;
   background: transparent;
 
-  color: #555555;
+  color: var(--color-text-muted);
 
   font-size: 12px;
   font-weight: 700;
@@ -181,8 +175,8 @@
 }
 
 .sidebar-section-header:hover {
-  background-color: #f5f5f5;
-  color: #111111;
+  background-color: var(--color-hover);
+  color: var(--color-text-strong);
 }
 
 .sidebar-section-title {
@@ -213,7 +207,7 @@
   align-items: center;
   gap: 12px;
 
-  color: #555555;
+  color: var(--color-text-muted);
 
   text-decoration: none;
 
@@ -228,8 +222,8 @@
 }
 
 .sidebar-item:hover {
-  background-color: #f3f3f3;
-  color: #111111;
+  background-color: var(--color-hover);
+  color: var(--color-text-strong);
 }
 
 /* ========================= */
@@ -237,8 +231,8 @@
 /* ========================= */
 
 .sidebar-item.active {
-  background-color: #e8e8eb;
-  color: #343449;
+  background-color: var(--color-active-bg);
+  color: var(--color-active-text);
 }
 
 .sidebar-item.active::before {
@@ -253,9 +247,9 @@
   width: 3px;
   height: 100%;
 
-  background-color: #343449;
+  background-color: var(--color-active-text);
 
-  border-radius: 7px
+  border-radius: 7px;
 }
 
 .sidebar-item-label {
@@ -315,7 +309,7 @@
 }
 
 .admin-sidebar-nav::-webkit-scrollbar-thumb {
-  background-color: #d0d0d0;
+  background-color: var(--color-scrollbar);
   border-radius: 10px;
 }
 
@@ -326,7 +320,7 @@
 .admin-sidebar-bottom {
   padding: 12px;
 
-  border-top: 1px solid #e5e5e5;
+  border-top: 1px solid var(--color-border);
 
   display: flex;
   flex-direction: column;
@@ -351,7 +345,7 @@
 
   background-color: transparent;
 
-  color: #555555;
+  color: var(--color-text-muted);
 
   text-decoration: none;
 
@@ -367,8 +361,8 @@
 }
 
 .admin-sidebar-bottom-item:hover {
-  background-color: #f3f3f3;
-  color: #111111;
+  background-color: var(--color-hover);
+  color: var(--color-text-strong);
 }
 
 .admin-sidebar-bottom-item span {
@@ -399,7 +393,6 @@
    Breakpoints: 1024 / 768 / 480 / 380
    ================================================================== */
 
-/* Tablet: sidebar angosto, sigue como columna lateral fija */
 @media (max-width: 1024px) {
   .admin-sidebar {
     width: 226px;
@@ -410,12 +403,6 @@
   }
 }
 
-/* ------------------------------------------------------------------
-   Mobile / tablet vertical: el sidebar se convierte en BARRA
-   SUPERIOR fija. Cerrado = solo header visible (64px). Abierto
-   (clase "collapsed", reutilizada) = despliega nav + bottom hacia
-   abajo, con scroll si el contenido no entra en la pantalla.
-   ------------------------------------------------------------------ */
 @media (max-width: 768px) {
   .admin-sidebar {
     width: 100%;
@@ -427,11 +414,11 @@
     flex-direction: column;
 
     border-right: none;
-    border-bottom: 1px solid #e5e5e5;
+    border-bottom: 1px solid var(--color-border);
 
     overflow: hidden;
 
-    box-shadow: 0 4px 16px rgba(17, 17, 17, 0.06);
+    box-shadow: 0 4px 16px var(--color-shadow);
   }
 
   .admin-sidebar-header {
@@ -443,16 +430,12 @@
     font-size: 15px;
   }
 
-  /* Estado ABIERTO en mobile: reutiliza "collapsed" */
   .admin-sidebar.collapsed {
     width: 100%;
     max-width: 100%;
     max-height: 100vh;
   }
 
-  /* En mobile, "collapsed" NO debe verse en modo icono: se anulan
-     los estilos de compactación de escritorio y se despliega
-     completo, con etiquetas, como un menú normal. */
   .admin-sidebar.collapsed .admin-sidebar-header {
     padding: 0 16px;
     justify-content: flex-start;
@@ -499,14 +482,11 @@
     display: inline;
   }
 
-  /* Rota el ícono del botón para indicar "abierto", por si es una
-     flecha/chevron; si es un ícono de 3 líneas no afecta en nada. */
   .admin-sidebar.collapsed .admin-sidebar-toggle {
     transform: rotate(180deg);
   }
 }
 
-/* Mobile estándar */
 @media (max-width: 480px) {
   .admin-sidebar-header {
     padding: 0 14px;
@@ -533,7 +513,6 @@
   }
 }
 
-/* Mobile chico */
 @media (max-width: 380px) {
   .admin-sidebar-logo {
     width: 42px;
@@ -555,7 +534,6 @@
   }
 }
 
-/* Accesibilidad: respeta reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .admin-sidebar,
   .admin-sidebar-toggle {

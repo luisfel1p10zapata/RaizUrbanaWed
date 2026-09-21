@@ -18,6 +18,7 @@
     width: 100%;
     font-family: var(--font-sans);
     background-color: var(--bg-cream);
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .auth-left-panel {
@@ -35,11 +36,18 @@
     color: #ffffff;
 }
 
-.auth-brand-logo {
-    font-family: var(--font-serif);
-    font-size: 24px;
-    letter-spacing: 2px;
-    font-weight: 700;
+/* Contenedor del logo en el panel izquierdo */
+.auth-brand-logo-container {
+    height: 80px;
+    display: flex;
+    align-items: center;
+}
+
+/* Ajustes de imagen para el logo en el panel izquierdo */
+.auth-brand-logo-img {
+    max-height: 100%;
+    width: auto;
+    object-fit: contain;
 }
 
 .auth-hero-content {
@@ -142,6 +150,7 @@
     border-radius: 12px;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.03);
     text-align: left;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .auth-card-header-link {
@@ -218,6 +227,8 @@
     border-radius: 8px;
     outline: none;
     background-color: #ffffff;
+    color: var(--text-primary);
+    transition: background-color 0.2s, color 0.2s, border-color 0.2s;
 }
 
 .auth-submit-btn {
@@ -233,6 +244,7 @@
     text-transform: uppercase;
     cursor: pointer;
     margin-top: 10px;
+    transition: background-color 0.2s;
 }
 
 .auth-bottom-copyright {
@@ -245,4 +257,35 @@
     .auth-left-panel {
         display: none;
     }
+}
+
+/* ==================================================================
+   MODO OSCURO
+   ================================================================== */
+:root[data-theme="dark"] .auth-container {
+    --bg-cream: #12131C;
+    --dark-navy: #4A4E69;
+    --dark-overlay: #0a0b12;
+    --card-bg: #1C1E2E;
+    --text-primary: #F2E9E4;
+    --text-muted: #9A8C98;
+    --border-color: #3A3D57;
+}
+
+:root[data-theme="dark"] .auth-card {
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+:root[data-theme="dark"] .auth-input {
+    background-color: var(--card-bg);
+    color: var(--text-primary);
+}
+
+:root[data-theme="dark"] .auth-input-icon {
+    color: var(--text-muted);
+}
+
+:root[data-theme="dark"] .auth-submit-btn {
+    color: #12131C;
+    background-color: var(--text-primary);
 }

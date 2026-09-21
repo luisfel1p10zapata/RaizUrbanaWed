@@ -36,7 +36,11 @@ const AdminSidebar = ({ collapsed, setCollapsed }) => {
             <div className="admin-sidebar-header">
                 <div className="admin-sidebar-logo">
                     <img
-                        src="/images/logo-ru.png"
+                        src={
+                            theme === 'dark'
+                                ? '/images/logoDark.png'
+                                : '/images/logo-ru.png'
+                        }
                         alt="Raíz Urbana"
                     />
                 </div>

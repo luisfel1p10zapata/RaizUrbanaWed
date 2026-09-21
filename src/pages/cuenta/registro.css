@@ -1,297 +1,843 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..700;1,400..700&family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&display=swap');
 
+
+/* =========================================================
+   VARIABLES
+   ========================================================= */
+
 :root {
     --bg-cream: #f4eee9;
     --dark-navy: #1b1b28;
     --dark-overlay: #151824;
     --card-bg: #ffffff;
+
     --text-primary: #1b1b28;
     --text-muted: #737791;
+
     --border-color: #e2e8f0;
+
     --font-serif: 'Playfair Display', serif;
     --font-sans: 'Plus Jakarta Sans', sans-serif;
 }
+
+
+/* =========================================================
+   CONTENEDOR PRINCIPAL
+   ========================================================= */
 
 .auth-container {
     display: flex;
     min-height: 100vh;
     width: 100%;
+
     font-family: var(--font-sans);
+
     background-color: var(--bg-cream);
+
+    transition:
+        background-color 0.3s ease,
+        color 0.3s ease;
 }
+
+
+/* =========================================================
+   PANEL IZQUIERDO
+   ========================================================= */
 
 .auth-left-panel {
     flex: 1;
+
     position: relative;
+
     background-color: var(--dark-overlay);
-    background-image: linear-gradient(rgba(21, 24, 36, 0.85), rgba(21, 24, 36, 0.85)),
+
+    background-image:
+        linear-gradient(
+            rgba(21, 24, 36, 0.85),
+            rgba(21, 24, 36, 0.85)
+        ),
         url('https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=1000');
+
     background-size: cover;
     background-position: center;
+
     display: flex;
     flex-direction: column;
+
     justify-content: space-between;
+
     padding: 40px 60px;
+
     color: #ffffff;
 }
 
+
+/* =========================================================
+   LOGO RAÍZ URBANA
+   ========================================================= */
+
 .auth-brand-logo {
-    font-family: var(--font-serif);
-    font-size: 24px;
-    letter-spacing: 2px;
-    font-weight: 700;
+    display: flex;
+    align-items: center;
+
+    width: fit-content;
+
+    z-index: 2;
 }
+
+.auth-logo-img {
+    display: block;
+
+    width: 180px;
+    height: auto;
+
+    max-height: 70px;
+
+    object-fit: contain;
+}
+
+
+/* =========================================================
+   HERO
+   ========================================================= */
 
 .auth-hero-content {
     max-width: 440px;
+
     margin-bottom: 80px;
 }
 
+
 .auth-hero-subtitle-tag {
     text-transform: uppercase;
+
     font-size: 11px;
+
     letter-spacing: 2px;
+
     color: #a0aec0;
+
     margin-bottom: 16px;
+
     display: flex;
     align-items: center;
+
     gap: 8px;
 }
 
+
 .auth-hero-subtitle-tag::before {
     content: '';
+
     width: 20px;
     height: 1px;
+
     background-color: #a0aec0;
 }
 
+
 .auth-hero-title {
     font-family: var(--font-serif);
+
     font-size: 42px;
+
     line-height: 1.15;
+
     font-weight: 400;
-    margin-bottom: 20px;
+
+    margin: 0 0 20px 0;
 }
+
 
 .auth-hero-description {
     font-size: 13px;
+
     color: #cbd5e0;
+
     line-height: 1.6;
-    margin-bottom: 32px;
+
+    margin: 0 0 32px 0;
 }
+
+
+/* =========================================================
+   LISTA DE CARACTERÍSTICAS
+   ========================================================= */
 
 .auth-feature-list {
     display: flex;
+
     flex-direction: column;
+
     gap: 12px;
 }
+
 
 .auth-feature-item {
     display: flex;
+
     align-items: center;
+
     gap: 12px;
+
     padding: 10px 14px;
+
     background: rgba(255, 255, 255, 0.05);
+
     border: 1px solid rgba(255, 255, 255, 0.1);
+
     border-radius: 8px;
+
     font-size: 13px;
+
     color: #e2e8f0;
 }
 
+
+.auth-feature-item svg {
+    flex-shrink: 0;
+}
+
+
+/* =========================================================
+   FOOTER IZQUIERDO
+   ========================================================= */
+
 .auth-footer-tag {
     font-size: 11px;
+
     color: #718096;
 }
 
+
+/* =========================================================
+   PANEL DERECHO
+   ========================================================= */
+
 .auth-right-panel {
     flex: 1;
+
     display: flex;
+
     flex-direction: column;
+
     justify-content: space-between;
+
     padding: 20px 40px;
+
     position: relative;
+
     overflow-y: auto;
 }
 
+
+/* =========================================================
+   NAVEGACIÓN SUPERIOR
+   ========================================================= */
+
 .auth-top-nav {
     display: flex;
+
     justify-content: flex-end;
 }
 
+
 .auth-back-link {
     display: flex;
+
     align-items: center;
+
     gap: 6px;
+
     font-size: 12px;
+
     color: var(--text-primary);
+
     text-decoration: none;
+
     font-weight: 500;
+
+    transition: opacity 0.2s ease;
 }
+
+
+.auth-back-link:hover {
+    opacity: 0.7;
+}
+
+
+/* =========================================================
+   WRAPPER DE TARJETA
+   ========================================================= */
 
 .auth-card-wrapper {
     display: flex;
+
     justify-content: center;
+
     align-items: center;
+
     padding: 20px 0;
 }
 
+
+/* =========================================================
+   TARJETA DE REGISTRO
+   ========================================================= */
+
 .auth-card-register {
     background: var(--card-bg);
+
     width: 100%;
+
     max-width: 440px;
+
     padding: 32px;
+
     border-radius: 12px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.03);
+
+    box-shadow:
+        0 10px 25px rgba(0, 0, 0, 0.03);
+
     text-align: center;
+
+    transition:
+        background-color 0.3s ease,
+        box-shadow 0.3s ease;
 }
 
+
+/* =========================================================
+   LOGO RU
+   ========================================================= */
+
 .auth-card-logo {
-    font-family: var(--font-serif);
-    font-size: 20px;
-    font-weight: 700;
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
     margin-bottom: 16px;
 }
 
+
+.auth-card-logo-img {
+    display: block;
+
+    width: 70px;
+    height: 70px;
+
+    object-fit: contain;
+}
+
+
+/* =========================================================
+   ENCABEZADO DE TARJETA
+   ========================================================= */
+
 .auth-card-subtitle {
     text-transform: uppercase;
+
     font-size: 9px;
+
     letter-spacing: 2px;
+
     color: var(--text-muted);
+
     font-weight: 700;
+
     margin-bottom: 4px;
 }
+
 
 .auth-card-title {
     font-family: var(--font-serif);
+
     font-size: 24px;
+
     color: var(--text-primary);
-    margin-bottom: 4px;
+
+    margin: 0 0 4px 0;
+
     font-weight: 500;
 }
 
+
 .auth-card-desc {
     font-size: 12px;
+
     color: var(--text-muted);
-    margin-bottom: 20px;
+
+    margin: 0 0 20px 0;
 }
+
+
+/* =========================================================
+   DIVISORES
+   ========================================================= */
 
 .auth-section-divider {
     text-align: left;
+
     font-size: 8px;
+
     font-weight: 700;
+
     letter-spacing: 1.5px;
+
     color: #a0aec0;
+
     text-transform: uppercase;
+
     margin: 12px 0 8px 0;
 }
 
+
+/* =========================================================
+   FORMULARIO
+   ========================================================= */
+
 .auth-form {
     display: flex;
+
     flex-direction: column;
+
     gap: 12px;
+
     text-align: left;
 }
 
+
+/* =========================================================
+   INPUT GROUP
+   ========================================================= */
+
 .auth-input-group {
     display: flex;
+
     flex-direction: column;
+
     gap: 4px;
 }
 
+
 .auth-input-group label {
     font-size: 9px;
+
     font-weight: 700;
+
     letter-spacing: 1px;
+
     text-transform: uppercase;
+
     color: var(--text-primary);
 }
 
+
+/* =========================================================
+   INPUT WRAPPER
+   ========================================================= */
+
 .auth-input-wrapper {
     position: relative;
+
     display: flex;
+
     align-items: center;
 }
 
+
+/* =========================================================
+   ICONOS
+   ========================================================= */
+
 .auth-input-icon {
     position: absolute;
+
     left: 12px;
+
     color: #a0aec0;
+
+    pointer-events: none;
+
+    z-index: 1;
 }
+
+
+/* =========================================================
+   INPUTS Y SELECTS
+   ========================================================= */
 
 .auth-input,
 .auth-select {
     width: 100%;
-    padding: 8px 12px 8px 36px;
+
+    padding: 8px 36px 8px 36px;
+
+    font-family: var(--font-sans);
+
     font-size: 12px;
+
     border: 1px solid var(--border-color);
+
     border-radius: 6px;
+
     outline: none;
+
     background-color: #ffffff;
+
+    color: var(--text-primary);
+
+    transition:
+        background-color 0.2s,
+        color 0.2s,
+        border-color 0.2s,
+        box-shadow 0.2s;
+
+    box-sizing: border-box;
 }
+
+
+.auth-input::placeholder {
+    color: #a0aec0;
+}
+
+
+.auth-input:focus,
+.auth-select:focus {
+    border-color: var(--dark-navy);
+
+    box-shadow:
+        0 0 0 2px rgba(27, 27, 40, 0.05);
+}
+
 
 .auth-select-no-icon {
     padding-left: 12px;
+
+    padding-right: 12px;
 }
+
+
+/* =========================================================
+   PASSWORD TOGGLE
+   ========================================================= */
+
+.auth-password-toggle {
+    position: absolute;
+
+    right: 12px;
+
+    background: none;
+
+    border: none;
+
+    color: #a0aec0;
+
+    cursor: pointer;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    padding: 0;
+
+    transition:
+        color 0.2s ease;
+}
+
+
+.auth-password-toggle:hover {
+    color: var(--text-primary);
+}
+
+
+/* =========================================================
+   GRID
+   ========================================================= */
 
 .auth-grid-2 {
     display: grid;
+
     grid-template-columns: 1fr 1fr;
+
     gap: 12px;
 }
 
+
+/* =========================================================
+   ESTADO
+   ========================================================= */
+
 .auth-status-toggle {
     display: grid;
+
     grid-template-columns: 1fr 1fr;
+
     gap: 8px;
 }
 
+
 .auth-status-btn {
     padding: 8px;
+
+    font-family: var(--font-sans);
+
     font-size: 11px;
+
     border: 1px solid var(--border-color);
+
     border-radius: 6px;
+
     background: #ffffff;
+
     color: var(--text-muted);
+
     cursor: pointer;
+
     text-align: center;
-    transition: all 0.2s;
+
+    transition: all 0.2s ease;
 }
+
+
+.auth-status-btn:hover {
+    border-color: var(--dark-navy);
+
+    color: var(--dark-navy);
+}
+
 
 .auth-status-btn.active {
     border-color: var(--dark-navy);
+
     color: var(--dark-navy);
+
     font-weight: 600;
 }
 
+
+/* =========================================================
+   BOTÓN CREAR CUENTA
+   ========================================================= */
+
 .auth-submit-btn {
     width: 100%;
+
     padding: 10px;
+
     background-color: var(--dark-navy);
+
     color: #ffffff;
+
     border: none;
+
     border-radius: 6px;
+
+    font-family: var(--font-sans);
+
     font-size: 11px;
+
     font-weight: 700;
+
     letter-spacing: 1.5px;
+
     text-transform: uppercase;
+
     cursor: pointer;
+
     margin-top: 10px;
+
+    transition:
+        background-color 0.2s ease,
+        opacity 0.2s ease,
+        transform 0.1s ease;
 }
+
+
+.auth-submit-btn:hover {
+    opacity: 0.9;
+}
+
+
+.auth-submit-btn:active {
+    transform: scale(0.99);
+}
+
+
+/* =========================================================
+   FOOTER TARJETA
+   ========================================================= */
 
 .auth-card-footer {
     margin-top: 16px;
+
     font-size: 11px;
+
     color: var(--text-muted);
 }
 
+
 .auth-link-bold {
     color: var(--text-primary);
+
     font-weight: 700;
+
     text-decoration: none;
 }
 
+
+.auth-link-bold:hover {
+    text-decoration: underline;
+}
+
+
+/* =========================================================
+   MODO OSCURO
+   ========================================================= */
+
+:root[data-theme="dark"] .auth-container {
+    --bg-cream: #12131C;
+
+    --dark-navy: #4A4E69;
+
+    --dark-overlay: #0a0b12;
+
+    --card-bg: #1C1E2E;
+
+    --text-primary: #F2E9E4;
+
+    --text-muted: #9A8C98;
+
+    --border-color: #3A3D57;
+}
+
+
+:root[data-theme="dark"] .auth-card-register {
+    box-shadow:
+        0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+
+:root[data-theme="dark"] .auth-input,
+:root[data-theme="dark"] .auth-select,
+:root[data-theme="dark"] .auth-status-btn {
+    background-color: var(--card-bg);
+
+    color: var(--text-primary);
+}
+
+
+:root[data-theme="dark"] .auth-input::placeholder {
+    color: #77798d;
+}
+
+
+:root[data-theme="dark"] .auth-input-icon {
+    color: var(--text-muted);
+}
+
+
+:root[data-theme="dark"] .auth-input:focus,
+:root[data-theme="dark"] .auth-select:focus {
+    border-color: #C9ADA7;
+
+    box-shadow:
+        0 0 0 2px rgba(201, 173, 167, 0.08);
+}
+
+
+:root[data-theme="dark"] .auth-status-btn.active {
+    border-color: #C9ADA7;
+
+    color: #C9ADA7;
+}
+
+
+:root[data-theme="dark"] .auth-status-btn:hover {
+    border-color: #C9ADA7;
+
+    color: #C9ADA7;
+}
+
+
+:root[data-theme="dark"] .auth-submit-btn {
+    background-color: #F2E9E4;
+
+    color: #12131C;
+}
+
+
+:root[data-theme="dark"] .auth-submit-btn:hover {
+    background-color: #C9ADA7;
+
+    opacity: 1;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
 @media (max-width: 900px) {
+
     .auth-left-panel {
         display: none;
     }
+
+    .auth-right-panel {
+        padding: 20px;
+    }
+
+}
+
+
+@media (max-width: 600px) {
+
+    .auth-right-panel {
+        padding: 15px;
+    }
+
+    .auth-card-wrapper {
+        padding: 15px 0;
+    }
+
+    .auth-card-register {
+        padding: 24px 20px;
+    }
+
+    .auth-grid-2 {
+        grid-template-columns: 1fr;
+    }
+
+    .auth-card-title {
+        font-size: 22px;
+    }
+
+    .auth-card-logo-img {
+        width: 60px;
+        height: 60px;
+    }
+
+}
+
+
+@media (max-width: 400px) {
+
+    .auth-card-register {
+        padding: 20px 15px;
+    }
+
+    .auth-form {
+        gap: 10px;
+    }
+
+    .auth-input,
+    .auth-select {
+        font-size: 11px;
+    }
+
 }

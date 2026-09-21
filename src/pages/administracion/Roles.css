@@ -5,14 +5,24 @@
    ================================================================== */
 @import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap");
 
-.roles-page {
-  /* Identidad de color del módulo (sin cambios) */
+.roles-page,
+.roles-modal-overlay,
+.role-detail-modal-overlay {
+  /* Identidad de color del módulo — MODO LIGHT (default) */
+  --card: #ffffff;
   --ink: #171735;
   --ink-soft: #3b3a58;
   --muted: #77748a;
   --border: #d8b6ae;
   --line: #f0e6e4;
   --soft-bg: #e9e9ed;
+  --thead-bg: #faf9f9;
+  --hover-bg: #f4eeeb;
+  --placeholder: #aaa6b4;
+  --focus: #bd958c;
+  --icon-bg: #d8d8de;
+  --overlay-bg: rgba(15, 23, 42, 0.4);
+  --modal-shadow: rgba(20, 16, 10, 0.2);
   --dark: #20203d;
   --dark-hover: #17172f;
 
@@ -34,14 +44,142 @@
   --danger-hover: #be123c;
 
   --serif: "Playfair Display", Georgia, serif;
+}
+
+.roles-page {
   width: 100%;
   min-height: calc(100vh - 64px);
   box-sizing: border-box;
   padding: 48px 10px 90px;
   color: var(--ink);
   font-family: "Montserrat", -apple-system, "Segoe UI", sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 .roles-page *, .roles-modal-overlay *, .role-detail-modal-overlay * { box-sizing: border-box; font-family: inherit; }
+
+/* ------------------------------------------------------------------ */
+/* MODO OSCURO                                                        */
+/* Paleta: bg #12131C · surface #1C1E2E · primary #4A4E69             */
+/*         secondary #9A8C98 · accent #C9ADA7 · text #F2E9E4          */
+/* Se usa [data-theme="dark"] (sin :root) para que funcione aunque el */
+/* atributo esté en <html>, <body> o un contenedor superior.          */
+/* ------------------------------------------------------------------ */
+[data-theme="dark"] .roles-page,
+[data-theme="dark"] .roles-modal-overlay,
+[data-theme="dark"] .role-detail-modal-overlay {
+  color-scheme: dark;
+
+  --card: #1C1E2E;
+  --ink: #F2E9E4;
+  --ink-soft: #C9ADA7;
+  --muted: #9A8C98;
+  --border: #3A3D57;
+  --line: #2A2C40;
+  --soft-bg: #252839;
+  --thead-bg: #1A1C2A;
+  --hover-bg: #252839;
+  --placeholder: #6f6a7a;
+  --focus: #5B6082;
+  --icon-bg: #2A2C40;
+  --overlay-bg: rgba(8, 9, 15, 0.72);
+  --modal-shadow: rgba(0, 0, 0, 0.55);
+  --dark: #4A4E69;
+  --dark-hover: #5B6082;
+
+  --success-bg: rgba(34, 197, 94, 0.12);
+  --success-fg: #4ade80;
+  --success-bd: rgba(34, 197, 94, 0.3);
+
+  --inactive-bg: rgba(201, 173, 167, 0.12);
+  --inactive-fg: #C9ADA7;
+  --inactive-bd: rgba(201, 173, 167, 0.3);
+
+  --blue-fg: #60a5fa;
+  --amber-fg: #fbbf24;
+  --red-fg: #fca5a5;
+
+  --danger-bg: rgba(225, 29, 72, 0.12);
+  --danger-fg: #fca5a5;
+  --danger: #b8455f;
+  --danger-hover: #a2394f;
+}
+
+/* Respaldo: si algún elemento del módulo quedara fuera de .roles-page
+   en el DOM, igual hereda estas variables. */
+[data-theme="dark"] {
+  --card: #1C1E2E;
+  --ink: #F2E9E4;
+  --ink-soft: #C9ADA7;
+  --muted: #9A8C98;
+  --border: #3A3D57;
+  --placeholder: #6f6a7a;
+  --focus: #5B6082;
+}
+
+/* --- Buscador y panel de filtros: refuerzo explícito ---------------
+   Cubre el panel completo (cabecera, contenedor, input e icono) y
+   cualquier <input> de texto/búsqueda dentro de la página, sin
+   depender de nombres de clase ni de la cascada de variables.       */
+[data-theme="dark"] .roles-filters-card,
+[data-theme="dark"] .roles-filter-header,
+[data-theme="dark"] .roles-filters {
+  background-color: #1C1E2E !important;
+  border-color: #3A3D57 !important;
+  color: #F2E9E4 !important;
+}
+[data-theme="dark"] .roles-search {
+  background: transparent !important;
+}
+[data-theme="dark"] .roles-search-input,
+[data-theme="dark"] .roles-search input,
+[data-theme="dark"] .roles-filters input,
+[data-theme="dark"] .roles-page input[type="text"],
+[data-theme="dark"] .roles-page input[type="search"],
+[data-theme="dark"] .roles-input,
+[data-theme="dark"] .roles-textarea {
+  background: #161722 !important;
+  border-color: #3A3D57 !important;
+  color: #F2E9E4 !important;
+  -webkit-text-fill-color: #F2E9E4 !important;
+  caret-color: #F2E9E4;
+}
+[data-theme="dark"] .roles-status-option,
+[data-theme="dark"] .roles-permission-card {
+  background-color: #1C1E2E !important;
+  border-color: #3A3D57 !important;
+  color: #F2E9E4 !important;
+}
+[data-theme="dark"] .roles-status-option.selected-active,
+[data-theme="dark"] .roles-permission-card.checked {
+  background-color: #252839 !important;
+  border-color: #C9ADA7 !important;
+}
+[data-theme="dark"] .roles-search-input::placeholder,
+[data-theme="dark"] .roles-search input::placeholder,
+[data-theme="dark"] .roles-input::placeholder,
+[data-theme="dark"] .roles-textarea::placeholder {
+  color: #6f6a7a !important;
+  -webkit-text-fill-color: #6f6a7a !important;
+}
+[data-theme="dark"] .roles-search-input:focus,
+[data-theme="dark"] .roles-search input:focus,
+[data-theme="dark"] .roles-input:focus,
+[data-theme="dark"] .roles-textarea:focus {
+  border-color: #5B6082 !important;
+}
+[data-theme="dark"] .roles-search-icon,
+[data-theme="dark"] .roles-search svg {
+  color: #9A8C98 !important;
+}
+/* Autofill de Chrome (pinta el campo de blanco/amarillo) */
+[data-theme="dark"] .roles-page input:-webkit-autofill,
+[data-theme="dark"] .roles-page input:-webkit-autofill:hover,
+[data-theme="dark"] .roles-page input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #F2E9E4 !important;
+  -webkit-box-shadow: 0 0 0 1000px #161722 inset !important;
+  box-shadow: 0 0 0 1000px #161722 inset !important;
+  transition: background-color 9999s ease-out 0s;
+}
 
 /* ---------------- Header ---------------- */
 .roles-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 28px; flex-wrap: wrap; gap: 16px; }
@@ -80,9 +218,9 @@
   transition: background-color 0.15s ease;
 }
 .roles-btn-cancel, .role-detail-btn-close {
-  background: #ffffff; border: 1px solid var(--border); color: var(--ink);
+  background: var(--card); border: 1px solid var(--border); color: var(--ink);
 }
-.roles-btn-cancel:hover, .role-detail-btn-close:hover { background: #faf6f4; }
+.roles-btn-cancel:hover, .role-detail-btn-close:hover { background: var(--hover-bg); }
 .roles-btn-submit, .roles-btn-primary, .role-detail-btn-edit {
   background: var(--dark); border: 1px solid var(--dark); color: #fff;
 }
@@ -98,7 +236,7 @@
   padding: 24px 26px;
   box-sizing: border-box;
   display: flex; align-items: center; gap: 20px;
-  background-color: #ffffff;
+  background-color: var(--card);
   border: 1px solid var(--border);
   border-radius: 14px;
 }
@@ -120,13 +258,13 @@
 .roles-stat-description { margin: 5px 0 0; color: var(--muted); font-size: 12px; line-height: 1.2; }
 
 /* ---------------- Panel de búsqueda / filtros ---------------- */
-.roles-filters-card { width: 100%; margin-bottom: 22px; box-sizing: border-box; overflow: hidden; background-color: #ffffff; border: 1px solid var(--border); border-radius: 14px; }
+.roles-filters-card { width: 100%; margin-bottom: 22px; box-sizing: border-box; overflow: hidden; background-color: var(--card); border: 1px solid var(--border); border-radius: 14px; }
 
 .roles-filter-header {
   padding: 18px 24px;
   box-sizing: border-box;
   display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-  background-color: #ffffff;
+  background-color: var(--card);
   border-bottom: 1px solid var(--border);
   color: var(--ink);
   font-size: 14.5px; font-weight: 600;
@@ -143,23 +281,23 @@
   outline: none;
   border: 1px solid var(--border);
   border-radius: 10px;
-  background-color: #ffffff;
+  background-color: var(--card);
   color: var(--ink-soft);
   font-family: inherit;
   font-size: 14.5px;
 }
-.roles-search-input::placeholder { color: #aaa6b4; }
-.roles-search-input:focus { border-color: #bd958c; }
+.roles-search-input::placeholder { color: var(--placeholder); }
+.roles-search-input:focus { border-color: var(--focus); }
 .roles-filter-select { display: none; }
 
 /* ---------------- Tabla ---------------- */
-.roles-table-card { width: 100%; box-sizing: border-box; overflow: hidden; background-color: #ffffff; border: 1px solid var(--border); border-radius: 14px; }
+.roles-table-card { width: 100%; box-sizing: border-box; overflow: hidden; background-color: var(--card); border: 1px solid var(--border); border-radius: 14px; }
 
 .roles-table-header {
   padding: 18px 24px;
   box-sizing: border-box;
   display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; row-gap: 6px;
-  background-color: #ffffff;
+  background-color: var(--card);
   border-bottom: 1px solid var(--border);
 }
 
@@ -180,7 +318,7 @@
 .roles-table th {
   padding: 15px 20px;
   box-sizing: border-box;
-  background-color: #faf9f9;
+  background-color: var(--thead-bg);
   border-bottom: 1px solid var(--border);
   color: var(--muted);
   font-size: 11.5px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
@@ -200,7 +338,7 @@
 .roles-table td {
   padding: 18px 20px;
   box-sizing: border-box;
-  background-color: #ffffff;
+  background-color: var(--card);
   border-bottom: 1px solid var(--line);
   color: var(--muted);
   font-size: 14px;
@@ -252,11 +390,11 @@
 .roles-action-button.disabled, .roles-status.disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
 
 /* ---------------- Paginación ---------------- */
-.roles-pagination { padding: 18px 24px; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; background-color: #ffffff; border-top: 1px solid var(--border); }
+.roles-pagination { padding: 18px 24px; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; background-color: var(--card); border-top: 1px solid var(--border); }
 .roles-pagination-info { margin: 0; color: var(--muted); font-size: 13px; }
 .roles-pagination-controls { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
 .roles-pagination-button { min-width: 32px; height: 32px; padding: 0 9px; display: flex; align-items: center; justify-content: center; border: none; border-radius: 8px; background-color: transparent; color: var(--muted); font-size: 14px; cursor: pointer; }
-.roles-pagination-button:hover:not(:disabled) { background-color: #f4eeeb; }
+.roles-pagination-button:hover:not(:disabled) { background-color: var(--hover-bg); }
 .roles-pagination-button.active { background-color: var(--dark); color: #ffffff; }
 .roles-pagination-button:disabled { cursor: not-allowed; opacity: 0.4; }
 
@@ -272,7 +410,7 @@
 .role-detail-modal-overlay {
   position: fixed;
   inset: 0;
-  background-color: rgba(15, 23, 42, 0.4);
+  background-color: var(--overlay-bg);
   backdrop-filter: blur(3px);
   display: flex;
   align-items: center;
@@ -286,10 +424,10 @@
   width: 100%;
   max-width: 560px;
   max-height: 92vh;
-  background-color: #ffffff;
+  background-color: var(--card);
   border-radius: 22px;
   border: 1px solid var(--border);
-  box-shadow: 0 24px 60px rgba(20, 16, 10, 0.2);
+  box-shadow: 0 24px 60px var(--modal-shadow);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -306,7 +444,7 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  background-color: #ffffff;
+  background-color: var(--card);
   border-bottom: 1px solid var(--line);
   flex-shrink: 0;
 }
@@ -374,7 +512,7 @@
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
-  background-color: #ffffff;
+  background-color: var(--card);
   border-top: 1px solid var(--line);
   flex-shrink: 0;
 }
@@ -393,18 +531,18 @@
   color: var(--ink);
   box-sizing: border-box;
   outline: none;
-  background-color: #ffffff;
+  background-color: var(--card);
   transition: border-color 0.15s ease;
 }
-.roles-input:focus, .roles-textarea:focus { border-color: #bd958c; }
-.roles-input::placeholder, .roles-textarea::placeholder { color: #aaa6b4; }
+.roles-input:focus, .roles-textarea:focus { border-color: var(--focus); }
+.roles-input::placeholder, .roles-textarea::placeholder { color: var(--placeholder); }
 .roles-textarea { min-height: 80px; resize: vertical; }
 
 .roles-status-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .roles-status-option {
   height: 46px; padding: 0 16px;
   border: 1px solid var(--border); border-radius: 10px;
-  background-color: #ffffff;
+  background-color: var(--card);
   display: flex; align-items: center; gap: 8px;
   cursor: pointer; font-size: 13px; color: var(--ink);
 }
@@ -431,7 +569,7 @@
   cursor: pointer;
   font-size: 13px;
   color: var(--ink);
-  background-color: #ffffff;
+  background-color: var(--card);
 }
 .roles-permission-card input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--dark); cursor: pointer; }
 .roles-permission-card.checked { background-color: var(--soft-bg); border-color: var(--ink); font-weight: 600; }
@@ -471,7 +609,7 @@
 }
 .role-detail-icon,
 .roles-detail-icon {
-  background-color: #d8d8de;
+  background-color: var(--icon-bg);
   color: var(--ink);
   width: 52px; height: 52px;
   border-radius: 12px;
