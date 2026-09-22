@@ -599,6 +599,121 @@
   .ru-modal { max-width: 94vw; }
 }
 
+@media (max-width: 780px) {
+  .ru-u-header { gap: 14px; }
+  .ru-u-title { font-size: 34px; }
+  .ru-btn-primary { width: 100%; justify-content: center; padding: 14px 20px; }
+
+  .ru-filters-card { padding: 18px; }
+  .ru-filters-head { font-size: 14px; margin-bottom: 16px; }
+  .ru-input, .ru-select { padding: 12px 14px; font-size: 13.5px; }
+  .ru-input { padding-left: 38px; }
+
+  .ru-list-head { padding: 0 18px 16px; }
+  .ru-list-title { font-size: 15px; }
+  .ru-count-badge { font-size: 12px; padding: 3px 9px; }
+
+  /* Tabla → tarjetas apiladas en móvil.
+     Requiere data-label="Columna" en cada <td> del <tbody> de .ru-users-table,
+     ej: <td data-label="Nombre">...</td>. */
+  .ru-table-scroll { overflow-x: visible; }
+  .ru-users-table { min-width: 0; display: block; }
+  .ru-users-table thead { display: none; }
+  .ru-users-table tbody { display: block; padding: 0 12px 12px; }
+  .ru-users-table tbody tr {
+    display: block;
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 2px 16px;
+    margin-bottom: 12px;
+    background: var(--card-bg);
+  }
+  .ru-users-table tbody tr:last-child { margin-bottom: 0; }
+  .ru-users-table tbody td {
+    display: block;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--divider);
+    font-size: 13.5px;
+    text-align: left;
+  }
+  .ru-users-table tbody td:first-child { padding-left: 0; color: var(--primary); }
+  .ru-users-table tbody td:last-child { padding-right: 0; border-bottom: none; padding-top: 14px; }
+  .ru-users-table tbody td::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--label-text);
+    margin-bottom: 5px;
+  }
+  .ru-users-table tbody td:empty { display: none; }
+  .ru-actions { justify-content: flex-end; }
+
+  .ru-avatar { width: 36px; height: 36px; font-size: 12px; }
+  .ru-user-name { font-size: 14px; }
+  .ru-mail-cell { max-width: 100%; }
+
+  .ru-pagination { padding: 16px 18px; }
+  .ru-page-btn { min-width: 32px; height: 32px; font-size: 12.5px; }
+
+  .ru-modal { max-width: 100%; max-height: 94vh; border-radius: 22px 22px 0 0; }
+  .ru-modal-overlay { padding: 14px; align-items: flex-end; }
+  .ru-modal-header { padding: 22px 20px 14px; }
+  .ru-modal-body { padding: 18px 20px 8px; }
+  .ru-modal-footer { padding: 14px 20px 20px; }
+}
+
+@media (max-width: 640px) {
+  .ru-avatar { width: 32px; height: 32px; }
+  .ru-role-pill { font-size: 11px; padding: 5px 11px; }
+  .ru-status { font-size: 12px; }
+  .ru-icon-btn svg { width: 17px; height: 17px; }
+
+  .ru-view-avatar { width: 50px; height: 50px; border-radius: 14px; font-size: 16px; }
+  .ru-view-name { font-size: 18px; }
+  .ru-order-card { padding: 11px 14px; }
+  .ru-activity-item { font-size: 12px; padding: 9px 0; }
+  .ru-activity-dot { width: 5px; height: 5px; }
+}
+
 @media (max-width: 560px) {
   .ru-pagination { flex-direction: column; align-items: flex-start; }
+}
+
+@media (max-width: 480px) {
+  .ru-page { padding: 20px 12px 50px; }
+  .ru-u-title { font-size: 28px; }
+  .ru-eyebrow { font-size: 11px; }
+
+  .ru-users-table tbody tr { padding: 2px 14px; border-radius: 10px; margin-bottom: 10px; }
+  .ru-users-table tbody td { padding: 10px 0; font-size: 13px; }
+  .ru-users-table tbody td:last-child { padding-top: 12px; }
+  .ru-users-table tbody td::before { font-size: 10px; margin-bottom: 4px; }
+
+  .ru-avatar { width: 28px; height: 28px; font-size: 11px; }
+  .ru-role-pill { font-size: 10.5px; padding: 4px 10px; }
+  .ru-page-btn { min-width: 28px; height: 28px; font-size: 12px; }
+
+  .ru-form-grid { gap: 12px 14px; }
+  .ru-form-input { padding: 11px 13px; font-size: 13px; }
+  .ru-form-input.with-icon { padding-left: 36px; }
+  .ru-status-toggle { padding: 10px; font-size: 12.5px; }
+
+  .ru-view-top { gap: 12px; margin-bottom: 18px; }
+  .ru-view-avatar { width: 44px; height: 44px; font-size: 14px; }
+  .ru-section-label { font-size: 10px; margin: 18px 0 10px; }
+  .ru-info-value { font-size: 13px; }
+}
+
+@media (max-width: 380px) {
+  .ru-users-table tbody tr { padding: 2px 12px; margin-bottom: 8px; }
+  .ru-users-table tbody td { padding: 9px 0; font-size: 12.5px; }
+  .ru-users-table tbody td::before { font-size: 9.5px; }
+
+  .ru-avatar { width: 26px; height: 26px; }
+  .ru-btn-primary { padding: 12px 16px; font-size: 12px; }
+  .ru-btn-outline, .ru-btn-dark { padding: 12px; font-size: 12.5px; }
+  .ru-modal-close { width: 26px; height: 26px; }
 }
