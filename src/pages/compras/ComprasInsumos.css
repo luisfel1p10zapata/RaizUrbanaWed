@@ -188,16 +188,82 @@
 .ci-status.cancelled { background: var(--red-bg);   color: var(--red-fg);   border-color: var(--red-bd); }
 
 /* ---------------- Acciones de fila ---------------- */
-.ci-actions { display: flex; gap: 4px; align-items: center; justify-content: center; flex-wrap: wrap; }
-.ci-actions button { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 7px; background: transparent; color: var(--blue-fg); cursor: pointer; }
-.ci-actions button svg { width: 18px; height: 18px; }
-.ci-actions button:hover { background: var(--hover-bg); }
-.ci-actions button:nth-child(2) { color: #f0a020; }
-.ci-actions .ci-delete-action { color: var(--red-fg); }
+/* ---------------- Acciones de fila ---------------- */
 
-.ci-no-results { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px; min-height: 180px; padding: 34px 0; color: var(--muted); text-align: center; }
-.ci-no-results strong { font-size: 14.5px; color: var(--ink); }
-.ci-no-results span { font-size: 13px; }
+.ci-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  min-width: 110px;
+}
+
+.ci-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--blue-fg);
+  cursor: pointer;
+  flex: 0 0 34px;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.ci-actions button svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.ci-actions button:hover {
+  background: var(--hover-bg);
+}
+
+.ci-actions button:nth-child(2) {
+  color: #f0a020;
+}
+
+.ci-actions .ci-delete-action {
+  color: var(--red-fg);
+}
+
+.ci-actions button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.ci-actions button:disabled:hover {
+  background: transparent;
+}
+
+.ci-no-results {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 180px;
+  padding: 34px 0;
+  color: var(--muted);
+  text-align: center;
+}
+
+.ci-no-results strong {
+  font-size: 14.5px;
+  color: var(--ink);
+}
+
+.ci-no-results span {
+  font-size: 13px;
+}
 
 /* ---------------- Footer + paginación ---------------- */
 .ci-table-footer { display: flex; align-items: center; justify-content: space-between; padding: 18px 24px; min-height: 0; font-size: 12.5px; color: var(--muted); flex-wrap: wrap; gap: 10px; }
@@ -305,77 +371,649 @@
 .ci-delete-content p { margin: 0; color: var(--ink-soft); font-size: 14px; line-height: 1.55; }
 
 /* ==================================================================
-   RESPONSIVE — breakpoints 1180 / 980 / 780 / 640 / 480 / 380
+   RESPONSIVE — 1180 / 980 / 780 / 640 / 480 / 380
    ================================================================== */
+
+/* ---------------- 1180px ---------------- */
+
 @media (max-width: 1180px) {
-  .compras-insumos-page { padding: 40px 24px 80px; }
-  .ci-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .ci-filters-row { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1fr); }
+
+  .compras-insumos-page {
+    padding: 40px 24px 80px;
+  }
+
+  .ci-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .ci-filters-row {
+    grid-template-columns:
+      minmax(0, 1.5fr)
+      minmax(0, 1fr)
+      minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .ci-table-scroll table {
+    min-width: 1050px;
+  }
+
+  .ci-actions {
+    min-width: 110px;
+  }
 }
+
+
+/* ---------------- 980px ---------------- */
 
 @media (max-width: 980px) {
-  .compras-insumos-page { padding: 32px 20px 70px; }
-  .ci-modal-header, .ci-modal-footer { padding-left: 24px; padding-right: 24px; }
-  .ci-modal-content, .ci-detail-content, .ci-status-options, .ci-delete-content { padding-left: 24px; padding-right: 24px; }
+
+  .compras-insumos-page {
+    padding: 32px 20px 70px;
+  }
+
+  .ci-page-header h1 {
+    font-size: 40px;
+  }
+
+  .ci-kpi-card {
+    padding: 20px;
+  }
+
+  .ci-filters-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ci-search {
+    grid-column: 1 / -1;
+  }
+
+  .ci-clear-filters {
+    justify-self: start;
+  }
+
+  .ci-table-scroll {
+    overflow-x: auto;
+  }
+
+  .ci-table-scroll table {
+    min-width: 1000px;
+  }
+
+  .ci-table-scroll th,
+  .ci-table-scroll td {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+
+  .ci-table-scroll th:first-child,
+  .ci-table-scroll td:first-child {
+    padding-left: 20px;
+  }
+
+  .ci-table-scroll th:last-child,
+  .ci-table-scroll td:last-child {
+    padding-right: 20px;
+  }
+
+  .ci-modal-header,
+  .ci-modal-footer {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+
+  .ci-modal-content,
+  .ci-detail-content,
+  .ci-status-options,
+  .ci-delete-content {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
 }
+
+
+/* ---------------- 780px ---------------- */
 
 @media (max-width: 780px) {
-  .compras-insumos-page { padding: 26px 16px 60px; }
-  .ci-page-header { flex-direction: column; align-items: stretch; gap: 14px; }
-  .ci-register-button { width: 100%; }
-  .ci-page-header h1 { font-size: 34px; }
 
-  .ci-kpi-grid { gap: 12px; }
-  .ci-kpi-card { padding: 18px 16px; column-gap: 12px; }
-  .ci-kpi-icon { width: 34px; height: 34px; }
-  .ci-kpi-content > strong { font-size: 17px; }
+  .compras-insumos-page {
+    padding: 26px 16px 60px;
+  }
 
-  .ci-filters-title, .ci-table-header { padding: 16px 18px; }
-  .ci-filters-row { grid-template-columns: 1fr; padding: 18px; gap: 10px; }
+  /* Header */
 
-  .ci-table-scroll table { min-width: 820px; }
-  .ci-table-scroll th { padding: 12px 14px; font-size: 11px; }
-  .ci-table-scroll td { padding: 14px; font-size: 13.5px; }
-  .ci-table-scroll th:first-child, .ci-table-scroll td:first-child { padding-left: 18px; }
-  .ci-table-scroll th:last-child, .ci-table-scroll td:last-child { padding-right: 18px; }
-  .ci-table-footer { padding: 14px 18px; }
+  .ci-page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    margin-bottom: 22px;
+  }
 
-  .ci-modal-overlay { padding: 14px; align-items: flex-end; }
-  .ci-modal, .ci-detail-modal, .ci-status-modal, .ci-delete-modal { max-width: 100%; max-height: 94vh; border-radius: 22px 22px 0 0; }
-  .ci-modal-header { padding: 22px 20px 14px; }
-  .ci-modal-content, .ci-detail-content { padding: 18px 20px 8px; }
-  .ci-status-options, .ci-delete-content { padding-left: 20px; padding-right: 20px; }
-  .ci-modal-footer { padding: 14px 20px 20px; }
+  .ci-page-header h1 {
+    font-size: 34px;
+  }
 
-  .ci-grid-2, .ci-grid-3 { grid-template-columns: 1fr; }
-  .ci-added-products { overflow-x: auto; }
-  .ci-added-header, .ci-added-row { min-width: 560px; }
+  .ci-page-header p {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .ci-register-button {
+    width: 100%;
+  }
+
+
+  /* KPI */
+
+  .ci-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .ci-kpi-card {
+    padding: 18px 16px;
+    grid-template-columns: 36px minmax(0, 1fr);
+    column-gap: 11px;
+  }
+
+  .ci-kpi-icon {
+    width: 34px;
+    height: 34px;
+  }
+
+  .ci-kpi-content > strong {
+    font-size: 17px;
+  }
+
+
+  /* Filtros */
+
+  .ci-filters-title,
+  .ci-table-header {
+    padding: 16px 18px;
+  }
+
+  .ci-filters-row {
+    grid-template-columns: 1fr;
+    padding: 18px;
+    gap: 10px;
+  }
+
+  .ci-search {
+    grid-column: auto;
+  }
+
+  .ci-clear-filters {
+    justify-self: start;
+  }
+
+
+  /* Tabla */
+
+  .ci-table-scroll {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .ci-table-scroll table {
+    min-width: 980px;
+  }
+
+  .ci-table-scroll th {
+    padding: 12px 14px;
+    font-size: 11px;
+  }
+
+  .ci-table-scroll td {
+    padding: 14px;
+    font-size: 13.5px;
+  }
+
+  .ci-table-scroll th:first-child,
+  .ci-table-scroll td:first-child {
+    padding-left: 18px;
+  }
+
+  .ci-table-scroll th:last-child,
+  .ci-table-scroll td:last-child {
+    padding-right: 18px;
+    min-width: 120px;
+  }
+
+  /* Acciones: nunca se apilan */
+
+  .ci-actions {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 4px;
+    min-width: 108px;
+  }
+
+  .ci-actions button {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    flex: 0 0 32px;
+  }
+
+  .ci-actions button svg {
+    width: 17px;
+    height: 17px;
+  }
+
+
+  /* Footer */
+
+  .ci-table-footer {
+    padding: 14px 18px;
+    gap: 12px;
+  }
+
+  .ci-pagination {
+    flex-wrap: nowrap;
+  }
+
+
+  /* Modal */
+
+  .ci-modal-overlay {
+    padding: 12px;
+    align-items: flex-end;
+  }
+
+  .ci-modal,
+  .ci-detail-modal,
+  .ci-status-modal,
+  .ci-delete-modal {
+    width: 100%;
+    max-width: 100%;
+    max-height: 94vh;
+    border-radius: 20px 20px 0 0;
+  }
+
+  .ci-modal-header {
+    padding: 20px 20px 14px;
+  }
+
+  .ci-modal-header h2 {
+    font-size: 24px;
+  }
+
+  .ci-modal-content,
+  .ci-detail-content {
+    padding: 18px 20px 8px;
+  }
+
+  .ci-status-options,
+  .ci-delete-content {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .ci-modal-footer {
+    padding: 14px 20px 20px;
+  }
+
+  .ci-grid-2,
+  .ci-grid-3 {
+    grid-template-columns: 1fr;
+  }
+
+
+  /* Productos agregados */
+
+  .ci-added-products {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .ci-added-header,
+  .ci-added-row {
+    min-width: 560px;
+  }
 }
+
+
+/* ---------------- 640px ---------------- */
 
 @media (max-width: 640px) {
-  .ci-kpi-grid { grid-template-columns: 1fr; }
-  .ci-kpi-card { grid-template-columns: 34px 1fr; }
-  .ci-modal-footer { flex-direction: column; }
-  .ci-modal-footer > * { width: 100%; }
-  .ci-pagination { justify-content: center; width: 100%; }
-  .ci-table-footer { justify-content: center; text-align: center; }
-  .ci-table-footer > *:first-child { width: 100%; text-align: center; }
+
+  .compras-insumos-page {
+    padding: 22px 14px 50px;
+  }
+
+  /* KPI en una sola columna */
+
+  .ci-kpi-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .ci-kpi-card {
+    min-height: 74px;
+    grid-template-columns: 36px minmax(0, 1fr);
+    padding: 16px;
+  }
+
+  .ci-kpi-content > span,
+  .ci-kpi-content > small {
+    font-size: 12px;
+  }
+
+  .ci-kpi-content > strong {
+    font-size: 16px;
+  }
+
+
+  /* Tabla */
+
+  .ci-table-scroll table {
+    min-width: 960px;
+  }
+
+  .ci-table-scroll th {
+    padding: 11px 12px;
+  }
+
+  .ci-table-scroll td {
+    padding: 13px 12px;
+  }
+
+  .ci-table-scroll th:first-child,
+  .ci-table-scroll td:first-child {
+    padding-left: 16px;
+  }
+
+  .ci-table-scroll th:last-child,
+  .ci-table-scroll td:last-child {
+    padding-right: 16px;
+    min-width: 116px;
+  }
+
+  .ci-actions {
+    gap: 3px;
+    min-width: 105px;
+  }
+
+  .ci-actions button {
+    width: 31px;
+    height: 31px;
+    min-width: 31px;
+    flex-basis: 31px;
+  }
+
+
+  /* Footer */
+
+  .ci-table-footer {
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+    padding: 14px 16px;
+  }
+
+  .ci-table-footer > * {
+    width: 100%;
+  }
+
+  .ci-pagination {
+    justify-content: center;
+    width: 100%;
+  }
+
+
+  /* Modal */
+
+  .ci-modal-overlay {
+    padding: 0;
+  }
+
+  .ci-modal,
+  .ci-detail-modal,
+  .ci-status-modal,
+  .ci-delete-modal {
+    max-height: 96vh;
+    border-radius: 18px 18px 0 0;
+  }
+
+  .ci-modal-header {
+    padding: 18px 16px 12px;
+  }
+
+  .ci-modal-header h2 {
+    font-size: 22px;
+  }
+
+  .ci-modal-content,
+  .ci-detail-content {
+    padding: 16px 16px 8px;
+  }
+
+  .ci-status-options,
+  .ci-delete-content {
+    padding: 16px 16px 8px;
+  }
+
+  .ci-modal-footer {
+    flex-direction: column;
+    padding: 12px 16px 16px;
+  }
+
+  .ci-modal-footer > * {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .ci-status-option {
+    padding: 13px 14px;
+  }
+
+
+  /* Formularios */
+
+  .ci-form-grid {
+    gap: 10px;
+  }
+
+  .ci-form-grid input,
+  .ci-form-grid select {
+    font-size: 14px;
+  }
 }
+
+
+/* ---------------- 480px ---------------- */
 
 @media (max-width: 480px) {
-  .compras-insumos-page { padding: 20px 12px 50px; }
-  .ci-page-header h1 { font-size: 28px; }
-  .ci-module-label { font-size: 11px; }
-  .ci-kpi-card { padding: 16px 14px; }
-  .ci-kpi-content > span, .ci-kpi-content > small { font-size: 12px; }
-  .ci-kpi-content > strong { font-size: 16px; }
-  .ci-table-scroll table { min-width: 760px; }
-  .ci-status { font-size: 12px; padding: 4px 10px; }
+
+  .compras-insumos-page {
+    padding: 18px 10px 45px;
+  }
+
+  .ci-module-label {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+  }
+
+  .ci-page-header h1 {
+    font-size: 28px;
+  }
+
+  .ci-page-header p {
+    font-size: 13px;
+  }
+
+  .ci-register-button {
+    padding: 13px 16px;
+    font-size: 13px;
+  }
+
+
+  /* KPI */
+
+  .ci-kpi-card {
+    padding: 14px;
+  }
+
+  .ci-kpi-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .ci-kpi-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+
+
+  /* Filtros */
+
+  .ci-filters-title {
+    padding: 14px 15px;
+  }
+
+  .ci-filters-row {
+    padding: 14px;
+  }
+
+  .ci-search,
+  .ci-filters-row select,
+  .ci-filter-date {
+    min-height: 44px;
+    font-size: 13.5px;
+  }
+
+
+  /* Tabla */
+
+  .ci-table-scroll table {
+    min-width: 930px;
+  }
+
+  .ci-status {
+    font-size: 12px;
+    padding: 4px 10px;
+  }
+
+  .ci-actions button {
+    width: 30px;
+    height: 30px;
+    min-width: 30px;
+    flex-basis: 30px;
+  }
+
+  .ci-actions button svg {
+    width: 16px;
+    height: 16px;
+  }
+
+
+  /* Modal */
+
+  .ci-modal-header {
+    padding: 16px 14px 10px;
+  }
+
+  .ci-modal-content,
+  .ci-detail-content {
+    padding: 14px 14px 6px;
+  }
+
+  .ci-modal-footer {
+    padding: 10px 14px 14px;
+  }
+
+  .ci-status-options,
+  .ci-delete-content {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .ci-modal-header h2 {
+    font-size: 21px;
+  }
+
+  .ci-modal-eyebrow {
+    font-size: 10px;
+  }
 }
 
+
+/* ---------------- 380px ---------------- */
+
 @media (max-width: 380px) {
-  .ci-primary-button, .ci-secondary-button, .ci-danger-button { padding: 12px 16px; font-size: 13.5px; }
-  .ci-register-button { padding: 13px 18px; }
-  .ci-table-scroll table { min-width: 720px; }
-  .ci-form-grid { gap: 10px; }
+
+  .compras-insumos-page {
+    padding: 16px 8px 40px;
+  }
+
+  .ci-page-header h1 {
+    font-size: 25px;
+  }
+
+  .ci-primary-button,
+  .ci-secondary-button,
+  .ci-danger-button {
+    padding: 11px 14px;
+    font-size: 13px;
+  }
+
+  .ci-register-button {
+    padding: 12px 16px;
+  }
+
+
+  /* Tabla */
+
+  .ci-table-scroll table {
+    min-width: 900px;
+  }
+
+  .ci-table-scroll th,
+  .ci-table-scroll td {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .ci-table-scroll th:first-child,
+  .ci-table-scroll td:first-child {
+    padding-left: 12px;
+  }
+
+  .ci-table-scroll th:last-child,
+  .ci-table-scroll td:last-child {
+    padding-right: 12px;
+  }
+
+  .ci-actions {
+    min-width: 102px;
+    gap: 2px;
+  }
+
+  .ci-actions button {
+    width: 29px;
+    height: 29px;
+    min-width: 29px;
+    flex-basis: 29px;
+  }
+
+  .ci-actions button svg {
+    width: 15px;
+    height: 15px;
+  }
+
+
+  /* Formularios */
+
+  .ci-form-grid {
+    gap: 9px;
+  }
+
+  .ci-form-grid input,
+  .ci-form-grid select {
+    padding: 11px 12px;
+  }
 }

@@ -602,43 +602,72 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
 .row-actions button {
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   padding: 0;
+  margin: 0;
   border: none;
-  border-radius: 7px;
-  background: none;
+  border-radius: 0;
+  background: transparent;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background .15s;
+  transition: opacity 0.15s ease, transform 0.15s ease;
 }
 
 .row-actions button:hover {
-  background: var(--soft-bg);
+  background: transparent;
+  transform: translateY(-1px);
+  opacity: 0.78;
+}
+
+.row-actions button:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
 .row-actions button svg {
   width: 18px;
   height: 18px;
+  stroke-width: 2;
 }
 
-.action-view {
-  color: var(--blue-fg);
+/* Ver — azul */
+.row-actions .action-view {
+  color: #2f6fed;
 }
 
-.action-edit {
+/* Editar — naranja */
+.row-actions .action-edit {
   color: #f0a020;
 }
 
-.action-delete {
-  color: var(--red-fg);
+/* Eliminar — rojo */
+.row-actions .action-delete {
+  color: #d8483a;
+}
+
+/* ==================================================================
+   ACCIONES — DARK MODE
+   ================================================================== */
+
+:root[data-theme="dark"] .row-actions .action-view {
+  color: #60a5fa;
+}
+
+:root[data-theme="dark"] .row-actions .action-edit {
+  color: #fbbf24;
+}
+
+:root[data-theme="dark"] .row-actions .action-delete {
+  color: #fca5a5;
 }
 
 
@@ -1765,3 +1794,56 @@
   }
 }
 
+
+
+/* ==================================================================
+   RESPONSIVE — ACCIONES
+   ================================================================== */
+
+@media (max-width: 780px) {
+  .row-actions {
+    gap: 8px;
+  }
+
+  .row-actions button {
+    width: 30px;
+    height: 30px;
+  }
+
+  .row-actions button svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .row-actions {
+    gap: 7px;
+  }
+
+  .row-actions button {
+    width: 28px;
+    height: 28px;
+  }
+
+  .row-actions button svg {
+    width: 17px;
+    height: 17px;
+  }
+}
+
+@media (max-width: 380px) {
+  .row-actions {
+    gap: 6px;
+  }
+
+  .row-actions button {
+    width: 26px;
+    height: 26px;
+  }
+
+  .row-actions button svg {
+    width: 16px;
+    height: 16px;
+  }
+}
