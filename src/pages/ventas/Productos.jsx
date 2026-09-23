@@ -16,9 +16,21 @@ import {
   ChevronRight,
   ChevronsRight,
   X,
-  CheckCircle2,
   Tag,
+  ImagePlus,
+  Check,
+  Layers
 } from "lucide-react";
+
+// Variantes base disponibles en el sistema (ejemplo de la vista ProductoVariante)
+const LISTA_VARIANTES_DISPONIBLES = [
+  { id: 1, color: "Negro", talle: "Ajustable", precio: "$8.500" },
+  { id: 2, color: "Rojo", talle: "Ajustable", precio: "$8.500" },
+  { id: 3, color: "Azul", talle: "Única", precio: "$12.000" },
+  { id: 4, color: "Dorado", talle: "Ajustable", precio: "$9.500" },
+  { id: 5, color: "Plateado", talle: "Ajustable", precio: "$9.500" },
+  { id: 6, color: "Negro", talle: "M", precio: "$15.000" },
+];
 
 const initialProductos = [
   {
@@ -28,6 +40,10 @@ const initialProductos = [
     tipo: "Chaqueta",
     publico: "Hombre",
     estado: "Activo",
+    variantes: [
+      { id: 1, color: "Negro", talle: "Ajustable", precio: "$8.500" },
+      { id: 6, color: "Negro", talle: "M", precio: "$15.000" },
+    ],
   },
   {
     id: 2,
@@ -36,6 +52,7 @@ const initialProductos = [
     tipo: "Vestido",
     publico: "Mujer",
     estado: "Activo",
+    variantes: [{ id: 2, color: "Rojo", talle: "Ajustable", precio: "$8.500" }],
   },
   {
     id: 3,
@@ -44,47 +61,19 @@ const initialProductos = [
     tipo: "Conjunto",
     publico: "Hombre",
     estado: "Activo",
+    variantes: [],
   },
-  {
-    id: 4,
-    nombre: "Bolso Mujer Cuero Vegano",
-    descripcion: "Bolso de mano en cuero ...",
-    tipo: "Bolso",
-    publico: "Mujer",
-    estado: "Activo",
-  },
-  {
-    id: 5,
-    nombre: "Pantalón Casual Algodón",
-    descripcion: "Pantalón chino en algod...",
-    tipo: "Pantalón",
-    publico: "Hombre",
-    estado: "Activo",
-  },
-  {
-    id: 6,
-    nombre: "Camiseta Básica Mujer",
-    descripcion: "Camiseta de algodón org...",
-    tipo: "Camiseta",
-    publico: "Mujer",
-    estado: "Activo",
-  },
-  {
-    id: 7,
-    nombre: "Zapato Formal Ejecutivo",
-    descripcion: "Calzado de cuero legít...",
-    tipo: "Calzado",
-    publico: "Hombre",
-    estado: "Inactivo",
-  },
-  {
-    id: 8,
-    nombre: "Abrigo Invierno Premium",
-    descripcion: "Abrigo de paño doble faz...",
-    tipo: "Abrigo",
-    publico: "Mujer",
-    estado: "Activo",
-  },
+];
+
+const TIPOS_PRODUCTO = [
+  "Camiseta", "Chaqueta", "Pantalón", "Vestido", "Conjunto", "Abrigo", "Bolso", "Bufanda", "Cinturón", "Zapato"
+];
+
+const PUBLICOS_OBJETIVO = [
+  { id: "Hombre", label: "Hombre", emoji: "🧔" },
+  { id: "Mujer", label: "Mujer", emoji: "👱‍♀️" },
+  { id: "Niño", label: "Niño", emoji: "👦" },
+  { id: "Niña", label: "Niña", emoji: "👧" },
 ];
 
 export default function Productos() {
@@ -102,17 +91,24 @@ export default function Productos() {
   // Formulario Modal
   const [nombre, setNombre] = useState("");
   const [descripcion, setDescripcion] = useState("");
-  const [tipo, setTipo] = useState("");
+  const [tipo, setTipo] = useState("Camiseta");
   const [publico, setPublico] = useState("Hombre");
   const [modalEstado, setModalEstado] = useState("Activo");
+  const [imagen, setImagen] = useState(null);
+
+  // Variantes asociadas al producto
+  const [varianteSeleccionadaId, setVarianteSeleccionadaId] = useState(LISTA_VARIANTES_DISPONIBLES[0]?.id || "");
+  const [variantesSeleccionadas, setVariantesSeleccionadas] = useState([]);
 
   const handleOpenCreate = () => {
     setSelectedProducto(null);
     setNombre("");
     setDescripcion("");
-    setTipo("Chaqueta");
-    setPublico("Hombre");
+    setTipo("Camiseta");
+    setPublico("Mujer");
     setModalEstado("Activo");
+    setImagen(null);
+    setVariantesSeleccionadas([]);
     setModalMode("create");
   };
 
@@ -128,6 +124,8 @@ export default function Productos() {
     setTipo(prod.tipo);
     setPublico(prod.publico);
     setModalEstado(prod.estado);
+    setImagen(null);
+    setVariantesSeleccionadas(prod.variantes || []);
     setModalMode("edit");
   };
 
@@ -139,6 +137,23 @@ export default function Productos() {
   const handleCloseModal = () => {
     setModalMode(null);
     setSelectedProducto(null);
+  };
+
+  // Agregar variante al listado temporal del producto
+  const handleAgregarVariante = () => {
+    const varObj = LISTA_VARIANTES_DISPONIBLES.find(
+      (v) => v.id === parseInt(varianteSeleccionadaId, 10)
+    );
+    if (!varObj) return;
+
+    if (variantesSeleccionadas.some((v) => v.id === varObj.id)) return;
+
+    setVariantesSeleccionadas([...variantesSeleccionadas, varObj]);
+  };
+
+  // Quitar variante
+  const handleEliminarVariante = (id) => {
+    setVariantesSeleccionadas(variantesSeleccionadas.filter((v) => v.id !== id));
   };
 
   const handleSaveProducto = (e) => {
@@ -153,13 +168,22 @@ export default function Productos() {
         tipo: tipo || "General",
         publico,
         estado: modalEstado,
+        variantes: variantesSeleccionadas,
       };
       setProductosList([newProd, ...productosList]);
     } else if (modalMode === "edit" && selectedProducto) {
       setProductosList(
         productosList.map((p) =>
           p.id === selectedProducto.id
-            ? { ...p, nombre, descripcion, tipo, publico, estado: modalEstado }
+            ? {
+                ...p,
+                nombre,
+                descripcion,
+                tipo,
+                publico,
+                estado: modalEstado,
+                variantes: variantesSeleccionadas,
+              }
             : p
         )
       );
@@ -272,6 +296,8 @@ export default function Productos() {
             <option value="">Público objetivo</option>
             <option value="Hombre">Hombre</option>
             <option value="Mujer">Mujer</option>
+            <option value="Niño">Niño</option>
+            <option value="Niña">Niña</option>
           </select>
           <select
             value={filtroEstado}
@@ -308,6 +334,7 @@ export default function Productos() {
                 <th>PRODUCTO</th>
                 <th>TIPO</th>
                 <th>PÚBLICO</th>
+                <th>VARIANTES</th>
                 <th>ESTADO</th>
                 <th style={{ textAlign: "right" }}>ACCIONES</th>
               </tr>
@@ -338,8 +365,14 @@ export default function Productos() {
                     </td>
                     <td>
                       <span className={`productos-badge-publico ${prod.publico.toLowerCase()}`}>
-                        <span>{prod.publico === "Hombre" ? "🧔" : "👱‍♀️"}</span>
+                        <span>{prod.publico === "Hombre" ? "🧔" : prod.publico === "Mujer" ? "👱‍♀️" : prod.publico === "Niño" ? "👦" : "👧"}</span>
                         {prod.publico}
+                      </span>
+                    </td>
+                    <td>
+                      <span className="productos-variantes-badge">
+                        <Layers size={13} />
+                        {prod.variantes ? prod.variantes.length : 0} registradas
                       </span>
                     </td>
                     <td>
@@ -377,7 +410,7 @@ export default function Productos() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className="productos-empty">
+                  <td colSpan={7} className="productos-empty">
                     No se encontraron productos.
                   </td>
                 </tr>
@@ -441,11 +474,11 @@ export default function Productos() {
       {(modalMode === "create" || modalMode === "edit") &&
         ReactDOM.createPortal(
           <div className="modal-overlay">
-            <div className="modal-container">
+            <div className="modal-container modal-large-container">
               <div className="modal-header">
                 <div>
                   <span className="modal-tag">
-                    {modalMode === "create" ? "CU.12.01 • NUEVO PRODUCTO" : `CU.12.02 • PRODUCTO #${selectedProducto?.id}`}
+                    {modalMode === "create" ? "CU.12.02 • NUEVO PRODUCTO" : `CU.12.02 • PRODUCTO #${selectedProducto?.id}`}
                   </span>
                   <h2 className="modal-title">
                     {modalMode === "create" ? "Registrar Producto" : "Editar Producto"}
@@ -456,16 +489,18 @@ export default function Productos() {
                 </button>
               </div>
 
+              {/* FORMULARIO Y CUERPO CON SCROLL */}
               <form id="producto-form" onSubmit={handleSaveProducto} className="modal-body">
+                {/* INFORMACIÓN BÁSICA */}
                 <div className="section-divider">
-                  <span>INFORMACIÓN PRINCIPAL</span>
+                  <span>INFORMACIÓN BÁSICA</span>
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">NOMBRE DEL PRODUCTO *</label>
+                  <label className="form-label">NOMBRE DEL PRODUCTO</label>
                   <input
                     type="text"
-                    placeholder="Ej: Chaqueta Premium Cuero"
+                    placeholder="Ej: Chaqueta Premium Cuero..."
                     value={nombre}
                     onChange={(e) => setNombre(e.target.value)}
                     className="modal-input"
@@ -474,79 +509,186 @@ export default function Productos() {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">DESCRIPCIÓN</label>
-                  <input
-                    type="text"
-                    placeholder="Ej: Chaqueta de cuero vacuno legítimo..."
-                    value={descripcion}
-                    onChange={(e) => setDescripcion(e.target.value)}
-                    className="modal-input"
-                  />
-                </div>
-
-                <div className="section-divider">
-                  <span>CLASIFICACIÓN</span>
-                </div>
-
-                <div className="grid-2-cols">
-                  <div className="form-group">
-                    <label className="form-label">TIPO</label>
-                    <input
-                      type="text"
-                      placeholder="Ej: Chaqueta, Vestido, Bolso..."
-                      value={tipo}
-                      onChange={(e) => setTipo(e.target.value)}
-                      className="modal-input"
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label">PÚBLICO OBJETIVO</label>
-                    <select
-                      value={publico}
-                      onChange={(e) => setPublico(e.target.value)}
-                      className="modal-input"
-                    >
-                      <option value="Hombre">Hombre</option>
-                      <option value="Mujer">Mujer</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="section-divider">
-                  <span>ESTADO</span>
-                </div>
-
-                <div className="form-group">
                   <label className="form-label">ESTADO</label>
-                  <div className="estado-options-row">
+                  <div className="estado-options-stack">
                     <button
                       type="button"
-                      className={`estado-card ${modalEstado === "Activo" ? "selected" : ""}`}
+                      className={`estado-card-pill ${modalEstado === "Activo" ? "selected" : ""}`}
                       onClick={() => setModalEstado("Activo")}
                     >
                       <div className="estado-content">
                         <span className="dot-green"></span>
                         <span className="estado-text">Activo</span>
                       </div>
-                      {modalEstado === "Activo" && <CheckCircle2 size={18} className="check-icon" />}
+                      <div className="circle-check">
+                        {modalEstado === "Activo" && <Check size={12} />}
+                      </div>
                     </button>
 
                     <button
                       type="button"
-                      className={`estado-card ${modalEstado === "Inactivo" ? "selected" : ""}`}
+                      className={`estado-card-pill ${modalEstado === "Inactivo" ? "selected" : ""}`}
                       onClick={() => setModalEstado("Inactivo")}
                     >
                       <div className="estado-content">
                         <span className="dot-gray"></span>
                         <span className="estado-text">Inactivo</span>
                       </div>
-                      {modalEstado === "Inactivo" && <CheckCircle2 size={18} className="check-icon" />}
+                      <div className="circle-check">
+                        {modalEstado === "Inactivo" && <Check size={12} />}
+                      </div>
                     </button>
                   </div>
                 </div>
+
+                <div className="form-group">
+                  <label className="form-label">DESCRIPCIÓN</label>
+                  <textarea
+                    placeholder="Describe el producto..."
+                    value={descripcion}
+                    onChange={(e) => setDescripcion(e.target.value)}
+                    className="modal-input modal-textarea"
+                    rows={3}
+                  />
+                </div>
+
+                {/* TIPO DE PRODUCTO */}
+                <div className="section-divider">
+                  <span>CU.12.09 • TIPO DE PRODUCTO</span>
+                </div>
+
+                <div className="tipos-pills-container">
+                  {TIPOS_PRODUCTO.map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      className={`tipo-pill ${tipo === t ? "selected" : ""}`}
+                      onClick={() => setTipo(t)}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+
+                {/* PÚBLICO OBJETIVO */}
+                <div className="section-divider">
+                  <span>CU.12.08 • PÚBLICO OBJETIVO</span>
+                </div>
+
+                <div className="publico-grid">
+                  {PUBLICOS_OBJETIVO.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      className={`publico-card ${publico === item.id ? "selected" : ""}`}
+                      onClick={() => setPublico(item.id)}
+                    >
+                      <span className="publico-emoji">{item.emoji}</span>
+                      <span className="publico-label">{item.label}</span>
+                      <div className="circle-check">
+                        {publico === item.id && <Check size={12} />}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                {/* VARIANTES DEL PRODUCTO (NUEVO) */}
+                <div className="section-divider">
+                  <span>VARIANTES REGISTRADAS</span>
+                </div>
+
+                <div className="variante-input-row">
+                  <div className="form-group flex-grow">
+                    <label className="form-label">SELECCIONAR VARIANTE</label>
+                    <select
+                      value={varianteSeleccionadaId}
+                      onChange={(e) => setVarianteSeleccionadaId(e.target.value)}
+                      className="modal-input modal-select"
+                    >
+                      {LISTA_VARIANTES_DISPONIBLES.map((v) => (
+                        <option key={v.id} value={v.id}>
+                          #{v.id} - {v.color} / {v.talle} ({v.precio})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn-add-variante"
+                    onClick={handleAgregarVariante}
+                  >
+                    + Agregar variante
+                  </button>
+                </div>
+
+                <div className="variantes-wrapper-container">
+                  {variantesSeleccionadas.length > 0 ? (
+                    <div className="variantes-table-container">
+                      <table className="variantes-table">
+                        <thead>
+                          <tr>
+                            <th>ID</th>
+                            <th>COLOR</th>
+                            <th>TALLA</th>
+                            <th>PRECIO</th>
+                            <th style={{ textAlign: "right" }}>ACCIÓN</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {variantesSeleccionadas.map((item) => (
+                            <tr key={item.id}>
+                              <td className="var-td-id">#{item.id}</td>
+                              <td>{item.color}</td>
+                              <td>{item.talle}</td>
+                              <td className="var-td-price">{item.precio}</td>
+                              <td className="var-td-action">
+                                <button
+                                  type="button"
+                                  className="btn-remove-variante"
+                                  onClick={() => handleEliminarVariante(item.id)}
+                                  title="Quitar variante"
+                                >
+                                  <Trash2 size={15} />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="variantes-box-empty">
+                      <span className="variantes-empty-state">
+                        Sin variantes asignadas. Selecciona una variante para agregar.
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* FOTO DEL PRODUCTO */}
+                <div className="section-divider">
+                  <span>FOTO DEL PRODUCTO</span>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">FOTO DEL PRODUCTO</label>
+                  <label className="upload-dropzone">
+                    <input
+                      type="file"
+                      accept="image/png, image/jpeg, image/webp"
+                      onChange={(e) => setImagen(e.target.files[0])}
+                      style={{ display: "none" }}
+                    />
+                    <ImagePlus size={28} className="upload-icon" />
+                    <span className="upload-text">
+                      {imagen ? imagen.name : "Haz clic para subir imagen"}
+                    </span>
+                  </label>
+                  <span className="upload-hint">PNG, JPG o WEBP. Máx. 2MB</span>
+                </div>
               </form>
 
+              {/* FOOTER FIJO */}
               <div className="modal-footer">
                 <button type="button" className="btn-modal-cancel" onClick={handleCloseModal}>
                   Cancelar
@@ -603,6 +745,14 @@ export default function Productos() {
                   <div className="view-info-row">
                     <span className="view-label-icon">Público</span>
                     <span className="view-value">{selectedProducto.publico}</span>
+                  </div>
+                  <div className="view-info-row">
+                    <span className="view-label-icon">Variantes ({selectedProducto.variantes?.length || 0})</span>
+                    <span className="view-value">
+                      {selectedProducto.variantes && selectedProducto.variantes.length > 0
+                        ? selectedProducto.variantes.map((v) => `${v.color}/${v.talle}`).join(", ")
+                        : "Sin variantes"}
+                    </span>
                   </div>
                 </div>
               </div>

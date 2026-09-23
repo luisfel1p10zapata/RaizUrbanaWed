@@ -16,60 +16,94 @@ import {
   ChevronRight,
   ChevronsRight,
   X,
-  CheckCircle2,
   Package,
-  DollarSign,
   Palette,
   Ruler,
+  ImagePlus,
+  Check,
+  FileText
 } from "lucide-react";
 
 const initialVariantes = [
   {
     id: 1,
-    producto: "Chaqueta Premium Cuero",
-    talle: "L",
+    producto: "Manilla Tejida Negra",
+    talle: "Ajustable",
     color: "Negro",
-    precio: "$120.000",
-    stock: 15,
+    precio: "$8.500",
     estado: "Activo",
+    insumos: [
+      { id: 101, nombre: "Balín Plateado 4mm", cantidad: 4 },
+      { id: 102, nombre: "Broche Langosta Plateado", cantidad: 2 },
+    ],
   },
   {
     id: 2,
-    nombre: "Chaqueta Premium Cuero",
-    talle: "M",
-    color: "Marrón",
-    precio: "$120.000",
-    stock: 8,
+    producto: "Manilla Tejida Negra",
+    talle: "Ajustable",
+    color: "Rojo",
+    precio: "$8.500",
     estado: "Activo",
+    insumos: [
+      { id: 103, nombre: "Balín Plateado 4mm", cantidad: 4 },
+      { id: 104, nombre: "Hilo Braid Rojo", cantidad: 1 },
+    ],
   },
   {
     id: 3,
-    producto: "Vestido Elegante Satinado",
-    talle: "S",
-    color: "Rojo",
-    precio: "$85.000",
-    stock: 22,
+    producto: "Collar Artesanal Azul",
+    talle: "Única",
+    color: "Azul",
+    precio: "$12.000",
     estado: "Activo",
+    insumos: [
+      { id: 105, nombre: "Dije Ancla Acero", cantidad: 1 },
+      { id: 106, nombre: "Cierre Magnético", cantidad: 1 },
+    ],
   },
   {
     id: 4,
-    producto: "Conjunto Urbano Deportivo",
-    talle: "XL",
-    color: "Gris",
-    precio: "$95.000",
-    stock: 0,
-    estado: "Inactivo",
+    producto: "Pulsera Ajustable ...",
+    talle: "Ajustable",
+    color: "Dorado",
+    precio: "$9.500",
+    estado: "Activo",
+    insumos: [
+      { id: 107, nombre: "Balín Dorado 4mm", cantidad: 6 },
+      { id: 108, nombre: "Broche Dorado", cantidad: 1 },
+    ],
   },
   {
     id: 5,
-    producto: "Pantalón Casual Algodón",
-    talle: "32",
-    color: "Beige",
-    precio: "$65.000",
-    stock: 12,
+    producto: "Pulsera Ajustable ...",
+    talle: "Ajustable",
+    color: "Plateado",
+    precio: "$9.500",
     estado: "Activo",
+    insumos: [],
+  },
+  {
+    id: 6,
+    producto: "Cinturón Trenzado ...",
+    talle: "M",
+    color: "Negro",
+    precio: "$15.000",
+    estado: "Activo",
+    insumos: [],
   },
 ];
+
+const LISTA_PRODUCTOS = [
+  "Manilla Tejida Negra",
+  "Collar Artesanal Azul",
+  "Pulsera Ajustable",
+  "Cinturón Trenzado",
+  "Chaqueta Premium Cuero"
+];
+
+const LISTA_COLORES = ["Negro", "Rojo", "Azul", "Dorado", "Plateado", "Marrón", "Gris"];
+const LISTA_TALLAS = ["Ajustable", "Única", "XS", "S", "M", "L", "XL"];
+const LISTA_INSUMOS = ["Balín Plateado 4mm", "Broche Langosta Plateado", "Hilo Braid Negro", "Dije Ancla Acero", "Cierre Magnético"];
 
 export default function ProductoVariante() {
   const [variantesList, setVariantesList] = useState(initialVariantes);
@@ -83,22 +117,28 @@ export default function ProductoVariante() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
-  // Estado Formulario Modal
-  const [producto, setProducto] = useState("");
-  const [talle, setTalle] = useState("M");
-  const [color, setColor] = useState("");
-  const [precio, setPrecio] = useState("");
-  const [stock, setStock] = useState("");
+  // Estado Formulario Modal Crear / Editar
+  const [producto, setProducto] = useState("Manilla Tejida Negra");
+  const [color, setColor] = useState("Negro");
+  const [talle, setTalle] = useState("Ajustable");
+  const [precio, setPrecio] = useState("0");
   const [modalEstado, setModalEstado] = useState("Activo");
+  const [imagen, setImagen] = useState(null);
+
+  // Insumos de la Ficha Técnica
+  const [insumoSeleccionado, setInsumoSeleccionado] = useState(LISTA_INSUMOS[0]);
+  const [cantidadInsumo, setCantidadInsumo] = useState(1);
+  const [insumosAgregados, setInsumosAgregados] = useState([]);
 
   const handleOpenCreate = () => {
     setSelectedVariante(null);
-    setProducto("");
-    setTalle("M");
-    setColor("");
-    setPrecio("");
-    setStock("");
+    setProducto(LISTA_PRODUCTOS[0]);
+    setColor(LISTA_COLORES[0]);
+    setTalle(LISTA_TALLAS[0]);
+    setPrecio("0");
     setModalEstado("Activo");
+    setImagen(null);
+    setInsumosAgregados([]);
     setModalMode("create");
   };
 
@@ -107,14 +147,20 @@ export default function ProductoVariante() {
     setModalMode("view");
   };
 
+  const handleOpenFicha = (item) => {
+    setSelectedVariante(item);
+    setModalMode("ficha");
+  };
+
   const handleOpenEdit = (item) => {
     setSelectedVariante(item);
-    setProducto(item.producto || item.nombre);
-    setTalle(item.talle);
-    setColor(item.color);
-    setPrecio(item.precio);
-    setStock(item.stock);
+    setProducto(item.producto || item.nombre || LISTA_PRODUCTOS[0]);
+    setTalle(item.talle || LISTA_TALLAS[0]);
+    setColor(item.color || LISTA_COLORES[0]);
+    setPrecio(item.precio ? item.precio.replace("$", "") : "0");
     setModalEstado(item.estado);
+    setImagen(null);
+    setInsumosAgregados(item.insumos || []);
     setModalMode("edit");
   };
 
@@ -128,9 +174,27 @@ export default function ProductoVariante() {
     setSelectedVariante(null);
   };
 
+  // Función para agregar insumos al formulario
+  const handleAgregarInsumo = (e) => {
+    if (e) e.preventDefault();
+    if (!insumoSeleccionado || cantidadInsumo <= 0) return;
+
+    const nuevoInsumo = {
+      id: Date.now(),
+      nombre: insumoSeleccionado,
+      cantidad: cantidadInsumo,
+    };
+
+    setInsumosAgregados((prev) => [...prev, nuevoInsumo]);
+  };
+
+  const handleEliminarInsumo = (id) => {
+    setInsumosAgregados(insumosAgregados.filter((i) => i.id !== id));
+  };
+
   const handleSaveVariante = (e) => {
     e.preventDefault();
-    if (!producto.trim()) return;
+    if (!producto) return;
 
     if (modalMode === "create") {
       const newVar = {
@@ -139,15 +203,23 @@ export default function ProductoVariante() {
         talle,
         color: color || "N/A",
         precio: precio.startsWith("$") ? precio : `$${precio}`,
-        stock: parseInt(stock, 10) || 0,
         estado: modalEstado,
+        insumos: insumosAgregados,
       };
       setVariantesList([newVar, ...variantesList]);
     } else if (modalMode === "edit" && selectedVariante) {
       setVariantesList(
         variantesList.map((v) =>
           v.id === selectedVariante.id
-            ? { ...v, producto, talle, color, precio, stock: parseInt(stock, 10) || 0, estado: modalEstado }
+            ? {
+                ...v,
+                producto,
+                talle,
+                color,
+                precio: precio.startsWith("$") ? precio : `$${precio}`,
+                estado: modalEstado,
+                insumos: insumosAgregados,
+              }
             : v
         )
       );
@@ -191,7 +263,7 @@ export default function ProductoVariante() {
           <span className="variante-eyebrow">CU.13 • MÓDULO</span>
           <h1 className="variante-title">Variantes de Productos</h1>
           <p className="variante-description">
-            Gestión de combinaciones de productos por talle, color, precio y stock
+            Gestión de combinaciones de productos por talle, color, precio y ficha técnica
           </p>
         </div>
         <button className="variante-register-button" onClick={handleOpenCreate}>
@@ -223,7 +295,7 @@ export default function ProductoVariante() {
         <div className="variante-stat-card">
           <div className="variante-stat-icon"><XCircle size={20} /></div>
           <div className="variante-stat-info">
-            <p className="variante-stat-label">Inactivas / Sin Stock</p>
+            <p className="variante-stat-label">Inactivas</p>
             <h3 className="variante-stat-value">{inactiveCount}</h3>
             <span className="variante-stat-description">deshabilitadas</span>
           </div>
@@ -258,11 +330,12 @@ export default function ProductoVariante() {
             }}
             className="variante-filter-select"
           >
-            <option value="">Todos los talles</option>
+            <option value="">Todas las tallas</option>
+            <option value="Ajustable">Ajustable</option>
+            <option value="Única">Única</option>
             <option value="S">S</option>
             <option value="M">M</option>
             <option value="L">L</option>
-            <option value="XL">XL</option>
           </select>
           <select
             value={filtroEstado}
@@ -279,11 +352,11 @@ export default function ProductoVariante() {
         </div>
       </div>
 
-      {/* Tabla Principal */}
+      {/* Tabla Principal con FOTO y FICHA TÉCNICA */}
       <div className="variante-table-card">
         <div className="variante-table-header">
           <div className="variante-table-title">
-            <span>Listado de Variantes</span>
+            <span>Listado Producto Variante</span>
             <span className="variante-table-count">{filteredVariantes.length}</span>
           </div>
           <span className="variante-table-page">
@@ -295,13 +368,14 @@ export default function ProductoVariante() {
           <table className="variante-table">
             <thead>
               <tr>
-                <th>#</th>
-                <th>PRODUCTO</th>
-                <th>TALLE</th>
+                <th style={{ textAlign: "center" }}>FOTO</th>
+                <th>ID ⇅</th>
+                <th>Producto ⇅</th>
                 <th>COLOR</th>
-                <th>PRECIO</th>
-                <th>STOCK</th>
+                <th>TALLA</th>
+                <th>Precio ⇅</th>
                 <th>ESTADO</th>
+                <th style={{ textAlign: "center" }}>FICHA</th>
                 <th style={{ textAlign: "right" }}>ACCIONES</th>
               </tr>
             </thead>
@@ -309,45 +383,63 @@ export default function ProductoVariante() {
               {currentVariantes.length > 0 ? (
                 currentVariantes.map((v) => (
                   <tr key={v.id}>
+                    {/* FOTO */}
+                    <td style={{ textAlign: "center" }}>
+                      <div className="variante-foto-icon">
+                        <Package size={18} />
+                      </div>
+                    </td>
+
+                    {/* ID */}
                     <td className="variante-id">
                       <span>#{v.id}</span>
                     </td>
+
+                    {/* PRODUCTO */}
                     <td>
-                      <div className="variante-name-wrapper">
-                        <div className="variante-name-icon">
-                          <Package size={18} />
-                        </div>
-                        <div className="variante-info-text">
-                          <span className="variante-name">{v.producto || v.nombre}</span>
-                        </div>
-                      </div>
+                      <span className="variante-name">{v.producto || v.nombre}</span>
                     </td>
+
+                    {/* COLOR */}
                     <td>
                       <span className="variante-tag-pill">
-                        <Ruler size={12} className="cell-icon" />
-                        {v.talle}
-                      </span>
-                    </td>
-                    <td>
-                      <span className="variante-tag-pill">
-                        <Palette size={12} className="cell-icon" />
                         {v.color}
                       </span>
                     </td>
+
+                    {/* TALLA */}
+                    <td>
+                      <span className="variante-tag-pill talle-pill">
+                        {v.talle}
+                      </span>
+                    </td>
+
+                    {/* PRECIO */}
                     <td>
                       <span className="variante-price">{v.precio}</span>
                     </td>
-                    <td>
-                      <span className={`variante-stock ${v.stock === 0 ? "out-of-stock" : ""}`}>
-                        {v.stock} u.
-                      </span>
-                    </td>
+
+                    {/* ESTADO */}
                     <td>
                       <span className={`variante-status ${v.estado === "Inactivo" ? "inactive" : ""}`}>
                         <span className="variante-status-dot"></span>
                         {v.estado}
                       </span>
                     </td>
+
+                    {/* FICHA TÉCNICA (BOTÓN BADGE COMO EN LA IMAGEN) */}
+                    <td style={{ textAlign: "center" }}>
+                      <button
+                        className="btn-ficha-badge"
+                        onClick={() => handleOpenFicha(v)}
+                        title="Ver Ficha Técnica"
+                      >
+                        <FileText size={14} />
+                        <span>{v.insumos ? v.insumos.length : 0}</span>
+                      </button>
+                    </td>
+
+                    {/* ACCIONES */}
                     <td>
                       <div className="variante-actions">
                         <button
@@ -377,7 +469,7 @@ export default function ProductoVariante() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={8} className="variante-empty">
+                  <td colSpan={9} className="variante-empty">
                     No se encontraron variantes.
                   </td>
                 </tr>
@@ -437,18 +529,76 @@ export default function ProductoVariante() {
         </div>
       </div>
 
+      {/* MODAL FICHA TÉCNICA (NUEVO - EXACTO A TU SEGUNDA IMAGEN) */}
+      {modalMode === "ficha" && selectedVariante &&
+        ReactDOM.createPortal(
+          <div className="modal-overlay">
+            <div className="modal-container modal-ficha-container">
+              <div className="modal-header">
+                <div>
+                  <span className="modal-tag">VARIANTE #{selectedVariante.id}</span>
+                  <h2 className="modal-title-serif">Ficha Técnica</h2>
+                </div>
+                <button className="modal-close-btn" onClick={handleCloseModal}>
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="modal-body-ficha">
+                <p className="ficha-subtitle">
+                  {selectedVariante.producto || selectedVariante.nombre} · {selectedVariante.color} / {selectedVariante.talle}
+                </p>
+
+                <div className="ficha-table-container">
+                  <table className="ficha-table">
+                    <thead>
+                      <tr>
+                        <th>INSUMO</th>
+                        <th style={{ textAlign: "right" }}>CANTIDAD</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {selectedVariante.insumos && selectedVariante.insumos.length > 0 ? (
+                        selectedVariante.insumos.map((item) => (
+                          <tr key={item.id}>
+                            <td className="ficha-td-name">{item.nombre}</td>
+                            <td className="ficha-td-qty">{item.cantidad} unidad</td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={2} className="ficha-empty-td">
+                            Esta variante no tiene insumos registrados en su ficha técnica.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div className="modal-footer ficha-footer">
+                <button type="button" className="btn-modal-cancel btn-block" onClick={handleCloseModal}>
+                  Cerrar
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
+
       {/* MODAL CREAR / EDITAR */}
       {(modalMode === "create" || modalMode === "edit") &&
         ReactDOM.createPortal(
           <div className="modal-overlay">
-            <div className="modal-container">
+            <div className="modal-container modal-large-container">
               <div className="modal-header">
                 <div>
                   <span className="modal-tag">
-                    {modalMode === "create" ? "CU.13.01 • NUEVA VARIANTE" : `CU.13.02 • VARIANTE #${selectedVariante?.id}`}
+                    {modalMode === "create" ? "NUEVA VARIANTE" : `CU.13.02 • VARIANTE #${selectedVariante?.id}`}
                   </span>
                   <h2 className="modal-title">
-                    {modalMode === "create" ? "Registrar Variante" : "Editar Variante"}
+                    {modalMode === "create" ? "Crear Producto Variante" : "Editar Producto Variante"}
                   </h2>
                 </div>
                 <button className="modal-close-btn" onClick={handleCloseModal}>
@@ -457,81 +607,78 @@ export default function ProductoVariante() {
               </div>
 
               <form id="variante-form" onSubmit={handleSaveVariante} className="modal-body">
+                {/* PRODUCTO Y VARIANTE */}
                 <div className="section-divider">
-                  <span>PRODUCTO BASE</span>
+                  <span>PRODUCTO Y VARIANTE</span>
                 </div>
 
                 <div className="form-group">
                   <label className="form-label">PRODUCTO *</label>
-                  <input
-                    type="text"
-                    placeholder="Ej: Chaqueta Premium Cuero"
+                  <select
                     value={producto}
                     onChange={(e) => setProducto(e.target.value)}
-                    className="modal-input"
+                    className="modal-input modal-select"
                     required
-                  />
-                </div>
-
-                <div className="section-divider">
-                  <span>ATRIBUTOS DE LA VARIANTE</span>
+                  >
+                    {LISTA_PRODUCTOS.map((p) => (
+                      <option key={p} value={p}>{p}</option>
+                    ))}
+                  </select>
+                  <span className="form-field-hint">id_producto FK</span>
                 </div>
 
                 <div className="grid-2-cols">
                   <div className="form-group">
-                    <label className="form-label">TALLE</label>
+                    <label className="form-label">COLOR *</label>
+                    <select
+                      value={color}
+                      onChange={(e) => setColor(e.target.value)}
+                      className="modal-input modal-select"
+                      required
+                    >
+                      {LISTA_COLORES.map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                    <span className="form-field-hint">id_color FK</span>
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">TALLA *</label>
                     <select
                       value={talle}
                       onChange={(e) => setTalle(e.target.value)}
-                      className="modal-input"
+                      className="modal-input modal-select"
+                      required
                     >
-                      <option value="XS">XS</option>
-                      <option value="S">S</option>
-                      <option value="M">M</option>
-                      <option value="L">L</option>
-                      <option value="XL">XL</option>
-                      <option value="XXL">XXL</option>
+                      {LISTA_TALLAS.map((t) => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
                     </select>
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label">COLOR</label>
-                    <input
-                      type="text"
-                      placeholder="Ej: Negro, Azul, Marrón"
-                      value={color}
-                      onChange={(e) => setColor(e.target.value)}
-                      className="modal-input"
-                    />
+                    <span className="form-field-hint">id_talla FK</span>
                   </div>
                 </div>
 
-                <div className="grid-2-cols">
-                  <div className="form-group">
-                    <label className="form-label">PRECIO</label>
-                    <input
-                      type="text"
-                      placeholder="$120.000"
-                      value={precio}
-                      onChange={(e) => setPrecio(e.target.value)}
-                      className="modal-input"
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label">STOCK DISPONIBLE</label>
-                    <input
-                      type="number"
-                      placeholder="10"
-                      value={stock}
-                      onChange={(e) => setStock(e.target.value)}
-                      className="modal-input"
-                    />
-                  </div>
-                </div>
-
+                {/* PRECIO */}
                 <div className="section-divider">
-                  <span>ESTADO</span>
+                  <span>PRECIO</span>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">PRECIO ($)</label>
+                  <input
+                    type="text"
+                    placeholder="0"
+                    value={precio}
+                    onChange={(e) => setPrecio(e.target.value)}
+                    className="modal-input"
+                  />
+                  <span className="form-field-hint">Precio unitario</span>
+                </div>
+
+                {/* ESTADO Y FOTO */}
+                <div className="section-divider">
+                  <span>ESTADO Y FOTO</span>
                 </div>
 
                 <div className="form-group">
@@ -546,7 +693,9 @@ export default function ProductoVariante() {
                         <span className="dot-green"></span>
                         <span className="estado-text">Activo</span>
                       </div>
-                      {modalEstado === "Activo" && <CheckCircle2 size={18} className="check-icon" />}
+                      <div className="circle-check">
+                        {modalEstado === "Activo" && <Check size={12} />}
+                      </div>
                     </button>
 
                     <button
@@ -558,12 +707,112 @@ export default function ProductoVariante() {
                         <span className="dot-gray"></span>
                         <span className="estado-text">Inactivo</span>
                       </div>
-                      {modalEstado === "Inactivo" && <CheckCircle2 size={18} className="check-icon" />}
+                      <div className="circle-check">
+                        {modalEstado === "Inactivo" && <Check size={12} />}
+                      </div>
                     </button>
                   </div>
                 </div>
+
+                <div className="form-group">
+                  <label className="form-label">FOTO DEL PRODUCTO</label>
+                  <label className="upload-dropzone">
+                    <input
+                      type="file"
+                      accept="image/png, image/jpeg, image/webp"
+                      onChange={(e) => setImagen(e.target.files[0])}
+                      style={{ display: "none" }}
+                    />
+                    <ImagePlus size={28} className="upload-icon" />
+                    <span className="upload-text">
+                      {imagen ? imagen.name : "Seleccionar imagen"}
+                    </span>
+                  </label>
+                  <span className="upload-hint">JPG, PNG o WEBP. Haz clic o arrastra para subir</span>
+                </div>
+
+                {/* FICHA TÉCNICA — INSUMOS REQUERIDOS */}
+                <div className="section-divider">
+                  <span>FICHA TÉCNICA — INSUMOS REQUERIDOS</span>
+                </div>
+
+                <div className="insumos-input-row">
+                  <div className="form-group flex-3">
+                    <label className="form-label">INSUMO</label>
+                    <select
+                      value={insumoSeleccionado}
+                      onChange={(e) => setInsumoSeleccionado(e.target.value)}
+                      className="modal-input modal-select"
+                    >
+                      {LISTA_INSUMOS.map((i) => (
+                        <option key={i} value={i}>{i}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="form-group flex-1">
+                    <label className="form-label">CANTIDAD</label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={cantidadInsumo}
+                      onChange={(e) => setCantidadInsumo(parseInt(e.target.value, 10) || 1)}
+                      className="modal-input"
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    className="btn-add-insumo"
+                    onClick={handleAgregarInsumo}
+                  >
+                    + Agregar
+                  </button>
+                </div>
+
+                {/* CONTENEDOR PRINCIPAL VISIBLE */}
+                <div className="insumos-wrapper-container">
+                  {insumosAgregados.length > 0 ? (
+                    <div className="insumos-table-container">
+                      <table className="insumos-table">
+                        <thead>
+                          <tr>
+                            <th>INSUMO</th>
+                            <th>CANTIDAD</th>
+                            <th style={{ textAlign: "right" }}>ACCIÓN</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {insumosAgregados.map((item) => (
+                            <tr key={item.id}>
+                              <td className="insumo-td-name">{item.nombre}</td>
+                              <td className="insumo-td-qty">{item.cantidad} unidad{item.cantidad > 1 ? "es" : ""}</td>
+                              <td className="insumo-td-action">
+                                <button
+                                  type="button"
+                                  className="btn-remove-insumo-table"
+                                  onClick={() => handleEliminarInsumo(item.id)}
+                                  title="Eliminar insumo"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="insumos-box-empty">
+                      <span className="insumos-empty-state">
+                        Sin insumos agregados. Usa el selector para agregar.
+                      </span>
+                    </div>
+                  )}
+                </div>
               </form>
 
+              {/* FOOTER FIJO */}
               <div className="modal-footer">
                 <button type="button" className="btn-modal-cancel" onClick={handleCloseModal}>
                   Cancelar
@@ -610,7 +859,7 @@ export default function ProductoVariante() {
 
                 <div className="view-info-list">
                   <div className="view-info-row">
-                    <span className="view-label-icon">Talle</span>
+                    <span className="view-label-icon">Talla</span>
                     <span className="view-value">{selectedVariante.talle}</span>
                   </div>
                   <div className="view-info-row">
@@ -622,8 +871,8 @@ export default function ProductoVariante() {
                     <span className="view-value">{selectedVariante.precio}</span>
                   </div>
                   <div className="view-info-row">
-                    <span className="view-label-icon">Stock</span>
-                    <span className="view-value">{selectedVariante.stock} unidades</span>
+                    <span className="view-label-icon">Insumos Ficha</span>
+                    <span className="view-value">{selectedVariante.insumos ? selectedVariante.insumos.length : 0} ítems</span>
                   </div>
                 </div>
               </div>
