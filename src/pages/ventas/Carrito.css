@@ -327,13 +327,94 @@
   .carrito-module .modal-footer { display: flex; gap: 12px; padding: 18px 30px 26px; border-top: 1px solid var(--border); }
   .carrito-module .modal-footer .btn { flex: 1; }
 
-  /* Responsive */
+  /* ================================================================== */
+  /* RESPONSIVE                                                         */
+  /* ================================================================== */
   @media (max-width: 700px) {
-    .carrito-module .cart-page { padding: 20px; }
+    .carrito-module { padding: 32px 16px 70px; }
     .carrito-module .page-title { font-size: 34px; }
-    .carrito-module .cart-card { grid-template-columns: 60px 1fr; }
-    .carrito-module .cart-card__icon { width: 60px; height: 60px; }
-    .carrito-module .cart-card__pricing { grid-column: 1 / -1; flex-direction: row; justify-content: space-between; align-items: baseline; margin-top: 12px; }
+    .carrito-module .eyebrow { font-size: 11px; }
+    .carrito-module .cart-count { font-size: 13.5px; margin: 14px 0 16px; }
+
+    .carrito-module .cart-card { grid-template-columns: 60px 1fr; padding: 18px 16px; column-gap: 14px; }
+    .carrito-module .cart-card__icon { width: 60px; height: 60px; border-radius: 10px; }
+    .carrito-module .cart-card__name { font-size: 14px; padding-right: 34px; }
+    .carrito-module .cart-card__pricing { grid-column: 1 / -1; flex-direction: row; justify-content: space-between; align-items: baseline; margin-top: 12px; min-width: 0; }
+    .carrito-module .cart-card__trash { top: 14px; right: 16px; }
+    .carrito-module .qty-stepper { padding: 4px 11px; gap: 12px; }
+
+    .carrito-module .summary-card { padding: 20px 18px; position: static; }
+    .carrito-module .summary-total-value { font-size: 19px; }
+
+    .carrito-module .avatar { width: 30px; height: 30px; }
+    .carrito-module .avatar svg { width: 14px; height: 14px; }
+    .carrito-module .client-row { padding: 11px 13px; gap: 11px; }
+    .carrito-module .client-row__name { font-size: 14px; }
+    .carrito-module .client-row__email { font-size: 12px; }
+
+    .carrito-module .added-product-row { padding: 11px 13px; gap: 11px; }
+    .carrito-module .added-product-row__name { font-size: 13.5px; }
+    .carrito-module .total-box { padding: 13px; }
+    .carrito-module .total-box span:last-child { font-size: 16px; }
+
     .carrito-module .payment-methods { grid-template-columns: repeat(2, 1fr); }
+    .carrito-module .payment-method { padding: 14px 6px; gap: 7px; font-size: 13px; }
+
     .carrito-module .form-grid { grid-template-columns: 1fr; }
+
+    .carrito-module .step__circle { width: 25px; height: 25px; font-size: 11.5px; }
+    .carrito-module .step__label { font-size: 10px; }
+    .carrito-module .stepper { padding: 0 20px 16px; }
+    .carrito-module .modal-header { padding: 22px 20px 14px; }
+    .carrito-module .modal-body { padding: 18px 20px 8px; }
+    .carrito-module .modal-footer { padding: 14px 20px 20px; }
+    .carrito-module .modal-overlay { padding: 14px; align-items: flex-end; }
+    .carrito-module .modal-card { max-width: 100%; max-height: 94vh; border-radius: 22px 22px 0 0; }
+
+    .carrito-module .icon-btn svg { width: 17px; height: 17px; }
+  }
+
+  @media (max-width: 480px) {
+    .carrito-module { padding: 20px 12px 50px; }
+    .carrito-module .page-title { font-size: 26px; }
+
+    .carrito-module .cart-card { grid-template-columns: 50px 1fr; padding: 14px; column-gap: 12px; }
+    .carrito-module .cart-card__icon { width: 50px; height: 50px; }
+    .carrito-module .cart-card__icon svg { width: 20px; height: 20px; }
+    .carrito-module .cart-card__name { font-size: 13.5px; padding-right: 28px; }
+    .carrito-module .line-total { font-size: 14px; }
+    .carrito-module .unit-price { font-size: 11.5px; }
+
+    .carrito-module .avatar { width: 28px; height: 28px; }
+    .carrito-module .client-row { padding: 10px 12px; gap: 9px; }
+
+    .carrito-module .added-product-row { padding: 10px 12px; gap: 9px; }
+    .carrito-module .added-product-row__price { font-size: 13px; }
+
+    .carrito-module .payment-methods { gap: 8px; }
+    .carrito-module .payment-method { padding: 12px 4px; font-size: 12px; gap: 6px; }
+
+    .carrito-module .step__label { display: none; }
+    .carrito-module .step--active .step__label, .carrito-module .step--done .step__label { display: block; }
+    .carrito-module .step-connector { margin: 12px 4px 0; }
+
+    .carrito-module .modal-title { font-size: 22px; }
+    .carrito-module .kv-row { padding: 11px 13px; font-size: 13px; }
+    .carrito-module .badge { font-size: 12px; padding: 3px 11px; }
+  }
+
+  @media (max-width: 380px) {
+    .carrito-module .cart-card { grid-template-columns: 44px 1fr; padding: 12px; column-gap: 10px; }
+    .carrito-module .cart-card__icon { width: 44px; height: 44px; border-radius: 9px; }
+    .carrito-module .cart-card__icon svg { width: 18px; height: 18px; }
+    .carrito-module .qty-stepper { gap: 10px; padding: 4px 9px; }
+
+    .carrito-module .avatar { width: 26px; height: 26px; }
+    .carrito-module .client-row, .carrito-module .added-product-row { padding: 9px 10px; gap: 8px; }
+
+    .carrito-module .btn { padding: 11px 16px; font-size: 13px; }
+    .carrito-module .btn--ghost { padding: 9px 13px; font-size: 12.5px; }
+
+    .carrito-module .payment-method { padding: 10px 3px; font-size: 11px; }
+    .carrito-module .step__circle { width: 22px; height: 22px; font-size: 10.5px; }
   }

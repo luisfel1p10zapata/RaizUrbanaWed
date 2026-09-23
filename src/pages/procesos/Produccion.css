@@ -435,7 +435,7 @@
 
 .produccion-table {
   width: 100%;
-  min-width: 1080px;
+  min-width: 1180px;
   border-collapse: collapse;
   table-layout: fixed;
   font-size: 14px;
@@ -466,16 +466,17 @@
   color: var(--ink);
   font-size: 14px;
   vertical-align: middle;
+  overflow: hidden;
 }
 
 .produccion-table td:first-child { padding-left: 24px; }
 .produccion-table tbody tr:last-child td { border-bottom: none; }
 
 /* Anchos de columna */
-.produccion-table th:nth-child(1) { width: 7%; }
-.produccion-table th:nth-child(2) { width: 11%; }
-.produccion-table th:nth-child(3) { width: 17%; }
-.produccion-table th:nth-child(4) { width: 15%; }
+.produccion-table th:nth-child(1) { width: 8%; }
+.produccion-table th:nth-child(2) { width: 12%; }
+.produccion-table th:nth-child(3) { width: 16%; }
+.produccion-table th:nth-child(4) { width: 14%; }
 .produccion-table th:nth-child(5) { width: 16%; }
 .produccion-table th:nth-child(6) { width: 11%; }
 .produccion-table th:nth-child(7) { width: 13%; }
@@ -493,6 +494,7 @@
 .produccion-id span {
   display: inline-flex;
   align-items: center;
+  max-width: 100%;
   padding: 4px 10px;
   border: 1px solid var(--border-soft);
   border-radius: 6px;
@@ -501,12 +503,15 @@
   font-size: 12.5px;
   font-weight: 600;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* CÓDIGO */
 .produccion-code {
   display: inline-flex;
   align-items: center;
+  max-width: 100%;
   min-height: 0;
   padding: 4px 10px;
   border: 1px solid var(--border-soft);
@@ -516,11 +521,13 @@
   font-size: 12.5px;
   font-weight: 600;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* PRODUCTO */
 .produccion-product {
-  display: block;
+  max-width: 100%;
   color: var(--ink) !important;
   font-size: 14.5px !important;
   font-weight: 600;
@@ -531,10 +538,13 @@
 
 /* RESPONSABLE */
 .produccion-responsible {
+  max-width: 100%;
   color: var(--ink) !important;
   font-size: 14.5px !important;
   font-weight: 600;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ENCARGADO */
@@ -543,6 +553,7 @@
   align-items: center;
   gap: 13px;
   min-width: 0;
+  max-width: 100%;
   white-space: nowrap;
 }
 
@@ -562,9 +573,12 @@
 .produccion-assigned-icon svg { width: 18px; height: 18px; }
 
 .produccion-assigned span {
+  flex: 1 1 auto;
+  min-width: 0;
   color: var(--ink);
   font-size: 14px;
   font-weight: 500;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -1399,7 +1413,7 @@
   .produccion-select-wrapper { flex: 1 1 100%; width: 100%; }
 
   .produccion-table-wrapper { margin: 0 -1px; }
-  .produccion-table { min-width: 960px; }
+  .produccion-table { min-width: 1050px; }
   .produccion-table th { padding: 12px 14px; font-size: 11px; }
   .produccion-table th:first-child { padding-left: 18px; }
   .produccion-table td { padding: 14px; font-size: 13.5px; }
@@ -1453,7 +1467,7 @@
   .produccion-stat-value { font-size: 16px; }
   .produccion-stat-description { font-size: 12px; }
 
-  .produccion-table { min-width: 900px; }
+  .produccion-table { min-width: 985px; }
   .produccion-product,
   .produccion-responsible { font-size: 13.5px !important; }
   .produccion-status,
@@ -1469,7 +1483,7 @@
 @media (max-width: 380px) {
   .produccion-page { padding-left: 10px; padding-right: 10px; }
   .produccion-register-button { padding: 13px 18px; font-size: 13.5px; }
-  .produccion-table { min-width: 860px; }
+  .produccion-table { min-width: 940px; }
   .form-row { gap: 10px; }
   .status-option { padding: 12px 14px; }
 }

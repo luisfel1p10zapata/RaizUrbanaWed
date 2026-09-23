@@ -7,6 +7,12 @@ html, body {
   min-height: 100vh;
 }
 
+.ru-root *,
+.ru-root *::before,
+.ru-root *::after {
+  box-sizing: border-box;
+}
+
 /* ============ DESIGN TOKENS (Raíz Urbana) ============ */
 /* Se definen también para el overlay, por si el modal se renderiza fuera de .ru-root */
 .ru-root,
@@ -75,6 +81,7 @@ html, body {
   background-color: var(--page-bg);
   min-height: 100vh;
   width: 100%;
+  overflow-x: hidden;
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
@@ -136,7 +143,7 @@ html, body {
 }
 
 .ru-page {
-  max-width: 100%;
+  max-width: 1440px;
   margin: 0 auto;
   padding: 48px 10px 90px;
 }
@@ -149,7 +156,7 @@ html, body {
 .ru-header h1 {
   font-family: var(--font-logo);
   font-weight: 500;
-  font-size: 44px;
+  font-size: clamp(24px, 5vw, 44px);
   line-height: 1.15;
   color: var(--primary);
   margin: 0 0 9px 0;
@@ -160,6 +167,7 @@ html, body {
   color: var(--secondary);
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
@@ -172,6 +180,8 @@ html, body {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
   margin: 40px 0 26px;
   padding-bottom: 16px;
   border-bottom: 1px solid var(--card-border);
@@ -189,7 +199,7 @@ html, body {
 .ru-module-title {
   font-family: var(--font-logo);
   font-weight: 600;
-  font-size: 34px;
+  font-size: clamp(22px, 4vw, 34px);
   color: var(--primary);
   margin: 0;
 }
@@ -214,12 +224,14 @@ html, body {
   border-radius: var(--radius-lg);
   padding: 24px 26px;
   box-shadow: var(--shadow-card);
+  min-width: 0; /* evita que el contenido empuje el ancho de la celda del grid */
 }
 
 .ru-kpi-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 10px;
   margin-bottom: 26px;
 }
 
@@ -227,6 +239,7 @@ html, body {
   font-size: 14px;
   color: var(--secondary);
   font-weight: 500;
+  overflow-wrap: anywhere;
 }
 
 .ru-kpi-icon {
@@ -243,17 +256,19 @@ html, body {
 
 .ru-kpi-value {
   font-family: var(--font-ui);
-  font-size: 36px;
+  font-size: clamp(20px, 3vw, 36px);
   font-weight: 700;
   letter-spacing: -0.01em;
   color: var(--primary);
   margin-bottom: 10px;
+  overflow-wrap: anywhere;
 }
 
 .ru-kpi-delta {
   font-size: 13px;
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 5px;
   color: var(--muted-text);
 }
@@ -282,6 +297,7 @@ html, body {
   flex-direction: column;
   height: 540px;
   overflow: hidden;
+  min-width: 0;
 }
 
 .ru-chart-head {
@@ -290,6 +306,8 @@ html, body {
   gap: 12px;
   padding: 18px 24px;
   border-bottom: 1px solid var(--divider);
+  flex-wrap: wrap;
+  row-gap: 8px;
 }
 
 .ru-chart-icon {
@@ -329,6 +347,7 @@ html, body {
   display: flex;
   align-items: center;
   gap: 3px;
+  white-space: nowrap;
 }
 
 .ru-chart-count-badge {
@@ -339,6 +358,7 @@ html, body {
   background: var(--background);
   padding: 4px 12px;
   border-radius: 20px;
+  white-space: nowrap;
 }
 
 /* ru-chart-body es flex-column para que el gráfico (flex:1)
@@ -368,7 +388,8 @@ html, body {
 /* Legend under a chart */
 .ru-legend-row {
   display: flex;
-  gap: 18px;
+  flex-wrap: wrap;
+  gap: 12px 18px;
   justify-content: center;
   font-size: 12px;
   font-weight: 600;
@@ -480,10 +501,11 @@ html, body {
 
 .ru-modal-title {
   font-family: var(--font-logo);
-  font-size: 26px;
+  font-size: clamp(19px, 3.5vw, 26px);
   font-weight: 600;
   color: var(--primary);
   margin: 0;
+  padding-right: 36px; /* evita que el título choque con el botón de cerrar */
 }
 
 .ru-modal-close {
@@ -508,7 +530,9 @@ html, body {
 .ru-modal-body {
   padding: 24px 30px 8px;
   overflow-y: auto;
+  overflow-x: hidden;
   flex: 1;
+  -webkit-overflow-scrolling: touch;
 }
 
 .ru-modal-chart {
@@ -519,6 +543,8 @@ html, body {
 
 .ru-modal-summary-line {
   display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
   justify-content: space-between;
   padding: 14px 0 6px;
   font-size: 11.5px;
@@ -528,6 +554,8 @@ html, body {
 .ru-table-wrap {
   border-top: 1px solid var(--divider);
   margin-top: 6px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .ru-table {
@@ -544,6 +572,7 @@ html, body {
   font-weight: 600;
   padding: 14px 6px 10px;
   border-bottom: 1px solid var(--divider);
+  white-space: nowrap;
 }
 
 .ru-table thead th:not(:first-child),
@@ -564,6 +593,7 @@ html, body {
   display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 160px;
 }
 
 .ru-avatar {
@@ -633,11 +663,23 @@ html, body {
 .ru-context-note b { color: var(--primary); }
 
 /* ============ RESPONSIVE ============ */
+
+/* --- Tablets grandes / laptops pequeños: adelantamos el quiebre de
+   4→2 columnas y de 2→1 gráficos antes de llegar a 880px, para que
+   las tarjetas no se aplasten en pantallas tipo iPad landscape/portrait --- */
+@media (max-width: 1180px) {
+  .ru-kpi-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 1024px) {
+  .ru-charts-grid { grid-template-columns: 1fr; }
+  .ru-chart-card { height: auto; min-height: 460px; }
+}
+
 @media (max-width: 880px) {
   .ru-kpi-grid { grid-template-columns: 1fr 1fr; }
   .ru-charts-grid { grid-template-columns: 1fr; }
   .ru-page { padding: 28px 16px 60px; }
-  .ru-header h1 { font-size: 34px; }
   .ru-chart-card { height: auto; min-height: 480px; }
   .ru-modal { max-width: 92vw; }
   .ru-modal-header { padding: 22px 20px 16px; }
@@ -645,7 +687,123 @@ html, body {
   .ru-modal-footer { padding: 16px 20px 22px; }
 }
 
-@media (max-width: 520px) {
+@media (max-width: 640px) {
+  .ru-kpi-card { padding: 18px 16px; }
+  .ru-kpi-icon { width: 34px; height: 34px; }
+  .ru-kpi-top { margin-bottom: 18px; }
+  .ru-kpi-label { font-size: 13px; }
+
+  .ru-chart-head { padding: 15px 18px; gap: 10px; }
+  .ru-chart-icon { width: 32px; height: 32px; }
+  .ru-chart-title { font-size: 14px; }
+  .ru-chart-badge, .ru-chart-count-badge { font-size: 11px; padding: 3px 9px; }
+  .ru-chart-body { padding: 14px 18px 10px; min-height: 280px; }
+  .ru-chart-footer { padding: 0 18px 18px; }
+  .ru-view-btn { padding: 11px 14px; font-size: 12.5px; }
+
+  .ru-legend-row { gap: 8px 12px; font-size: 11px; }
+  .ru-legend-row .sq { width: 11px; height: 11px; }
+  .ru-legend-row .dot { width: 7px; height: 7px; }
+
+  .ru-avatar { width: 30px; height: 30px; font-size: 11px; }
+  .ru-modal-header { padding: 22px 20px 14px; }
+  .ru-modal-body { padding: 18px 20px 8px; }
+  .ru-modal-footer { padding: 14px 20px 20px; }
+  .ru-modal-chart { height: 260px; }
+}
+
+/* --- Móviles medianos: la fila de KPIs pasa a 1 columna aquí en vez de
+   en 520px, así ganamos ancho antes y el valor numérico no se corta --- */
+@media (max-width: 560px) {
   .ru-kpi-grid { grid-template-columns: 1fr; }
   .ru-module-row { flex-direction: column; align-items: flex-start; gap: 6px; }
+  .ru-header-sub { gap: 6px; row-gap: 4px; }
+}
+
+@media (max-width: 480px) {
+  .ru-page { padding: 20px 12px 50px; }
+
+  .ru-kpi-card { padding: 14px 12px; }
+  .ru-kpi-icon { width: 30px; height: 30px; }
+  .ru-kpi-delta { font-size: 12px; }
+
+  .ru-chart-card { min-height: 400px; }
+  .ru-chart-icon { width: 28px; height: 28px; }
+  .ru-chart-title { font-size: 13px; }
+  .ru-chart-subtitle { font-size: 11px; }
+  .ru-chart-body { min-height: 240px; }
+
+  /* Tabla del modal se convierte en tarjetas apiladas.
+     Agrega data-label="Columna" a cada <td> del <tbody> de .ru-table
+     para que la etiqueta se muestre arriba del valor. */
+  .ru-table-wrap { overflow-x: visible; }
+  .ru-table { display: block; }
+  .ru-table thead { display: none; }
+  .ru-table tbody { display: block; }
+  .ru-table tbody tr {
+    display: block;
+    border: 1px solid var(--divider);
+    border-radius: 10px;
+    padding: 2px 12px;
+    margin-bottom: 10px;
+  }
+  .ru-table tbody tr:last-child { margin-bottom: 0; }
+  .ru-table tbody td {
+    display: block;
+    text-align: left !important;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--divider);
+    font-size: 13px;
+  }
+  .ru-table tbody td:last-child { border-bottom: none; }
+  .ru-table tbody td::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--label-text);
+    margin-bottom: 4px;
+  }
+  .ru-client-cell { min-width: 0; }
+  .ru-avatar { width: 26px; height: 26px; font-size: 10.5px; }
+  .ru-tag { font-size: 10px; padding: 2px 7px; }
+
+  .ru-context-note { font-size: 11px; padding: 10px 12px; }
+}
+
+@media (max-width: 380px) {
+  .ru-kpi-icon { width: 26px; height: 26px; }
+  .ru-chart-icon { width: 26px; height: 26px; }
+  .ru-modal-close { width: 28px; height: 28px; }
+  .ru-close-btn { padding: 11px; font-size: 12px; }
+  .ru-avatar { width: 24px; height: 24px; font-size: 10px; }
+}
+
+/* --- Móviles muy angostos (320px y similares): último respiro para que
+   el header y las tarjetas no rocen los bordes de la pantalla --- */
+@media (max-width: 340px) {
+  .ru-page { padding: 16px 10px 40px; }
+  .ru-kpi-card { padding: 12px 10px; }
+  .ru-chart-body { padding: 12px 14px 8px; }
+  .ru-chart-footer { padding: 0 14px 14px; }
+}
+
+/* --- Altura corta (celulares en horizontal): evita que el modal se
+   sienta gigante cuando hay poca altura de viewport disponible --- */
+@media (max-height: 480px) and (orientation: landscape) {
+  .ru-modal { max-height: 96vh; }
+  .ru-modal-body { padding-top: 14px; }
+  .ru-modal-chart { height: 200px; }
+}
+
+/* --- Accesibilidad: respeta a quienes prefieren menos movimiento --- */
+@media (prefers-reduced-motion: reduce) {
+  .ru-root, .ru-view-btn, .ru-close-btn, .ru-modal-close {
+    transition: none;
+  }
+  .ru-modal-overlay {
+    animation: none;
+  }
 }
