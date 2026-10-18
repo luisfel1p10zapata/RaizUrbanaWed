@@ -10,7 +10,7 @@ import { useState } from 'react';
 
 import './AdminSidebar.css';
 
-import useTheme from '../hook/useTheme';
+import useTheme from '../hooks/useTheme';
 import navigationConfig from './NavigationConfig';
 import SidebarSection from './SidebarSection';
 import SidebarItem from './SidebarItem';

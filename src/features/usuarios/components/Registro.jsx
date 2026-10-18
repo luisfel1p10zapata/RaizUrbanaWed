@@ -14,7 +14,7 @@ import {
   MapPin
 } from 'lucide-react';
 
-import useTheme from '../../components/hook/useTheme';
+import useTheme from '../../../components/hooks/useTheme';
 import './registro.css';
 
 export default function Registro() {
