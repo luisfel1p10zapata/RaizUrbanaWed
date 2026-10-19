@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { Moon, Sun, ShoppingBag } from 'lucide-react';
-import useTheme from '../hook/useTheme';
+import useTheme from '../hooks/useTheme';
 import './MainNavbar.css';
 
 const MainNavbar = () => {

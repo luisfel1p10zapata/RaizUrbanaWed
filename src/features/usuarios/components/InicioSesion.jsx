@@ -1,27 +1,30 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Mail, ArrowLeft, Layers, Star, LayoutGrid } from 'lucide-react';
-import useTheme from '../../components/hook/useTheme';
-import './recuperarcontraseña.css';
+import { useNavigate, Link } from "react-router-dom";
+import { Mail, Lock, Eye, EyeOff, ArrowLeft, Layers, Star, LayoutGrid } from 'lucide-react';
+import useTheme from '../../../components/hooks/useTheme';
+import './iniciosesion.css';
 
-export default function RecuperarContrasena() {
+export default function InicioSesion() {
+  const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const navigate = useNavigate();
   const { theme } = useTheme();
 
-  // Selección de logo dinámico según el tema
   const logoSrc = theme === 'dark' ? '/images/logoDark.png' : '/images/logo-ru.png';
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    alert('Se ha enviado un enlace de recuperación a tu correo electrónico.');
+    // Redirección directa al Perfil tras iniciar sesión
+    navigate('/cuenta/perfil');
   };
 
   return (
     <div className="auth-container">
       {/* Panel Izquierdo Hero */}
       <div className="auth-left-panel">
-        <div className="auth-brand-logo-container">
-          <img src={logoSrc} alt="Raíz Urbana" className="auth-brand-logo-img" />
+        <div className="auth-brand-logo">
+          <img src={logoSrc} alt="Raíz Urbana" />
         </div>
 
         <div className="auth-hero-content">
@@ -63,16 +66,12 @@ export default function RecuperarContrasena() {
 
         <div className="auth-card-wrapper">
           <div className="auth-card">
-            <Link to="/cuenta/iniciar-sesion" className="auth-card-header-link">
-              <ArrowLeft size={14} />
-              Volver al inicio de sesión
-            </Link>
-
-            <div className="auth-card-subtitle">RECUPERACIÓN DE ACCESO</div>
-            <h2 className="auth-card-title">Recuperar contraseña</h2>
-            <p className="auth-card-desc">
-              Te enviaremos un enlace para restablecer tu contraseña.
-            </p>
+            <div className="auth-card-logo">
+              <img src={logoSrc} alt="Raíz Urbana" />
+            </div>
+            <div className="auth-card-subtitle">BIENVENIDO DE VUELTA</div>
+            <h2 className="auth-card-title">Iniciar sesión</h2>
+            <p className="auth-card-desc">Accede a tu cuenta de Raíz Urbana</p>
 
             <form onSubmit={handleSubmit} className="auth-form">
               <div className="auth-input-group">
@@ -90,10 +89,49 @@ export default function RecuperarContrasena() {
                 </div>
               </div>
 
+              <div className="auth-input-group">
+                <label>CONTRASEÑA</label>
+                <div className="auth-input-wrapper">
+                  <Lock size={16} className="auth-input-icon" />
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="auth-input"
+                  />
+                  <button
+                    type="button"
+                    className="auth-password-toggle"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="auth-options">
+                <label className="auth-checkbox-label">
+                  <input type="checkbox" />
+                  Recordarme
+                </label>
+                <Link to="/cuenta/recuperar-contrasena" className="auth-forgot-link">
+                  Recuperar contraseña
+                </Link>
+              </div>
+
               <button type="submit" className="auth-submit-btn">
-                ENVIAR ENLACE DE RECUPERACIÓN
+                INICIAR SESIÓN
               </button>
             </form>
+
+            <div className="auth-card-footer">
+              ¿No tienes cuenta?{' '}
+              <Link to="/cuenta/registro" className="auth-link-bold">
+                Regístrate
+              </Link>
+            </div>
           </div>
         </div>
 

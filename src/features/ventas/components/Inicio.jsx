@@ -7,7 +7,7 @@ import {
   ShoppingBag,
   Sparkles,
 } from 'lucide-react';
-import useTheme from '../../components/hook/useTheme';
+import useTheme from '../../../components/hooks/useTheme';
 
 const categories = [
   {
