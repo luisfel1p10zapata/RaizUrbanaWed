@@ -11,6 +11,7 @@ import Productos from '../features/control-de-existencias/components/Productos';
 import ProductosVariante from '../features/control-de-existencias/components/ProductosVariante';
 import Categorias from '../features/control-de-existencias/components/Categorias';
 import TipoProducto from '../features/control-de-existencias/components/TipoProducto';
+import Devoluciones from '../features/ventas/components/Devoluciones';
 
 // Dashboard
 import Dashboard from '../features/dashboard/components/Dashboard';
@@ -25,6 +26,7 @@ import Insumos from '../features/control-de-existencias/components/Insumos';
 import CategoriaInsumos from '../features/control-de-existencias/components/CategoriaInsumos';
 import Materiales from '../features/control-de-existencias/components/Materiales';
 import Tamanos from '../features/control-de-existencias/components/Tamanos';
+import BajasInsumos from '../features/control-de-existencias/components/BajasInsumos';
 
 // Producción y Configuración de Procesos
 import Produccion from '../features/produccion/components/Produccion';
@@ -133,6 +135,18 @@ const AppRoutes = () => {
           <Route
             path="/proveedores"
             element={<Proveedores />}
+          />
+
+          {/* Inventario */}
+          <Route
+            path="/inventario/bajas-insumos"
+            element={<BajasInsumos />}
+          />
+
+          {/* Inventario */}
+          <Route
+            path="/devoluciones"
+            element={<Devoluciones />}
           />
 
           {/* Inventario */}

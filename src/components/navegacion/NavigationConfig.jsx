@@ -1,3 +1,4 @@
+
 import {
     Home,
     LayoutDashboard,
@@ -14,6 +15,8 @@ import {
     TrendingUp,
     Receipt,
     Layers,
+    Archive,
+    RotateCcw,
 } from 'lucide-react';
 
 const navigationConfig = [
@@ -34,17 +37,44 @@ const navigationConfig = [
     },
 
     {
-        title: 'Ventas',
+        title: 'Configuración',
         items: [
             {
-                label: 'Ventas',
-                path: '/ventas',
-                icon: TrendingUp,
+                label: 'Roles',
+                path: '/administracion/roles',
+                icon: Shield,
+            },
+        ],
+    },
+
+    {
+        title: 'Usuarios',
+        items: [
+            {
+                label: 'Usuarios',
+                path: '/administracion/usuarios',
+                icon: Users,
+            },
+        ],
+    },
+
+    {
+        title: 'Control de existencias',
+        items: [
+            {
+                label: 'Categoría',
+                path: '/categorias',
+                icon: Tags,
             },
             {
-                label: 'Carrito',
-                path: '/carrito',
-                icon: ShoppingBag,
+                label: 'Subcategoría',
+                path: '/tipo-producto',
+                icon: Layers,
+            },
+            {
+                label: 'Insumos',
+                path: '/inventario/insumos',
+                icon: Warehouse,
             },
             {
                 label: 'Productos',
@@ -52,18 +82,23 @@ const navigationConfig = [
                 icon: Package,
             },
             {
-                label: 'Productos Variante',
+                label: 'Producto Variante',
                 path: '/productos-variante',
                 icon: Layers,
             },
             {
-                label: 'Categorías',
-                path: '/categorias',
-                icon: Tags,
+                label: 'Bajas Insumos',
+                path: '/inventario/bajas-insumos',
+                icon: Archive,
             },
             {
-                label: 'Tipo Producto',
-                path: '/tipo-producto',
+                label: 'Tamaños',
+                path: '/inventario/tamanos',
+                icon: Ruler,
+            },
+            {
+                label: 'Materiales',
+                path: '/inventario/materiales',
                 icon: Package,
             },
         ],
@@ -73,77 +108,51 @@ const navigationConfig = [
         title: 'Compras',
         items: [
             {
-                label: 'Compras',
-                path: '/compras',
-                icon: Receipt,
-            },
-            {
-                label: 'Compras Insumos',
-                path: '/compras-insumos',
-                icon: Package,
-            },
-            {
                 label: 'Proveedores',
                 path: '/proveedores',
                 icon: Truck,
             },
-        ],
-    },
-
-    {
-        title: 'Inventario',
-        items: [
             {
-                label: 'Insumos',
-                path: '/inventario/insumos',
-                icon: Warehouse,
-            },
-            {
-                label: 'Categoría Insumos',
-                path: '/inventario/categoria-insumos',
-                icon: Tags,
-            },
-            {
-                label: 'Materiales',
-                path: '/inventario/materiales',
-                icon: Layers,
-            },
-            {
-                label: 'Tamaños',
-                path: '/inventario/tamanos',
-                icon: Ruler,
+                label: 'Compras',
+                path: '/compras',
+                icon: Receipt,
             },
         ],
     },
 
     {
-        title: 'Procesos',
+        title: 'Producción',
         items: [
             {
-                label: 'Producción',
+                label: 'Orden de producción',
                 path: '/procesos/produccion',
                 icon: Factory,
+            },
+        ],
+    },
+
+    {
+        title: 'Ventas',
+        items: [
+            {
+                label: 'Ventas',
+                path: '/ventas',
+                icon: TrendingUp,
+            },
+            {
+                label: 'Devoluciones',
+                path: '/devoluciones',
+                icon: RotateCcw,
+            },
+            {
+                label: 'Carrito',
+                path: '/carrito',
+                icon: ShoppingBag,
             },
             {
                 label: 'Método Pago',
                 path: '/procesos/metodo-pago',
                 icon: CreditCard,
-            },
-        ],
-    },
-
-    {
-        title: 'Administración',
-        items: [
-            {
-                label: 'Usuarios',
-                path: '/administracion/usuarios',
-                icon: Users,
-            },
-            {
-                label: 'Roles',
-                path: '/administracion/roles',
-                icon: Shield,
             },
         ],
     },
