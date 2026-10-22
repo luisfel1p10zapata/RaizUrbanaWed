@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react';
+import useRoles from '../hooks/useRoles';
+
 import {
   Plus,
   Search,
@@ -71,6 +73,17 @@ const INITIAL_ROLES = [
 ];
 
 const Roles = () => {
+
+  const {
+    permisos,
+    cargandoPermisos,
+    guardando,
+    error,
+    crearRol,
+  } = useRoles();
+
+  const [permisosExpandidos, setPermisosExpandidos] = useState([]);
+  const [errorFormulario, setErrorFormulario] = useState('');
   // Estado principal de roles
   const [rolesList, setRolesList] = useState(INITIAL_ROLES);
 
@@ -82,13 +95,11 @@ const Roles = () => {
   const [activeModal, setActiveModal] = useState(null); // 'CREATE' | 'VIEW' | 'EDIT' | 'DELETE' | null
   const [selectedRole, setSelectedRole] = useState(null);
 
-  // Estado del Formulario (Crear / Editar)
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     active: true,
-    isTotalAccess: false,
-    permissions: [],
+    privilegeIds: [],
   });
 
   // ---- CAMBIO RÁPIDO DE ESTADO (PROTEGIDO SI ES ADMIN/PROTECTED) ----
@@ -102,32 +113,66 @@ const Roles = () => {
     );
   };
 
-  // ---- MANEJO DE SELECCIÓN DE PERMISOS ----
-  const handlePermissionToggle = (moduleName) => {
-    setFormData((prev) => {
-      const isSelected = prev.permissions.includes(moduleName);
-      const updatedPermissions = isSelected
-        ? prev.permissions.filter((p) => p !== moduleName)
-        : [...prev.permissions, moduleName];
 
-      return {
-        ...prev,
-        permissions: updatedPermissions,
-        isTotalAccess: updatedPermissions.length === AVAILABLE_MODULES.length,
-      };
-    });
-  };
+  const obtenerTodosLosPrivilegios = () =>
+    permisos.flatMap((permiso) =>
+      permiso.privilegios.map((privilegio) => privilegio.id_privilegio)
+    );
 
   const handleTotalAccessToggle = () => {
     setFormData((prev) => {
-      const newTotalAccess = !prev.isTotalAccess;
+      const todos = obtenerTodosLosPrivilegios();
+      const tieneAccesoTotal = todos.every((id) =>
+        prev.privilegeIds.includes(id)
+      );
+
       return {
         ...prev,
-        isTotalAccess: newTotalAccess,
-        permissions: newTotalAccess ? [...AVAILABLE_MODULES] : [],
+        privilegeIds: tieneAccesoTotal ? [] : todos,
       };
     });
   };
+
+  const handleExpandirPermiso = (idPermiso) => {
+    setPermisosExpandidos((prev) =>
+      prev.includes(idPermiso)
+        ? prev.filter((id) => id !== idPermiso)
+        : [...prev, idPermiso]
+    );
+  };
+
+  const handlePrivilegeToggle = (idPrivilegio) => {
+    setFormData((prev) => {
+      const seleccionado = prev.privilegeIds.includes(idPrivilegio);
+
+      return {
+        ...prev,
+        privilegeIds: seleccionado
+          ? prev.privilegeIds.filter((id) => id !== idPrivilegio)
+          : [...prev.privilegeIds, idPrivilegio],
+      };
+    });
+  };
+
+  const handlePermissionToggle = (permiso) => {
+    const ids = permiso.privilegios.map(
+      (privilegio) => privilegio.id_privilegio
+    );
+
+    setFormData((prev) => {
+      const todosSeleccionados =
+        ids.length > 0 &&
+        ids.every((id) => prev.privilegeIds.includes(id));
+
+      return {
+        ...prev,
+        privilegeIds: todosSeleccionados
+          ? prev.privilegeIds.filter((id) => !ids.includes(id))
+          : [...new Set([...prev.privilegeIds, ...ids])],
+      };
+    });
+  };
+
 
   // ---- ACCIONES DE MODALES ----
   const handleOpenCreate = () => {
@@ -135,9 +180,11 @@ const Roles = () => {
       name: '',
       description: '',
       active: true,
-      isTotalAccess: false,
-      permissions: [],
+      privilegeIds: [],
     });
+
+    setPermisosExpandidos([]);
+    setErrorFormulario('');
     setActiveModal('CREATE');
   };
 
@@ -153,8 +200,7 @@ const Roles = () => {
       name: role.name,
       description: role.description,
       active: role.active,
-      isTotalAccess: role.isTotalAccess,
-      permissions: [...role.permissions],
+      privilegeIds: role.privilegeIds ?? [],
     });
     setActiveModal('EDIT');
   };
@@ -170,28 +216,61 @@ const Roles = () => {
     setSelectedRole(null);
   };
 
-  // ---- GUARDAR / EDITAR / ELIMINAR ----
-  const handleSaveRole = (e) => {
-    e.preventDefault();
 
-    if (activeModal === 'CREATE') {
-      const newRole = {
-        id: rolesList.length ? Math.max(...rolesList.map((r) => r.id)) + 1 : 1,
-        ...formData,
-        isProtected: false,
-      };
-      setRolesList([...rolesList, newRole]);
-    } else if (activeModal === 'EDIT' && selectedRole) {
-      if (selectedRole.isProtected) return;
-      setRolesList((prev) =>
-        prev.map((role) =>
-          role.id === selectedRole.id ? { ...role, ...formData } : role
-        )
+  const handleSaveRole = async (e) => {
+    e.preventDefault();
+    setErrorFormulario('');
+
+    if (activeModal === 'EDIT') {
+      setErrorFormulario(
+        'La edición en PostgreSQL se conectará cuando implementemos su endpoint.'
       );
+      return;
     }
 
-    handleCloseModal();
+    if (!formData.name.trim() || !formData.description.trim()) {
+      setErrorFormulario('Completa el nombre y la descripción del rol.');
+      return;
+    }
+
+    try {
+      const resultado = await crearRol({
+        nombre: formData.name.trim(),
+        descripcion: formData.description.trim(),
+        estado: formData.active,
+        privilegios_ids: formData.privilegeIds,
+      });
+
+      const nuevoRol = {
+        id: resultado.id_rol,
+        name: resultado.nombre,
+        description: resultado.descripcion,
+        active: resultado.estado,
+        privilegeIds: resultado.privilegios_ids,
+        permissions: permisos
+          .filter((permiso) =>
+            permiso.privilegios.some((privilegio) =>
+              resultado.privilegios_ids.includes(
+                privilegio.id_privilegio
+              )
+            )
+          )
+          .map((permiso) => permiso.nombre),
+        isTotalAccess:
+          obtenerTodosLosPrivilegios().length > 0 &&
+          obtenerTodosLosPrivilegios().every((id) =>
+            resultado.privilegios_ids.includes(id)
+          ),
+        isProtected: false,
+      };
+
+      setRolesList((prev) => [...prev, nuevoRol]);
+      handleCloseModal();
+    } catch (err) {
+      setErrorFormulario(err.message || 'No se pudo registrar el rol.');
+    }
   };
+
 
   const handleDeleteConfirm = () => {
     if (selectedRole && !selectedRole.isProtected) {
@@ -380,9 +459,8 @@ const Roles = () => {
                       {/* ESTADO DESHABILITADO SI ES ROL PROTEGIDO */}
                       <button
                         type="button"
-                        className={`roles-status ${
-                          role.active ? '' : 'inactive'
-                        } ${role.isProtected ? 'disabled' : ''}`}
+                        className={`roles-status ${role.active ? '' : 'inactive'
+                          } ${role.isProtected ? 'disabled' : ''}`}
                         onClick={() => handleToggleStatus(role)}
                         disabled={role.isProtected}
                         title={
@@ -413,9 +491,8 @@ const Roles = () => {
                         {/* Botón EDITAR (Desactivado si es protegido) */}
                         <button
                           type="button"
-                          className={`roles-action-button roles-action-edit ${
-                            role.isProtected ? 'disabled' : ''
-                          }`}
+                          className={`roles-action-button roles-action-edit ${role.isProtected ? 'disabled' : ''
+                            }`}
                           title={
                             role.isProtected
                               ? 'El rol Administrador no se puede editar'
@@ -430,9 +507,8 @@ const Roles = () => {
                         {/* Botón ELIMINAR (Desactivado si es protegido) */}
                         <button
                           type="button"
-                          className={`roles-action-button roles-action-delete ${
-                            role.isProtected ? 'disabled' : ''
-                          }`}
+                          className={`roles-action-button roles-action-delete ${role.isProtected ? 'disabled' : ''
+                            }`}
                           title={
                             role.isProtected
                               ? 'El rol Administrador no se puede eliminar'
@@ -553,9 +629,8 @@ const Roles = () => {
                 <div className="roles-status-selector">
                   <button
                     type="button"
-                    className={`roles-status-option ${
-                      formData.active ? 'selected-active' : ''
-                    }`}
+                    className={`roles-status-option ${formData.active ? 'selected-active' : ''
+                      }`}
                     onClick={() => setFormData({ ...formData, active: true })}
                   >
                     <span className="roles-dot active-dot" />
@@ -567,9 +642,8 @@ const Roles = () => {
 
                   <button
                     type="button"
-                    className={`roles-status-option ${
-                      !formData.active ? 'selected-inactive' : ''
-                    }`}
+                    className={`roles-status-option ${!formData.active ? 'selected-inactive' : ''
+                      }`}
                     onClick={() => setFormData({ ...formData, active: false })}
                   >
                     <span className="roles-dot inactive-dot" />
@@ -586,42 +660,109 @@ const Roles = () => {
               </div>
 
               <label
-                className={`roles-permission-card total-access ${
-                  formData.isTotalAccess ? 'checked' : ''
-                }`}
+                className={`roles-permission-card total-access ${permisos.length > 0 &&
+                  obtenerTodosLosPrivilegios().length > 0 &&
+                  obtenerTodosLosPrivilegios().every((id) =>
+                    formData.privilegeIds.includes(id)
+                  )
+                  ? 'checked'
+                  : ''
+                  }`}
               >
                 <input
                   type="checkbox"
-                  checked={formData.isTotalAccess}
+                  checked={
+                    permisos.length > 0 &&
+                    obtenerTodosLosPrivilegios().length > 0 &&
+                    obtenerTodosLosPrivilegios().every((id) =>
+                      formData.privilegeIds.includes(id)
+                    )
+                  }
                   onChange={handleTotalAccessToggle}
+                  disabled={cargandoPermisos || guardando}
                 />
                 <div>
                   <strong>Acceso Total</strong>
-                  <p>Seleccionar todos los módulos disponibles</p>
+                  <p>Seleccionar todos los privilegios disponibles</p>
                 </div>
               </label>
 
-              <div className="roles-permissions-grid">
-                {AVAILABLE_MODULES.map((module) => {
-                  const isChecked = formData.permissions.includes(module);
-                  return (
-                    <label
-                      key={module}
-                      className={`roles-permission-card ${
-                        isChecked ? 'checked' : ''
-                      }`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={isChecked}
-                        onChange={() => handlePermissionToggle(module)}
-                      />
-                      <span>{module}</span>
-                    </label>
-                  );
-                })}
-              </div>
+              {cargandoPermisos ? (
+                <p>Cargando permisos y privilegios...</p>
+              ) : (
+                <div className="roles-permissions-grid">
+                  {permisos.map((permiso) => {
+                    const idsPrivilegios = permiso.privilegios.map(
+                      (privilegio) => privilegio.id_privilegio
+                    );
 
+                    const seleccionados = idsPrivilegios.filter((id) =>
+                      (formData.privilegeIds ?? []).includes(id)
+                    ).length;
+
+                    const permisoSeleccionado = seleccionados > 0;
+
+                    const expandido = permisosExpandidos.includes(
+                      permiso.id_permiso
+                    );
+
+                    return (
+                      <div
+                        key={permiso.id_permiso}
+                        className="roles-permission-card"
+                      >
+                        <div className="roles-permission-header">
+                          <label className="roles-permission-label">
+                            <input
+                              type="checkbox"
+                              checked={permisoSeleccionado}
+                              onChange={() => handlePermissionToggle(permiso)}
+                              disabled={guardando || idsPrivilegios.length === 0}
+                            />
+
+                            <span>{permiso.nombre}</span>
+                          </label>
+
+                          <button
+                            type="button"
+                            className="roles-expand-button"
+                            onClick={() =>
+                              handleExpandirPermiso(permiso.id_permiso)
+                            }
+                          >
+                            {expandido ? "Ocultar" : "Ver privilegios"}
+                          </button>
+                        </div>
+
+                        {expandido && (
+                          <div className="roles-privileges-list">
+                            {permiso.privilegios.map((privilegio) => (
+                              <label
+                                key={privilegio.id_privilegio}
+                                className="roles-privilege-item"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={(formData.privilegeIds ?? []).includes(
+                                    privilegio.id_privilegio
+                                  )}
+                                  onChange={() =>
+                                    handlePrivilegeToggle(
+                                      privilegio.id_privilegio
+                                    )
+                                  }
+                                />
+
+                                <span>{privilegio.nombre}</span>
+                              </label>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
               <div className="roles-modal-footer">
                 <button
                   type="button"
@@ -670,9 +811,8 @@ const Roles = () => {
                   <div className="roles-detail-header">
                     <h3>{selectedRole.name}</h3>
                     <span
-                      className={`roles-status ${
-                        selectedRole.active ? '' : 'inactive'
-                      }`}
+                      className={`roles-status ${selectedRole.active ? '' : 'inactive'
+                        }`}
                     >
                       <span className="roles-status-dot" />
                       {selectedRole.active ? 'Activo' : 'Inactivo'}
@@ -686,30 +826,39 @@ const Roles = () => {
                 <span>PERMISOS ASIGNADOS</span>
                 <span className="roles-detail-count">
                   {selectedRole.isTotalAccess
-                    ? `${AVAILABLE_MODULES.length} de ${AVAILABLE_MODULES.length}`
-                    : `${selectedRole.permissions.length} de ${AVAILABLE_MODULES.length}`}
+                    ? `${permisos.length} de ${permisos.length}`
+                    : `${selectedRole.permissions.length} de ${permisos.length}`}
                 </span>
               </div>
 
               <div className="roles-permissions-grid">
-                {AVAILABLE_MODULES.map((module) => {
-                  const hasPermission =
-                    selectedRole.isTotalAccess ||
-                    selectedRole.permissions.includes(module);
+                {permisos.map((permiso) => {
+                  const ids = permiso.privilegios.map(
+                    (privilegio) => privilegio.id_privilegio
+                  );
+
+                  const asignados = selectedRole.isTotalAccess
+                    ? ids.length
+                    : ids.filter((id) =>
+                      (selectedRole.privilegeIds ?? []).includes(id)
+                    ).length;
+
+                  const tienePermiso = ids.length > 0 && asignados === ids.length;
 
                   return (
                     <div
-                      key={module}
-                      className={`roles-view-permission-tag ${
-                        hasPermission ? 'active' : 'inactive'
-                      }`}
+                      key={permiso.id_permiso}
+                      className={`roles-view-permission-tag ${tienePermiso ? 'active' : 'inactive'
+                        }`}
                     >
-                      {hasPermission ? (
+                      {tienePermiso ? (
                         <CheckCircle2 size={16} />
                       ) : (
                         <XCircle size={16} />
                       )}
-                      <span>{module}</span>
+                      <span>
+                        {permiso.nombre} ({asignados}/{ids.length})
+                      </span>
                     </div>
                   );
                 })}
