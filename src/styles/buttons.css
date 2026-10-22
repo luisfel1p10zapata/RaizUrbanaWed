@@ -1,0 +1,53 @@
+/* ==========================================================================
+   ESTILOS GLOBALES DE BOTONES (Basado en diseño real)
+   ================================================================---------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 12px 20px;
+  font-size: 0.95rem;
+  border: 1px solid transparent;
+}
+
+/* Botón Principal (Oscuro) */
+.btn-primary, .ru-btn-dark {
+  background-color: var(--color-primary, #22223B);
+  color: var(--color-background, #F2E9E4);
+  border-color: transparent;
+}
+.btn-primary:hover, .ru-btn-dark:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+/* Botón de Contorno (Outline / Cancelar) */
+.btn-outline, .ru-btn-outline {
+  background-color: transparent;
+  border: 1px solid var(--color-secondary, #4A4E69);
+  color: var(--color-primary, #22223B);
+}
+.btn-outline:hover, .ru-btn-outline:hover {
+  background-color: var(--color-hover, #F3F3F3);
+}
+
+/* Botón Destructivo / Peligro (Rojo) */
+.btn-destructive {
+  background-color: #d93838;
+  color: #ffffff;
+}
+.btn-destructive:hover {
+  background-color: #c22e2e;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

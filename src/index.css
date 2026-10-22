@@ -1,5 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
 
+/* ============ IMPORTACIÓN DE RECURSOS GLOBALES (Sistema de UI) ============ */
+@import './styles/buttons.css';
+@import './styles/components.css';
+
 :root {
   /* Paleta original */
   --color-primary: #22223B;
@@ -18,6 +22,15 @@
   --color-active-text: #343449;
   --color-scrollbar: #D0D0D0;
   --color-shadow: rgba(17, 17, 17, 0.06);
+
+  /* Variables auxiliares para los componentes globales */
+  --bg-primary: #F2E9E4;
+  --bg-card: #FFFFFF;
+  --border-radius: 12px;
+  --transition-speed: 0.3s ease;
+  --color-destructive: #e11d48;
+  --color-success: #22c55e;
+  --color-warning: #eab308;
 
   font-family: 'Montserrat', sans-serif;
   color: var(--color-primary);
@@ -46,8 +59,13 @@
   --color-active-text: #F2E9E4;
   --color-scrollbar: #4A4E69;
   --color-shadow: rgba(0, 0, 0, 0.4);
+
+  /* Variables auxiliares para modo oscuro */
+  --bg-primary: #12131C;
+  --bg-card: #1C1E2E;
 }
 
+/* Selector universal corregido (se cambió el guion por el asterisco) */
 * {
   box-sizing: border-box;
 }
