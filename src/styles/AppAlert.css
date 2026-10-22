@@ -1,0 +1,134 @@
+.app-alert {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-radius: 6px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.9rem;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  animation: slideUpToast 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  max-width: 400px;
+}
+
+@keyframes slideUpToast {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Barra lateral indicadora de color */
+.app-alert-bar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  border-top-left-radius: 6px;
+  border-bottom-left-radius: 6px;
+}
+
+.app-alert-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.app-alert-body {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.app-alert-title {
+  font-weight: 700;
+}
+
+/* Botón de cierre para la alerta flotante */
+.app-alert-close {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  opacity: 0.7;
+  padding: 2px;
+  margin-left: auto;
+}
+.app-alert-close:hover { opacity: 1; }
+
+/* ==========================================
+   MODO CLARO
+   ========================================== */
+.app-alert-success {
+  background-color: #f0fdf4;
+  color: #15803d;
+}
+.app-alert-success .app-alert-bar { background-color: #22c55e; }
+.app-alert-success .app-alert-icon { color: #22c55e; }
+.app-alert-success .app-alert-close { color: #15803d; }
+
+.app-alert-info {
+  background-color: #eff6ff;
+  color: #1d4ed8;
+}
+.app-alert-info .app-alert-bar { background-color: #3b82f6; }
+.app-alert-info .app-alert-icon { color: #3b82f6; }
+.app-alert-info .app-alert-close { color: #1d4ed8; }
+
+.app-alert-warning {
+  background-color: #fefce8;
+  color: #a16207;
+}
+.app-alert-warning .app-alert-bar { background-color: #eab308; }
+.app-alert-warning .app-alert-icon { color: #eab308; }
+.app-alert-warning .app-alert-close { color: #a16207; }
+
+.app-alert-error {
+  background-color: #fef2f2;
+  color: #b91c1c;
+}
+.app-alert-error .app-alert-bar { background-color: #ef4444; }
+.app-alert-error .app-alert-icon { color: #ef4444; }
+.app-alert-error .app-alert-close { color: #b91c1c; }
+
+/* ==========================================
+   MODO OSCURO
+   ========================================== */
+[data-theme="dark"] .app-alert-success {
+  background-color: #0c2318;
+  color: #4ade80;
+}
+[data-theme="dark"] .app-alert-success .app-alert-bar { background-color: #22c55e; }
+[data-theme="dark"] .app-alert-success .app-alert-icon { color: #22c55e; }
+[data-theme="dark"] .app-alert-success .app-alert-close { color: #4ade80; }
+
+[data-theme="dark"] .app-alert-info {
+  background-color: #0f1d36;
+  color: #60a5fa;
+}
+[data-theme="dark"] .app-alert-info .app-alert-bar { background-color: #3b82f6; }
+[data-theme="dark"] .app-alert-info .app-alert-icon { color: #3b82f6; }
+[data-theme="dark"] .app-alert-info .app-alert-close { color: #60a5fa; }
+
+[data-theme="dark"] .app-alert-warning {
+  background-color: #2a210d;
+  color: #facc15;
+}
+[data-theme="dark"] .app-alert-warning .app-alert-bar { background-color: #eab308; }
+[data-theme="dark"] .app-alert-warning .app-alert-icon { color: #eab308; }
+[data-theme="dark"] .app-alert-warning .app-alert-close { color: #facc15; }
+
+[data-theme="dark"] .app-alert-error {
+  background-color: #2b1111;
+  color: #f87171;
+}
+[data-theme="dark"] .app-alert-error .app-alert-bar { background-color: #ef4444; }
+[data-theme="dark"] .app-alert-error .app-alert-icon { color: #ef4444; }
+[data-theme="dark"] .app-alert-error .app-alert-close { color: #f87171; }

@@ -1,0 +1,25 @@
+/* ==========================================================================
+   VARIABLES GLOBALES - SISTEMA DE DISEÑO
+   ================================================================---------- */
+:root {
+  /* Colores Principales (Tema Oscuro) */
+  --bg-primary: #121824;
+  --bg-card: #1b2230;
+  --bg-hover: #242c3d;
+  
+  /* Colores de Texto */
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  
+  /* Colores de Acento y Estados */
+  --color-primary: #3b82f6;
+  --color-primary-hover: #2563eb;
+  --color-secondary: #475569;
+  --color-destructive: #e11d48;
+  --color-success: #22c55e;
+  --color-warning: #eab308;
+  
+  /* Utilidades Generales */
+  --border-radius: 12px;
+  --transition-speed: 0.3s ease;
+}
