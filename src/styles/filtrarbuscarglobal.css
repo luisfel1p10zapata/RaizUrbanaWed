@@ -1,0 +1,75 @@
+.ru-filters-card {
+  background-color: #FFFFFF;
+  border: 1px solid #EAD9CF;
+  border-radius: 14px;
+  padding: 24px 26px;
+  margin-bottom: 26px;
+  box-shadow: 0 1px 2px rgba(34, 34, 59, 0.04);
+}
+
+.ru-filters-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #22223B;
+  margin-bottom: 20px;
+}
+
+.ru-filters-head svg {
+  color: #4A4E69;
+}
+
+.ru-filters-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+}
+
+.ru-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.ru-input-wrap svg {
+  position: absolute;
+  left: 14px;
+  color: #9691A0;
+  pointer-events: none;
+}
+
+.ru-input,
+.ru-select {
+  width: 100%;
+  border: 1px solid #EAD9CF;
+  background: #FFFFFF;
+  border-radius: 10px;
+  padding: 14px 16px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 14px;
+  color: #22223B;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.ru-input { padding-left: 42px; }
+.ru-input::placeholder { color: #9691A0; }
+.ru-input:focus, .ru-select:focus { border-color: #C9ADA7; }
+
+.ru-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%234A4E69' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 34px;
+  cursor: pointer;
+}
+
+@media (max-width: 880px) {
+  .ru-filters-row {
+    grid-template-columns: 1fr;
+  }
+}

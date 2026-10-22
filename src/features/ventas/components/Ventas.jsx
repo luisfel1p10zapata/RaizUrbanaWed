@@ -715,3 +715,4 @@ function VerVentaModal({ venta, onClose }) {
     </div>
   );
 }
+
