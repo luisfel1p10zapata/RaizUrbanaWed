@@ -1,0 +1,88 @@
+/* ==========================================================================
+   ESTILOS GLOBALES DE TABLAS (Calca exacta de la interfaz de referencia)
+   ========================================================================== */
+
+.ru-table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  background-color: var(--color-surface, #FFFFFF);
+}
+
+.global-users-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.88rem;
+}
+
+/* Cabecera idéntica a la referencia */
+.global-users-table th {
+  background-color: #fcfbfb;
+  color: #6b7280;
+  font-weight: 700;
+  padding: 15px 18px;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  letter-spacing: 0.7px;
+  border-top: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* Celdas del cuerpo con espaciado profesional */
+.global-users-table td {
+  padding: 16px 18px;
+  border-bottom: 1px solid #f2f3f5;
+  color: #1f2937;
+  background-color: #FFFFFF;
+  vertical-align: middle;
+}
+
+/* Efecto hover suave en las filas */
+.global-users-table tr:hover td {
+  background-color: #f9fafb;
+}
+
+/* Soporte completo para Modo Oscuro */
+[data-theme="dark"] .global-users-table th {
+  background-color: #1f2937;
+  color: #9ca3af;
+  border-color: #374151;
+}
+
+[data-theme="dark"] .global-users-table td {
+  background-color: #111827;
+  border-bottom-color: #1f2937;
+  color: #f3f4f6;
+}
+
+[data-theme="dark"] .global-users-table tr:hover td {
+  background-color: #1f2937;
+}
+
+/* Estilo para los botones de acciones en línea */
+.ru-actions {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.ru-icon-btn {
+  background: transparent;
+ 
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s ease;
+}
+
+.ru-icon-btn:hover {
+  opacity: 0.7;
+}
+
+/* Colores exactos para los iconos de acción */
+.ru-icon-btn.view { color: #3b82f6; }   /* Azul */
+.ru-icon-btn.edit { color: #eab308; }   /* Amarillo/Dorado */
+.ru-icon-btn.delete { color: #ef4444; } /* Rojo */
