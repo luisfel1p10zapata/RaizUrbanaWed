@@ -1,27 +1,38 @@
+/* Todas las tarjetas quedan en UNA sola fila, sean 2, 3 o 4:
+   grid-auto-flow: column + columnas iguales (1fr) se ajusta al número de KPIs. */
 .ru-kpis-container {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 16px;
   margin-bottom: 26px;
 }
 
 .ru-kpi-card {
-  background-color: #FFFFFF;
-  border: 1px solid #EAD9CF;
+  --kpi-bg: #FFFFFF;
+  --kpi-border: #E0C3BE;
+  --kpi-icon-bg: #EDEBF0;
+  --kpi-icon: #22223B;
+  --kpi-muted: #7C7889;
+  --kpi-value: #22223B;
+
+  background-color: var(--kpi-bg);
+  border: 1px solid var(--kpi-border);
   border-radius: 14px;
   padding: 22px 24px;
   display: flex;
   align-items: flex-start;
   gap: 16px;
+  min-width: 0;
   box-shadow: 0 1px 2px rgba(34, 34, 59, 0.04);
 }
 
 .ru-kpi-icon-box {
-  width: 42px;
-  height: 42px;
+  width: 38px;
+  height: 38px;
   border-radius: 10px;
-  background-color: #F2E9E4;
-  color: #4A4E69;
+  background-color: var(--kpi-icon-bg);
+  color: var(--kpi-icon);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -29,43 +40,82 @@
 }
 
 .ru-kpi-icon-box svg {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
 }
 
+/* Título, número y etiqueta apilados */
 .ru-kpi-content {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .ru-kpi-title {
   font-size: 13px;
-  color: #9691A0;
-  font-weight: 500;
-  margin-bottom: 4px;
+  line-height: 1.3;
+  color: var(--kpi-muted);
+  font-weight: 400;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .ru-kpi-value-row {
   display: flex;
-  align-items: baseline;
-  gap: 6px;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
 }
 
 .ru-kpi-number {
-  font-size: 24px;
+  font-size: 19px;
   font-weight: 700;
-  color: #22223B;
-  line-height: 1.2;
+  color: var(--kpi-value);
+  line-height: 1.25;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .ru-kpi-label {
   font-size: 13px;
-  color: #9691A0;
+  line-height: 1.3;
+  color: var(--kpi-muted);
   font-weight: 400;
 }
 
-@media (max-width: 880px) {
+
+/* ---------- Modo oscuro ---------- */
+.dark .ru-kpi-card,
+[data-theme="dark"] .ru-kpi-card,
+.dark-mode .ru-kpi-card {
+  --kpi-bg: #1A1A24;
+  --kpi-border: #2E2E3E;
+  --kpi-icon-bg: #2E2E3E;
+  --kpi-icon: #C9ADA7;
+  --kpi-muted: #9691A0;
+  --kpi-value: #F2E9E4;
+  box-shadow: none;
+}
+
+/* Tablet: 2 por fila (si queda uno suelto, ocupa todo el ancho) */
+@media (max-width: 900px) {
+  .ru-kpis-container {
+    grid-auto-flow: row;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ru-kpi-card:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+  .ru-kpi-card { padding: 18px 20px; }
+}
+
+/* Móvil: 1 por fila */
+@media (max-width: 560px) {
   .ru-kpis-container {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
 }

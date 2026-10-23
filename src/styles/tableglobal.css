@@ -1,68 +1,118 @@
+/* ==========================================================
+   TableGlobal — estilo único para todas las tablas del sistema
+   Colores como variables (--tg-*) para claro y oscuro.
+   Los selectores llevan el prefijo .produccion-table-card para
+   ganarle a estilos genéricos de table/th/td/button de otros CSS.
+   ========================================================== */
 .produccion-table-card {
+  --tg-bg: #FFFFFF;
+  --tg-border: #E6CFCB;
+  --tg-line: #E9DAD7;
+  --tg-head-bg: #F6F2F1;
+  --tg-head-text: #6F6B7C;
+  --tg-text: #22223B;
+  --tg-muted: #9691A0;
+  --tg-icon: #4A4E69;
+  --tg-pill-bg: #EEE9E8;
+  --tg-pill-text: #4A4E69;
+  --tg-hover: rgba(242, 233, 228, 0.45);
+  --tg-btn-hover: rgba(74, 78, 105, 0.08);
+  --tg-active-bg: #22223B;
+  --tg-active-text: #FFFFFF;
+
   width: 100%;
-  background-color: #FFFFFF;
-  border: 1px solid #EAD9CF;
+  background-color: var(--tg-bg);
+  border: 1px solid var(--tg-border);
   border-radius: 14px;
   overflow: hidden;
   box-shadow: 0 1px 2px rgba(34, 34, 59, 0.04);
-  transition: background-color 0.2s ease, border-color 0.2s ease;
+  font-family: inherit;
+  color: var(--tg-text);
 }
 
-.produccion-table-header {
+.dark .produccion-table-card,
+[data-theme="dark"] .produccion-table-card,
+.dark-mode .produccion-table-card {
+  --tg-bg: #1e1e31;
+  --tg-border: #2E2E3E;
+  --tg-line: #2E2E3E;
+  --tg-head-bg: #252533;
+  --tg-head-text: #B8B5C0;
+  --tg-text: #F2E9E4;
+  --tg-muted: #9691A0;
+  --tg-icon: #9A8C98;
+  --tg-pill-bg: #2E2E3E;
+  --tg-pill-text: #C9ADA7;
+  --tg-hover: rgba(255, 255, 255, 0.03);
+  --tg-btn-hover: rgba(255, 255, 255, 0.08);
+  --tg-active-bg: #C9ADA7;
+  --tg-active-text: #1A1A24;
+}
+
+/* ---------- Encabezado de la tarjeta ---------- */
+.produccion-table-card .produccion-table-header {
   padding: 18px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background-color: #FFFFFF;
-  border-bottom: 1px solid #ECE1D8;
+  gap: 12px;
+  background-color: var(--tg-bg);
+  border-bottom: 1px solid var(--tg-border);
 }
 
-.produccion-table-title {
+.produccion-table-card .produccion-table-title {
   display: flex;
   align-items: center;
   gap: 10px;
-  color: #22223B;
-  font-size: 14.5px;
+  color: var(--tg-text);
+  font-size: 15px;
   font-weight: 600;
 }
 
-.produccion-table-title svg { 
-  width: 17px; 
-  height: 17px; 
-  color: #4A4E69; 
+.produccion-table-card .produccion-table-title svg {
+  width: 17px;
+  height: 17px;
+  color: var(--tg-icon);
+  flex-shrink: 0;
 }
 
-.produccion-table-count {
-  padding: 2px 9px;
+.produccion-table-card .produccion-table-count {
+  padding: 2px 10px;
   border-radius: 999px;
-  background-color: #F2E9E4;
-  color: #4A4E69;
+  background-color: var(--tg-pill-bg);
+  color: var(--tg-pill-text);
   font-size: 12px;
   font-weight: 600;
 }
 
-.produccion-table-page { 
-  color: #9691A0; 
-  font-size: 13px; 
-  font-weight: 400; 
+.produccion-table-card .produccion-table-page {
+  color: var(--tg-muted);
+  font-size: 13px;
+  font-weight: 400;
+  white-space: nowrap;
 }
 
-.produccion-table-wrapper { 
-  width: 100%; 
-  overflow-x: auto; 
+/* ---------- Tabla ---------- */
+.produccion-table-card .produccion-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  background-color: var(--tg-bg);
 }
 
-.produccion-table {
+.produccion-table-card .produccion-table {
   width: 100%;
   border-collapse: collapse;
+  border-spacing: 0;
+  background-color: transparent;
   font-size: 14px;
 }
 
-.produccion-table th {
-  padding: 15px 20px;
-  background-color: #E5E5EA; /* Color gris de la cabecera en modo claro */
-  border-bottom: 1px solid #ECE1D8;
-  color: #8D8A96;
+.produccion-table-card .produccion-table thead th {
+  padding: 16px 20px;
+  background-color: var(--tg-head-bg);
+  border: none;
+  border-bottom: 1px solid var(--tg-border);
+  color: var(--tg-head-text);
   font-size: 11.5px;
   font-weight: 600;
   letter-spacing: 0.08em;
@@ -71,167 +121,139 @@
   white-space: nowrap;
 }
 
-.produccion-table th:first-child { padding-left: 24px; }
-.produccion-table th:last-child { padding-right: 24px; text-align: center; }
+.produccion-table-card .produccion-table thead th:first-child { padding-left: 24px; }
+.produccion-table-card .produccion-table thead th:last-child  { padding-right: 24px; text-align: center; }
 
-.produccion-table td {
-  padding: 18px 20px;
-  background-color: #FFFFFF;
-  border-bottom: 1px solid #ECE1D8;
-  color: #22223B;
+.produccion-table-card .produccion-table tbody td {
+  padding: 20px 20px;
+  background-color: transparent;
+  border: none;
+  border-bottom: 1px solid var(--tg-line);
+  color: var(--tg-text);
+  font-size: 14px;
+  font-weight: 500;
   vertical-align: middle;
 }
 
-.produccion-table td:first-child { padding-left: 24px; }
-.produccion-table td:last-child { padding-right: 24px; text-align: center; }
-.produccion-table tbody tr:last-child td { border-bottom: none; }
-.produccion-table tbody tr:hover { background-color: rgba(242, 233, 228, 0.35); }
+.produccion-table-card .produccion-table tbody td:first-child { padding-left: 24px; }
+.produccion-table-card .produccion-table tbody td:last-child  { padding-right: 24px; text-align: center; }
+.produccion-table-card .produccion-table tbody tr:last-child td { border-bottom: none; }
+.produccion-table-card .produccion-table tbody tr:hover td { background-color: var(--tg-hover); }
 
-/* Paginación */
-.produccion-pagination {
+.produccion-table-card .produccion-table-empty {
+  text-align: center !important;
+  padding: 34px 20px !important;
+  color: var(--tg-muted) !important;
+  font-weight: 400 !important;
+}
+
+/* ---------- Paginación ---------- */
+.produccion-table-card .produccion-pagination {
   padding: 18px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background-color: #FFFFFF;
-  border-top: 1px solid #ECE1D8;
+  flex-wrap: wrap;
+  gap: 12px;
+  background-color: var(--tg-bg);
+  border-top: 1px solid var(--tg-border);
 }
 
-.produccion-pagination-info { 
-  color: #9691A0; 
-  font-size: 12.5px; 
-  margin: 0; 
+.produccion-table-card .produccion-pagination-info {
+  color: var(--tg-muted);
+  font-size: 12.5px;
+  margin: 0;
 }
 
-.produccion-pagination-controls { 
-  display: flex; 
-  align-items: center; 
-  gap: 4px; 
+.produccion-table-card .produccion-pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
-.produccion-pagination-button {
-  min-width: 32px;
-  height: 32px;
-  padding: 0 6px;
+.produccion-table-card button.produccion-pagination-button {
+  -webkit-appearance: none;
+  appearance: none;
+  min-width: 34px;
+  height: 34px;
+  padding: 0 8px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border: none;
   border-radius: 8px;
   background-color: transparent;
-  color: #22223B;
-  font-size: 14.5px;
+  color: var(--tg-text);
+  font-family: inherit;
+  font-size: 15px;
+  line-height: 1;
   cursor: pointer;
+  box-shadow: none;
+  transition: background-color 0.15s ease;
 }
 
-.produccion-pagination-button:hover:not(:disabled) { 
-  background-color: rgba(74, 78, 105, 0.08); 
+.produccion-table-card button.produccion-pagination-button:hover:not(:disabled):not(.active) {
+  background-color: var(--tg-btn-hover);
 }
 
-.produccion-pagination-button.active { 
-  background-color: #22223B; 
-  color: #FFFFFF; 
-  font-weight: 600; 
+.produccion-table-card button.produccion-pagination-button.active {
+  background-color: var(--tg-active-bg);
+  color: var(--tg-active-text);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: default;
 }
 
-.produccion-pagination-button:disabled { 
-  cursor: not-allowed; 
-  opacity: 0.35; 
+.produccion-table-card button.produccion-pagination-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.3;
 }
 
+/* ---------- Responsive ---------- */
+@media (max-width: 780px) {
+  .produccion-table-card .produccion-table-header,
+  .produccion-table-card .produccion-pagination { padding: 14px 18px; }
 
-/* ==========================================
-   MODO OSCURO (Activado por clases o atributos en el contenedor)
-   ========================================== */
-.dark .produccion-table-card,
-[data-theme="dark"] .produccion-table-card,
-.dark-mode .produccion-table-card {
-  background-color: #1A1A24;
-  border-color: #2E2E3E;
-}
+  .produccion-table-card .produccion-table-wrapper { overflow-x: visible; padding: 12px; }
+  .produccion-table-card .produccion-table,
+  .produccion-table-card .produccion-table tbody { display: block; }
+  .produccion-table-card .produccion-table thead { display: none; }
 
-.dark .produccion-table-header,
-[data-theme="dark"] .produccion-table-header,
-.dark-mode .produccion-table-header {
-  background-color: #1A1A24;
-  border-bottom-color: #2E2E3E;
-}
+  .produccion-table-card .produccion-table tbody tr {
+    display: block;
+    border: 1px solid var(--tg-border);
+    border-radius: 12px;
+    padding: 2px 16px;
+    margin-bottom: 12px;
+    background-color: var(--tg-bg);
+  }
+  .produccion-table-card .produccion-table tbody tr:last-child { margin-bottom: 0; }
 
-.dark .produccion-table-title,
-[data-theme="dark"] .produccion-table-title,
-.dark-mode .produccion-table-title {
-  color: #F2E9E4;
-}
+  .produccion-table-card .produccion-table tbody td,
+  .produccion-table-card .produccion-table tbody td:first-child,
+  .produccion-table-card .produccion-table tbody td:last-child {
+    display: block;
+    padding: 12px 0;
+    text-align: left;
+    border-bottom: 1px solid var(--tg-line);
+  }
+  .produccion-table-card .produccion-table tbody td:last-child { border-bottom: none; }
+  .produccion-table-card .produccion-table tbody tr:last-child td { border-bottom: none; }
+  .produccion-table-card .produccion-table tbody tr:last-child td:not(:last-child) { border-bottom: 1px solid var(--tg-line); }
 
-.dark .produccion-table-title svg,
-[data-theme="dark"] .produccion-table-title svg,
-.dark-mode .produccion-table-title svg {
-  color: #9A8C98;
-}
+  .produccion-table-card .produccion-table tbody td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 5px;
+    color: var(--tg-head-text);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+  }
+  .produccion-table-card .produccion-table tbody td[data-label="Acciones"]::before { display: none; }
+  .produccion-table-card .produccion-table tbody td[data-label="Acciones"] > div { justify-content: flex-end; }
 
-.dark .produccion-table-count,
-[data-theme="dark"] .produccion-table-count,
-.dark-mode .produccion-table-count {
-  background-color: #2E2E3E;
-  color: #C9ADA7;
-}
-
-.dark .produccion-table-page,
-[data-theme="dark"] .produccion-table-page,
-.dark-mode .produccion-table-page {
-  color: #9691A0;
-}
-
-.dark .produccion-table th,
-[data-theme="dark"] .produccion-table th,
-.dark-mode .produccion-table th {
-  background-color: #252533; /* Gris oscuro para la cabecera en dark mode */
-  border-bottom-color: #2E2E3E;
-  color: #B8B5C0;
-}
-
-.dark .produccion-table td,
-[data-theme="dark"] .produccion-table td,
-.dark-mode .produccion-table td {
-  background-color: #1A1A24;
-  border-bottom-color: #2E2E3E;
-  color: #F2E9E4;
-}
-
-.dark .produccion-table tbody tr:hover,
-[data-theme="dark"] .produccion-table tbody tr:hover,
-.dark-mode .produccion-table tbody tr:hover {
-  background-color: rgba(255, 255, 255, 0.03);
-}
-
-.dark .produccion-pagination,
-[data-theme="dark"] .produccion-pagination,
-.dark-mode .produccion-pagination {
-  background-color: #1A1A24;
-  border-top-color: #2E2E3E;
-}
-
-.dark .produccion-pagination-info,
-[data-theme="dark"] .produccion-pagination-info,
-.dark-mode .produccion-pagination-info {
-  color: #9691A0;
-}
-
-.dark .produccion-pagination-button,
-[data-theme="dark"] .produccion-pagination-button,
-.dark-mode .produccion-pagination-button {
-  color: #F2E9E4;
-}
-
-.dark .produccion-pagination-button:hover:not(:disabled),
-[data-theme="dark"] .produccion-pagination-button:hover:not(:disabled),
-.dark-mode .produccion-pagination-button:hover:not(:disabled) {
-  background-color: rgba(255, 255, 255, 0.08);
-}
-
-.dark .produccion-pagination-button.active,
-[data-theme="dark"] .produccion-pagination-button.active,
-.dark-mode .produccion-pagination-button.active {
-  background-color: #C9ADA7;
-  color: #1A1A24;
+  .produccion-table-card .produccion-table-empty { display: table-cell; }
+  .produccion-table-card .produccion-pagination { justify-content: center; text-align: center; }
 }
