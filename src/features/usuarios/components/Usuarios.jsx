@@ -1,30 +1,15 @@
-<<<<<<< Updated upstream
-import React from "react";
-import { Search, Filter, Eye, Pencil, Trash2 } from "lucide-react";
-import { useUsuarios } from "../hooks/useUsuarios";
-import { Avatar, StatusBadge, ViewUserModal, CreateUserModal, EditUserModal } from "./UserModals";
-import GlobalTable from "../../../components/ui/TableGlobal";
-import ConfirmModal from "../../../components/ui/ConfirmModal";
-import AppAlert from "../../../components/ui/AppAlert";
-import "./Usuarios.css";
-
-=======
 import { useMemo, useState } from "react";
 import {
   Search, Filter, Eye, Pencil, Trash2, X, Mail, Phone, IdCard,
   ShoppingBag, Activity, MapPin, ChevronsLeft, ChevronLeft,
-  ChevronRight, ChevronsRight, CheckCircle2,
+  ChevronRight, ChevronsRight, CheckCircle2, AlertCircle,
 } from "lucide-react";
 import "./Usuarios.css";
 
 /* ============================================================
-   DATA
+   DATA Y UTILIDADES
    ============================================================ */
-
 const AVATAR_COLORS = ["#2E9E5B", "#D6558A", "#4A76A8", "#E0973F", "#4A76D8", "#3E9BC9", "#D1495B", "#5B6FD8", "#8A6FD6", "#3EB08A"];
-
-// Alrededor de la línea 15:
-// const ROLES = ['Administrador', 'Cliente', ...]; // <-- ESTA LÍNEA // o un objeto con los roles
 
 const INITIAL_USERS = [
   { id: 1, cedula: "1045678901", nombre: "Carlos Mendoza", correo: "carlos.mendoza@empresa.com", telefono: "+54 11 4321-0001", rol: "Administrador", estado: "Activo", fecha: "2025-11-01", direccion: "Calle 45 # 12-30, Bogotá", genero: "Masculino", registrado: "2025-11-01" },
@@ -40,10 +25,8 @@ const INITIAL_USERS = [
 ];
 
 const PAGE_SIZE = 8;
-
 const initials = (nombre) => nombre.split(" ").filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
 
-/* Historial / actividad — datos reales para Lucía (#2), genéricos y deterministas para el resto */
 function getHistorial(user) {
   if (user.id === 2) {
     return [
@@ -77,9 +60,8 @@ function getActividad(user) {
 const fmt = (n) => "$" + n.toLocaleString("es-CO");
 
 /* ============================================================
-   SMALL PIECES
+   COMPONENTES DE APOYO (AVATAR, BADGES Y MODALES)
    ============================================================ */
-
 function Avatar({ nombre, id, size = 42 }) {
   const color = AVATAR_COLORS[(id - 1) % AVATAR_COLORS.length];
   return (
@@ -98,10 +80,6 @@ function StatusBadge({ estado }) {
   );
 }
 
-/* ============================================================
-   MODAL SHELL
-   ============================================================ */
-
 function ModalShell({ eyebrow, title, onClose, children, footer }) {
   return (
     <div className="ru-modal-overlay" onClick={onClose}>
@@ -117,10 +95,6 @@ function ModalShell({ eyebrow, title, onClose, children, footer }) {
     </div>
   );
 }
-
-/* ============================================================
-   VIEW USER MODAL — "Consultar Usuario"
-   ============================================================ */
 
 function ViewUserModal({ user, index, onClose, onEdit }) {
   const historial = getHistorial(user);
@@ -146,7 +120,6 @@ function ViewUserModal({ user, index, onClose, onEdit }) {
           </div>
         </div>
       </div>
-
       <div className="ru-section-label"><IdCard size={13} /> INFORMACIÓN GENERAL</div>
       <div className="ru-info-grid">
         <div className="ru-info-item">
@@ -162,7 +135,6 @@ function ViewUserModal({ user, index, onClose, onEdit }) {
           <div><div className="ru-info-label">Teléfono</div><div className="ru-info-value">{user.telefono}</div></div>
         </div>
       </div>
-
       <div className="ru-section-label"><ShoppingBag size={13} /> HISTORIAL DE COMPRAS</div>
       {historial.map((h) => (
         <div className="ru-order-card" key={h.id}>
@@ -176,7 +148,6 @@ function ViewUserModal({ user, index, onClose, onEdit }) {
           </div>
         </div>
       ))}
-
       <div className="ru-section-label"><Activity size={13} /> ACTIVIDAD RECIENTE</div>
       {actividad.map((a, i) => (
         <div className="ru-activity-item" key={i}>
@@ -187,10 +158,6 @@ function ViewUserModal({ user, index, onClose, onEdit }) {
     </ModalShell>
   );
 }
-
-/* ============================================================
-   FORM FIELD HELPERS
-   ============================================================ */
 
 function Field({ label, required, full, children }) {
   return (
@@ -228,19 +195,13 @@ function PasswordInput({ value, onChange, placeholder }) {
   );
 }
 
-/* ============================================================
-   CREATE USER MODAL — "Registrar Usuario"
-   ============================================================ */
-
 function CreateUserModal({ nextId, onClose, onCreate }) {
   const [form, setForm] = useState({
     cedula: "", nombre: "", correo: "", password: "", confirmPassword: "",
     telefono: "", direccion: "", genero: "Masculino", rol: "Empleado",
   });
-
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
   const canSubmit = form.cedula.trim() && form.nombre.trim();
-
   const handleSubmit = () => {
     if (!canSubmit) return;
     onCreate({
@@ -257,7 +218,6 @@ function CreateUserModal({ nextId, onClose, onCreate }) {
       genero: form.genero,
     });
   };
-
   return (
     <ModalShell
       eyebrow="CU.14.02 · NUEVO USUARIO"
@@ -275,25 +235,21 @@ function CreateUserModal({ nextId, onClose, onCreate }) {
         <Field label="NOMBRE COMPLETO" required>
           <TextInput placeholder="Nombre y apellido" value={form.nombre} onChange={set("nombre")} />
         </Field>
-
         <Field label="CORREO ELECTRÓNICO">
           <TextInput icon={<Mail size={15} />} type="email" placeholder="usuario@empresa.com" value={form.correo} onChange={set("correo")} />
         </Field>
         <Field label="CONTRASEÑA">
           <PasswordInput placeholder="Mínimo 6 caracteres" value={form.password} onChange={set("password")} />
         </Field>
-
         <Field label="CONFIRMAR CONTRASEÑA">
           <PasswordInput placeholder="Repetir contraseña" value={form.confirmPassword} onChange={set("confirmPassword")} />
         </Field>
         <Field label="TELÉFONO">
           <TextInput icon={<Phone size={15} />} placeholder="+57 300 123-4567" value={form.telefono} onChange={set("telefono")} />
         </Field>
-
         <Field label="DIRECCIÓN" full>
           <TextInput icon={<MapPin size={15} />} placeholder="Calle 80 # 45-12, Bogotá" value={form.direccion} onChange={set("direccion")} />
         </Field>
-
         <Field label="GÉNERO">
           <select className="ru-form-input" style={{ cursor: "pointer" }} value={form.genero} onChange={set("genero")}>
             <option>Masculino</option>
@@ -311,14 +267,9 @@ function CreateUserModal({ nextId, onClose, onCreate }) {
   );
 }
 
-/* ============================================================
-   EDIT USER MODAL — "Editar Usuario"
-   ============================================================ */
-
 function EditUserModal({ user, index, onClose, onSave }) {
   const [form, setForm] = useState({ ...user });
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
-
   return (
     <ModalShell
       eyebrow={`CU.14.03 · EDITANDO #${index + 1}`}
@@ -336,18 +287,15 @@ function EditUserModal({ user, index, onClose, onSave }) {
         <Field label="NOMBRE COMPLETO" required>
           <TextInput value={form.nombre} onChange={set("nombre")} />
         </Field>
-
         <Field label="CORREO ELECTRÓNICO" full>
           <TextInput icon={<Mail size={15} />} type="email" value={form.correo} onChange={set("correo")} />
         </Field>
-
         <Field label="TELÉFONO">
           <TextInput icon={<Phone size={15} />} value={form.telefono} onChange={set("telefono")} />
         </Field>
         <Field label="DIRECCIÓN">
           <TextInput icon={<MapPin size={15} />} value={form.direccion} onChange={set("direccion")} />
         </Field>
-
         <Field label="GÉNERO">
           <select className="ru-form-input" style={{ cursor: "pointer" }} value={form.genero} onChange={set("genero")}>
             <option>Masculino</option>
@@ -360,7 +308,6 @@ function EditUserModal({ user, index, onClose, onSave }) {
             {["Empleado", "Vendedor", "Bodeguero", "Supervisor", "Supervisora", "Administrador"].map((r) => <option key={r}>{r}</option>)}
           </select>
         </Field>
-
         <Field label="ESTADO" full>
           <div className="ru-status-toggle-row">
             {["Activo", "Inactivo"].map((s) => {
@@ -386,94 +333,137 @@ function EditUserModal({ user, index, onClose, onSave }) {
 }
 
 /* ============================================================
-   PAGINATION
+   COMPONENTES UI INTERNOS (ConfirmModal y AppAlert)
    ============================================================ */
-
-function Pagination({ page, totalPages, onChange, showingFrom, showingTo, total }) {
-  const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+function ConfirmModal({ title, message, onClose, onConfirm, confirmText = "Confirmar" }) {
   return (
-    <div className="ru-pagination">
-      <span className="ru-pagination-info">Mostrando {showingFrom}–{showingTo} de {total} registros</span>
-      <div className="ru-pagination-controls">
-        <button className="ru-page-btn" disabled={page === 1} onClick={() => onChange(1)}><ChevronsLeft size={14} /></button>
-        <button className="ru-page-btn" disabled={page === 1} onClick={() => onChange(page - 1)}><ChevronLeft size={14} /></button>
-        {pages.map((p) => (
-          <button key={p} className={`ru-page-btn${p === page ? " active" : ""}`} onClick={() => onChange(p)}>{p}</button>
-        ))}
-        <button className="ru-page-btn" disabled={page === totalPages} onClick={() => onChange(page + 1)}><ChevronRight size={14} /></button>
-        <button className="ru-page-btn" disabled={page === totalPages} onClick={() => onChange(totalPages)}><ChevronsRight size={14} /></button>
+    <div className="ru-modal-overlay" onClick={onClose}>
+      <div className="ru-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px' }}>
+        <div className="ru-modal-header">
+          <h2 className="ru-modal-title">{title}</h2>
+          <button className="ru-modal-close" onClick={onClose}><X size={18} /></button>
+        </div>
+        <div className="ru-modal-body" style={{ padding: '16px 0', color: '#555' }}>
+          <p>{message}</p>
+        </div>
+        <div className="ru-modal-footer" style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+          <button className="ru-btn-outline" onClick={onClose}>Cancelar</button>
+          <button className="ru-btn-dark" onClick={onConfirm} style={{ background: '#dc2626', color: '#fff' }}>{confirmText}</button>
+        </div>
       </div>
     </div>
   );
 }
 
-/* ============================================================
-   MAIN MODULE
-   ============================================================ */
+function AppAlert({ type = "success", title, message, onClose }) {
+  return (
+    <div className={`app-alert app-alert-${type}`}>
+      <div className="app-alert-bar" />
+      <div className="app-alert-icon">
+        <AlertCircle size={18} />
+      </div>
+      <div className="app-alert-body">
+        <span className="app-alert-title">{title}:</span>
+        <span>{message}</span>
+      </div>
+      <button className="app-alert-close" onClick={onClose}>
+        <X size={16} />
+      </button>
+    </div>
+  );
+}
 
->>>>>>> Stashed changes
+/* ============================================================
+   MÓDULO PRINCIPAL
+   ============================================================ */
 export default function Usuarios() {
-  const {
-    users,
-    search,
-    roleFilter,
-    statusFilter,
-    safePage,
-    totalPages,
-    pageItems,
-    showingFrom,
-    showingTo,
-    totalRecords,
-    uniqueRoles,
-    modal,
-    activeUser,
-    activeIndex,
-    deleteTarget,
-    setDeleteTarget,
-    alertMessage,
-    setAlertMessage,
-    setSearch,
-    setRoleFilter,
-    setStatusFilter,
-    setPage,
-    setModal,
-    confirmDelete,
-    handleCreate,
-    handleSave,
-  } = useUsuarios();
+  const [users, setUsers] = useState(INITIAL_USERS);
+  const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState("Todos los roles");
+  const [statusFilter, setStatusFilter] = useState("Todos los estados");
+  const [page, setPage] = useState(1);
+  const [modal, setModal] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [alertMessage, setAlertMessage] = useState(null);
+
+  const uniqueRoles = useMemo(() => [...new Set(users.map((u) => u.rol))], [users]);
+
+  const filteredUsers = useMemo(() => {
+    return users.filter((u) => {
+      const matchSearch =
+        u.nombre.toLowerCase().includes(search.toLowerCase()) ||
+        u.correo.toLowerCase().includes(search.toLowerCase()) ||
+        u.cedula.includes(search);
+      const matchRole = roleFilter === "Todos los roles" || u.rol === roleFilter;
+      const matchStatus = statusFilter === "Todos los estados" || u.estado === statusFilter;
+      return matchSearch && matchRole && matchStatus;
+    });
+  }, [users, search, roleFilter, statusFilter]);
+
+  const totalRecords = filteredUsers.length;
+  const totalPages = Math.ceil(totalRecords / PAGE_SIZE) || 1;
+  const safePage = Math.min(page, totalPages);
+  const pageItems = useMemo(() => {
+    const start = (safePage - 1) * PAGE_SIZE;
+    return filteredUsers.slice(start, start + PAGE_SIZE);
+  }, [filteredUsers, safePage]);
+
+  const showingFrom = totalRecords === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1;
+  const showingTo = Math.min(safePage * PAGE_SIZE, totalRecords);
+
+  const activeUser = modal?.userId ? users.find((u) => u.id === modal.userId) : null;
+  const activeIndex = activeUser ? users.findIndex((u) => u.id === activeUser.id) : -1;
+
+  const confirmDelete = () => {
+    if (!deleteTarget) return;
+    setUsers((prev) => prev.filter((u) => u.id !== deleteTarget.id));
+    setAlertMessage({ type: "success", title: "Eliminado", message: `Usuario ${deleteTarget.nombre} eliminado con éxito.` });
+    setDeleteTarget(null);
+  };
+
+  const handleCreate = (newUser) => {
+    setUsers((prev) => [newUser, ...prev]);
+    setModal(null);
+    setAlertMessage({ type: "success", title: "Registrado", message: `Usuario ${newUser.nombre} creado con éxito.` });
+  };
+
+  const handleSave = (updated) => {
+    setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
+    setModal(null);
+    setAlertMessage({ type: "success", title: "Actualizado", message: `Usuario ${updated.nombre} actualizado con éxito.` });
+  };
 
   const columns = [
     {
-      
       header: "ID",
       width: "8%",
       render: (u) => {
-        const realIndex = (safePage - 1) * 8 + (pageItems.findIndex(item => item.id === u.id) + 1);
+        const realIndex = (safePage - 1) * PAGE_SIZE + (pageItems.findIndex(item => item.id === u.id) + 1);
         return <span className="ru-badge-id">#{realIndex}</span>;
       }
     },
-    { 
-      header: "Documento", 
-      width: "14%", 
-      render: (u) => <span className="ru-badge-id">{u.tipoDoc} {u.numeroDoc}</span> 
+    {
+      header: "Documento",
+      width: "14%",
+      render: (u) => <span className="ru-badge-id">{u.cedula}</span>
     },
     {
       header: "Usuario",
       width: "22%",
       render: (u) => (
         <div className="ru-user-cell">
-          <Avatar nombres={u.nombres} apellidos={u.apellidos} id={u.id} />
+          <Avatar nombre={u.nombre} id={u.id} />
           <div>
-            <div className="ru-user-name">{u.nombres} {u.apellidos}</div>
+            <div className="ru-user-name">{u.nombre}</div>
             <div className="ru-user-phone">{u.correo}</div>
           </div>
         </div>
       )
     },
-    { header: "Teléfono", width: "13%", accessor: "telefono" },
+    { header: "Teléfono", width: "13%", render: (u) => u.telefono },
     { header: "Rol", width: "13%", render: (u) => <span className="ru-role-pill">{u.rol}</span> },
     { header: "Estado", width: "10%", render: (u) => <StatusBadge estado={u.estado} /> },
-    { header: "Fecha Registro", width: "12%", accessor: "fecha" },
+    { header: "Fecha Registro", width: "12%", render: (u) => u.fecha },
     {
       header: "Acciones",
       width: "10%",
@@ -516,25 +506,25 @@ export default function Usuarios() {
           <div className="ru-filters-row">
             <div className="ru-input-wrap">
               <Search size={15} />
-              <input 
-                className="ru-input" 
-                placeholder="Buscar por nombre, correo o documento..." 
-                value={search} 
-                onChange={setSearch} 
+              <input
+                className="ru-input"
+                placeholder="Buscar por nombre, correo o documento..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-            <select 
-              className="ru-select" 
-              value={roleFilter} 
-              onChange={setRoleFilter}
+            <select
+              className="ru-select"
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value)}
             >
               <option value="Todos los roles">Todos los roles</option>
               {uniqueRoles.map((r) => <option key={r} value={r}>{r}</option>)}
             </select>
-            <select 
-              className="ru-select" 
-              value={statusFilter} 
-              onChange={setStatusFilter}
+            <select
+              className="ru-select"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
             >
               <option value="Todos los estados">Todos los estados</option>
               <option value="Activo">Activo</option>
@@ -544,17 +534,46 @@ export default function Usuarios() {
         </div>
 
         {/* Tabla Global Integrada */}
-        <GlobalTable
-          title="Listado de Usuarios"
-          totalCount={totalRecords}
-          pageInfoTop={`Página ${safePage} de ${totalPages || 1}`}
-          columns={columns}
-          data={pageItems}
-          paginationText={`Mostrando ${showingFrom}–{showingTo} de ${totalRecords} registros`}
-          currentPage={safePage}
-          totalPages={totalPages || 1}
-          onPageChange={setPage}
-        />
+        <div className="ru-table-container">
+          <table className="ru-table">
+            <thead>
+              <tr>
+                {columns.map((col, idx) => (
+                  <th key={idx} style={{ width: col.width }}>{col.header}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {pageItems.length > 0 ? (
+                pageItems.map((u) => (
+                  <tr key={u.id}>
+                    {columns.map((col, idx) => (
+                      <td key={idx}>{col.render ? col.render(u) : u[col.accessor]}</td>
+                    ))}
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={columns.length} className="ru-no-data">No se encontraron registros.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Paginación */}
+        <div className="ru-pagination">
+          <span className="ru-pagination-info">Mostrando {showingFrom}–{showingTo} de {totalRecords} registros</span>
+          <div className="ru-pagination-controls">
+            <button className="ru-page-btn" disabled={safePage === 1} onClick={() => setPage(1)}><ChevronsLeft size={14} /></button>
+            <button className="ru-page-btn" disabled={safePage === 1} onClick={() => setPage(safePage - 1)}><ChevronLeft size={14} /></button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+              <button key={p} className={`ru-page-btn${p === safePage ? " active" : ""}`} onClick={() => setPage(p)}>{p}</button>
+            ))}
+            <button className="ru-page-btn" disabled={safePage === totalPages} onClick={() => setPage(safePage + 1)}><ChevronRight size={14} /></button>
+            <button className="ru-page-btn" disabled={safePage === totalPages} onClick={() => setPage(totalPages)}><ChevronsRight size={14} /></button>
+          </div>
+        </div>
       </div>
 
       {/* Modales */}
@@ -572,7 +591,7 @@ export default function Usuarios() {
       {deleteTarget && (
         <ConfirmModal
           title="¿Eliminar Usuario?"
-          message={`Estás a punto de eliminar al usuario "${deleteTarget.nombres} ${deleteTarget.apellidos}". Esta acción no se puede deshacer.`}
+          message={`Estás a punto de eliminar al usuario "${deleteTarget.nombre}". Esta acción no se puede deshacer.`}
           onClose={() => setDeleteTarget(null)}
           onConfirm={confirmDelete}
           confirmText="Sí, eliminar usuario"

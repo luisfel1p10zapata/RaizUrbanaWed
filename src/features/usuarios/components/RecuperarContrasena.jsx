@@ -1,6 +1,14 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Mail, ArrowLeft, Layers, Star, LayoutGrid, AlertCircle, CheckCircle2 } from 'lucide-react';
+import {
+  Mail,
+  ArrowLeft,
+  ArrowRight,
+  AlertCircle,
+  CheckCircle2,
+  ShieldCheck,
+} from 'lucide-react';
+
 import useTheme from '../../../components/hooks/useTheme';
 import './recuperarcontraseña.css';
 
@@ -11,9 +19,12 @@ export default function RecuperarContrasena() {
   const [loading, setLoading] = useState(false);
   const { theme } = useTheme();
 
-  // Selección de logo dinámico según el tema[cite: 10]
-  const logoSrc = theme === 'dark' ? '/images/logoDark.png' : '/images/logo-ru.png';
+  const logoSrc =
+    theme === 'dark'
+      ? '/images/logoDark.png'
+      : '/images/logo-ru.png';
 
+  // Se conserva la lógica original de recuperación.
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -21,131 +32,201 @@ export default function RecuperarContrasena() {
     setLoading(true);
 
     try {
-      // Conexión real con el endpoint en Python (FastAPI)
-      const response = await fetch('http://localhost:8000/api/auth/recuperar-contrasena', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ correo: email })
-      });
+      const response = await fetch(
+        'http://localhost:8000/api/auth/recuperar-contrasena',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ correo: email }),
+        }
+      );
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.detail || 'Ocurrió un error al procesar la solicitud.');
+        throw new Error(
+          data.detail || 'Ocurrió un error al procesar la solicitud.'
+        );
       }
 
-      // Mensaje de éxito que devuelve el backend
-      setMessage(data.message || 'Se ha enviado un enlace de recuperación a tu correo electrónico.');
-
+      setMessage(
+        data.message ||
+        'Se ha enviado un enlace de recuperación a tu correo electrónico.'
+      );
     } catch (err) {
-      setError(err.message || 'Error al conectar con el servidor de Python.');
+      setError(
+        err.message || 'Error al conectar con el servidor de Python.'
+      );
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="auth-container">
-      {/* Panel Izquierdo Hero */}
-      <div className="auth-left-panel">
-        <div className="auth-brand-logo-container">
-          <img src={logoSrc} alt="Raíz Urbana" className="auth-brand-logo-img" />
-        </div>
-        <div className="auth-hero-content">
-          <div className="auth-hero-subtitle-tag">SISTEMA ADMINISTRATIVO</div>
-          <h1 className="auth-hero-title">Moda que refleja tu esencia.</h1>
-          <p className="auth-hero-description">
-            Gestiona tu catálogo, ventas, compras y producción desde un solo lugar.
-          </p>
-          <div className="auth-feature-list">
-            <div className="auth-feature-item">
-              <Layers size={16} />
-              <span>Catálogo de moda premium</span>
-            </div>
-            <div className="auth-feature-item">
-              <Star size={16} />
-              <span>Gestión integral de ventas</span>
-            </div>
-            <div className="auth-feature-item">
-              <LayoutGrid size={16} />
-              <span>Panel administrativo completo</span>
-            </div>
-          </div>
-        </div>
-        <div className="auth-footer-tag">
-          Raíz Urbana © 2026 - Uso Interno
-        </div>
-      </div>
-
-      {/* Panel Derecho Formulario */}
-      <div className="auth-right-panel">
-        <div className="auth-top-nav">
-          <Link to="/" className="auth-back-link">
-            <ArrowLeft size={14} />
-            Volver al sistema
+    <main
+      className="ru-recovery"
+      data-theme={theme === 'dark' ? 'dark' : 'light'}
+    >
+      <div className="ru-recovery__layout">
+        <nav
+          className="ru-recovery__navigation"
+          aria-label="Volver al inicio"
+        >
+          <Link to="/" className="ru-recovery__back">
+            <ArrowLeft size={17} aria-hidden="true" />
+            Volver al inicio
           </Link>
-        </div>
-        <div className="auth-card-wrapper">
-          <div className="auth-card">
-            <Link to="/cuenta/inicio-sesion" className="auth-card-header-link">
-              <ArrowLeft size={14} />
-              Volver al inicio de sesión
-            </Link>
-            <div className="auth-card-subtitle">RECUPERACIÓN DE ACCESO</div>
-            <h2 className="auth-card-title">Recuperar contraseña</h2>
-            <p className="auth-card-desc">
-              Te enviaremos un enlace para restablecer tu contraseña.
-            </p>
+        </nav>
 
-            {error && (
-              <div className="auth-error-alert" style={{
-                display: 'flex', alignItems: 'center', gap: '8px',
-                padding: '10px 14px', marginBottom: '16px', borderRadius: '8px',
-                background: 'var(--red-bg, #fde6e3)', color: 'var(--red-fg, #d8483a)',
-                fontSize: '13px', fontWeight: '500', border: '1px solid var(--red-bd, #f5b8b1)'
-              }}>
-                <AlertCircle size={16} style={{ flexShrink: 0 }} />
-                <span>{error}</span>
+        <section
+          className="ru-recovery__shell"
+          aria-label="Recuperación de contraseña"
+        >
+          <aside className="ru-recovery__brand">
+            <div className="ru-recovery__brand-top">
+              <div className="ru-recovery__brand-logo">
+                <img src={logoSrc} alt="Raíz Urbana" />
               </div>
-            )}
 
-            {message && (
-              <div className="auth-success-alert" style={{
-                display: 'flex', alignItems: 'center', gap: '8px',
-                padding: '10px 14px', marginBottom: '16px', borderRadius: '8px',
-                background: '#e6f4ea', color: '#137333',
-                fontSize: '13px', fontWeight: '500', border: '1px solid #ceead6'
-              }}>
-                <CheckCircle2 size={16} style={{ flexShrink: 0 }} />
-                <span>{message}</span>
+              <span className="ru-recovery__brand-label">
+                SISTEMA ADMINISTRATIVO
+              </span>
+            </div>
+
+            <div className="ru-recovery__hero">
+              <span className="ru-recovery__eyebrow">
+                TU MARCA, EN UN SOLO LUGAR
+              </span>
+
+              <h1 className="ru-recovery__hero-title">
+                Moda que refleja
+                <br />
+                <em>tu esencia.</em>
+              </h1>
+
+              <p className="ru-recovery__hero-description">
+                Gestiona tu catálogo, ventas, compras y producción
+                desde un solo lugar.
+              </p>
+
+              <div className="ru-recovery__modules">
+                <span>Catálogo</span>
+                <span>Ventas</span>
+                <span>Producción</span>
               </div>
-            )}
+            </div>
 
-            <form onSubmit={handleSubmit} className="auth-form">
-              <div className="auth-input-group">
-                <label>CORREO ELECTRÓNICO</label>
-                <div className="auth-input-wrapper">
-                  <Mail size={16} className="auth-input-icon" />
-                  <input
-                    type="email"
-                    placeholder="tu@correo.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    className="auth-input"
-                  />
+            <footer className="ru-recovery__brand-footer">
+              <span>RAÍZ URBANA</span>
+              <span>© 2026 · Uso interno</span>
+            </footer>
+
+            <div
+              className="ru-recovery__decoration"
+              aria-hidden="true"
+            />
+          </aside>
+
+          <div className="ru-recovery__panel">
+            <div className="ru-recovery__content">
+              <div className="ru-recovery__form-logo">
+                <img src={logoSrc} alt="Raíz Urbana" />
+              </div>
+
+              <header className="ru-recovery__heading">
+                <span className="ru-recovery__subtitle">
+                  RECUPERACIÓN DE ACCESO
+                </span>
+
+                <h2>Recuperar contraseña</h2>
+
+                <p>
+                  Te enviaremos un enlace para restablecer
+                  tu contraseña.
+                </p>
+              </header>
+
+              {error && (
+                <div
+                  className="ru-recovery__alert ru-recovery__alert--error"
+                  role="alert"
+                >
+                  <AlertCircle size={18} aria-hidden="true" />
+                  <span>{error}</span>
                 </div>
+              )}
+
+              {message && (
+                <div
+                  className="ru-recovery__alert ru-recovery__alert--success"
+                  role="status"
+                >
+                  <CheckCircle2 size={18} aria-hidden="true" />
+                  <span>{message}</span>
+                </div>
+              )}
+
+              <form
+                onSubmit={handleSubmit}
+                className="ru-recovery__form"
+                aria-busy={loading}
+              >
+                <div className="ru-recovery__field">
+                  <label htmlFor="ru-recovery-email">
+                    Correo electrónico
+                  </label>
+
+                  <div className="ru-recovery__input-wrap">
+                    <Mail
+                      size={18}
+                      className="ru-recovery__input-icon"
+                      aria-hidden="true"
+                    />
+
+                    <input
+                      id="ru-recovery-email"
+                      name="email"
+                      type="email"
+                      placeholder="tu@correo.com"
+                      autoComplete="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  className="ru-recovery__submit"
+                  disabled={loading}
+                >
+                  <span>
+                    {loading
+                      ? 'ENVIANDO...'
+                      : 'ENVIAR ENLACE DE RECUPERACIÓN'}
+                  </span>
+
+                  <ArrowRight size={18} aria-hidden="true" />
+                </button>
+              </form>
+
+              <Link
+                to="/cuenta/inicio-sesion"
+                className="ru-recovery__login-link"
+              >
+                <ArrowLeft size={16} aria-hidden="true" />
+                Volver al inicio de sesión
+              </Link>
+
+              <div className="ru-recovery__access-note">
+                <ShieldCheck size={16} aria-hidden="true" />
+                <span>Raíz Urbana · Sistema Administrativo</span>
               </div>
-              <button type="submit" className="auth-submit-btn" disabled={loading}>
-                {loading ? 'ENVIANDO...' : 'ENVIAR ENLACE DE RECUPERACIÓN'}
-              </button>
-            </form>
+            </div>
           </div>
-        </div>
-        <div className="auth-bottom-copyright">
-          Raíz Urbana © 2026 - Sistema Administrativo
-        </div>
+        </section>
       </div>
-    </div>
+    </main>
   );
 }
