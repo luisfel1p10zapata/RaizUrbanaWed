@@ -1,0 +1,259 @@
+/* ==========================================================
+   TableGlobal — estilo único para todas las tablas del sistema
+   Colores como variables (--tg-*) para claro y oscuro.
+   Los selectores llevan el prefijo .produccion-table-card para
+   ganarle a estilos genéricos de table/th/td/button de otros CSS.
+   ========================================================== */
+.produccion-table-card {
+  --tg-bg: #FFFFFF;
+  --tg-border: #E6CFCB;
+  --tg-line: #E9DAD7;
+  --tg-head-bg: #F6F2F1;
+  --tg-head-text: #6F6B7C;
+  --tg-text: #22223B;
+  --tg-muted: #9691A0;
+  --tg-icon: #4A4E69;
+  --tg-pill-bg: #EEE9E8;
+  --tg-pill-text: #4A4E69;
+  --tg-hover: rgba(242, 233, 228, 0.45);
+  --tg-btn-hover: rgba(74, 78, 105, 0.08);
+  --tg-active-bg: #22223B;
+  --tg-active-text: #FFFFFF;
+
+  width: 100%;
+  background-color: var(--tg-bg);
+  border: 1px solid var(--tg-border);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(34, 34, 59, 0.04);
+  font-family: inherit;
+  color: var(--tg-text);
+}
+
+.dark .produccion-table-card,
+[data-theme="dark"] .produccion-table-card,
+.dark-mode .produccion-table-card {
+  --tg-bg: #1e1e31;
+  --tg-border: #2E2E3E;
+  --tg-line: #2E2E3E;
+  --tg-head-bg: #252533;
+  --tg-head-text: #B8B5C0;
+  --tg-text: #F2E9E4;
+  --tg-muted: #9691A0;
+  --tg-icon: #9A8C98;
+  --tg-pill-bg: #2E2E3E;
+  --tg-pill-text: #C9ADA7;
+  --tg-hover: rgba(255, 255, 255, 0.03);
+  --tg-btn-hover: rgba(255, 255, 255, 0.08);
+  --tg-active-bg: #C9ADA7;
+  --tg-active-text: #1A1A24;
+}
+
+/* ---------- Encabezado de la tarjeta ---------- */
+.produccion-table-card .produccion-table-header {
+  padding: 18px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background-color: var(--tg-bg);
+  border-bottom: 1px solid var(--tg-border);
+}
+
+.produccion-table-card .produccion-table-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--tg-text);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.produccion-table-card .produccion-table-title svg {
+  width: 17px;
+  height: 17px;
+  color: var(--tg-icon);
+  flex-shrink: 0;
+}
+
+.produccion-table-card .produccion-table-count {
+  padding: 2px 10px;
+  border-radius: 999px;
+  background-color: var(--tg-pill-bg);
+  color: var(--tg-pill-text);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.produccion-table-card .produccion-table-page {
+  color: var(--tg-muted);
+  font-size: 13px;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+/* ---------- Tabla ---------- */
+.produccion-table-card .produccion-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  background-color: var(--tg-bg);
+}
+
+.produccion-table-card .produccion-table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+  background-color: transparent;
+  font-size: 14px;
+}
+
+.produccion-table-card .produccion-table thead th {
+  padding: 16px 20px;
+  background-color: var(--tg-head-bg);
+  border: none;
+  border-bottom: 1px solid var(--tg-border);
+  color: var(--tg-head-text);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.produccion-table-card .produccion-table thead th:first-child { padding-left: 24px; }
+.produccion-table-card .produccion-table thead th:last-child  { padding-right: 24px; text-align: center; }
+
+.produccion-table-card .produccion-table tbody td {
+  padding: 20px 20px;
+  background-color: transparent;
+  border: none;
+  border-bottom: 1px solid var(--tg-line);
+  color: var(--tg-text);
+  font-size: 14px;
+  font-weight: 500;
+  vertical-align: middle;
+}
+
+.produccion-table-card .produccion-table tbody td:first-child { padding-left: 24px; }
+.produccion-table-card .produccion-table tbody td:last-child  { padding-right: 24px; text-align: center; }
+.produccion-table-card .produccion-table tbody tr:last-child td { border-bottom: none; }
+.produccion-table-card .produccion-table tbody tr:hover td { background-color: var(--tg-hover); }
+
+.produccion-table-card .produccion-table-empty {
+  text-align: center !important;
+  padding: 34px 20px !important;
+  color: var(--tg-muted) !important;
+  font-weight: 400 !important;
+}
+
+/* ---------- Paginación ---------- */
+.produccion-table-card .produccion-pagination {
+  padding: 18px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  background-color: var(--tg-bg);
+  border-top: 1px solid var(--tg-border);
+}
+
+.produccion-table-card .produccion-pagination-info {
+  color: var(--tg-muted);
+  font-size: 12.5px;
+  margin: 0;
+}
+
+.produccion-table-card .produccion-pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.produccion-table-card button.produccion-pagination-button {
+  -webkit-appearance: none;
+  appearance: none;
+  min-width: 34px;
+  height: 34px;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 8px;
+  background-color: transparent;
+  color: var(--tg-text);
+  font-family: inherit;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: none;
+  transition: background-color 0.15s ease;
+}
+
+.produccion-table-card button.produccion-pagination-button:hover:not(:disabled):not(.active) {
+  background-color: var(--tg-btn-hover);
+}
+
+.produccion-table-card button.produccion-pagination-button.active {
+  background-color: var(--tg-active-bg);
+  color: var(--tg-active-text);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: default;
+}
+
+.produccion-table-card button.produccion-pagination-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.3;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 780px) {
+  .produccion-table-card .produccion-table-header,
+  .produccion-table-card .produccion-pagination { padding: 14px 18px; }
+
+  .produccion-table-card .produccion-table-wrapper { overflow-x: visible; padding: 12px; }
+  .produccion-table-card .produccion-table,
+  .produccion-table-card .produccion-table tbody { display: block; }
+  .produccion-table-card .produccion-table thead { display: none; }
+
+  .produccion-table-card .produccion-table tbody tr {
+    display: block;
+    border: 1px solid var(--tg-border);
+    border-radius: 12px;
+    padding: 2px 16px;
+    margin-bottom: 12px;
+    background-color: var(--tg-bg);
+  }
+  .produccion-table-card .produccion-table tbody tr:last-child { margin-bottom: 0; }
+
+  .produccion-table-card .produccion-table tbody td,
+  .produccion-table-card .produccion-table tbody td:first-child,
+  .produccion-table-card .produccion-table tbody td:last-child {
+    display: block;
+    padding: 12px 0;
+    text-align: left;
+    border-bottom: 1px solid var(--tg-line);
+  }
+  .produccion-table-card .produccion-table tbody td:last-child { border-bottom: none; }
+  .produccion-table-card .produccion-table tbody tr:last-child td { border-bottom: none; }
+  .produccion-table-card .produccion-table tbody tr:last-child td:not(:last-child) { border-bottom: 1px solid var(--tg-line); }
+
+  .produccion-table-card .produccion-table tbody td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 5px;
+    color: var(--tg-head-text);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+  }
+  .produccion-table-card .produccion-table tbody td[data-label="Acciones"]::before { display: none; }
+  .produccion-table-card .produccion-table tbody td[data-label="Acciones"] > div { justify-content: flex-end; }
+
+  .produccion-table-card .produccion-table-empty { display: table-cell; }
+  .produccion-table-card .produccion-pagination { justify-content: center; text-align: center; }
+}

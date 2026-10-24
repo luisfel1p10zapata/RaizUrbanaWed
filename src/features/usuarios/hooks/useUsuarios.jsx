@@ -7,11 +7,11 @@ export function useUsuarios() {
   const [roleFilter, setRoleFilter] = useState("Todos los roles");
   const [statusFilter, setStatusFilter] = useState("Todos los estados");
   const [page, setPage] = useState(1);
-  const [modal, setModal] = useState(null); 
+  const [modal, setModal] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [alertMessage, setAlertMessage] = useState(null);
 
-  // Auto-ocultar alertas
+  // Auto-ocultar alertas temporales
   useEffect(() => {
     if (alertMessage) {
       const timer = setTimeout(() => setAlertMessage(null), 3500);
@@ -21,7 +21,7 @@ export function useUsuarios() {
 
   const uniqueRoles = useMemo(() => [...new Set(users.map((u) => u.rol))], [users]);
 
-  // Filtrado optimizado sin mutaciones
+  // Filtrado optimizado
   const filtered = useMemo(() => {
     return users.filter((u) => {
       const fullName = `${u.nombres} ${u.apellidos}`.toLowerCase();
@@ -35,11 +35,9 @@ export function useUsuarios() {
     });
   }, [users, search, roleFilter, statusFilter]);
 
-  // Cálculo estricto de páginas
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(Math.max(1, page), totalPages);
 
-  // Sorteo exacto de los elementos de la página actual para evitar duplicados
   const pageItems = useMemo(() => {
     const start = (safePage - 1) * PAGE_SIZE;
     const end = start + PAGE_SIZE;
@@ -49,17 +47,14 @@ export function useUsuarios() {
   const showingFrom = filtered.length === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1;
   const showingTo = Math.min(safePage * PAGE_SIZE, filtered.length);
 
-  // Manejadores de filtros que devuelven siempre a la página 1
   const handleSearchChange = (e) => {
     setSearch(e.target.value);
     setPage(1);
   };
-
   const handleRoleChange = (e) => {
     setRoleFilter(e.target.value);
     setPage(1);
   };
-
   const handleStatusChange = (e) => {
     setStatusFilter(e.target.value);
     setPage(1);
