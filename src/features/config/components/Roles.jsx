@@ -215,24 +215,31 @@ const Roles = () => {
     setActiveModal(null);
     setSelectedRole(null);
   };
-
-
   const handleSaveRole = async (e) => {
     e.preventDefault();
     setErrorFormulario('');
 
-    if (activeModal === 'EDIT') {
+    if (!formData.name.trim()) {
+      setErrorFormulario('Debes ingresar el nombre del rol.');
+      return;
+    }
+
+    if (!formData.description.trim()) {
+      setErrorFormulario('Debes ingresar la descripción del rol.');
+      return;
+    }
+
+    if (cargandoPermisos) {
+      setErrorFormulario('Espera a que terminen de cargar los permisos.');
+      return;
+    }
+
+    if (formData.privilegeIds.length === 0) {
       setErrorFormulario(
-        'La edición en PostgreSQL se conectará cuando implementemos su endpoint.'
+        'No puedes registrar un rol sin permisos y selecciona al menos un privilegio.'
       );
       return;
     }
-
-    if (!formData.name.trim() || !formData.description.trim()) {
-      setErrorFormulario('Completa el nombre y la descripción del rol.');
-      return;
-    }
-
     try {
       const resultado = await crearRol({
         nombre: formData.name.trim(),
@@ -586,7 +593,11 @@ const Roles = () => {
               </button>
             </div>
 
-            <form onSubmit={handleSaveRole} className="roles-modal-form">
+            <form
+              onSubmit={handleSaveRole}
+              className="roles-modal-form"
+              noValidate
+            >
               <div className="roles-modal-section-title">
                 <span>INFORMACIÓN DEL ROL</span>
               </div>
@@ -621,6 +632,7 @@ const Roles = () => {
                     setFormData({ ...formData, description: e.target.value })
                   }
                   rows={3}
+                  required
                 />
               </div>
 
@@ -762,6 +774,11 @@ const Roles = () => {
                     );
                   })}
                 </div>
+              )}
+              {errorFormulario && (
+                <p className="roles-form-error" role="alert">
+                  {errorFormulario}
+                </p>
               )}
               <div className="roles-modal-footer">
                 <button
