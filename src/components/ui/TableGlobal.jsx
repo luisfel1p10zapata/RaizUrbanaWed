@@ -7,6 +7,7 @@ import '../../styles/tableglobal.css';
  * columns: [{ header, width?, accessor?, render?(row, index) }]
  * renderRowActions (opcional): (row) => JSX. Si se envía, agrega
  *   automáticamente una última columna "Acciones".
+ * borderRadius (opcional): radio para las 4 esquinas (ej: "8px", "10px", 8). Por defecto: 8px.
  */
 export default function TableGlobal({
   title = "Listado",
@@ -21,6 +22,9 @@ export default function TableGlobal({
   emptyMessage = "No hay registros disponibles.",
   renderRowActions,
   actionsHeader = "Acciones",
+  borderRadius,
+  className = "",
+  style = {},
 }) {
   const handlePageClick = (page) => {
     if (onPageChange && page >= 1 && page <= totalPages && page !== currentPage) {
@@ -32,8 +36,12 @@ export default function TableGlobal({
     ? [...columns, { header: actionsHeader, width: "12%", render: (row) => <div className="ru-actions">{renderRowActions(row)}</div> }]
     : columns;
 
+  const cardStyle = borderRadius
+    ? { ...style, '--tg-radius': typeof borderRadius === 'number' ? `${borderRadius}px` : borderRadius }
+    : style;
+
   return (
-    <div className="produccion-table-card">
+    <div className={`produccion-table-card ${className}`.trim()} style={cardStyle}>
       <div className="produccion-table-header">
         <div className="produccion-table-title">
           <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true">

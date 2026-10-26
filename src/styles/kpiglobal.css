@@ -15,10 +15,11 @@
   --kpi-icon: #22223B;
   --kpi-muted: #7C7889;
   --kpi-value: #22223B;
+  --kpi-radius: 8px; /* Pequeño border radius */
 
   background-color: var(--kpi-bg);
   border: 1px solid var(--kpi-border);
-  border-radius: 14px;
+  border-radius: var(--kpi-radius, 8px);
   padding: 22px 24px;
   display: flex;
   align-items: flex-start;
@@ -30,7 +31,7 @@
 .ru-kpi-icon-box {
   width: 38px;
   height: 38px;
-  border-radius: 10px;
+  border-radius: 8px;
   background-color: var(--kpi-icon-bg);
   color: var(--kpi-icon);
   display: flex;

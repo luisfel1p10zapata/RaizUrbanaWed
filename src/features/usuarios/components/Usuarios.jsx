@@ -534,6 +534,7 @@ export default function Usuarios() {
         </div>
 
         {/* Tabla Global Integrada */}
+        <div className="ru-card ru-list-card">
         <div className="ru-table-container">
           <table className="ru-table">
             <thead>
@@ -573,6 +574,7 @@ export default function Usuarios() {
             <button className="ru-page-btn" disabled={safePage === totalPages} onClick={() => setPage(safePage + 1)}><ChevronRight size={14} /></button>
             <button className="ru-page-btn" disabled={safePage === totalPages} onClick={() => setPage(totalPages)}><ChevronsRight size={14} /></button>
           </div>
+        </div>
         </div>
       </div>
 
