@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { X, Mail, Phone, IdCard, MapPin, AlertTriangle } from "lucide-react";
 
 const AVATAR_COLORS = ["#2E9E5B", "#D6558A", "#4A76A8", "#E0973F", "#4A76D8", "#3E9BC9", "#D1495B", "#5B6FD8", "#8A6FD6", "#3EB08A"];
@@ -8,19 +8,19 @@ const initials = (nombre, apellido) => `${nombre?.[0] || ""}${apellido?.[0] || "
 export function Avatar({ nombres, apellidos, id, size = 42 }) {
   const color = AVATAR_COLORS[(id - 1) % AVATAR_COLORS.length];
   return (
-    <span 
-      className="ru-avatar" 
-      style={{ 
-        background: color, 
-        width: size, 
-        height: size, 
-        fontSize: size * 0.33, 
-        borderRadius: size * 0.4, 
-        display: 'inline-flex', 
-        alignItems: 'center', 
-        justifyContent: 'center', 
-        color: '#fff', 
-        fontWeight: 'bold' 
+    <span
+      className="ru-avatar"
+      style={{
+        background: color,
+        width: size,
+        height: size,
+        fontSize: size * 0.33,
+        borderRadius: size * 0.4,
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: '#fff',
+        fontWeight: 'bold'
       }}
     >
       {initials(nombres, apellidos)}

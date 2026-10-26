@@ -6,12 +6,14 @@ import {
   Eye,
   EyeOff,
   ArrowLeft,
-  Layers,
-  Star,
-  LayoutGrid,
+  ArrowRight,
   User,
   Phone,
-  MapPin
+  MapPin,
+  FileText,
+  CreditCard,
+  AlertCircle,
+  CheckCircle2,
 } from 'lucide-react';
 
 import useTheme from '../../../components/hooks/useTheme';
@@ -19,26 +21,28 @@ import './registro.css';
 
 export default function Registro() {
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
-
   const { theme } = useTheme();
 
-  // Logo dinámico según el tema
   const logoSrc =
     theme === 'dark'
       ? '/images/logoDark.png'
       : '/images/logo-ru.png';
 
   const [formData, setFormData] = useState({
-    nombre: '',
+    nombres: '',
+    apellidos: '',
+    id_TipoDoc: '',
+    numeroDoc: '',
     email: '',
     password: '',
     telefono: '',
     direccion: '',
     genero: '',
-    rol: 'Empleado',
-    estado: 'activo'
   });
 
   const handleChange = (e) => {
@@ -46,482 +50,417 @@ export default function Registro() {
 
     setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
-  const handleStatusChange = (nuevoEstado) => {
-    setFormData((prev) => ({
-      ...prev,
-      estado: nuevoEstado
-    }));
-  };
-
-  const handleSubmit = (e) => {
+  // Se conserva la lógica original del registro.
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+    setSuccessMsg('');
+    setLoading(true);
 
-    console.log('Datos a enviar:', formData);
+    try {
+      const response = await fetch(
+        'http://localhost:8000/api/auth/register',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nombres: formData.nombres,
+            apellidos: formData.apellidos,
+            id_TipoDoc: formData.id_TipoDoc,
+            numeroDoc: formData.numeroDoc,
+            email: formData.email,
+            password: formData.password,
+            telefono: formData.telefono,
+            direccion: formData.direccion,
+            genero: formData.genero,
+          }),
+        }
+      );
 
-    navigate('/cuenta/perfil');
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.detail ||
+          'El correo electrónico ya se encuentra registrado en el sistema.'
+        );
+      }
+
+      setSuccessMsg(
+        '¡Cuenta registrada correctamente! Redirigiendo al inicio de sesión...'
+      );
+
+      setTimeout(() => {
+        navigate('/cuenta/inicio-sesion');
+      }, 2500);
+    } catch (err) {
+      setError(
+        err.message || 'Ocurrió un error al registrar la cuenta.'
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="auth-container">
-
-      {/* =========================================
-          PANEL IZQUIERDO
-          ========================================= */}
-      <div className="auth-left-panel">
-
-        {/* Logo */}
-        <div className="auth-brand-logo">
-          <img
-            src={logoSrc}
-            alt="Raíz Urbana"
-          />
-        </div>
-
-        {/* Hero */}
-        <div className="auth-hero-content">
-
-          <div className="auth-hero-subtitle-tag">
-            SISTEMA ADMINISTRATIVO
-          </div>
-
-          <h1 className="auth-hero-title">
-            Moda que refleja tu esencia.
-          </h1>
-
-          <p className="auth-hero-description">
-            Gestiona tu catálogo, ventas, compras y producción
-            desde un solo lugar.
-          </p>
-
-          {/* Características */}
-          <div className="auth-feature-list">
-
-            <div className="auth-feature-item">
-              <Layers size={16} />
-              <span>
-                Catálogo de ropa y accesorios
-              </span>
-            </div>
-
-            <div className="auth-feature-item">
-              <Star size={16} />
-              <span>
-                Gestión integral de ventas
-              </span>
-            </div>
-
-            <div className="auth-feature-item">
-              <LayoutGrid size={16} />
-              <span>
-                Panel administrativo completo
-              </span>
-            </div>
-
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="auth-footer-tag">
-          Raíz Urbana © 2026 - Uso Interno
-        </div>
-
-      </div>
-
-
-      {/* =========================================
-          PANEL DERECHO
-          ========================================= */}
-      <div className="auth-right-panel">
-
-        {/* Navegación */}
-        <div className="auth-top-nav">
-
-          <Link
-            to="/"
-            className="auth-back-link"
-          >
-            <ArrowLeft size={14} />
-            Volver al sistema
+    <main
+      className="ru-register"
+      data-theme={theme === 'dark' ? 'dark' : 'light'}
+    >
+      <div className="ru-register__layout">
+        <nav className="ru-register__navigation">
+          <Link to="/" className="ru-register__back">
+            <ArrowLeft size={17} aria-hidden="true" />
+            Volver al inicio
           </Link>
+        </nav>
 
-        </div>
+        <section
+          className="ru-register__shell"
+          aria-label="Registro en Raíz Urbana"
+        >
+          <aside className="ru-register__brand">
+            <div className="ru-register__brand-top">
+              <div className="ru-register__brand-logo">
+                <img src={logoSrc} alt="Raíz Urbana" />
+              </div>
 
-
-        {/* Tarjeta */}
-        <div className="auth-card-wrapper">
-
-          <div className="auth-card-register">
-
-            {/* Logo de la tarjeta */}
-            <div className="auth-card-logo">
-
-              <img
-                src={logoSrc}
-                alt="Raíz Urbana"
-              />
-
+              <span className="ru-register__brand-label">
+                SISTEMA ADMINISTRATIVO
+              </span>
             </div>
 
+            <div className="ru-register__hero">
+              <span className="ru-register__eyebrow">
+                TU MARCA, EN UN SOLO LUGAR
+              </span>
 
-            {/* Encabezado */}
-            <div className="auth-card-subtitle">
-              NUEVA CUENTA
+              <h1 className="ru-register__hero-title">
+                Moda que refleja
+                <br />
+                <em>tu esencia.</em>
+              </h1>
+
+              <p className="ru-register__hero-description">
+                Gestiona tu catálogo, ventas, compras y producción
+                desde un solo lugar.
+              </p>
+
+              <div className="ru-register__modules">
+                <span>Catálogo</span>
+                <span>Ventas</span>
+                <span>Producción</span>
+              </div>
             </div>
 
-            <h2 className="auth-card-title">
-              Crear cuenta
-            </h2>
+            <footer className="ru-register__brand-footer">
+              <span>RAÍZ URBANA</span>
+              <span>© 2026 · Uso interno</span>
+            </footer>
 
-            <p className="auth-card-desc">
-              Únete a Raíz Urbana
-            </p>
+            <div
+              className="ru-register__decoration"
+              aria-hidden="true"
+            />
+          </aside>
 
-
-            {/* =====================================
-                FORMULARIO
-                ===================================== */}
-            <form
-              onSubmit={handleSubmit}
-              className="auth-form"
-            >
-
-              {/* INFORMACIÓN PERSONAL */}
-              <div className="auth-section-divider">
-                INFORMACIÓN PERSONAL
-              </div>
-
-
-              {/* NOMBRES */}
-              <div className="auth-input-group">
-
-                <label htmlFor="nombre">
-                  NOMBRES *
-                </label>
-
-                <div className="auth-input-wrapper">
-
-                  <User
-                    size={14}
-                    className="auth-input-icon"
-                  />
-
-                  <input
-                    id="nombre"
-                    type="text"
-                    name="nombre"
-                    placeholder="Tu nombre completo"
-                    value={formData.nombre}
-                    onChange={handleChange}
-                    required
-                    className="auth-input"
-                  />
-
+          <div className="ru-register__panel">
+            <div className="ru-register__content">
+              <header className="ru-register__heading">
+                <div className="ru-register__form-logo">
+                  <img src={logoSrc} alt="Raíz Urbana" />
                 </div>
 
-              </div>
+                <div className="ru-register__heading-text">
+                  <span className="ru-register__subtitle">
+                    NUEVA CUENTA
+                  </span>
 
+                  <h2>Crear cuenta</h2>
 
-              {/* CORREO */}
-              <div className="auth-input-group">
-
-                <label htmlFor="email">
-                  CORREO ELECTRÓNICO *
-                </label>
-
-                <div className="auth-input-wrapper">
-
-                  <Mail
-                    size={14}
-                    className="auth-input-icon"
-                  />
-
-                  <input
-                    id="email"
-                    type="email"
-                    name="email"
-                    placeholder="tu@correo.com"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                    className="auth-input"
-                  />
-
+                  <p>Únete a la plataforma de Raíz Urbana.</p>
                 </div>
+              </header>
 
-              </div>
-
-
-              {/* SEGURIDAD */}
-              <div className="auth-section-divider">
-                SEGURIDAD
-              </div>
-
-
-              {/* CONTRASEÑA */}
-              <div className="auth-input-group">
-
-                <label htmlFor="password">
-                  CONTRASEÑA *
-                </label>
-
-                <div className="auth-input-wrapper">
-
-                  <Lock
-                    size={14}
-                    className="auth-input-icon"
-                  />
-
-                  <input
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    name="password"
-                    placeholder="Mínimo 6 caracteres"
-                    value={formData.password}
-                    onChange={handleChange}
-                    required
-                    minLength={6}
-                    className="auth-input"
-                  />
-
-                  <button
-                    type="button"
-                    className="auth-password-toggle"
-                    onClick={() =>
-                      setShowPassword(!showPassword)
-                    }
-                    aria-label={
-                      showPassword
-                        ? 'Ocultar contraseña'
-                        : 'Mostrar contraseña'
-                    }
-                  >
-                    {showPassword ? (
-                      <EyeOff size={14} />
-                    ) : (
-                      <Eye size={14} />
-                    )}
-                  </button>
-
+              {error && (
+                <div
+                  className="ru-register__alert ru-register__alert--error"
+                  role="alert"
+                >
+                  <AlertCircle size={18} aria-hidden="true" />
+                  <span>{error}</span>
                 </div>
+              )}
 
-              </div>
-
-
-              {/* CONTACTO */}
-              <div className="auth-section-divider">
-                CONTACTO
-              </div>
-
-
-              {/* TELÉFONO */}
-              <div className="auth-input-group">
-
-                <label htmlFor="telefono">
-                  TELÉFONO *
-                </label>
-
-                <div className="auth-input-wrapper">
-
-                  <Phone
-                    size={14}
-                    className="auth-input-icon"
-                  />
-
-                  <input
-                    id="telefono"
-                    type="tel"
-                    name="telefono"
-                    placeholder="+57 300 000 0000"
-                    value={formData.telefono}
-                    onChange={handleChange}
-                    required
-                    className="auth-input"
-                  />
-
+              {successMsg && (
+                <div
+                  className="ru-register__alert ru-register__alert--success"
+                  role="status"
+                >
+                  <CheckCircle2 size={18} aria-hidden="true" />
+                  <span>{successMsg}</span>
                 </div>
+              )}
 
-              </div>
-
-
-              {/* DIRECCIÓN */}
-              <div className="auth-input-group">
-
-                <label htmlFor="direccion">
-                  DIRECCIÓN *
-                </label>
-
-                <div className="auth-input-wrapper">
-
-                  <MapPin
-                    size={14}
-                    className="auth-input-icon"
-                  />
-
-                  <input
-                    id="direccion"
-                    type="text"
-                    name="direccion"
-                    placeholder="Calle, Barrio, Ciudad"
-                    value={formData.direccion}
-                    onChange={handleChange}
-                    required
-                    className="auth-input"
-                  />
-
-                </div>
-
-              </div>
-
-
-              {/* PERFIL */}
-              <div className="auth-section-divider">
-                PERFIL
-              </div>
-
-
-              {/* GÉNERO + ROL */}
-              <div className="auth-grid-2">
-
-                {/* GÉNERO */}
-                <div className="auth-input-group">
-
-                  <label htmlFor="genero">
-                    GÉNERO *
-                  </label>
-
-                  <select
-                    id="genero"
-                    name="genero"
-                    value={formData.genero}
-                    onChange={handleChange}
-                    required
-                    className="auth-select auth-select-no-icon"
-                  >
-                    <option value="">
-                      Seleccionar
-                    </option>
-
-                    <option value="masculino">
-                      Masculino
-                    </option>
-
-                    <option value="femenino">
-                      Femenino
-                    </option>
-
-                    <option value="otro">
-                      Otro
-                    </option>
-                  </select>
-
-                </div>
-
-
-                {/* ROL */}
-                <div className="auth-input-group">
-
-                  <label htmlFor="rol">
-                    ROL
-                  </label>
-
-                  <select
-                    id="rol"
-                    name="rol"
-                    value={formData.rol}
-                    onChange={handleChange}
-                    className="auth-select auth-select-no-icon"
-                  >
-                    <option value="Empleado">
-                      Empleado
-                    </option>
-
-                    <option value="Administrador">
-                      Administrador
-                    </option>
-                  </select>
-
-                </div>
-
-              </div>
-
-
-              {/* ESTADO */}
-              <div className="auth-input-group">
-
-                <label>
-                  ESTADO
-                </label>
-
-                <div className="auth-status-toggle">
-
-                  <button
-                    type="button"
-                    className={`auth-status-btn ${
-                      formData.estado === 'activo'
-                        ? 'active'
-                        : ''
-                    }`}
-                    onClick={() =>
-                      handleStatusChange('activo')
-                    }
-                  >
-                    Activo
-                  </button>
-
-                  <button
-                    type="button"
-                    className={`auth-status-btn ${
-                      formData.estado === 'inactivo'
-                        ? 'active'
-                        : ''
-                    }`}
-                    onClick={() =>
-                      handleStatusChange('inactivo')
-                    }
-                  >
-                    Inactivo
-                  </button>
-
-                </div>
-
-              </div>
-
-
-              {/* BOTÓN */}
-              <button
-                type="submit"
-                className="auth-submit-btn"
+              <form
+                onSubmit={handleSubmit}
+                className="ru-register__form"
+                aria-busy={loading}
               >
-                CREAR CUENTA
-              </button>
+                <fieldset className="ru-register__section">
+                  <legend>Datos personales</legend>
 
-            </form>
+                  <div className="ru-register__grid">
+                    <div className="ru-register__field">
+                      <label htmlFor="nombres">Nombres *</label>
 
+                      <div className="ru-register__input-wrap">
+                        <User size={16} aria-hidden="true" />
 
-            {/* Footer */}
-            <div className="auth-card-footer">
+                        <input
+                          id="nombres"
+                          type="text"
+                          name="nombres"
+                          placeholder="Tus nombres"
+                          value={formData.nombres}
+                          onChange={handleChange}
+                          required
+                        />
+                      </div>
+                    </div>
 
-              ¿Ya tienes cuenta?{' '}
+                    <div className="ru-register__field">
+                      <label htmlFor="apellidos">Apellidos *</label>
 
-              <Link
-                to="/cuenta/iniciar-sesion"
-                className="auth-link-bold"
-              >
-                Inicia sesión
-              </Link>
+                      <div className="ru-register__input-wrap">
+                        <User size={16} aria-hidden="true" />
 
+                        <input
+                          id="apellidos"
+                          type="text"
+                          name="apellidos"
+                          placeholder="Tus apellidos"
+                          value={formData.apellidos}
+                          onChange={handleChange}
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </fieldset>
+
+                <fieldset className="ru-register__section">
+                  <legend>Identificación</legend>
+
+                  <div className="ru-register__grid">
+                    <div className="ru-register__field">
+                      <label htmlFor="id_TipoDoc">
+                        Tipo de documento *
+                      </label>
+
+                      <div className="ru-register__input-wrap">
+                        <FileText size={16} aria-hidden="true" />
+
+                        <select
+                          id="id_TipoDoc"
+                          name="id_TipoDoc"
+                          value={formData.id_TipoDoc}
+                          onChange={handleChange}
+                          required
+                        >
+                          <option value="">Seleccionar</option>
+                          <option value="CC">
+                            Cédula de Ciudadanía (CC)
+                          </option>
+                          <option value="CE">
+                            Cédula de Extranjería (CE)
+                          </option>
+                          <option value="Pasaporte">Pasaporte</option>
+                          <option value="TI">
+                            Tarjeta de Identidad (TI)
+                          </option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="ru-register__field">
+                      <label htmlFor="numeroDoc">
+                        Número de documento *
+                      </label>
+
+                      <div className="ru-register__input-wrap">
+                        <CreditCard size={16} aria-hidden="true" />
+
+                        <input
+                          id="numeroDoc"
+                          type="text"
+                          name="numeroDoc"
+                          placeholder="Ej: 1020304050"
+                          value={formData.numeroDoc}
+                          onChange={handleChange}
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </fieldset>
+
+                <fieldset className="ru-register__section">
+                  <legend>Acceso y seguridad</legend>
+
+                  <div className="ru-register__grid">
+                    <div className="ru-register__field">
+                      <label htmlFor="email">
+                        Correo electrónico *
+                      </label>
+
+                      <div className="ru-register__input-wrap">
+                        <Mail size={16} aria-hidden="true" />
+
+                        <input
+                          id="email"
+                          type="email"
+                          name="email"
+                          placeholder="tu@correo.com"
+                          value={formData.email}
+                          onChange={handleChange}
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="ru-register__field">
+                      <label htmlFor="password">Contraseña *</label>
+
+                      <div className="ru-register__input-wrap">
+                        <Lock size={16} aria-hidden="true" />
+
+                        <input
+                          id="password"
+                          type={showPassword ? 'text' : 'password'}
+                          name="password"
+                          placeholder="Mínimo 6 caracteres"
+                          value={formData.password}
+                          onChange={handleChange}
+                          required
+                          minLength={6}
+                          className="ru-register__password"
+                        />
+
+                        <button
+                          type="button"
+                          className="ru-register__password-toggle"
+                          onClick={() =>
+                            setShowPassword(!showPassword)
+                          }
+                          aria-label={
+                            showPassword
+                              ? 'Ocultar contraseña'
+                              : 'Mostrar contraseña'
+                          }
+                          aria-pressed={showPassword}
+                          aria-controls="password"
+                        >
+                          {showPassword ? (
+                            <EyeOff size={16} aria-hidden="true" />
+                          ) : (
+                            <Eye size={16} aria-hidden="true" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </fieldset>
+
+                <fieldset className="ru-register__section">
+                  <legend>Contacto y perfil</legend>
+
+                  <div className="ru-register__grid">
+                    <div className="ru-register__field">
+                      <label htmlFor="telefono">Teléfono *</label>
+
+                      <div className="ru-register__input-wrap">
+                        <Phone size={16} aria-hidden="true" />
+
+                        <input
+                          id="telefono"
+                          type="tel"
+                          name="telefono"
+                          placeholder="300 000 0000"
+                          value={formData.telefono}
+                          onChange={handleChange}
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="ru-register__field">
+                      <label htmlFor="genero">Género *</label>
+
+                      <select
+                        id="genero"
+                        name="genero"
+                        value={formData.genero}
+                        onChange={handleChange}
+                        required
+                        className="ru-register__select-plain"
+                      >
+                        <option value="">Seleccionar</option>
+                        <option value="Masculino">Masculino</option>
+                        <option value="Femenino">Femenino</option>
+                        <option value="Otro">Otro</option>
+                      </select>
+                    </div>
+
+                    <div className="ru-register__field ru-register__field--full">
+                      <label htmlFor="direccion">Dirección *</label>
+
+                      <div className="ru-register__input-wrap">
+                        <MapPin size={16} aria-hidden="true" />
+
+                        <input
+                          id="direccion"
+                          type="text"
+                          name="direccion"
+                          placeholder="Calle, Barrio, Ciudad"
+                          value={formData.direccion}
+                          onChange={handleChange}
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </fieldset>
+
+                <button
+                  type="submit"
+                  className="ru-register__submit"
+                  disabled={loading}
+                >
+                  <span>
+                    {loading
+                      ? 'REGISTRANDO CUENTA...'
+                      : 'REGISTRAR CUENTA'}
+                  </span>
+
+                  <ArrowRight size={18} aria-hidden="true" />
+                </button>
+              </form>
+
+              <p className="ru-register__footer">
+                ¿Ya tienes cuenta?{' '}
+                <Link to="/cuenta/inicio-sesion">
+                  Inicia sesión
+                </Link>
+              </p>
             </div>
-
           </div>
-
-        </div>
-
+        </section>
       </div>
-
-    </div>
+    </main>
   );
 }
