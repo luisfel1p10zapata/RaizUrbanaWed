@@ -22,8 +22,8 @@
   --font-logo: 'Playfair Display', 'Georgia', serif;
   --font-ui: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
 
-  --radius-lg: 18px;
-  --radius-md: 12px;
+  --radius-lg: 8px;
+  --radius-md: 8px;
   --radius-sm: 8px;
   --shadow-card: 0 1px 2px rgba(34, 34, 59, 0.04);
   --shadow-modal: 0 30px 60px rgba(20, 16, 30, 0.35);
@@ -101,8 +101,10 @@
 .ru-card {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-lg, 8px);
   box-shadow: var(--shadow-card);
+  overflow: hidden;
+  -webkit-mask-image: -webkit-radial-gradient(white, black);
 }
 
 .ru-filters-card { padding: 24px 26px; margin-bottom: 26px; }
@@ -167,7 +169,14 @@
 }
 
 /* ============ LIST CARD ============ */
-.ru-list-card { padding: 28px 0 0; overflow: hidden; }
+.ru-list-card {
+  padding: 0;
+  overflow: hidden;
+  background: var(--card-bg, #FFFFFF);
+  border: 1px solid var(--card-border, #EAD9CF);
+  border-radius: var(--radius-lg, 8px);
+  margin-top: 20px;
+}
 
 .ru-list-head {
   display: flex;
@@ -196,11 +205,23 @@
 
 .ru-page-of { font-size: 13px; color: var(--muted-text); }
 
-.ru-table-scroll { overflow-x: auto; }
+.ru-table-container,
+.ru-table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  background: var(--card-bg, #FFFFFF);
+}
 
-.ru-users-table { width: 100%; border-collapse: collapse; min-width: 900px; }
+.ru-table,
+.ru-users-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 900px;
+  background-color: var(--card-bg, #FFFFFF);
+}
 
 /* Encabezado y celdas alineados con la tabla de Ventas */
+.ru-table thead th,
 .ru-users-table thead th {
   text-align: left;
   font-size: 11.5px;
@@ -213,21 +234,37 @@
   white-space: nowrap;
 }
 
+.ru-table thead th:first-child,
 .ru-users-table thead th:first-child { padding-left: 24px; }
+.ru-table thead th:last-child,
 .ru-users-table thead th:last-child { padding-right: 24px; text-align: center; }
 
+.ru-table tbody td,
 .ru-users-table tbody td {
   padding: 18px 20px;
   border-bottom: 1px solid var(--divider);
   font-size: 14px;
   color: var(--primary);
+  background-color: var(--card-bg, #FFFFFF);
   vertical-align: middle;
 }
 
+.ru-no-data {
+  text-align: center;
+  padding: 34px 20px;
+  color: var(--muted-text);
+  font-size: 14px;
+  background-color: var(--card-bg, #FFFFFF);
+}
+
+.ru-table tbody td:first-child,
 .ru-users-table tbody td:first-child { padding-left: 24px; color: var(--muted-text); font-weight: 600; }
+.ru-table tbody td:last-child,
 .ru-users-table tbody td:last-child { padding-right: 24px; }
+.ru-table tbody tr:last-child td,
 .ru-users-table tbody tr:last-child td { border-bottom: none; }
-.ru-users-table tbody tr:hover { background: rgba(242, 233, 228, 0.35); }
+.ru-table tbody tr:hover td,
+.ru-users-table tbody tr:hover td { background: rgba(242, 233, 228, 0.35); }
 
 .ru-user-cell { display: flex; align-items: center; gap: 12px; }
 
@@ -636,8 +673,10 @@
     font-size: 13.5px;
     text-align: left;
   }
-  .ru-users-table tbody td:first-child { padding-left: 0; color: var(--primary); }
-  .ru-users-table tbody td:last-child { padding-right: 0; border-bottom: none; padding-top: 14px; }
+  .ru-table tbody td:first-child,
+.ru-users-table tbody td:first-child { padding-left: 0; color: var(--primary); }
+  .ru-table tbody td:last-child,
+.ru-users-table tbody td:last-child { padding-right: 0; border-bottom: none; padding-top: 14px; }
   .ru-users-table tbody td::before {
     content: attr(data-label);
     display: block;
@@ -689,7 +728,8 @@
 
   .ru-users-table tbody tr { padding: 2px 14px; border-radius: 10px; margin-bottom: 10px; }
   .ru-users-table tbody td { padding: 10px 0; font-size: 13px; }
-  .ru-users-table tbody td:last-child { padding-top: 12px; }
+  .ru-table tbody td:last-child,
+.ru-users-table tbody td:last-child { padding-top: 12px; }
   .ru-users-table tbody td::before { font-size: 10px; margin-bottom: 4px; }
 
   .ru-avatar { width: 28px; height: 28px; font-size: 11px; }

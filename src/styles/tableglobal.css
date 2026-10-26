@@ -19,12 +19,14 @@
   --tg-btn-hover: rgba(74, 78, 105, 0.08);
   --tg-active-bg: #22223B;
   --tg-active-text: #FFFFFF;
+  --tg-radius: 8px; /* Pequeño border radius para cada esquina */
 
   width: 100%;
   background-color: var(--tg-bg);
   border: 1px solid var(--tg-border);
-  border-radius: 14px;
+  border-radius: var(--tg-radius, 8px);
   overflow: hidden;
+  -webkit-mask-image: -webkit-radial-gradient(white, black);
   box-shadow: 0 1px 2px rgba(34, 34, 59, 0.04);
   font-family: inherit;
   color: var(--tg-text);
@@ -51,6 +53,8 @@
 
 /* ---------- Encabezado de la tarjeta ---------- */
 .produccion-table-card .produccion-table-header {
+  border-top-left-radius: var(--tg-radius, 8px);
+  border-top-right-radius: var(--tg-radius, 8px);
   padding: 18px 24px;
   display: flex;
   align-items: center;
@@ -149,6 +153,8 @@
 
 /* ---------- Paginación ---------- */
 .produccion-table-card .produccion-pagination {
+  border-bottom-left-radius: var(--tg-radius, 8px);
+  border-bottom-right-radius: var(--tg-radius, 8px);
   padding: 18px 24px;
   display: flex;
   align-items: center;
@@ -222,7 +228,7 @@
   .produccion-table-card .produccion-table tbody tr {
     display: block;
     border: 1px solid var(--tg-border);
-    border-radius: 12px;
+    border-radius: var(--tg-radius, 8px);
     padding: 2px 16px;
     margin-bottom: 12px;
     background-color: var(--tg-bg);
