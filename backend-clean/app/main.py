@@ -9,6 +9,8 @@ from app.modules.ventas.presentation.ventas_router import router as ventas_route
 from app.modules.categorias.presentation.controller import router as categorias_router
 from app.modules.metodo_pago.presentation.router import router as metodos_pago_router
 from app.modules.compras.presentation.router import router as compras_router
+from app.modules.orden_produccion.presentation.orden_produccion_router import router as orden_produccion_router
+
 
 app = FastAPI(
     title="Raíz Urbana API",
@@ -33,7 +35,7 @@ app.include_router(roles_router)  # Ya incluye prefix="/api/roles" en su definic
 app.include_router(categorias_router, prefix="/api")
 app.include_router(metodos_pago_router, prefix="/api")
 app.include_router(compras_router, prefix="/api")
-
+app.include_router(orden_produccion_router)
 
 @app.get("/", tags=["General"])
 def read_root():
