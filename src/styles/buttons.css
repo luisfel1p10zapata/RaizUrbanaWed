@@ -1,53 +1,391 @@
 /* ==========================================================================
-   ESTILOS GLOBALES DE BOTONES (Basado en diseño real)
-   ================================================================---------- */
+   BOTONES Y BADGES · Guía de diseño oficial de Raíz Urbana (claro y oscuro)
 
-.btn {
+   ÍNDICE
+     1. Tokens · modo claro
+     2. Tokens · modo oscuro
+     3. Botón · base
+     4. Botón · tamaños        (sm · md · lg)
+     5. Botón · variantes      (primary · secondary · outline · destructive)
+     6. Botón · ícono y texto
+     7. Badges
+
+   Los colores viven SOLO en los tokens (secciones 1 y 2). Para cambiar el
+   diseño de un botón o badge se edita un token, no cada selector.
+   El modo oscuro se activa con  [data-theme="dark"], .dark  o  .dark-mode
+   en <html>, <body> o cualquier contenedor padre.
+   ========================================================================== */
+
+
+/* ==========================================================================
+   1. TOKENS · MODO CLARO
+   ========================================================================== */
+:root {
+  /* Botón primario (navy) */
+  --btn-primary-bg: #1C1C2E;
+  --btn-primary-fg: #FFFFFF;
+  --btn-primary-bd: #1C1C2E;
+  --btn-primary-bg-hover: #2E2E48;
+  --btn-primary-shadow: rgba(28, 28, 46, 0.22);
+
+  /* Botón secundario (slate) */
+  --btn-secondary-bg: #4A4E69;
+  --btn-secondary-fg: #FFFFFF;
+  --btn-secondary-bd: #4A4E69;
+  --btn-secondary-bg-hover: #3C4057;
+  --btn-secondary-shadow: rgba(74, 78, 105, 0.22);
+
+  /* Botón outline (blanco con borde oscuro) */
+  --btn-outline-bg: #FFFFFF;
+  --btn-outline-fg: #1C1C2E;
+  --btn-outline-bd: #1C1C2E;
+  --btn-outline-bg-hover: #F2E9E4;
+  --btn-outline-bd-hover: #1C1C2E;
+  --btn-outline-fg-hover: #1C1C2E;
+
+  /* Botón destructivo (carmesí) */
+  --btn-destructive-bg: #D0183A;
+  --btn-destructive-fg: #FFFFFF;
+  --btn-destructive-bd: #D0183A;
+  --btn-destructive-bg-hover: #B31230;
+  --btn-destructive-shadow: rgba(208, 24, 58, 0.25);
+
+  /* Anillo de foco (accesibilidad con teclado) */
+  --btn-focus: #4A76A8;
+
+  /* Badges: [fondo, texto, borde] */
+  --badge-primary-bg: #1C1C2E;   --badge-primary-fg: #FFFFFF;  --badge-primary-bd: transparent;
+  --badge-secondary-bg: #4A4E69; --badge-secondary-fg: #FFFFFF; --badge-secondary-bd: transparent;
+  --badge-accent-bg: #E2DCDE;    --badge-accent-fg: #4A4E69;   --badge-accent-bd: transparent;
+  --badge-success-bg: #D4F7DF;   --badge-success-fg: #0F7642;  --badge-success-bd: transparent;
+  --badge-warning-bg: #FEF3C7;   --badge-warning-fg: #B45309;  --badge-warning-bd: transparent;
+  --badge-danger-bg: #FEE2E2;    --badge-danger-fg: #B91C1C;   --badge-danger-bd: transparent;
+  --badge-info-bg: #DBEAFE;      --badge-info-fg: #1D4ED8;     --badge-info-bd: transparent;
+  --badge-outline-bg: #FFFFFF;   --badge-outline-fg: #1C1C2E;  --badge-outline-bd: #9A8C98;
+}
+
+
+/* ==========================================================================
+   2. TOKENS · MODO OSCURO  (va después del claro para sobrescribirlo)
+   ========================================================================== */
+:root[data-theme="dark"],
+[data-theme="dark"],
+.dark,
+.dark-mode {
+  --btn-primary-bg: #4F5675;
+  --btn-primary-fg: #FFFFFF;
+  --btn-primary-bd: #4F5675;
+  --btn-primary-bg-hover: #5E678C;
+  --btn-primary-shadow: rgba(0, 0, 0, 0.45);
+
+  --btn-secondary-bg: #9A8C98;
+  --btn-secondary-fg: #FFFFFF;
+  --btn-secondary-bd: #9A8C98;
+  --btn-secondary-bg-hover: #AA9CA8;
+  --btn-secondary-shadow: rgba(0, 0, 0, 0.45);
+
+  --btn-outline-bg: transparent;
+  --btn-outline-fg: #7E88A3;
+  --btn-outline-bd: #2E344D;
+  --btn-outline-bg-hover: rgba(255, 255, 255, 0.05);
+  --btn-outline-bd-hover: #4F5675;
+  --btn-outline-fg-hover: #C9ADA7;
+
+  --btn-destructive-bg: #D81B3F;
+  --btn-destructive-fg: #FFFFFF;
+  --btn-destructive-bd: #D81B3F;
+  --btn-destructive-bg-hover: #E8294F;
+  --btn-destructive-shadow: rgba(216, 27, 63, 0.45);
+
+  --btn-focus: #8E9AC9;
+
+  --badge-primary-bg: #4F5675;   --badge-primary-fg: #FFFFFF;  --badge-primary-bd: transparent;
+  --badge-secondary-bg: #7E778B; --badge-secondary-fg: #FFFFFF; --badge-secondary-bd: transparent;
+  --badge-accent-bg: #2D2A38;    --badge-accent-fg: #C9ADA7;   --badge-accent-bd: #4A4658;
+  --badge-success-bg: rgba(34, 197, 94, 0.16);  --badge-success-fg: #4ADE80; --badge-success-bd: rgba(34, 197, 94, 0.35);
+  --badge-warning-bg: rgba(245, 158, 11, 0.16); --badge-warning-fg: #FBBF24; --badge-warning-bd: rgba(245, 158, 11, 0.35);
+  --badge-danger-bg: rgba(239, 68, 68, 0.16);   --badge-danger-fg: #F87171;  --badge-danger-bd: rgba(239, 68, 68, 0.35);
+  --badge-info-bg: rgba(59, 130, 246, 0.16);    --badge-info-fg: #60A5FA;    --badge-info-bd: rgba(59, 130, 246, 0.35);
+  --badge-outline-bg: transparent; --badge-outline-fg: #C9ADA7; --badge-outline-bd: #3A3D57;
+}
+
+
+/* ==========================================================================
+   3. BOTÓN · BASE
+   Incluye los alias .ru-btn-* para que funcionen solos, sin la clase .btn
+   (traen el tamaño mediano por defecto; .btn-sm / .btn-lg lo reemplazan).
+   ========================================================================== */
+.btn,
+.ru-btn-primary,
+.ru-btn-secondary,
+.ru-btn-outline,
+.ru-btn-destructive,
+.ru-btn-destructivo,
+.ru-btn-dark {
+  box-sizing: border-box;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  font-family: 'Montserrat', sans-serif;
-  font-weight: 600;
+
+  padding: 10px 22px;
+  min-height: 40px;
+  border: 1.5px solid transparent;
   border-radius: 8px;
+
+  font-family: 'Montserrat', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.25;
+  text-decoration: none;
+  white-space: nowrap;
+
   cursor: pointer;
-  transition: all 0.2s ease;
-  padding: 12px 20px;
-  font-size: 0.95rem;
-  border: 1px solid transparent;
+  user-select: none;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease,
+              box-shadow 0.2s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Botón Principal (Oscuro) */
-.btn-primary, .ru-btn-dark {
-  background-color: var(--color-primary, #000025);
-  color: var(--color-background, #F2E9E4);
-  border-color: transparent;
+.btn:focus-visible,
+.ru-btn-primary:focus-visible,
+.ru-btn-secondary:focus-visible,
+.ru-btn-outline:focus-visible,
+.ru-btn-destructive:focus-visible,
+.ru-btn-destructivo:focus-visible,
+.ru-btn-dark:focus-visible {
+  outline: 2px solid var(--btn-focus);
+  outline-offset: 2px;
 }
-.btn-primary:hover, .ru-btn-dark:hover {
-  opacity: 0.9;
+
+.btn:active,
+.ru-btn-primary:active,
+.ru-btn-secondary:active,
+.ru-btn-outline:active,
+.ru-btn-destructive:active,
+.ru-btn-destructivo:active,
+.ru-btn-dark:active {
+  transform: translateY(1px);
+}
+
+.btn:disabled,
+.ru-btn-primary:disabled,
+.ru-btn-secondary:disabled,
+.ru-btn-outline:disabled,
+.ru-btn-destructive:disabled,
+.ru-btn-destructivo:disabled,
+.ru-btn-dark:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.btn-full {
+  display: flex;
+  width: 100%;
+}
+
+
+/* ==========================================================================
+   4. BOTÓN · TAMAÑOS
+   ========================================================================== */
+.btn-sm,
+.btn-small {
+  padding: 6px 14px;
+  min-height: 32px;
+  border-radius: 6px;
+  font-size: 12px;
+  gap: 6px;
+}
+
+.btn-md,
+.btn-medium {
+  padding: 10px 22px;
+  min-height: 40px;
+  border-radius: 8px;
+  font-size: 14px;
+  gap: 8px;
+}
+
+.btn-lg,
+.btn-large {
+  padding: 14px 28px;
+  min-height: 52px;
+  border-radius: 8px;
+  font-size: 16px;
+  gap: 10px;
+}
+
+/* Tamaño del ícono según el botón */
+.btn-sm .btn-icon svg,
+.btn-small .btn-icon svg { width: 14px; height: 14px; }
+
+.btn-md .btn-icon svg,
+.btn-medium .btn-icon svg { width: 16px; height: 16px; }
+
+.btn-lg .btn-icon svg,
+.btn-large .btn-icon svg { width: 18px; height: 18px; }
+
+
+/* ==========================================================================
+   5. BOTÓN · VARIANTES  (los colores salen de los tokens)
+   ========================================================================== */
+
+/* Primary */
+.btn-primary,
+.ru-btn-primary,
+.ru-btn-dark {
+  background-color: var(--btn-primary-bg);
+  border-color: var(--btn-primary-bd);
+  color: var(--btn-primary-fg);
+}
+.btn-primary:hover,
+.ru-btn-primary:hover,
+.ru-btn-dark:hover {
+  background-color: var(--btn-primary-bg-hover);
+  border-color: var(--btn-primary-bg-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px var(--btn-primary-shadow);
+}
+
+/* Secondary */
+.btn-secondary,
+.ru-btn-secondary {
+  background-color: var(--btn-secondary-bg);
+  border-color: var(--btn-secondary-bd);
+  color: var(--btn-secondary-fg);
+}
+.btn-secondary:hover,
+.ru-btn-secondary:hover {
+  background-color: var(--btn-secondary-bg-hover);
+  border-color: var(--btn-secondary-bg-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px var(--btn-secondary-shadow);
+}
+
+/* Outline */
+.btn-outline,
+.ru-btn-outline {
+  background-color: var(--btn-outline-bg);
+  border-color: var(--btn-outline-bd);
+  color: var(--btn-outline-fg);
+}
+.btn-outline:hover,
+.ru-btn-outline:hover {
+  background-color: var(--btn-outline-bg-hover);
+  border-color: var(--btn-outline-bd-hover);
+  color: var(--btn-outline-fg-hover);
   transform: translateY(-1px);
 }
 
-/* Botón de Contorno (Outline / Cancelar) */
-.btn-outline, .ru-btn-outline {
-  background-color: transparent;
-  border: 1px solid var(--color-secondary, #000522);
-  color: var(--color-primary, #000025);
+/* Destructive */
+.btn-destructive,
+.btn-destructivo,
+.ru-btn-destructive,
+.ru-btn-destructivo {
+  background-color: var(--btn-destructive-bg);
+  border-color: var(--btn-destructive-bd);
+  color: var(--btn-destructive-fg);
 }
-.btn-outline:hover, .ru-btn-outline:hover {
-  background-color: var(--color-hover, #F3F3F3);
+.btn-destructive:hover,
+.btn-destructivo:hover,
+.ru-btn-destructive:hover,
+.ru-btn-destructivo:hover {
+  background-color: var(--btn-destructive-bg-hover);
+  border-color: var(--btn-destructive-bg-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px var(--btn-destructive-shadow);
 }
 
-/* Botón Destructivo / Peligro (Rojo) */
-.btn-destructive {
-  background-color: #d93838;
-  color: #ffffff;
+
+/* ==========================================================================
+   6. BOTÓN · ÍCONO Y TEXTO
+   ========================================================================== */
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: currentColor;
 }
-.btn-destructive:hover {
-  background-color: #c22e2e;
+.btn-icon svg { display: block; }
+
+.btn-text {
+  display: inline-block;
+  line-height: inherit;
 }
 
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+
+/* ==========================================================================
+   7. BADGES
+   Cada variante solo declara 3 variables privadas (--_bg, --_fg, --_bd);
+   la regla base las usa. Así no se repite el código en claro y oscuro.
+   ========================================================================== */
+.badge,
+.ru-badge {
+  --_bg: var(--badge-accent-bg);
+  --_fg: var(--badge-accent-fg);
+  --_bd: var(--badge-accent-bd);
+  --_bw: 1px;
+
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 4px 14px;
+  border: var(--_bw) solid var(--_bd);
+  border-radius: 999px;
+  background-color: var(--_bg);
+  color: var(--_fg);
+
+  font-family: 'Montserrat', sans-serif;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.badge-dot {
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background-color: currentColor;
+}
+
+.badge-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.badge-icon svg { width: 13px; height: 13px; }
+
+/* Variantes */
+.badge-primary, .ru-badge-primary {
+  --_bg: var(--badge-primary-bg); --_fg: var(--badge-primary-fg); --_bd: var(--badge-primary-bd);
+}
+.badge-secondary, .ru-badge-secondary {
+  --_bg: var(--badge-secondary-bg); --_fg: var(--badge-secondary-fg); --_bd: var(--badge-secondary-bd);
+}
+.badge-accent, .ru-badge-accent {
+  --_bg: var(--badge-accent-bg); --_fg: var(--badge-accent-fg); --_bd: var(--badge-accent-bd);
+}
+.badge-activo, .ru-badge-activo, .badge-success {
+  --_bg: var(--badge-success-bg); --_fg: var(--badge-success-fg); --_bd: var(--badge-success-bd);
+}
+.badge-pendiente, .ru-badge-pendiente, .badge-warning {
+  --_bg: var(--badge-warning-bg); --_fg: var(--badge-warning-fg); --_bd: var(--badge-warning-bd);
+}
+.badge-cancelado, .ru-badge-cancelado, .badge-danger, .badge-destructive {
+  --_bg: var(--badge-danger-bg); --_fg: var(--badge-danger-fg); --_bd: var(--badge-danger-bd);
+}
+.badge-info, .ru-badge-info {
+  --_bg: var(--badge-info-bg); --_fg: var(--badge-info-fg); --_bd: var(--badge-info-bd);
+}
+.badge-outline, .ru-badge-outline {
+  --_bg: var(--badge-outline-bg); --_fg: var(--badge-outline-fg); --_bd: var(--badge-outline-bd);
+  --_bw: 1.5px;
 }

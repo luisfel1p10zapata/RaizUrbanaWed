@@ -1,0 +1,114 @@
+/* ==========================================================================
+   ConfirmModal — Modal Global de Confirmación
+   Soporte completo para Modo Claro y Modo Oscuro (data-theme="dark")
+   ========================================================================== */
+
+.ru-confirm-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(18, 15, 24, 0.55);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 24px;
+  animation: ru-modal-fade-in 0.15s ease;
+}
+
+@keyframes ru-modal-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+[data-theme="dark"] .ru-confirm-modal-overlay,
+.dark .ru-confirm-modal-overlay,
+.dark-mode .ru-confirm-modal-overlay {
+  background: rgba(0, 0, 0, 0.75);
+}
+
+.ru-confirm-modal {
+  background: #FFFFFF;
+  border: 1px solid #EAD9CF;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 420px;
+  padding: 26px 28px 22px;
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(34, 34, 59, 0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+[data-theme="dark"] .ru-confirm-modal,
+.dark .ru-confirm-modal,
+.dark-mode .ru-confirm-modal {
+  background: #1C1E2E;
+  border: 1px solid #3A3D57;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.6);
+}
+
+.ru-confirm-icon-box {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(225, 29, 72, 0.1);
+  color: #E11D48;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+[data-theme="dark"] .ru-confirm-icon-box,
+.dark .ru-confirm-icon-box,
+.dark-mode .ru-confirm-icon-box {
+  background: rgba(239, 68, 68, 0.2);
+  color: #F87171;
+}
+
+.ru-confirm-title {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: #22223B;
+  margin: 0 0 8px 0;
+  transition: color 0.2s ease;
+}
+
+[data-theme="dark"] .ru-confirm-title,
+.dark .ru-confirm-title,
+.dark-mode .ru-confirm-title {
+  color: #F2E9E4;
+}
+
+.ru-confirm-message {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 13.5px;
+  color: #6F6B7C;
+  line-height: 1.5;
+  margin: 0 0 22px 0;
+  max-width: 340px;
+  transition: color 0.2s ease;
+}
+
+[data-theme="dark"] .ru-confirm-message,
+.dark .ru-confirm-message,
+.dark-mode .ru-confirm-message {
+  color: #C9ADA7;
+}
+
+.ru-confirm-footer {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  justify-content: center;
+}
+
+.ru-confirm-footer .btn {
+  flex: 1;
+}
+

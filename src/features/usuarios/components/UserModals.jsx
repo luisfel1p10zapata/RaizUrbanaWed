@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { X, Mail, Phone, IdCard, MapPin, AlertTriangle } from "lucide-react";
+import "../styles/ModalsUsuarios.css";
 
 const AVATAR_COLORS = ["#2E9E5B", "#D6558A", "#4A76A8", "#E0973F", "#4A76D8", "#3E9BC9", "#D1495B", "#5B6FD8", "#8A6FD6", "#3EB08A"];
 
@@ -79,8 +80,8 @@ export function ViewUserModal({ user, index, onClose, onEdit }) {
       title="Consultar Usuario"
       onClose={onClose}
       footer={<>
-        <button className="ru-btn-outline" onClick={onClose}>Cerrar</button>
-        <button className="ru-btn-dark" onClick={onEdit}>Editar usuario</button>
+        <button type="button" className="btn btn-outline" onClick={onClose}>Cerrar</button>
+        <button type="button" className="btn btn-primary" onClick={onEdit}>Editar usuario</button>
       </>}
     >
       <div className="ru-view-top">
@@ -139,8 +140,8 @@ export function CreateUserModal({ nextId, onClose, onCreate }) {
       title="Registrar Usuario"
       onClose={onClose}
       footer={<>
-        <button className="ru-btn-outline" onClick={onClose}>Cancelar</button>
-        <button className="ru-btn-dark" onClick={() => validate() && onCreate({ id: nextId, ...form, estado: "Activo", fecha: new Date().toISOString().slice(0, 10) })}>Registrar usuario</button>
+        <button type="button" className="btn btn-outline" onClick={onClose}>Cancelar</button>
+        <button type="button" className="btn btn-primary" onClick={() => validate() && onCreate({ id: nextId, ...form, estado: "Activo", fecha: new Date().toISOString().slice(0, 10) })}>Registrar usuario</button>
       </>}
     >
       <div className="ru-form-grid">
@@ -195,8 +196,8 @@ export function EditUserModal({ user, index, onClose, onSave }) {
       title="Editar Usuario / Cliente"
       onClose={onClose}
       footer={<>
-        <button className="ru-btn-outline" onClick={onClose}>Cancelar</button>
-        <button className="ru-btn-dark" onClick={() => validate() && onSave(form)}>Guardar cambios</button>
+        <button type="button" className="btn btn-outline" onClick={onClose}>Cancelar</button>
+        <button type="button" className="btn btn-primary" onClick={() => validate() && onSave(form)}>Guardar cambios</button>
       </>}
     >
       <div className="ru-form-grid">

@@ -1,0 +1,248 @@
+/* ==================================================================
+   ModalsUsuarios.css — estilos de todos los modales de Usuarios
+   (ver usuario, crear y editar).
+   Las variables (--primary, --card-bg, --card-border...) vienen de .ru-root
+   (Usuarios.css), por eso el modo claro y oscuro funcionan solos.
+
+   ✏️ QUÉ SE OPTIMIZÓ (busca los comentarios ✏️):
+   1. Sección 1: bases agrupadas (caja con borde, centrado flex, etiquetas,
+      textos apagados) en vez de repetir las mismas propiedades.
+   2. Todo el responsive de los modales salió de Usuarios.css y quedó
+      aquí, al final.
+   3. Sin colores fijos: todo usa variables, así que no necesita bloques
+      [data-theme="dark"] propios.
+   ================================================================== */
+
+/* ---------- 1. BASES AGRUPADAS (propiedades que se repetían) ---------- */
+
+/* ✏️ Caja con borde + fondo + tipografía: inputs y botones de estado */
+.ru-form-input, .ru-status-toggle {
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  background: var(--card-bg);
+  font-family: var(--font-ui);
+}
+
+/* ✏️ Elementos con contenido centrado */
+.ru-modal-close, .ru-view-avatar, .ru-toggle-eye {
+  display: flex; align-items: center; justify-content: center;
+}
+.ru-modal-close, .ru-view-avatar { flex-shrink: 0; }
+
+/* ✏️ Etiquetas en negrita con color de etiqueta */
+.ru-form-label, .ru-section-label { font-weight: 700; color: var(--label-text); }
+
+/* ✏️ Textos apagados (gris) */
+.ru-view-registered, .ru-order-date, .ru-activity-time, .ru-info-label,
+.ru-info-item svg { color: var(--muted-text); }
+
+/* ✏️ Filas con texto a la izquierda y valor a la derecha */
+.ru-order-card, .ru-activity-item { display: flex; align-items: center; justify-content: space-between; }
+
+/* ---------- 2. MARCO DEL MODAL ---------- */
+.ru-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  padding: 24px;
+  background: rgba(18, 15, 24, 0.55);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: ru-fade-in 0.15s ease;
+}
+@keyframes ru-fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+.ru-modal {
+  background: var(--card-bg);
+  border-radius: 22px;
+  width: 100%;
+  max-width: 620px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: var(--shadow-modal);
+}
+
+.ru-modal-header {
+  padding: 26px 30px 18px;
+  border-bottom: 1px solid var(--divider);
+  flex-shrink: 0;
+  position: relative;
+}
+
+.ru-modal-eyebrow { font-size: 11px; letter-spacing: 0.1em; color: var(--accent); font-weight: 600; margin-bottom: 7px; }
+.ru-modal-title { font-family: var(--font-logo); font-size: 26px; font-weight: 600; color: var(--primary); margin: 0; }
+
+.ru-modal-close {
+  position: absolute;
+  top: 22px;
+  right: 24px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--secondary);
+  cursor: pointer;
+}
+.ru-modal-close:hover { background: var(--background); }
+
+.ru-modal-body { padding: 24px 30px 8px; overflow-y: auto; flex: 1; }
+
+.ru-modal-footer {
+  padding: 18px 30px 26px;
+  border-top: 1px solid var(--divider);
+  flex-shrink: 0;
+  display: flex;
+  gap: 12px;
+}
+.ru-modal-footer .btn,
+.ru-modal-footer .ru-btn-outline,
+.ru-modal-footer .ru-btn-dark,
+.ru-modal-footer .ru-btn-primary { flex: 1; }
+
+/* ---------- 3. VER USUARIO ---------- */
+.ru-view-top { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
+
+.ru-view-avatar {
+  width: 58px;
+  height: 58px;
+  border-radius: 16px;
+  color: #fff;
+  font-size: 19px;
+  font-weight: 700;
+}
+
+.ru-view-name { font-family: var(--font-logo); font-size: 20px; font-weight: 600; color: var(--primary); margin: 0 0 4px; }
+.ru-view-registered { font-size: 12px; margin-bottom: 8px; }
+.ru-view-badges { display: flex; align-items: center; gap: 10px; }
+
+.ru-section-label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 22px 0 12px;
+}
+
+/* Datos del usuario */
+.ru-info-grid { display: flex; flex-direction: column; gap: 16px; }
+.ru-info-item { display: flex; align-items: flex-start; gap: 11px; }
+.ru-info-item svg { margin-top: 2px; flex-shrink: 0; }
+.ru-info-label { font-size: 10.5px; letter-spacing: 0.04em; margin-bottom: 2px; }
+.ru-info-value { font-size: 13.5px; color: var(--primary); font-weight: 500; }
+
+/* Pedidos */
+.ru-order-card {
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+  padding: 13px 16px;
+  margin-bottom: 10px;
+}
+.ru-order-id { font-size: 13px; font-weight: 600; color: var(--primary); }
+.ru-order-date { font-size: 11.5px; margin-top: 2px; }
+.ru-order-amount { font-size: 13.5px; font-weight: 700; color: var(--primary); text-align: right; }
+.ru-order-status { font-size: 11px; color: var(--positive); font-weight: 600; margin-top: 2px; text-align: right; }
+
+/* Actividad reciente */
+.ru-activity-item { padding: 10px 0; border-bottom: 1px solid var(--divider); font-size: 12.5px; }
+.ru-activity-item:last-child { border-bottom: none; }
+.ru-activity-text { display: flex; align-items: center; gap: 9px; color: var(--primary); }
+.ru-activity-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--soft); flex-shrink: 0; }
+.ru-activity-time { white-space: nowrap; }
+
+/* ---------- 4. FORMULARIO (CREAR / EDITAR) ---------- */
+.ru-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 18px; margin-bottom: 4px; }
+.ru-form-field.full { grid-column: 1 / -1; }
+
+.ru-form-label { display: block; font-size: 10.5px; letter-spacing: 0.07em; margin-bottom: 7px; }
+.ru-form-label .req { color: var(--negative); }
+
+.ru-form-input-wrap { position: relative; display: flex; align-items: center; }
+.ru-form-input-wrap svg.leading { position: absolute; left: 14px; color: var(--muted-text); pointer-events: none; }
+
+.ru-form-input {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 13.5px;
+  color: var(--primary);
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+.ru-form-input.with-icon { padding-left: 40px; }
+.ru-form-input.with-toggle { padding-right: 40px; }
+.ru-form-input::placeholder { color: var(--muted-text); }
+.ru-form-input:focus { border-color: var(--soft); }
+
+.ru-toggle-eye {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  color: var(--muted-text);
+  cursor: pointer;
+}
+
+/* Selector Activo / Inactivo */
+.ru-status-toggle-row { display: flex; gap: 12px; }
+
+.ru-status-toggle {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--secondary);
+  cursor: pointer;
+}
+.ru-status-toggle .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted-text); }
+.ru-status-toggle.selected { border-color: var(--primary); background: var(--background); color: var(--primary); }
+.ru-status-toggle.selected.active .dot { background: var(--positive); }
+.ru-status-toggle.selected.inactive .dot { background: var(--muted-text); }
+.ru-status-toggle svg.check { color: var(--primary); }
+
+/* ---------- 5. RESPONSIVE (✏️ movido desde Usuarios.css) ---------- */
+@media (max-width: 880px) {
+  .ru-form-grid { grid-template-columns: 1fr; }
+  .ru-modal { max-width: 94vw; }
+}
+
+@media (max-width: 780px) {
+  .ru-modal { max-width: 100%; max-height: 94vh; border-radius: 22px 22px 0 0; }
+  .ru-modal-overlay { padding: 14px; align-items: flex-end; }
+  .ru-modal-header { padding: 22px 20px 14px; }
+  .ru-modal-body { padding: 18px 20px 8px; }
+  .ru-modal-footer { padding: 14px 20px 20px; }
+}
+
+@media (max-width: 640px) {
+  .ru-view-avatar { width: 50px; height: 50px; border-radius: 14px; font-size: 16px; }
+  .ru-view-name { font-size: 18px; }
+  .ru-order-card { padding: 11px 14px; }
+  .ru-activity-item { font-size: 12px; padding: 9px 0; }
+  .ru-activity-dot { width: 5px; height: 5px; }
+}
+
+@media (max-width: 480px) {
+  .ru-form-grid { gap: 12px 14px; }
+  .ru-form-input { padding: 11px 13px; font-size: 13px; }
+  .ru-form-input.with-icon { padding-left: 36px; }
+  .ru-status-toggle { padding: 10px; font-size: 12.5px; }
+
+  .ru-view-top { gap: 12px; margin-bottom: 18px; }
+  .ru-view-avatar { width: 44px; height: 44px; font-size: 14px; }
+  .ru-section-label { font-size: 10px; margin: 18px 0 10px; }
+  .ru-info-value { font-size: 13px; }
+}
+
+@media (max-width: 380px) {
+  .ru-btn-outline, .ru-btn-dark { padding: 12px; font-size: 12.5px; }
+  .ru-modal-close { width: 26px; height: 26px; }
+}
