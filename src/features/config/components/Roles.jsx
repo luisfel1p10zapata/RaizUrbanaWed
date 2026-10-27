@@ -21,78 +21,141 @@ import {
 
 import './Roles.css';
 
-// Lista de módulos disponibles en el sistema para la asignación de permisos
-const AVAILABLE_MODULES = [
-  'Dashboard',
-  'Ventas',
-  'Productos',
-  'Producto Variante',
-  'Categorías',
-  'Tipo Producto',
-  'Compras',
-  'Compras Insumos',
-  'Proveedores',
-  'Insumos',
-  'Categoría de Insumos',
-  'Materiales',
-  'Tamaños',
-  'Producción',
-  'Métodos Pago',
-  'Usuarios',
-  'Roles',
-];
+// Convierte la respuesta de FastAPI al formato que utiliza la interfaz.
+const esAdministrador = (rol) =>
+  String(rol?.nombre ?? rol?.Nombre ?? rol?.name ?? '')
+    .trim()
+    .toLowerCase() === 'administrador';
 
-const INITIAL_ROLES = [
-  {
-    id: 1,
-    name: 'Administrador',
-    description: 'Acceso completo a todos los módulos...',
-    isTotalAccess: true,
-    permissions: [...AVAILABLE_MODULES],
-    active: true,
-    isProtected: true, // Marca de protección para evitar edición/eliminación
-  },
-  {
-    id: 2,
-    name: 'Empleado',
-    description: 'Acceso operativo para tareas de ventas, compras y producción',
-    isTotalAccess: false,
-    permissions: ['Dashboard', 'Ventas', 'Compras', 'Producción'],
-    active: true,
-    isProtected: false,
-  },
-  {
-    id: 3,
-    name: 'Cliente',
-    description: 'Acceso limitado a módulos de consulta',
-    isTotalAccess: false,
-    permissions: ['Dashboard', 'Productos', 'Categorías'],
-    active: true,
-    isProtected: false,
-  },
-];
+
+const normalizarRol = (rol, catalogoPermisos = []) => {
+  const id = rol.id_rol ?? rol.id_Rol ?? rol.id;
+  const nombre = rol.nombre ?? rol.Nombre ?? rol.name ?? '';
+
+  // La API devuelve "descripción" con d minúscula y tilde.
+  const descripcion =
+    rol.descripción ??
+    rol.Descripción ??
+    rol.descripcion ??
+    rol.description ??
+    '';
+
+  const estado = rol.estado ?? rol.Estado ?? rol.active ?? true;
+
+  // IDs utilizados por los formularios de asignación.
+  const privilegiosRaw =
+    rol.privilegios_ids ??
+    rol.privilegeIds ??
+    rol.privilegiosIds ??
+    [];
+
+  const permisosRaw =
+    rol.permisos_ids ??
+    rol.permissionIds ??
+    rol.permisosIds ??
+    [];
+
+  const privilegeIds = Array.isArray(privilegiosRaw)
+    ? privilegiosRaw.map(Number)
+    : [];
+
+  const permissionIds = Array.isArray(permisosRaw)
+    ? permisosRaw.map(Number)
+    : [];
+
+  // Nombres que vienen directamente del listado de PostgreSQL.
+  const permisosApi = Array.isArray(rol.permisos)
+    ? rol.permisos
+    : [];
+
+  const privilegiosApi = Array.isArray(rol.privilegios)
+    ? rol.privilegios
+    : [];
+
+  // Compatibilidad con los datos del catálogo cuando hay IDs disponibles.
+  const permisosDelCatalogo = catalogoPermisos.filter((permiso) => {
+    const idsDelPermiso = (permiso.privilegios ?? []).map(
+      (item) => Number(item.id_privilegio)
+    );
+
+    return (
+      permissionIds.includes(Number(permiso.id_permiso)) ||
+      idsDelPermiso.some((idPrivilegio) =>
+        privilegeIds.includes(idPrivilegio)
+      )
+    );
+  });
+
+  const nombresPermisos = permisosApi.length
+    ? permisosApi
+    : permisosDelCatalogo.map((permiso) => permiso.nombre);
+
+  const nombresPrivilegios = privilegiosApi.length
+    ? privilegiosApi
+    : catalogoPermisos.flatMap((permiso) =>
+      (permiso.privilegios ?? [])
+        .filter((item) =>
+          privilegeIds.includes(Number(item.id_privilegio))
+        )
+        .map((item) => item.nombre)
+    );
+
+  const todosLosPrivilegios = catalogoPermisos.flatMap((permiso) =>
+    (permiso.privilegios ?? []).map((item) =>
+      Number(item.id_privilegio)
+    )
+  );
+
+  const tieneTodosLosPrivilegios =
+    todosLosPrivilegios.length > 0 &&
+    todosLosPrivilegios.every((idPrivilegio) =>
+      privilegeIds.includes(idPrivilegio)
+    );
+
+  const isProtected =
+    String(nombre).trim().toLowerCase() === 'administrador';
+
+  return {
+    id: Number(id),
+    name: nombre,
+    description: descripcion,
+    active: Boolean(estado),
+    privilegeIds,
+    permissionIds,
+    permissions: nombresPermisos,
+    privilegeNames: nombresPrivilegios,
+    isTotalAccess: isProtected || tieneTodosLosPrivilegios,
+    isProtected,
+  };
+};
+
 
 const Roles = () => {
-
   const {
+    roles,
     permisos,
+    cargandoRoles,
     cargandoPermisos,
     guardando,
     error,
+    cargarRoles,
     crearRol,
+    editarRol,
+    borrarRol,
+    cambiarEstado,
+    actualizarPermisos,
+    actualizarPrivilegios,
+    consultarRol,
   } = useRoles();
 
   const [permisosExpandidos, setPermisosExpandidos] = useState([]);
   const [errorFormulario, setErrorFormulario] = useState('');
-  // Estado principal de roles
-  const [rolesList, setRolesList] = useState(INITIAL_ROLES);
+  const [operando, setOperando] = useState(false);
 
-  // Filtros de búsqueda
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('Todos');
 
-  // Control de Modales
-  const [activeModal, setActiveModal] = useState(null); // 'CREATE' | 'VIEW' | 'EDIT' | 'DELETE' | null
+  const [activeModal, setActiveModal] = useState(null);
   const [selectedRole, setSelectedRole] = useState(null);
 
   const [formData, setFormData] = useState({
@@ -102,21 +165,24 @@ const Roles = () => {
     privilegeIds: [],
   });
 
-  // ---- CAMBIO RÁPIDO DE ESTADO (PROTEGIDO SI ES ADMIN/PROTECTED) ----
-  const handleToggleStatus = (role) => {
-    if (role.isProtected) return; // No permite cambiar estado a roles protegidos
+  const permisosVisibles = useMemo(
+    () => permisos.filter((permiso) =>
+      String(permiso.nombre ?? '').trim().toLowerCase() !== 'acceso total'
+    ),
+    [permisos]
+  );
 
-    setRolesList((prevRoles) =>
-      prevRoles.map((r) =>
-        r.id === role.id ? { ...r, active: !r.active } : r
-      )
-    );
-  };
+  // La lista ya no se inicializa con roles simulados: procede de FastAPI.
+  const rolesList = useMemo(
+    () => roles.map((rol) => normalizarRol(rol, permisosVisibles)),
+    [roles, permisosVisibles]
+  );
 
+  const modulosDisponibles = permisosVisibles.length;
 
   const obtenerTodosLosPrivilegios = () =>
-    permisos.flatMap((permiso) =>
-      permiso.privilegios.map((privilegio) => privilegio.id_privilegio)
+    permisosVisibles.flatMap((permiso) =>
+      (permiso.privilegios ?? []).map((privilegio) => Number(privilegio.id_privilegio))
     );
 
   const handleTotalAccessToggle = () => {
@@ -155,8 +221,8 @@ const Roles = () => {
   };
 
   const handlePermissionToggle = (permiso) => {
-    const ids = permiso.privilegios.map(
-      (privilegio) => privilegio.id_privilegio
+    const ids = (permiso.privilegios ?? []).map(
+      (privilegio) => Number(privilegio.id_privilegio)
     );
 
     setFormData((prev) => {
@@ -174,116 +240,166 @@ const Roles = () => {
   };
 
 
-  // ---- ACCIONES DE MODALES ----
+  // ---- ACCIONES DE MODALES CONECTADAS A FASTAPI ----
   const handleOpenCreate = () => {
-    setFormData({
-      name: '',
-      description: '',
-      active: true,
-      privilegeIds: [],
-    });
-
+    setFormData({ name: '', description: '', active: true, privilegeIds: [] });
+    setSelectedRole(null);
     setPermisosExpandidos([]);
     setErrorFormulario('');
     setActiveModal('CREATE');
   };
 
-  const handleOpenView = (role) => {
-    setSelectedRole(role);
-    setActiveModal('VIEW');
+  const handleToggleStatus = async (role) => {
+    if (role.isProtected || operando) return;
+    setOperando(true);
+    setErrorFormulario('');
+    try {
+      await cambiarEstado(role.id, !role.active);
+    } catch (err) {
+      setErrorFormulario(err.message || 'No se pudo cambiar el estado del rol.');
+    } finally {
+      setOperando(false);
+    }
   };
 
-  const handleOpenEdit = (role) => {
-    if (role.isProtected) return; // Protección adicional
-    setSelectedRole(role);
-    setFormData({
-      name: role.name,
-      description: role.description,
-      active: role.active,
-      privilegeIds: role.privilegeIds ?? [],
-    });
-    setActiveModal('EDIT');
+  const handleOpenView = async (role) => {
+    setErrorFormulario('');
+    setOperando(true);
+    try {
+      const detalle = await consultarRol(role.id);
+      const rolDetalle = normalizarRol({
+        ...role,
+        ...(detalle ?? {}),
+        privilegios_ids: detalle?.privilegios_ids ?? detalle?.privilegeIds ?? role.privilegeIds,
+        permisos_ids: detalle?.permisos_ids ?? detalle?.permissionIds ?? role.permissionIds,
+      }, permisosVisibles);
+      setSelectedRole(rolDetalle);
+      setActiveModal('VIEW');
+    } catch (err) {
+      setErrorFormulario(err.message || 'No se pudo consultar el rol.');
+    } finally {
+      setOperando(false);
+    }
+  };
+
+  const handleOpenEdit = async (role) => {
+    if (role.isProtected || operando) return;
+    setErrorFormulario('');
+    setOperando(true);
+    try {
+      const detalle = await consultarRol(role.id);
+      const rolDetalle = normalizarRol({
+        ...role,
+        ...(detalle ?? {}),
+        privilegios_ids: detalle?.privilegios_ids ?? detalle?.privilegeIds ?? role.privilegeIds,
+        permisos_ids: detalle?.permisos_ids ?? detalle?.permissionIds ?? role.permissionIds,
+      }, permisosVisibles);
+      setSelectedRole(rolDetalle);
+      setFormData({
+        name: rolDetalle.name,
+        description: rolDetalle.description,
+        active: rolDetalle.active,
+        privilegeIds: rolDetalle.privilegeIds,
+      });
+      setPermisosExpandidos([]);
+      setActiveModal('EDIT');
+    } catch (err) {
+      setErrorFormulario(err.message || 'No se pudo cargar el rol para editarlo.');
+    } finally {
+      setOperando(false);
+    }
   };
 
   const handleOpenDelete = (role) => {
-    if (role.isProtected) return; // Protección adicional
+    if (role.isProtected || operando) return;
     setSelectedRole(role);
+    setErrorFormulario('');
     setActiveModal('DELETE');
   };
 
   const handleCloseModal = () => {
+    if (operando || guardando) return;
     setActiveModal(null);
     setSelectedRole(null);
+    setErrorFormulario('');
   };
+
   const handleSaveRole = async (e) => {
     e.preventDefault();
     setErrorFormulario('');
 
-    if (!formData.name.trim()) {
+    const nombre = formData.name.trim();
+    const descripcion = formData.description.trim();
+    if (!nombre) {
       setErrorFormulario('Debes ingresar el nombre del rol.');
       return;
     }
-
-    if (!formData.description.trim()) {
+    if (!descripcion) {
       setErrorFormulario('Debes ingresar la descripción del rol.');
       return;
     }
-
     if (cargandoPermisos) {
       setErrorFormulario('Espera a que terminen de cargar los permisos.');
       return;
     }
-
     if (formData.privilegeIds.length === 0) {
-      setErrorFormulario(
-        'No puedes registrar un rol sin permisos y selecciona al menos un privilegio.'
-      );
+      setErrorFormulario('Selecciona al menos un privilegio para el rol.');
       return;
     }
+
+    const privilegiosSeleccionados = [...new Set(formData.privilegeIds.map(Number))];
+    const permisosSeleccionados = permisosVisibles
+      .filter((permiso) => (permiso.privilegios ?? []).some((privilegio) =>
+        privilegiosSeleccionados.includes(Number(privilegio.id_privilegio))
+      ))
+      .map((permiso) => Number(permiso.id_permiso));
+
     try {
-      const resultado = await crearRol({
-        nombre: formData.name.trim(),
-        descripcion: formData.description.trim(),
-        estado: formData.active,
-        privilegios_ids: formData.privilegeIds,
-      });
+      if (activeModal === 'CREATE') {
+        await crearRol({
+          nombre,
+          descripcion,
+          estado: formData.active,
+          permisos_ids: permisosSeleccionados,
+          privilegios_ids: privilegiosSeleccionados,
+        });
+      } else if (activeModal === 'EDIT' && selectedRole) {
+        if (selectedRole.isProtected) {
+          setErrorFormulario('El rol Administrador no se puede modificar.');
+          return;
+        }
+        // Actualiza los datos generales y las asignaciones existentes.
+        await editarRol(selectedRole.id, {
+          nombre,
+          descripcion,
+          estado: formData.active,
+        });
+        await actualizarPermisos(selectedRole.id, permisosSeleccionados);
+        await actualizarPrivilegios(selectedRole.id, privilegiosSeleccionados);
+      }
 
-      const nuevoRol = {
-        id: resultado.id_rol,
-        name: resultado.nombre,
-        description: resultado.descripcion,
-        active: resultado.estado,
-        privilegeIds: resultado.privilegios_ids,
-        permissions: permisos
-          .filter((permiso) =>
-            permiso.privilegios.some((privilegio) =>
-              resultado.privilegios_ids.includes(
-                privilegio.id_privilegio
-              )
-            )
-          )
-          .map((permiso) => permiso.nombre),
-        isTotalAccess:
-          obtenerTodosLosPrivilegios().length > 0 &&
-          obtenerTodosLosPrivilegios().every((id) =>
-            resultado.privilegios_ids.includes(id)
-          ),
-        isProtected: false,
-      };
-
-      setRolesList((prev) => [...prev, nuevoRol]);
-      handleCloseModal();
+      await cargarRoles();
+      setActiveModal(null);
+      setSelectedRole(null);
+      setErrorFormulario('');
     } catch (err) {
-      setErrorFormulario(err.message || 'No se pudo registrar el rol.');
+      setErrorFormulario(err.message || 'No se pudo guardar el rol.');
     }
   };
 
-
-  const handleDeleteConfirm = () => {
-    if (selectedRole && !selectedRole.isProtected) {
-      setRolesList((prev) => prev.filter((role) => role.id !== selectedRole.id));
+  const handleDeleteConfirm = async () => {
+    if (!selectedRole || selectedRole.isProtected || operando) return;
+    setOperando(true);
+    setErrorFormulario('');
+    try {
+      await borrarRol(selectedRole.id);
+      setActiveModal(null);
+      setSelectedRole(null);
+    } catch (err) {
+      setErrorFormulario(err.message || 'No se pudo eliminar el rol.');
+    } finally {
+      setOperando(false);
     }
-    handleCloseModal();
   };
 
   // ---- FILTRADO ----
@@ -293,8 +409,8 @@ const Roles = () => {
     return rolesList.filter((role) => {
       const matchesSearch =
         !value ||
-        role.name.toLowerCase().includes(value) ||
-        role.description.toLowerCase().includes(value);
+        String(role.name ?? '').toLowerCase().includes(value) ||
+        String(role.description ?? '').toLowerCase().includes(value);
 
       const matchesStatus =
         statusFilter === 'Todos' ||
@@ -330,6 +446,10 @@ const Roles = () => {
           <span>REGISTRAR ROL</span>
         </button>
       </header>
+
+      {error && (
+        <p className="roles-form-error" role="alert">{error}</p>
+      )}
 
       {/* ESTADÍSTICAS */}
       <div className="roles-stats">
@@ -422,7 +542,11 @@ const Roles = () => {
             </thead>
 
             <tbody>
-              {filteredRoles.length > 0 ? (
+              {cargandoRoles ? (
+                <tr>
+                  <td colSpan="6" className="roles-empty">Cargando roles...</td>
+                </tr>
+              ) : filteredRoles.length > 0 ? (
                 filteredRoles.map((role) => (
                   <tr key={role.id}>
                     <td className="roles-id">
@@ -456,7 +580,7 @@ const Roles = () => {
                             {role.permissions.length}
                           </strong>
                           <span className="roles-permissions-total">
-                            /{AVAILABLE_MODULES.length} módulos
+                            /{modulosDisponibles} módulos
                           </span>
                         </span>
                       )}
@@ -703,7 +827,7 @@ const Roles = () => {
                 <p>Cargando permisos y privilegios...</p>
               ) : (
                 <div className="roles-permissions-grid">
-                  {permisos.map((permiso) => {
+                  {permisosVisibles.map((permiso) => {
                     const idsPrivilegios = permiso.privilegios.map(
                       (privilegio) => privilegio.id_privilegio
                     );
@@ -788,8 +912,16 @@ const Roles = () => {
                 >
                   Cancelar
                 </button>
-                <button type="submit" className="roles-btn-submit">
-                  {activeModal === 'CREATE' ? 'Guardar rol' : 'Guardar cambios'}
+                <button
+                  type="submit"
+                  className="roles-btn-submit"
+                  disabled={guardando || operando}
+                >
+                  {guardando || operando
+                    ? 'Guardando...'
+                    : activeModal === 'CREATE'
+                      ? 'Guardar rol'
+                      : 'Guardar cambios'}
                 </button>
               </div>
             </form>
@@ -849,7 +981,7 @@ const Roles = () => {
               </div>
 
               <div className="roles-permissions-grid">
-                {permisos.map((permiso) => {
+                {permisosVisibles.map((permiso) => {
                   const ids = permiso.privilegios.map(
                     (privilegio) => privilegio.id_privilegio
                   );
@@ -914,11 +1046,15 @@ const Roles = () => {
               </p>
             </div>
 
+            {errorFormulario && (
+              <p className="roles-form-error" role="alert">{errorFormulario}</p>
+            )}
             <div className="roles-modal-footer">
               <button
                 type="button"
                 className="roles-btn-cancel"
                 onClick={handleCloseModal}
+                disabled={operando}
               >
                 Cancelar
               </button>
@@ -926,8 +1062,9 @@ const Roles = () => {
                 type="button"
                 className="roles-btn-delete"
                 onClick={handleDeleteConfirm}
+                disabled={operando}
               >
-                Confirmar
+                {operando ? 'Eliminando...' : 'Confirmar'}
               </button>
             </div>
           </div>

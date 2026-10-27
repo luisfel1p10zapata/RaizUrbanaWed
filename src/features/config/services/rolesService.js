@@ -1,31 +1,109 @@
 
 const API_URL = "http://127.0.0.1:8000/api/roles";
 
-async function manejarRespuesta(response) {
-    const data = await response.json().catch(() => ({}));
+async function solicitar(endpoint = "", opciones = {}) {
+    const respuesta = await fetch(`${API_URL}${endpoint}`, {
+        ...opciones,
+        headers: {
+            ...(opciones.body
+                ? { "Content-Type": "application/json" }
+                : {}),
+            ...opciones.headers,
+        },
+    });
 
-    if (!response.ok) {
+    const texto = await respuesta.text();
+    let resultado = null;
+
+    if (texto) {
+        try {
+            resultado = JSON.parse(texto);
+        } catch {
+            resultado = texto;
+        }
+    }
+
+    if (!respuesta.ok) {
+        const mensaje =
+            typeof resultado === "object" && resultado !== null
+                ? resultado.detail || resultado.message
+                : resultado;
+
         throw new Error(
-            data.detail || "Ocurrió un error al comunicarse con la API."
+            mensaje || `Error ${respuesta.status} al procesar la solicitud.`
         );
     }
 
-    return data;
+    return resultado;
 }
 
-export async function obtenerPermisosPrivilegios() {
-    const response = await fetch(`${API_URL}/permisos`);
-    return manejarRespuesta(response);
+export function listarRoles() {
+    return solicitar();
 }
 
-export async function registrarRol(datos) {
-    const response = await fetch(API_URL, {
+export function buscarRoles(filtro = "") {
+    return solicitar(`/buscar?filtro=${encodeURIComponent(filtro)}`);
+}
+
+export function obtenerRol(idRol) {
+    return solicitar(`/${idRol}`);
+}
+
+export function obtenerPermisosPrivilegios() {
+    return solicitar("/permisos");
+}
+
+export function registrarRol(datos) {
+    return solicitar("", {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify(datos),
+        body: JSON.stringify({
+            nombre: datos.nombre,
+            descripcion: datos.descripcion,
+            estado: datos.estado ?? true,
+            permisos_ids: datos.permisos_ids ?? [],
+            privilegios_ids: datos.privilegios_ids ?? [],
+        }),
     });
+}
 
-    return manejarRespuesta(response);
+export function actualizarRol(idRol, datos) {
+    return solicitar(`/${idRol}`, {
+        method: "PUT",
+        body: JSON.stringify({
+            nombre: datos.nombre,
+            descripcion: datos.descripcion,
+            estado: datos.estado,
+        }),
+    });
+}
+
+export function eliminarRol(idRol) {
+    return solicitar(`/${idRol}`, {
+        method: "DELETE",
+    });
+}
+
+export function cambiarEstadoRol(idRol, estado) {
+    return solicitar(`/${idRol}/estado`, {
+        method: "PATCH",
+        body: JSON.stringify({ estado }),
+    });
+}
+
+export function asignarPermisos(idRol, permisosIds = []) {
+    return solicitar(`/${idRol}/permisos`, {
+        method: "PUT",
+        body: JSON.stringify({
+            permisos_ids: permisosIds,
+        }),
+    });
+}
+
+export function asignarPrivilegios(idRol, privilegiosIds = []) {
+    return solicitar(`/${idRol}/privilegios`, {
+        method: "PUT",
+        body: JSON.stringify({
+            privilegios_ids: privilegiosIds,
+        }),
+    });
 }
