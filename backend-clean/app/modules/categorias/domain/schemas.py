@@ -1,5 +1,5 @@
 """DTOs y esquemas de dominio para el módulo de categorías."""
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator # type: ignore
 from app.shared.schemas import CamelModel
 
 

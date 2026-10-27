@@ -1,8 +1,8 @@
 
 """Rutas HTTP del módulo de Categorías."""
 
-from fastapi import APIRouter, HTTPException, status
-from pydantic import BaseModel
+from fastapi import APIRouter, HTTPException, status # type: ignore
+from pydantic import BaseModel # type: ignore
 
 from app.modules.categorias.application.service import CategoriaService
 from app.modules.categorias.domain.schemas import (

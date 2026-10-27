@@ -1,6 +1,6 @@
 """Repositorio para el módulo de Métodos de Pago."""
 from typing import Any
-from app.modules.metodo_pago.domain.exceptions import MetodoPagoDuplicadoError, MetodoPagoNoEncontradoError
+from app.modules.metodo_pago.domain.exceptions import MetodoPagoDuplicadoError, MetodoPagoNoEncontradoError # type: ignore
 
 
 class MetodoPagoInMemoryRepository:
@@ -78,7 +78,7 @@ class MetodoPagoPostgresRepository:
     """
 
     def __init__(self):
-        from app.core.database import get_connection
+        from app.core.database import get_connection # type: ignore
         self._get_connection = get_connection
 
     def guardar(self, datos: dict[str, Any]) -> dict[str, Any]:

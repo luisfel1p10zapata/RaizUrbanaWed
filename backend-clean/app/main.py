@@ -1,6 +1,6 @@
 """Punto de entrada principal de la API REST - Raíz Urbana."""
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI # type: ignore
+from fastapi.middleware.cors import CORSMiddleware # type: ignore
 
 from app.modules.accesos.presentation.router import router as auth_router
 from app.modules.roles.presentation.roles_router import router as roles_router
@@ -9,6 +9,8 @@ from app.modules.ventas.presentation.ventas_router import router as ventas_route
 from app.modules.categorias.presentation.controller import router as categorias_router
 from app.modules.metodo_pago.presentation.router import router as metodos_pago_router
 from app.modules.compras.presentation.router import router as compras_router
+from app.modules.insumos.presentation.controller import router as insumos_router
+from app.modules.materiales.presentation.controller import router as materiales_router
 from app.modules.orden_produccion.presentation.orden_produccion_router import router as orden_produccion_router
 
 
@@ -35,7 +37,11 @@ app.include_router(roles_router)  # Ya incluye prefix="/api/roles" en su definic
 app.include_router(categorias_router, prefix="/api")
 app.include_router(metodos_pago_router, prefix="/api")
 app.include_router(compras_router, prefix="/api")
-app.include_router(orden_produccion_router)
+
+app.include_router(insumos_router, prefix="/api")
+app.include_router(materiales_router, prefix="/api")
+app.include_router(orden_produccion_router, prefix="/api")
+
 
 @app.get("/", tags=["General"])
 def read_root():
