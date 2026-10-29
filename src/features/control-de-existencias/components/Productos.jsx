@@ -20,8 +20,8 @@ import {
   CheckCircle2
 } from "lucide-react";
 import "./Productos.css";
-
-const STORAGE_KEY = "raiz-urbana-productos-v1";
+import { listarProductosApi, registrarProductoApi } from "../services/productoService";
+import { listarProductoVariantesApi } from "../services/productoVarianteService";
 
 const TIPOS = [
   "Camiseta",
@@ -68,45 +68,6 @@ const TALLAS = [
   "XXL",
   "METRO"
 ];
-
-const DATOS_INICIALES = [
-  ["Manilla Tejida Negra", "Accesorio", "Mujer"],
-  ["Collar Artesanal Azul", "Accesorio", "Mujer"],
-  ["Chaqueta Premium Cuero", "Chaqueta", "Hombre"],
-  ["Camiseta Básica Algodón", "Camiseta", "Hombre"],
-  ["Pantalón Recto Clásico", "Pantalón", "Mujer"],
-  ["Abrigo Largo de Invierno", "Abrigo", "Mujer"],
-  ["Bolso Urbano Minimalista", "Bolso", "Mujer"],
-  ["Bufanda Tejida Suave", "Bufanda", "Hombre"],
-  ["Cinturón Hebilla Metálica", "Cinturón", "Hombre"],
-  ["Zapatos Casual Urbanos", "Zapato", "Hombre"],
-  ["Vestido Floral Juvenil", "Vestido", "Niña"],
-  ["Conjunto Deportivo Infantil", "Conjunto", "Niño"],
-  ["Chaqueta Denim Moderna", "Chaqueta", "Mujer"],
-  ["Camiseta Estampada Infantil", "Camiseta", "Niño"],
-  ["Pantalón Cargo Urbano", "Pantalón", "Hombre"],
-  ["Bolso de Mano Elegante", "Bolso", "Mujer"],
-  ["Abrigo Infantil Acolchado", "Abrigo", "Niña"],
-  ["Zapatos Deportivos Infantiles", "Zapato", "Niño"],
-  ["Bufanda Elegante Unicolor", "Bufanda", "Mujer"],
-  ["Cinturón Delgado Clásico", "Cinturón", "Mujer"],
-  ["Vestido Casual de Algodón", "Vestido", "Mujer"],
-  ["Camiseta Oversize Urbana", "Camiseta", "Hombre"],
-  ["Chaqueta Impermeable", "Chaqueta", "Hombre"],
-  ["Conjunto Casual Moderno", "Conjunto", "Mujer"],
-  ["Bolso Bandolera Compacto", "Bolso", "Mujer"]
-].map(([nombre, tipo, publico], index) => ({
-  id: index + 1,
-  nombre,
-  tipo,
-  publico,
-  descripcion: "",
-  estado: [6, 10, 16].includes(index + 1)
-    ? "Inactivo"
-    : "Activo",
-  foto: "",
-  variantes: []
-}));
 
 const PRODUCTO_VACIO = {
   nombre: "",
@@ -235,33 +196,68 @@ function Modal({
 ========================================= */
 
 export default function Productos() {
-  const [productos, setProductos] = useState(() => {
-    try {
-      const guardados = JSON.parse(
-        localStorage.getItem(STORAGE_KEY)
-      );
-
-      return Array.isArray(guardados)
-        ? guardados
-        : DATOS_INICIALES;
-    } catch {
-      return DATOS_INICIALES;
-    }
-  });
+  const [productos, setProductos] = useState([]);
+  const [cargandoProductos, setCargandoProductos] = useState(true);
+  const [errorCarga, setErrorCarga] = useState("");
+  const [guardandoProducto, setGuardandoProducto] = useState(false);
+  const [variantesApi, setVariantesApi] = useState([]);
+  const [cargandoVariantes, setCargandoVariantes] = useState(true);
+  const [errorVariantes, setErrorVariantes] = useState("");
 
   useEffect(() => {
-    try {
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify(productos)
-      );
-    } catch (e) {
-      console.error(
-        "No se pudieron guardar los productos:",
-        e
-      );
-    }
-  }, [productos]);
+    let activo = true;
+    listarProductoVariantesApi()
+      .then(datos => {
+        if (!Array.isArray(datos)) throw new Error("La API no devolvió una lista válida de variantes.");
+        if (activo) {
+          setVariantesApi(datos.map(v => ({
+            ...v,
+            talle: v.talle || v.talla || "",
+            insumos: Array.isArray(v.insumos) ? v.insumos : []
+          })));
+          setErrorVariantes("");
+        }
+      })
+      .catch(err => {
+        if (activo) setErrorVariantes(err.message || "No se pudieron cargar las variantes.");
+      })
+      .finally(() => { if (activo) setCargandoVariantes(false); });
+    return () => { activo = false; };
+  }, []);
+
+  const variantesDeProducto = producto =>
+    variantesApi.filter(v =>
+      String(v.producto || "").trim().toLocaleLowerCase("es") ===
+      String(producto?.nombre || "").trim().toLocaleLowerCase("es")
+    );
+
+
+  // La fuente del listado es FastAPI; no se mezclan datos simulados.
+  useEffect(() => {
+    let activo = true;
+
+    listarProductosApi()
+      .then(datos => {
+        if (!Array.isArray(datos)) {
+          throw new Error("La API no devolvió una lista válida de productos.");
+        }
+        if (activo) {
+          setProductos(datos.map(p => ({
+            ...p,
+            variantes: Array.isArray(p.variantes) ? p.variantes : []
+          })));
+          setErrorCarga("");
+        }
+      })
+      .catch(err => {
+        if (activo) setErrorCarga(err.message || "No se pudieron cargar los productos.");
+      })
+      .finally(() => {
+        if (activo) setCargandoProductos(false);
+      });
+
+    return () => { activo = false; };
+  }, []);
 
   const [busqueda, setBusqueda] = useState("");
   const [filtroPublico, setFiltroPublico] = useState("");
@@ -280,7 +276,6 @@ export default function Productos() {
     setRegistrarVarianteInicial
   ] = useState(false);
 
-  const [varianteId, setVarianteId] = useState(null);
 
   const [formVariante, setFormVariante] = useState(
     VARIANTE_VACIA
@@ -294,9 +289,10 @@ export default function Productos() {
 
   const archivoRef = useRef(null);
 
-  const productoActual = productos.find(
-    p => p.id === productoId
-  );
+  const productoBase = productos.find(p => p.id === productoId);
+  const productoActual = productoBase
+    ? { ...productoBase, variantes: variantesDeProducto(productoBase) }
+    : null;
 
   const cerrar = () => {
     setModal(null);
@@ -306,7 +302,6 @@ export default function Productos() {
   };
 
   const reiniciarVariante = () => {
-    setVarianteId(null);
     setFormVariante({ ...VARIANTE_VACIA });
     setInsumos([]);
     setNombreInsumo("");
@@ -378,88 +373,73 @@ export default function Productos() {
      GUARDAR PRODUCTO
   ========================================= */
 
-  const guardarProducto = e => {
+  const guardarProducto = async e => {
     e.preventDefault();
+    if (guardandoProducto) return;
 
-    if (!formProducto.nombre.trim()) {
-      setError(
-        "Ingresa el nombre del producto."
-      );
+    const nombre = formProducto.nombre.trim();
+    if (nombre.length < 2) {
+      setError("El nombre debe tener al menos dos caracteres.");
       return;
     }
 
+    // Editar no forma parte de los endpoints del Sprint 1.
     if (productoId !== null) {
-      setProductos(prev =>
-        prev.map(p =>
-          p.id === productoId
-            ? {
-                ...p,
-                ...formProducto,
-                nombre: formProducto.nombre.trim()
-              }
-            : p
-        )
-      );
-
-      cerrar();
+      setError("La edición de productos todavía no está disponible en la API.");
       return;
     }
 
-    const idProducto = nuevoId();
-    let variantesIniciales = [];
-
+    // El backend aún no cuenta con POST para registrar variantes.
     if (registrarVarianteInicial) {
-      const precio = Number(
-        formVariante.precio
-      );
-
-      if (
-        !Number.isFinite(precio) ||
-        precio <= 0
-      ) {
-        setError(
-          "Ingresa un precio válido para la variante."
-        );
-        return;
-      }
-
-      variantesIniciales = [{
-        id: nuevoId(),
-        productoId: idProducto,
-        color: formVariante.color,
-        talle: formVariante.talle,
-        precio,
-        estado: formVariante.estado,
-        insumos: insumos.map(i => ({ ...i }))
-      }];
+      setError("Por ahora registra el producto sin la primera variante. El registro de variantes en la API está pendiente de otro sprint.");
+      return;
     }
 
-    const nuevoProducto = {
-      ...formProducto,
-      id: idProducto,
-      nombre: formProducto.nombre.trim(),
-      variantes: variantesIniciales
+    const datos = {
+      nombre,
+      tipo: formProducto.tipo,
+      publico: formProducto.publico,
+      descripcion: formProducto.descripcion.trim(),
+      estado: formProducto.estado,
+      foto: formProducto.foto || ""
     };
 
-    setProductos(prev => [
-      nuevoProducto,
-      ...prev
-    ]);
+    try {
+      setGuardandoProducto(true);
+      setError("");
+      const creado = await registrarProductoApi(datos);
+      // Solo se incorpora el producto confirmado por el servidor.
+      setProductos(prev => {
+        const sinDuplicado = prev.filter(p => p.id !== creado.id);
+        return [...sinDuplicado, {
+          ...creado,
+          variantes: Array.isArray(creado.variantes) ? creado.variantes : []
+        }];
+      });
+      setPagina(1);
+      cerrar();
 
-    setPagina(1);
-    cerrar();
+      // Se consulta nuevamente la fuente oficial para confirmar el listado.
+      try {
+        const lista = await listarProductosApi();
+        if (!Array.isArray(lista)) throw new Error("Respuesta de listado inválida.");
+        setProductos(lista.map(p => ({
+          ...p,
+          variantes: Array.isArray(p.variantes) ? p.variantes : []
+        })));
+        setErrorCarga("");
+      } catch (err) {
+        setErrorCarga(`Producto registrado, pero no se pudo actualizar el listado desde la API: ${err.message}`);
+      }
+    } catch (err) {
+      setError(err.message || "No se pudo registrar el producto.");
+    } finally {
+      setGuardandoProducto(false);
+    }
   };
 
   const eliminarProducto = () => {
-    if (!productoActual) return;
-
-    setProductos(prev =>
-      prev.filter(
-        p => p.id !== productoActual.id
-      )
-    );
-
-    cerrar();
+    setError("La eliminación de productos todavía no está disponible en la API.");
   };
 
   /* =========================================
@@ -471,25 +451,6 @@ export default function Productos() {
     setFichaAbierta(null);
     reiniciarVariante();
     setModal("variantes");
-  };
-
-  const editarVariante = v => {
-    setVarianteId(v.id);
-
-    setFormVariante({
-      color: v.color || "Negro",
-      talle: v.talle || "M",
-      precio: String(
-        precioNumerico(v.precio)
-      ),
-      estado: v.estado || "Activo"
-    });
-
-    setInsumos(
-      (v.insumos || []).map(i => ({ ...i }))
-    );
-
-    setError("");
   };
 
   const agregarInsumo = () => {
@@ -539,111 +500,6 @@ export default function Productos() {
     setNombreInsumo("");
     setCantidadInsumo(1);
     setError("");
-  };
-
-  const guardarVariante = e => {
-    e.preventDefault();
-
-    if (!productoActual) return;
-
-    const precio = Number(
-      formVariante.precio
-    );
-
-    if (
-      !Number.isFinite(precio) ||
-      precio <= 0
-    ) {
-      setError(
-        "Ingresa un precio mayor que cero."
-      );
-      return;
-    }
-
-    const anteriores =
-      productoActual.variantes || [];
-
-    const duplicada = anteriores.some(
-      v =>
-        v.id !== varianteId &&
-        String(v.color).toLowerCase() ===
-          formVariante.color.toLowerCase() &&
-        String(v.talle).toLowerCase() ===
-          formVariante.talle.toLowerCase()
-    );
-
-    if (duplicada) {
-      setError(
-        "Ya existe una variante con ese color y talla."
-      );
-      return;
-    }
-
-    const variante = {
-      id: varianteId ?? nuevoId(),
-      productoId: productoActual.id,
-      color: formVariante.color,
-      talle: formVariante.talle,
-      precio,
-      estado: formVariante.estado,
-      insumos: insumos.map(i => ({ ...i }))
-    };
-
-    setProductos(prev =>
-      prev.map(p => {
-        if (p.id !== productoActual.id) {
-          return p;
-        }
-
-        const lista = p.variantes || [];
-
-        return {
-          ...p,
-          variantes:
-            varianteId !== null
-              ? lista.map(v =>
-                  v.id === varianteId
-                    ? variante
-                    : v
-                )
-              : [...lista, variante]
-        };
-      })
-    );
-
-    reiniciarVariante();
-  };
-
-  const eliminarVariante = id => {
-    if (
-      !window.confirm(
-        "¿Eliminar esta variante?"
-      )
-    ) {
-      return;
-    }
-
-    setProductos(prev =>
-      prev.map(p =>
-        p.id === productoId
-          ? {
-              ...p,
-              variantes:
-                (p.variantes || []).filter(
-                  v => v.id !== id
-                )
-            }
-          : p
-      )
-    );
-
-    if (varianteId === id) {
-      reiniciarVariante();
-    }
-
-    if (fichaAbierta === id) {
-      setFichaAbierta(null);
-    }
   };
 
   /* =========================================
@@ -996,6 +852,10 @@ export default function Productos() {
         </div>
       </section>
 
+      {errorCarga && (
+        <p className="ru-error" role="alert">{errorCarga}</p>
+      )}
+
       {/* LISTADO */}
 
       <section className="ru-card ru-listado">
@@ -1065,7 +925,7 @@ export default function Productos() {
                     >
                       <Layers size={15} />
 
-                      {(p.variantes || []).length}
+                      {variantesDeProducto(p).length}
                       {" "}variantes
                     </button>
                   </td>
@@ -1123,7 +983,7 @@ export default function Productos() {
                     colSpan={7}
                     className="ru-vacio"
                   >
-                    No se encontraron productos.
+                    {cargandoProductos ? "Cargando productos desde la API..." : "No se encontraron productos."}
                   </td>
                 </tr>
               )}
@@ -1235,10 +1095,11 @@ export default function Productos() {
                 type="submit"
                 form="form-producto"
                 className="ru-primary"
+                disabled={guardandoProducto}
               >
                 {productoId !== null
                   ? "Guardar cambios"
-                  : "Registrar producto"}
+                  : guardandoProducto ? "Registrando..." : "Registrar producto"}
               </button>
             </>
           }
@@ -1579,7 +1440,7 @@ export default function Productos() {
 
             <p>
               <strong>Variantes:</strong>{" "}
-              {(productoActual.variantes || []).length}
+              {variantesDeProducto(productoActual).length}
             </p>
           </div>
         </Modal>
@@ -1620,6 +1481,7 @@ export default function Productos() {
           <p className="ru-muted">
             También se eliminarán sus variantes.
           </p>
+          {error && <p className="ru-error" role="alert">{error}</p>}
         </Modal>
       )}
 
@@ -1632,7 +1494,7 @@ export default function Productos() {
           grande
           etiqueta="CU.13 · VARIANTES DEL PRODUCTO"
           titulo={productoActual.nombre}
-          descripcion="Registra colores, tallas, precios y ficha técnica"
+          descripcion="Consulta colores, tallas, precios y ficha técnica desde la API"
           onClose={cerrar}
           footer={
             <>
@@ -1644,25 +1506,6 @@ export default function Productos() {
                 Cerrar
               </button>
 
-              {varianteId !== null && (
-                <button
-                  type="button"
-                  className="ru-secondary"
-                  onClick={reiniciarVariante}
-                >
-                  Cancelar edición
-                </button>
-              )}
-
-              <button
-                type="submit"
-                form="form-variante"
-                className="ru-primary"
-              >
-                {varianteId !== null
-                  ? "Guardar cambios"
-                  : "Registrar variante"}
-              </button>
             </>
           }
         >
@@ -1716,27 +1559,7 @@ export default function Productos() {
                           </button>
                         </td>
 
-                        <td>
-                          <div className="ru-acciones">
-                            <button
-                              title="Editar variante"
-                              onClick={() =>
-                                editarVariante(v)
-                              }
-                            >
-                              <Pencil size={16} />
-                            </button>
-
-                            <button
-                              title="Eliminar variante"
-                              onClick={() =>
-                                eliminarVariante(v.id)
-                              }
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
-                        </td>
+                        <td><span className="ru-muted">Solo consulta</span></td>
                       </tr>
 
                       {fichaAbierta === v.id && (
@@ -1786,7 +1609,7 @@ export default function Productos() {
                       colSpan={6}
                       className="ru-vacio"
                     >
-                      Todavía no hay variantes registradas.
+                      {cargandoVariantes ? "Cargando variantes desde la API..." : "No hay variantes registradas para este producto en la API."}
                     </td>
                   </tr>
                 )}
@@ -1794,28 +1617,9 @@ export default function Productos() {
             </table>
           </div>
 
-          <div className="ru-seccion">
-            {varianteId !== null
-              ? "EDITAR VARIANTE"
-              : "REGISTRAR NUEVA VARIANTE"}
-          </div>
-
-          <form
-            id="form-variante"
-            onSubmit={guardarVariante}
-          >
-            {renderCamposVariante()}
-            {renderInsumos()}
-
-            {error && (
-              <p
-                className="ru-error"
-                role="alert"
-              >
-                {error}
-              </p>
-            )}
-          </form>
+          {errorVariantes && <p className="ru-error" role="alert">{errorVariantes}</p>}
+          {cargandoVariantes && <p className="ru-muted">Cargando variantes desde la API...</p>}
+          <p className="ru-muted">El registro, la edición y la eliminación de variantes estarán disponibles cuando existan sus endpoints en FastAPI.</p>
         </Modal>
       )}
     </div>

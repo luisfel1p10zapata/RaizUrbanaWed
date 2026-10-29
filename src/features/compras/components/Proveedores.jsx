@@ -1,5 +1,6 @@
 
 import React, { useState } from "react";
+import { registrarProveedorApi } from "../services/proveedorService";
 import ReactDOM from "react-dom";
 import "./Proveedores.css";
 
@@ -281,6 +282,9 @@ export default function Proveedores() {
   const [email, setEmail] = useState("");
   const [direccion, setDireccion] = useState("");
   const [modalEstado, setModalEstado] = useState("Activo");
+  const [documento, setDocumento] = useState("");
+  const [guardando, setGuardando] = useState(false);
+  const [mensajeApi, setMensajeApi] = useState(null);
 
   // =============================================
   // ABRIR MODALES
@@ -293,6 +297,8 @@ export default function Proveedores() {
     setEmail("");
     setDireccion("");
     setModalEstado("Activo");
+    setDocumento("");
+    setMensajeApi(null);
     setModalMode("create");
   };
 
@@ -308,12 +314,15 @@ export default function Proveedores() {
     setEmail(prov.email);
     setDireccion(prov.direccion);
     setModalEstado(prov.estado);
-    setModalMode("edit");
+    setDocumento(prov.documento || "");
+    setMensajeApi({ tipo: "error", texto: "Editar proveedores todavía no está disponible en FastAPI." });
+    setModalMode(null);
   };
 
   const handleOpenDelete = (prov) => {
     setSelectedProveedor(prov);
-    setModalMode("delete");
+    setMensajeApi({ tipo: "error", texto: "Eliminar proveedores todavía no está disponible en FastAPI." });
+    setModalMode(null);
   };
 
   const handleCloseModal = () => {
@@ -325,66 +334,42 @@ export default function Proveedores() {
   // REGISTRAR Y EDITAR PROVEEDORES
   // =============================================
 
-  const handleSaveProveedor = (e) => {
+  const handleSaveProveedor = async (e) => {
     e.preventDefault();
-
-    if (!nombre.trim()) return;
-
-    if (modalMode === "create") {
-      const newProv = {
-        id: Math.max(0, ...proveedoresList.map(p => p.id)) + 1,
+    if (modalMode !== "create" || guardando) return;
+    if (nombre.trim().length < 2) {
+      setMensajeApi({ tipo: "error", texto: "El nombre debe tener al menos 2 caracteres." });
+      return;
+    }
+    setGuardando(true);
+    setMensajeApi(null);
+    try {
+      const creado = await registrarProveedorApi({
         nombre: nombre.trim(),
-        fecha: new Date().toISOString().split("T")[0],
         telefono: telefono.trim() || "N/A",
         direccion: direccion.trim() || "N/A",
         email: email.trim() || "N/A",
         estado: modalEstado,
-      };
-
-      setProveedoresList((prev) => [
-        newProv,
-        ...prev,
-      ]);
-
+        documento: documento.trim() || null,
+      });
+      // Los datos de ejemplo pueden compartir IDs con el backend.
+      setProveedoresList((prev) => [{ ...creado, origen: "api" }, ...prev]);
       setCurrentPage(1);
-
-    } else if (
-      modalMode === "edit" &&
-      selectedProveedor
-    ) {
-      setProveedoresList((prev) =>
-        prev.map((p) =>
-          p.id === selectedProveedor.id
-            ? {
-                ...p,
-                nombre: nombre.trim(),
-                telefono: telefono.trim() || "N/A",
-                email: email.trim() || "N/A",
-                direccion: direccion.trim() || "N/A",
-                estado: modalEstado,
-              }
-            : p
-        )
-      );
+      setModalMode(null);
+      setSelectedProveedor(null);
+      setMensajeApi({ tipo: "exito", texto: "Proveedor registrado correctamente en FastAPI." });
+    } catch (error) {
+      setMensajeApi({ tipo: "error", texto: error.message || "No se pudo registrar el proveedor." });
+    } finally {
+      setGuardando(false);
     }
-
-    handleCloseModal();
   };
 
-  // =============================================
-  // ELIMINAR PROVEEDOR
-  // =============================================
-
+  // El backend de este sprint no dispone de PUT, PATCH ni DELETE.
   const handleDeleteProveedor = () => {
-    if (selectedProveedor) {
-      setProveedoresList((prev) =>
-        prev.filter(
-          (p) => p.id !== selectedProveedor.id
-        )
-      );
-    }
-
-    handleCloseModal();
+    setModalMode(null);
+    setSelectedProveedor(null);
+    setMensajeApi({ tipo: "error", texto: "Eliminar proveedores todavía no está disponible en FastAPI." });
   };
 
   // =============================================
@@ -449,6 +434,12 @@ export default function Proveedores() {
           ENCABEZADO
       ===================================== */}
 
+      {mensajeApi && modalMode !== "create" && (
+        <div role="alert" style={{ padding: "12px 16px", marginBottom: 16, borderRadius: 8,
+          border: "1px solid currentColor", color: mensajeApi.tipo === "error" ? "#b42318" : "#16803c" }}>
+          {mensajeApi.texto}
+        </div>
+      )}
       <div className="proveedores-header">
         <div className="proveedores-header-info">
 
@@ -645,7 +636,7 @@ export default function Proveedores() {
 
                 currentProveedores.map((prov) => (
 
-                  <tr key={prov.id}>
+                  <tr key={`${prov.origen || "demo"}-${prov.id}`}>
 
                     <td className="proveedores-id">
                       <span>#{prov.id}</span>
@@ -914,6 +905,11 @@ export default function Proveedores() {
                 className="modal-body"
               >
 
+                {mensajeApi?.tipo === "error" && (
+                  <p role="alert" style={{ color: "#b42318", margin: "0 0 12px" }}>
+                    {mensajeApi.texto}
+                  </p>
+                )}
                 <div className="section-divider">
                   <span>DATOS DE LA EMPRESA</span>
                 </div>
@@ -933,8 +929,16 @@ export default function Proveedores() {
                     }
                     className="modal-input"
                     required
+                    minLength={2}
+                    maxLength={150}
                   />
 
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">DOCUMENTO / NIT (OPCIONAL)</label>
+                  <input type="text" className="modal-input" placeholder="Ej: 900123456-1"
+                    value={documento} maxLength={30} onChange={(e) => setDocumento(e.target.value)} />
                 </div>
 
                 <div className="form-group">
@@ -1078,6 +1082,7 @@ export default function Proveedores() {
                   type="button"
                   className="btn-modal-cancel"
                   onClick={handleCloseModal}
+                  disabled={guardando}
                 >
                   Cancelar
                 </button>
@@ -1086,8 +1091,9 @@ export default function Proveedores() {
                   type="submit"
                   form="proveedor-form"
                   className="btn-modal-submit"
+                  disabled={guardando}
                 >
-                  {modalMode === "create"
+                  {guardando ? "Registrando..." : modalMode === "create"
                     ? "Registrar proveedor"
                     : "Guardar cambios"}
                 </button>
