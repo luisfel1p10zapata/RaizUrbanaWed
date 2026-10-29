@@ -12,6 +12,9 @@ from app.modules.compras.presentation.router import router as compras_router
 from app.modules.insumos.presentation.controller import router as insumos_router
 from app.modules.materiales.presentation.controller import router as materiales_router
 from app.modules.orden_produccion.presentation.orden_produccion_router import router as orden_produccion_router
+from app.modules.productos.presentation.router import router as productos_router
+from app.modules.producto_variantes.presentation.router import router as producto_variantes_router
+from app.modules.proveedores.presentation.router import router as proveedores_router
 
 
 app = FastAPI(
@@ -41,6 +44,9 @@ app.include_router(compras_router, prefix="/api")
 app.include_router(insumos_router, prefix="/api")
 app.include_router(materiales_router, prefix="/api")
 app.include_router(orden_produccion_router, prefix="/api")
+app.include_router(productos_router, prefix="/api")
+app.include_router(producto_variantes_router, prefix="/api")
+app.include_router(proveedores_router, prefix="/api")
 
 
 @app.get("/", tags=["General"])
