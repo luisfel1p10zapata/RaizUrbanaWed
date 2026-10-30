@@ -1,53 +1,75 @@
+/* ==========================================================================
+   AppAlert — Componente Global de Alertas Temporales (Toast Flotante)
+   Diseño Oficial: Éxito, Información, Advertencia y Error
+   Soporte completo para Modo Claro y Modo Oscuro (data-theme="dark")
+   ========================================================================== */
+
 .app-alert {
   position: fixed;
   bottom: 24px;
   right: 24px;
   z-index: 99999;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
-  padding: 14px 18px;
+  padding: 14px 18px 14px 16px;
   border-radius: 6px;
   font-family: 'Montserrat', sans-serif;
-  font-size: 0.9rem;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
   animation: slideUpToast 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  max-width: 400px;
+  max-width: 440px;
+  min-width: 320px;
+  border: 1px solid transparent;
+  border-left-width: 4px;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
 }
 
 @keyframes slideUpToast {
-  from { opacity: 0; transform: translateY(30px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
-/* Barra lateral indicadora de color */
-.app-alert-bar {
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 4px;
-  border-top-left-radius: 6px;
-  border-bottom-left-radius: 6px;
-}
-
+/* Ícono lateral */
 .app-alert-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: bold;
+  flex-shrink: 0;
+  margin-top: 1px;
 }
 
+.app-alert-icon svg {
+  display: block;
+}
+
+/* Cuerpo de texto con Título y Mensaje apilados verticalmente */
 .app-alert-body {
   display: flex;
-  gap: 6px;
-  align-items: baseline;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 3px;
   flex: 1;
+  text-align: left;
 }
 
 .app-alert-title {
+  font-size: 14px;
   font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+.app-alert-text {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.35;
+  opacity: 0.95;
 }
 
 /* Botón de cierre para la alerta flotante */
@@ -57,78 +79,192 @@
   cursor: pointer;
   display: flex;
   align-items: center;
-  opacity: 0.7;
-  padding: 2px;
-  margin-left: auto;
+  justify-content: center;
+  opacity: 0.65;
+  padding: 4px;
+  margin-left: 4px;
+  margin-top: -2px;
+  border-radius: 4px;
+  transition: opacity 0.15s ease, background-color 0.15s ease;
+  color: inherit;
+  flex-shrink: 0;
 }
-.app-alert-close:hover { opacity: 1; }
 
-/* ==========================================
-   MODO CLARO
-   ========================================== */
+.app-alert-close:hover {
+  opacity: 1;
+  background-color: rgba(0, 0, 0, 0.06);
+}
+
+/* ==========================================================================
+   MODO CLARO (LIGHT THEME)
+   ========================================================================== */
+
+/* 1. ¡Éxito! (Verde) */
 .app-alert-success {
-  background-color: #f0fdf4;
-  color: #15803d;
+  background-color: #F0FDF4;
+  border-color: rgba(16, 185, 129, 0.2);
+  border-left-color: #10B981;
 }
-.app-alert-success .app-alert-bar { background-color: #22c55e; }
-.app-alert-success .app-alert-icon { color: #22c55e; }
-.app-alert-success .app-alert-close { color: #15803d; }
+.app-alert-success .app-alert-icon { color: #10B981; }
+.app-alert-success .app-alert-title { color: #047857; }
+.app-alert-success .app-alert-text { color: #065F46; }
+.app-alert-success .app-alert-close { color: #047857; }
 
+/* 2. Información (Azul) */
 .app-alert-info {
-  background-color: #eff6ff;
-  color: #1d4ed8;
+  background-color: #EFF6FF;
+  border-color: rgba(37, 99, 235, 0.2);
+  border-left-color: #2563EB;
 }
-.app-alert-info .app-alert-bar { background-color: #3b82f6; }
-.app-alert-info .app-alert-icon { color: #3b82f6; }
-.app-alert-info .app-alert-close { color: #1d4ed8; }
+.app-alert-info .app-alert-icon { color: #2563EB; }
+.app-alert-info .app-alert-title { color: #1D4ED8; }
+.app-alert-info .app-alert-text { color: #2563EB; }
+.app-alert-info .app-alert-close { color: #1D4ED8; }
 
+/* 3. Advertencia (Ámbar / Amarillo) */
 .app-alert-warning {
-  background-color: #fefce8;
-  color: #a16207;
+  background-color: #FFFBEB;
+  border-color: rgba(245, 158, 11, 0.2);
+  border-left-color: #F59E0B;
 }
-.app-alert-warning .app-alert-bar { background-color: #eab308; }
-.app-alert-warning .app-alert-icon { color: #eab308; }
-.app-alert-warning .app-alert-close { color: #a16207; }
+.app-alert-warning .app-alert-icon { color: #D97706; }
+.app-alert-warning .app-alert-title { color: #B45309; }
+.app-alert-warning .app-alert-text { color: #92400E; }
+.app-alert-warning .app-alert-close { color: #B45309; }
 
-.app-alert-error {
-  background-color: #fef2f2;
-  color: #b91c1c;
+/* 4. Error / Peligro (Rojo) */
+.app-alert-error,
+.app-alert-danger {
+  background-color: #FEF2F2;
+  border-color: rgba(239, 68, 68, 0.2);
+  border-left-color: #EF4444;
 }
-.app-alert-error .app-alert-bar { background-color: #ef4444; }
-.app-alert-error .app-alert-icon { color: #ef4444; }
-.app-alert-error .app-alert-close { color: #b91c1c; }
+.app-alert-error .app-alert-icon,
+.app-alert-danger .app-alert-icon { color: #DC2626; }
+.app-alert-error .app-alert-title,
+.app-alert-danger .app-alert-title { color: #B91C1C; }
+.app-alert-error .app-alert-text,
+.app-alert-danger .app-alert-text { color: #991B1B; }
+.app-alert-error .app-alert-close,
+.app-alert-danger .app-alert-close { color: #B91C1C; }
 
-/* ==========================================
-   MODO OSCURO
-   ========================================== */
-[data-theme="dark"] .app-alert-success {
-  background-color: #0c2318;
-  color: #4ade80;
+/* ==========================================================================
+   MODO OSCURO (DARK THEME)
+   ========================================================================== */
+[data-theme="dark"] .app-alert,
+:root[data-theme="dark"] .app-alert,
+.dark .app-alert,
+.dark-mode .app-alert {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
 }
-[data-theme="dark"] .app-alert-success .app-alert-bar { background-color: #22c55e; }
-[data-theme="dark"] .app-alert-success .app-alert-icon { color: #22c55e; }
-[data-theme="dark"] .app-alert-success .app-alert-close { color: #4ade80; }
 
-[data-theme="dark"] .app-alert-info {
-  background-color: #0f1d36;
-  color: #60a5fa;
+[data-theme="dark"] .app-alert-close:hover,
+:root[data-theme="dark"] .app-alert-close:hover,
+.dark .app-alert-close:hover,
+.dark-mode .app-alert-close:hover {
+  background-color: rgba(255, 255, 255, 0.1);
 }
-[data-theme="dark"] .app-alert-info .app-alert-bar { background-color: #3b82f6; }
-[data-theme="dark"] .app-alert-info .app-alert-icon { color: #3b82f6; }
-[data-theme="dark"] .app-alert-info .app-alert-close { color: #60a5fa; }
 
-[data-theme="dark"] .app-alert-warning {
-  background-color: #2a210d;
-  color: #facc15;
+/* 1. Éxito en Modo Oscuro */
+[data-theme="dark"] .app-alert-success,
+:root[data-theme="dark"] .app-alert-success,
+.dark .app-alert-success,
+.dark-mode .app-alert-success {
+  background-color: #0D2319;
+  border-color: rgba(16, 185, 129, 0.25);
+  border-left-color: #10B981;
 }
-[data-theme="dark"] .app-alert-warning .app-alert-bar { background-color: #eab308; }
-[data-theme="dark"] .app-alert-warning .app-alert-icon { color: #eab308; }
-[data-theme="dark"] .app-alert-warning .app-alert-close { color: #facc15; }
+[data-theme="dark"] .app-alert-success .app-alert-icon,
+:root[data-theme="dark"] .app-alert-success .app-alert-icon,
+.dark .app-alert-success .app-alert-icon { color: #4ADE80; }
+[data-theme="dark"] .app-alert-success .app-alert-title,
+:root[data-theme="dark"] .app-alert-success .app-alert-title,
+.dark .app-alert-success .app-alert-title { color: #4ADE80; }
+[data-theme="dark"] .app-alert-success .app-alert-text,
+:root[data-theme="dark"] .app-alert-success .app-alert-text,
+.dark .app-alert-success .app-alert-text { color: #86EFAC; }
+[data-theme="dark"] .app-alert-success .app-alert-close,
+:root[data-theme="dark"] .app-alert-success .app-alert-close,
+.dark .app-alert-success .app-alert-close { color: #4ADE80; }
 
-[data-theme="dark"] .app-alert-error {
-  background-color: #2b1111;
-  color: #f87171;
+/* 2. Información en Modo Oscuro */
+[data-theme="dark"] .app-alert-info,
+:root[data-theme="dark"] .app-alert-info,
+.dark .app-alert-info,
+.dark-mode .app-alert-info {
+  background-color: #0F1D38;
+  border-color: rgba(37, 99, 235, 0.25);
+  border-left-color: #2563EB;
 }
-[data-theme="dark"] .app-alert-error .app-alert-bar { background-color: #ef4444; }
-[data-theme="dark"] .app-alert-error .app-alert-icon { color: #ef4444; }
-[data-theme="dark"] .app-alert-error .app-alert-close { color: #f87171; }
+[data-theme="dark"] .app-alert-info .app-alert-icon,
+:root[data-theme="dark"] .app-alert-info .app-alert-icon,
+.dark .app-alert-info .app-alert-icon { color: #60A5FA; }
+[data-theme="dark"] .app-alert-info .app-alert-title,
+:root[data-theme="dark"] .app-alert-info .app-alert-title,
+.dark .app-alert-info .app-alert-title { color: #60A5FA; }
+[data-theme="dark"] .app-alert-info .app-alert-text,
+:root[data-theme="dark"] .app-alert-info .app-alert-text,
+.dark .app-alert-info .app-alert-text { color: #93C5FD; }
+[data-theme="dark"] .app-alert-info .app-alert-close,
+:root[data-theme="dark"] .app-alert-info .app-alert-close,
+.dark .app-alert-info .app-alert-close { color: #60A5FA; }
+
+/* 3. Advertencia en Modo Oscuro */
+[data-theme="dark"] .app-alert-warning,
+:root[data-theme="dark"] .app-alert-warning,
+.dark .app-alert-warning,
+.dark-mode .app-alert-warning {
+  background-color: #2A1F0B;
+  border-color: rgba(245, 158, 11, 0.25);
+  border-left-color: #F59E0B;
+}
+[data-theme="dark"] .app-alert-warning .app-alert-icon,
+:root[data-theme="dark"] .app-alert-warning .app-alert-icon,
+.dark .app-alert-warning .app-alert-icon { color: #FBBF24; }
+[data-theme="dark"] .app-alert-warning .app-alert-title,
+:root[data-theme="dark"] .app-alert-warning .app-alert-title,
+.dark .app-alert-warning .app-alert-title { color: #FBBF24; }
+[data-theme="dark"] .app-alert-warning .app-alert-text,
+:root[data-theme="dark"] .app-alert-warning .app-alert-text,
+.dark .app-alert-warning .app-alert-text { color: #FDE68A; }
+[data-theme="dark"] .app-alert-warning .app-alert-close,
+:root[data-theme="dark"] .app-alert-warning .app-alert-close,
+.dark .app-alert-warning .app-alert-close { color: #FBBF24; }
+
+/* 4. Error en Modo Oscuro */
+[data-theme="dark"] .app-alert-error,
+[data-theme="dark"] .app-alert-danger,
+:root[data-theme="dark"] .app-alert-error,
+:root[data-theme="dark"] .app-alert-danger,
+.dark .app-alert-error,
+.dark .app-alert-danger,
+.dark-mode .app-alert-error,
+.dark-mode .app-alert-danger {
+  background-color: #2D1215;
+  border-color: rgba(239, 68, 68, 0.25);
+  border-left-color: #EF4444;
+}
+[data-theme="dark"] .app-alert-error .app-alert-icon,
+[data-theme="dark"] .app-alert-danger .app-alert-icon,
+:root[data-theme="dark"] .app-alert-error .app-alert-icon,
+:root[data-theme="dark"] .app-alert-danger .app-alert-icon,
+.dark .app-alert-error .app-alert-icon,
+.dark .app-alert-danger .app-alert-icon { color: #F87171; }
+[data-theme="dark"] .app-alert-error .app-alert-title,
+[data-theme="dark"] .app-alert-danger .app-alert-title,
+:root[data-theme="dark"] .app-alert-error .app-alert-title,
+:root[data-theme="dark"] .app-alert-danger .app-alert-title,
+.dark .app-alert-error .app-alert-title,
+.dark .app-alert-danger .app-alert-title { color: #F87171; }
+[data-theme="dark"] .app-alert-error .app-alert-text,
+[data-theme="dark"] .app-alert-danger .app-alert-text,
+:root[data-theme="dark"] .app-alert-error .app-alert-text,
+:root[data-theme="dark"] .app-alert-danger .app-alert-text,
+.dark .app-alert-error .app-alert-text,
+.dark .app-alert-danger .app-alert-text { color: #FCA5A5; }
+[data-theme="dark"] .app-alert-error .app-alert-close,
+[data-theme="dark"] .app-alert-danger .app-alert-close,
+:root[data-theme="dark"] .app-alert-error .app-alert-close,
+:root[data-theme="dark"] .app-alert-danger .app-alert-close,
+.dark .app-alert-error .app-alert-close,
+.dark .app-alert-danger .app-alert-close { color: #F87171; }

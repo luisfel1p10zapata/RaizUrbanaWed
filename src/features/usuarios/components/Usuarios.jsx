@@ -2,9 +2,11 @@ import { useMemo, useState } from "react";
 import {
   Search, Filter, Eye, Pencil, Trash2, X, Mail, Phone, IdCard,
   ShoppingBag, Activity, MapPin, ChevronsLeft, ChevronLeft,
-  ChevronRight, ChevronsRight, CheckCircle2, AlertCircle,
+  ChevronRight, ChevronsRight, CheckCircle2, AlertCircle, Users,
 } from "lucide-react";
-import "./Usuarios.css";
+import AppAlert from "../../../components/ui/AppAlert";
+import ConfirmModal from "../../../components/ui/ConfirmModal";
+import "../styles/Usuarios.css";
 
 /* ============================================================
    DATA Y UTILIDADES
@@ -105,8 +107,8 @@ function ViewUserModal({ user, index, onClose, onEdit }) {
       title="Consultar Usuario"
       onClose={onClose}
       footer={<>
-        <button className="ru-btn-outline" onClick={onClose}>Cerrar</button>
-        <button className="ru-btn-dark" onClick={onEdit}>Editar usuario</button>
+        <button type="button" className="btn btn-outline" onClick={onClose}>Cerrar</button>
+        <button type="button" className="btn btn-primary" onClick={onEdit}>Editar usuario</button>
       </>}
     >
       <div className="ru-view-top">
@@ -224,8 +226,8 @@ function CreateUserModal({ nextId, onClose, onCreate }) {
       title="Registrar Usuario"
       onClose={onClose}
       footer={<>
-        <button className="ru-btn-outline" onClick={onClose}>Cancelar</button>
-        <button className="ru-btn-dark" disabled={!canSubmit} onClick={handleSubmit}>Registrar usuario</button>
+        <button type="button" className="btn btn-outline" onClick={onClose}>Cancelar</button>
+        <button type="button" className="btn btn-primary" disabled={!canSubmit} onClick={handleSubmit}>Registrar usuario</button>
       </>}
     >
       <div className="ru-form-grid">
@@ -276,8 +278,8 @@ function EditUserModal({ user, index, onClose, onSave }) {
       title="Editar Usuario"
       onClose={onClose}
       footer={<>
-        <button className="ru-btn-outline" onClick={onClose}>Cancelar</button>
-        <button className="ru-btn-dark" onClick={() => onSave(form)}>Guardar cambios</button>
+        <button type="button" className="btn btn-outline" onClick={onClose}>Cancelar</button>
+        <button type="button" className="btn btn-primary" onClick={() => onSave(form)}>Guardar cambios</button>
       </>}
     >
       <div className="ru-form-grid">
@@ -332,46 +334,7 @@ function EditUserModal({ user, index, onClose, onSave }) {
   );
 }
 
-/* ============================================================
-   COMPONENTES UI INTERNOS (ConfirmModal y AppAlert)
-   ============================================================ */
-function ConfirmModal({ title, message, onClose, onConfirm, confirmText = "Confirmar" }) {
-  return (
-    <div className="ru-modal-overlay" onClick={onClose}>
-      <div className="ru-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px' }}>
-        <div className="ru-modal-header">
-          <h2 className="ru-modal-title">{title}</h2>
-          <button className="ru-modal-close" onClick={onClose}><X size={18} /></button>
-        </div>
-        <div className="ru-modal-body" style={{ padding: '16px 0', color: '#555' }}>
-          <p>{message}</p>
-        </div>
-        <div className="ru-modal-footer" style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-          <button className="ru-btn-outline" onClick={onClose}>Cancelar</button>
-          <button className="ru-btn-dark" onClick={onConfirm} style={{ background: '#dc2626', color: '#fff' }}>{confirmText}</button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
-function AppAlert({ type = "success", title, message, onClose }) {
-  return (
-    <div className={`app-alert app-alert-${type}`}>
-      <div className="app-alert-bar" />
-      <div className="app-alert-icon">
-        <AlertCircle size={18} />
-      </div>
-      <div className="app-alert-body">
-        <span className="app-alert-title">{title}:</span>
-        <span>{message}</span>
-      </div>
-      <button className="app-alert-close" onClick={onClose}>
-        <X size={16} />
-      </button>
-    </div>
-  );
-}
 
 /* ============================================================
    MÓDULO PRINCIPAL
@@ -416,21 +379,34 @@ export default function Usuarios() {
 
   const confirmDelete = () => {
     if (!deleteTarget) return;
+    const nombre = deleteTarget.nombre;
     setUsers((prev) => prev.filter((u) => u.id !== deleteTarget.id));
-    setAlertMessage({ type: "success", title: "Eliminado", message: `Usuario ${deleteTarget.nombre} eliminado con éxito.` });
+    setAlertMessage({
+      type: "error",
+      title: "Eliminado",
+      message: `El usuario "${nombre}" fue eliminado correctamente del sistema.`,
+    });
     setDeleteTarget(null);
   };
 
   const handleCreate = (newUser) => {
     setUsers((prev) => [newUser, ...prev]);
     setModal(null);
-    setAlertMessage({ type: "success", title: "Registrado", message: `Usuario ${newUser.nombre} creado con éxito.` });
+    setAlertMessage({
+      type: "success",
+      title: "¡Éxito!",
+      message: `El usuario "${newUser.nombre}" fue registrado correctamente en el sistema.`,
+    });
   };
 
   const handleSave = (updated) => {
     setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
     setModal(null);
-    setAlertMessage({ type: "success", title: "Actualizado", message: `Usuario ${updated.nombre} actualizado con éxito.` });
+    setAlertMessage({
+      type: "info",
+      title: "Información",
+      message: `Los datos del usuario "${updated.nombre}" fueron actualizados con éxito.`,
+    });
   };
 
   const columns = [
@@ -493,7 +469,7 @@ export default function Usuarios() {
             <h1 className="ru-u-title">Gestión de Usuarios</h1>
             <p className="ru-u-subtitle">Administra los usuarios y sus roles en el sistema</p>
           </div>
-          <button className="ru-btn-primary" onClick={() => setModal({ type: "create" })}>
+          <button type="button" className="btn btn-primary" onClick={() => setModal({ type: "create" })}>
             + REGISTRAR USUARIO
           </button>
         </div>
@@ -535,7 +511,16 @@ export default function Usuarios() {
 
         {/* Tabla Global Integrada */}
         <div className="ru-card ru-list-card">
-        <div className="ru-table-container">
+          <div className="ru-list-head">
+            <div className="ru-list-title">
+              <Users size={18} />
+              <span>Lista de Usuarios</span>
+              <span className="ru-count-badge">{totalRecords}</span>
+            </div>
+            <span className="ru-page-of">Página {safePage} de {totalPages}</span>
+          </div>
+
+          <div className="ru-table-container">
           <table className="ru-table">
             <thead>
               <tr>

@@ -1,9 +1,8 @@
-/* ==========================================================
-   TableGlobal — estilo único para todas las tablas del sistema
-   Colores como variables (--tg-*) para claro y oscuro.
-   Los selectores llevan el prefijo .produccion-table-card para
-   ganarle a estilos genéricos de table/th/td/button de otros CSS.
-   ========================================================== */
+/* ==========================================================================
+   TableGlobal — Estilo único y universal para todas las tablas del sistema
+   Soporte completo para Modo Claro y Modo Oscuro (data-theme="dark")
+   ========================================================================== */
+
 .produccion-table-card {
   --tg-bg: #FFFFFF;
   --tg-border: #E6CFCB;
@@ -15,11 +14,11 @@
   --tg-icon: #4A4E69;
   --tg-pill-bg: #EEE9E8;
   --tg-pill-text: #4A4E69;
-  --tg-hover: rgba(242, 233, 228, 0.45);
+  --tg-hover: #FAF7F6;
   --tg-btn-hover: rgba(74, 78, 105, 0.08);
   --tg-active-bg: #22223B;
   --tg-active-text: #FFFFFF;
-  --tg-radius: 8px; /* Pequeño border radius para cada esquina */
+  --tg-radius: 8px;
 
   width: 100%;
   background-color: var(--tg-bg);
@@ -31,25 +30,30 @@
   box-shadow: 0 1px 2px rgba(34, 34, 59, 0.04);
   font-family: inherit;
   color: var(--tg-text);
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
-.dark .produccion-table-card,
+/* ==========================================================================
+   MODO OSCURO (Dark Mode)
+   ========================================================================== */
 [data-theme="dark"] .produccion-table-card,
+.dark .produccion-table-card,
 .dark-mode .produccion-table-card {
-  --tg-bg: #1e1e31;
-  --tg-border: #2E2E3E;
-  --tg-line: #2E2E3E;
-  --tg-head-bg: #252533;
-  --tg-head-text: #B8B5C0;
+  --tg-bg: #1C1E2E;
+  --tg-border: #3A3D57;
+  --tg-line: #2E3247;
+  --tg-head-bg: #252839;
+  --tg-head-text: #C9ADA7;
   --tg-text: #F2E9E4;
-  --tg-muted: #9691A0;
+  --tg-muted: #9A8C98;
   --tg-icon: #9A8C98;
-  --tg-pill-bg: #2E2E3E;
-  --tg-pill-text: #C9ADA7;
-  --tg-hover: rgba(255, 255, 255, 0.03);
+  --tg-pill-bg: #2E3247;
+  --tg-pill-text: #F2E9E4;
+  --tg-hover: #252839;
   --tg-btn-hover: rgba(255, 255, 255, 0.08);
   --tg-active-bg: #C9ADA7;
-  --tg-active-text: #1A1A24;
+  --tg-active-text: #12131C;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
 }
 
 /* ---------- Encabezado de la tarjeta ---------- */
@@ -63,6 +67,7 @@
   gap: 12px;
   background-color: var(--tg-bg);
   border-bottom: 1px solid var(--tg-border);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .produccion-table-card .produccion-table-title {
@@ -72,6 +77,7 @@
   color: var(--tg-text);
   font-size: 15px;
   font-weight: 600;
+  transition: color 0.2s ease;
 }
 
 .produccion-table-card .produccion-table-title svg {
@@ -79,6 +85,7 @@
   height: 17px;
   color: var(--tg-icon);
   flex-shrink: 0;
+  transition: color 0.2s ease;
 }
 
 .produccion-table-card .produccion-table-count {
@@ -88,6 +95,7 @@
   color: var(--tg-pill-text);
   font-size: 12px;
   font-weight: 600;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .produccion-table-card .produccion-table-page {
@@ -95,6 +103,7 @@
   font-size: 13px;
   font-weight: 400;
   white-space: nowrap;
+  transition: color 0.2s ease;
 }
 
 /* ---------- Tabla ---------- */
@@ -102,14 +111,16 @@
   width: 100%;
   overflow-x: auto;
   background-color: var(--tg-bg);
+  transition: background-color 0.2s ease;
 }
 
 .produccion-table-card .produccion-table {
   width: 100%;
   border-collapse: collapse;
   border-spacing: 0;
-  background-color: transparent;
+  background-color: var(--tg-bg);
   font-size: 14px;
+  transition: background-color 0.2s ease;
 }
 
 .produccion-table-card .produccion-table thead th {
@@ -124,32 +135,53 @@
   text-transform: uppercase;
   text-align: left;
   white-space: nowrap;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
 .produccion-table-card .produccion-table thead th:first-child { padding-left: 24px; }
 .produccion-table-card .produccion-table thead th:last-child  { padding-right: 24px; text-align: center; }
 
+/* Filas y Celdas con fondo opaco explícito (evita transparencias) */
 .produccion-table-card .produccion-table tbody td {
   padding: 20px 20px;
-  background-color: transparent;
+  background-color: var(--tg-bg);
   border: none;
   border-bottom: 1px solid var(--tg-line);
   color: var(--tg-text);
   font-size: 14px;
   font-weight: 500;
   vertical-align: middle;
+  transition: background-color 0.15s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
 .produccion-table-card .produccion-table tbody td:first-child { padding-left: 24px; }
 .produccion-table-card .produccion-table tbody td:last-child  { padding-right: 24px; text-align: center; }
 .produccion-table-card .produccion-table tbody tr:last-child td { border-bottom: none; }
-.produccion-table-card .produccion-table tbody tr:hover td { background-color: var(--tg-hover); }
+
+.produccion-table-card .produccion-table tbody tr:hover td {
+  background-color: var(--tg-hover);
+}
 
 .produccion-table-card .produccion-table-empty {
   text-align: center !important;
   padding: 34px 20px !important;
   color: var(--tg-muted) !important;
   font-weight: 400 !important;
+}
+
+/* ---------- Botones de acción en tabla en modo oscuro ---------- */
+[data-theme="dark"] .produccion-table-card .ru-actions .ru-icon-btn.view,
+.dark .produccion-table-card .ru-actions .ru-icon-btn.view { color: #60A5FA; }
+
+[data-theme="dark"] .produccion-table-card .ru-actions .ru-icon-btn.edit,
+.dark .produccion-table-card .ru-actions .ru-icon-btn.edit { color: #FBBF24; }
+
+[data-theme="dark"] .produccion-table-card .ru-actions .ru-icon-btn.delete,
+.dark .produccion-table-card .ru-actions .ru-icon-btn.delete { color: #F87171; }
+
+[data-theme="dark"] .produccion-table-card .ru-actions .ru-icon-btn:hover,
+.dark .produccion-table-card .ru-actions .ru-icon-btn:hover {
+  background-color: rgba(255, 255, 255, 0.08);
 }
 
 /* ---------- Paginación ---------- */
@@ -164,12 +196,14 @@
   gap: 12px;
   background-color: var(--tg-bg);
   border-top: 1px solid var(--tg-border);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .produccion-table-card .produccion-pagination-info {
   color: var(--tg-muted);
   font-size: 12.5px;
   margin: 0;
+  transition: color 0.2s ease;
 }
 
 .produccion-table-card .produccion-pagination-controls {
@@ -196,7 +230,7 @@
   line-height: 1;
   cursor: pointer;
   box-shadow: none;
-  transition: background-color 0.15s ease;
+  transition: background-color 0.15s ease, color 0.2s ease;
 }
 
 .produccion-table-card button.produccion-pagination-button:hover:not(:disabled):not(.active) {
@@ -216,7 +250,9 @@
   opacity: 0.3;
 }
 
-/* ---------- Responsive ---------- */
+/* ==========================================================================
+   RESPONSIVE
+   ========================================================================== */
 @media (max-width: 780px) {
   .produccion-table-card .produccion-table-header,
   .produccion-table-card .produccion-pagination { padding: 14px 18px; }

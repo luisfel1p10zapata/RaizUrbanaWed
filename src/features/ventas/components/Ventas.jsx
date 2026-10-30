@@ -1,28 +1,49 @@
 import React from "react";
 
 import { Icons } from "../../../components/ui/Icons";
-import Button from "../../../components/ui/Button";
 import KpiGlobal from "../../../components/ui/KpiGlobal";
 import FiltrarBuscarGlobal from "../../../components/ui/FiltrarBuscarGlobal";
-import GlobalTable from "../../../components/ui/TableGlobal";
+import TableGlobal from "../../../components/ui/TableGlobal";
 import ConfirmModal from "../../../components/ui/ConfirmModal";
 import AppAlert from "../../../components/ui/AppAlert";
 
 import { useVentas } from "../hooks/useVentas";
 import {
-  Badge, RegistrarVentaModal, VerVentaModal, EditarVentaModal, CambiarEstadoModal,
+  Badge,
+  RegistrarVentaModal,
+  VerVentaModal,
+  EditarVentaModal,
+  CambiarEstadoModal,
 } from "./ModalsVentas";
 import { ESTADO_VENTA_META, ESTADO_PAGO_META, formatoMoneda } from "../../../data/dataVentas";
 
-import "./Ventas.css";
+import "../styles/Ventas.css";
 
 export default function Ventas() {
   const {
-    metricas, search, estadoFilter, safePage, totalPages, pageItems,
-    showingFrom, showingTo, totalRecords, modal, activeVenta,
-    deleteTarget, setDeleteTarget, alertMessage, closeAlert,
-    setSearch, setEstadoFilter, setPage, setModal,
-    handleCreate, handleSave, handleChangeStatus, confirmDelete,
+    metricas,
+    search,
+    estadoFilter,
+    safePage,
+    totalPages,
+    pageItems,
+    showingFrom,
+    showingTo,
+    totalRecords,
+    modal,
+    activeVenta,
+    deleteTarget,
+    setDeleteTarget,
+    alertMessage,
+    closeAlert,
+    setSearch,
+    setEstadoFilter,
+    setPage,
+    setModal,
+    handleCreate,
+    handleSave,
+    handleChangeStatus,
+    confirmDelete,
   } = useVentas();
 
   const kpis = [
@@ -38,25 +59,42 @@ export default function Ventas() {
   ];
 
   const columns = [
-    { header: "Código", width: "10%", render: (v) => <span className="ru-v-code-pill">{v.codigo}</span> },
+    {
+      header: "Código",
+      width: "10%",
+      render: (v) => <span className="ru-v-code-pill">{v.codigo}</span>,
+    },
     {
       header: "Cliente",
       width: "24%",
       render: (v) => (
         <div>
-          <span className="ru-v-client-name">{v.cliente.nombre}</span>
-          <span className="ru-v-client-email">{v.cliente.email}</span>
+          <span className="ru-v-client-name">{v.cliente?.nombre}</span>
+          <span className="ru-v-client-email">{v.cliente?.email}</span>
         </div>
       ),
     },
-    { header: "Fecha", width: "12%", accessor: "fecha" },
-    { header: "Total", width: "13%", render: (v) => <span className="ru-v-cell-total">{formatoMoneda(v.total)}</span> },
+    {
+      header: "Fecha",
+      width: "12%",
+      accessor: "fecha",
+    },
+    {
+      header: "Total",
+      width: "13%",
+      render: (v) => <span className="ru-v-cell-total">{formatoMoneda(v.total)}</span>,
+    },
     {
       header: "Estado venta",
       width: "15%",
       render: (v) => (
-        <button className="ru-v-badge-btn" onClick={() => setModal({ type: "status", ventaId: v.id })} title="Cambiar estado">
-          <Badge color={ESTADO_VENTA_META[v.estadoVenta].color}>{v.estadoVenta}</Badge>
+        <button
+          type="button"
+          className="ru-v-badge-btn"
+          onClick={() => setModal({ type: "status", ventaId: v.id })}
+          title="Cambiar estado"
+        >
+          <Badge color={ESTADO_VENTA_META[v.estadoVenta]?.color}>{v.estadoVenta}</Badge>
         </button>
       ),
     },
@@ -70,9 +108,30 @@ export default function Ventas() {
       width: "14%",
       render: (v) => (
         <div className="ru-actions">
-          <button className="ru-icon-btn view" onClick={() => setModal({ type: "view", ventaId: v.id })} title="Ver detalle"><Icons.Eye width={16} height={16} /></button>
-          <button className="ru-icon-btn edit" onClick={() => setModal({ type: "edit", ventaId: v.id })} title="Editar venta"><Icons.Pencil width={16} height={16} /></button>
-          <button className="ru-icon-btn delete" onClick={() => setDeleteTarget(v)} title="Eliminar venta"><Icons.Trash width={16} height={16} /></button>
+          <button
+            type="button"
+            className="ru-icon-btn view"
+            onClick={() => setModal({ type: "view", ventaId: v.id })}
+            title="Ver detalle"
+          >
+            <Icons.Eye width={16} height={16} />
+          </button>
+          <button
+            type="button"
+            className="ru-icon-btn edit"
+            onClick={() => setModal({ type: "edit", ventaId: v.id })}
+            title="Editar venta"
+          >
+            <Icons.Pencil width={16} height={16} />
+          </button>
+          <button
+            type="button"
+            className="ru-icon-btn delete"
+            onClick={() => setDeleteTarget(v)}
+            title="Eliminar venta"
+          >
+            <Icons.Trash width={16} height={16} />
+          </button>
         </div>
       ),
     },
@@ -87,9 +146,14 @@ export default function Ventas() {
             <h1 className="ru-v-title">Gestión de Ventas</h1>
             <p className="ru-v-subtitle">Registro y seguimiento de ventas y pagos</p>
           </div>
-          <Button icon={Icons.Plus} onClick={() => setModal({ type: "create" })}>
-            REGISTRAR VENTA
-          </Button>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => setModal({ type: "create" })}
+          >
+            <Icons.Plus width={17} height={17} />
+            <span>REGISTRAR VENTA</span>
+          </button>
         </div>
 
         <KpiGlobal kpis={kpis} />
@@ -104,7 +168,7 @@ export default function Ventas() {
           filterOptions={estadoOptions}
         />
 
-        <GlobalTable
+        <TableGlobal
           title="Listado de Ventas"
           totalCount={totalRecords}
           pageInfoTop={`Página ${safePage} de ${totalPages}`}
@@ -138,14 +202,14 @@ export default function Ventas() {
       {deleteTarget && (
         <ConfirmModal
           title="¿Eliminar Venta?"
-          message={`Estás a punto de eliminar la venta "${deleteTarget.codigo}" de ${deleteTarget.cliente.nombre}. Esta acción no se puede deshacer.`}
+          message={`Estás a punto de eliminar la venta "${deleteTarget.codigo}" de ${deleteTarget.cliente?.nombre || "este cliente"}. Esta acción no se puede deshacer.`}
           onClose={() => setDeleteTarget(null)}
           onConfirm={confirmDelete}
           confirmText="Sí, eliminar venta"
         />
       )}
 
-      {/* Toast flotante temporal (AppAlert) */}
+      {/* Toast flotante temporal */}
       {alertMessage && (
         <AppAlert
           type={alertMessage.type}

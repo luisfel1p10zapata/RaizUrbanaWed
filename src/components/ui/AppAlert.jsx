@@ -3,40 +3,87 @@ import { Check, Info, AlertTriangle, X } from 'lucide-react';
 import '../../styles/AppAlert.css';
 
 /**
- * Componente Global de Alertas Temporales (Toast flotante)
- * @param {string} type - success | info | warning | error
- * @param {string} title - Título del mensaje (ej: ¡Éxito!, Información, Advertencia, Error)
- * @param {string} message - Descripción del mensaje
- * @param {function} onClose - Función que se ejecuta al cerrar o expirar el tiempo
+ * Componente Global de Alertas Temporales (Toast Flotante)
+ * Basado estrictamente en la guía visual oficial de Raíz Urbana:
+ * - Éxito (Verde): Creación y acciones exitosas
+ * - Información (Azul): Actualización y notificaciones del sistema
+ * - Advertencia (Ámbar): Alertas de stock, cambios de estado y precauciones
+ * - Error (Rojo): Eliminación de registros o fallos en operaciones
+ *
+ * @param {('success'|'info'|'warning'|'error'|'danger')} type - Tipo de alerta
+ * @param {string} title - Título del mensaje (si se omite, se infiere del tipo)
+ * @param {string} message - Descripción o detalle de la alerta
+ * @param {function} onClose - Función al cerrar o expirar la alerta
+ * @param {number} duration - Duración en milisegundos (por defecto 3800ms)
  */
-export default function AppAlert({ type = 'success', title, message, onClose }) {
+export default function AppAlert({
+  type = 'success',
+  title,
+  message,
+  onClose,
+  duration = 3800,
+}) {
+  // Normalización del tipo
+  const normType = (() => {
+    const t = String(type).toLowerCase();
+    if (t === 'danger' || t === 'destructive' || t === 'eliminado' || t === 'error') return 'error';
+    if (t === 'warning' || t === 'advertencia' || t === 'alerta') return 'warning';
+    if (t === 'info' || t === 'informacion' || t === 'información' || t === 'actualizado') return 'info';
+    return 'success';
+  })();
+
+  // Título predeterminado según el tipo si no se proporciona uno explícito
+  const defaultTitle = {
+    success: '¡Éxito!',
+    info: 'Información',
+    warning: 'Advertencia',
+    error: 'Error',
+  }[normType];
+
+  const finalTitle = title || defaultTitle;
+
+  // Auto-cierre con timer
   useEffect(() => {
+    if (!duration || duration <= 0) return;
     const timer = setTimeout(() => {
       if (onClose) onClose();
-    }, 3500); // Se oculta automáticamente a los 3.5 segundos
+    }, duration);
     return () => clearTimeout(timer);
-  }, [onClose]);
+  }, [onClose, duration]);
 
+  // Íconos oficiales según la guía
   const icons = {
-    success: <Check size={16} />,
-    info: <Info size={16} />,
-    warning: <AlertTriangle size={16} />,
-    error: <X size={16} />
+    success: <Check size={18} strokeWidth={2.4} />,
+    info: <Info size={18} strokeWidth={2.4} />,
+    warning: <AlertTriangle size={18} strokeWidth={2.4} />,
+    error: <X size={18} strokeWidth={2.4} />,
   };
 
   return (
-    <div className={`app-alert app-alert-${type}`}>
-      <span className="app-alert-bar" />
-      <span className="app-alert-icon">{icons[type]}</span>
+    <aside
+      className={`app-alert app-alert-${normType}`}
+      role="status"
+      aria-live="polite"
+    >
+      <span className="app-alert-icon" aria-hidden="true">
+        {icons[normType]}
+      </span>
+
       <div className="app-alert-body">
-        {title && <span className="app-alert-title">{title}</span>}
-        <span className="app-alert-text">{message}</span>
+        {finalTitle && <strong className="app-alert-title">{finalTitle}</strong>}
+        {message && <span className="app-alert-text">{message}</span>}
       </div>
+
       {onClose && (
-        <button className="app-alert-close" onClick={onClose} aria-label="Cerrar">
+        <button
+          type="button"
+          className="app-alert-close"
+          onClick={onClose}
+          aria-label="Cerrar notificación"
+        >
           <X size={14} />
         </button>
       )}
-    </div>
+    </aside>
   );
 }

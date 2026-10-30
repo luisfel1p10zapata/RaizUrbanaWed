@@ -213,6 +213,16 @@ class UsuarioInMemoryRepository:
         usuario["rol"] = nuevo_rol.strip()
         return usuario
 
+    def eliminar(self, usuario_id: int) -> bool:
+        usuario = self.obtener_por_id(usuario_id)
+        if not usuario:
+            raise UsuarioNoEncontradoError(usuario_id)
+
+        UsuarioInMemoryRepository._db = [
+            u for u in UsuarioInMemoryRepository._db if u["id"] != usuario_id
+        ]
+        return True
+
 
 class UsuarioPostgresRepository:
     """Estructura preparada para la integración con PostgreSQL.
