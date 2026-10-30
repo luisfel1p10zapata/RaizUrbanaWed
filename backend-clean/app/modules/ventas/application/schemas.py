@@ -31,25 +31,44 @@ class MetodoPago(StrEnum):
 
 
 # --------------------------------------------------------------------------
+# MODELOS BASE COMPARTIDOS
+# --------------------------------------------------------------------------
+class ClienteResumen(CamelModel):
+    id: int = 1
+    nombre: str
+    email: str
+
+
+class ProductoResumen(CamelModel):
+    id: int = 101
+    nombre: str
+    precio: float
+
+
+# --------------------------------------------------------------------------
 # ENTRADA (lo que RECIBE la API)
-# El cliente NO envía: id, código, fecha, total, estados ni historial.
-# Todo eso lo calcula el backend.
 # --------------------------------------------------------------------------
 class ItemVentaCreate(CamelModel):
-    producto_id: int
-    cantidad: int = Field(ge=1, description="Mínimo 1 unidad")
-    talla: str = Field(min_length=1, max_length=30)
-    color: str = Field(min_length=1, max_length=30)
+    producto_id: int | None = None
+    producto: ProductoResumen | None = None
+    cantidad: int = Field(default=1, ge=1, description="Mínimo 1 unidad")
+    talla: str = Field(default="M", max_length=30)
+    color: str = Field(default="Único", max_length=30)
+    subtotal: float | None = None
 
 
 class VentaCreate(CamelModel):
-    cliente_id: int
-    metodo_pago: MetodoPago
+    cliente_id: int | None = None
+    cliente: ClienteResumen | None = None
+    metodo_pago: MetodoPago = MetodoPago.EFECTIVO
+    estado_venta: EstadoVenta = EstadoVenta.PENDIENTE
+    estado_pago: EstadoPago = EstadoPago.PENDIENTE
     items: list[ItemVentaCreate] = Field(min_length=1, description="Al menos un producto")
+    total: float | None = None
 
 
 class VentaUpdate(CamelModel):
-    """Editar venta: solo los campos que el modal permite cambiar."""
+    """Editar venta: campos que el modal permite cambiar."""
 
     estado_venta: EstadoVenta | None = None
     estado_pago: EstadoPago | None = None
@@ -74,18 +93,6 @@ class VentaFiltros(CamelModel):
 # --------------------------------------------------------------------------
 # SALIDA (lo que DEVUELVE la API)
 # --------------------------------------------------------------------------
-class ClienteResumen(CamelModel):
-    id: int
-    nombre: str
-    email: str
-
-
-class ProductoResumen(CamelModel):
-    id: int
-    nombre: str
-    precio: float
-
-
 class ItemVentaResponse(CamelModel):
     producto: ProductoResumen
     cantidad: int

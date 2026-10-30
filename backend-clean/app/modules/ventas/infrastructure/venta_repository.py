@@ -182,6 +182,101 @@ class VentaInMemoryRepository:
             ventas_pendientes=ventas_pendientes,
         )
 
+    def guardar(self, datos: dict[str, Any]) -> dict[str, Any]:
+        nuevo_id = VentaInMemoryRepository._secuencia_id
+        VentaInMemoryRepository._secuencia_id += 1
+
+        codigo = datos.get("codigo") or f"VT-{nuevo_id:03d}"
+
+        # Cliente
+        cliente = datos.get("cliente") or {
+            "id": datos.get("cliente_id", 1),
+            "nombre": datos.get("cliente_nombre", "Cliente"),
+            "email": datos.get("cliente_email", "cliente@empresa.com"),
+        }
+
+        # Items
+        items_in = datos.get("items", [])
+        items_guardados = []
+        subtotal_acumulado = 0.0
+        for item in items_in:
+            if isinstance(item, dict):
+                prod_info = item.get("producto") or {
+                    "id": item.get("producto_id", 101),
+                    "nombre": item.get("producto_nombre", "Producto"),
+                    "precio": float(item.get("precio", 10000.0)),
+                }
+                cant = int(item.get("cantidad", 1))
+                sub = float(item.get("subtotal") or (prod_info.get("precio", 10000.0) * cant))
+                subtotal_acumulado += sub
+                items_guardados.append({
+                    "producto": prod_info,
+                    "cantidad": cant,
+                    "talla": item.get("talla", "M"),
+                    "color": item.get("color", "Único"),
+                    "subtotal": sub,
+                })
+            else:
+                # Objeto Pydantic
+                prod_info = getattr(item, "producto", None)
+                if not prod_info:
+                    prod_info = {"id": getattr(item, "producto_id", 101), "nombre": "Producto", "precio": 10000.0}
+                elif hasattr(prod_info, "model_dump"):
+                    prod_info = prod_info.model_dump()
+                cant = getattr(item, "cantidad", 1)
+                sub = float(getattr(item, "subtotal", 0.0) or (prod_info["precio"] * cant))
+                subtotal_acumulado += sub
+                items_guardados.append({
+                    "producto": prod_info,
+                    "cantidad": cant,
+                    "talla": getattr(item, "talla", "M"),
+                    "color": getattr(item, "color", "Único"),
+                    "subtotal": sub,
+                })
+
+        total = float(datos.get("total") or subtotal_acumulado)
+
+        registro = {
+            "id": nuevo_id,
+            "codigo": codigo,
+            "cliente": cliente if isinstance(cliente, dict) else cliente.model_dump(),
+            "fecha": datos.get("fecha") or date.today(),
+            "estado_venta": datos.get("estado_venta", EstadoVenta.PENDIENTE),
+            "estado_pago": datos.get("estado_pago", EstadoPago.PENDIENTE),
+            "metodo_pago": datos.get("metodo_pago", MetodoPago.EFECTIVO),
+            "items": items_guardados,
+            "total": total,
+            "historial": datos.get("historial") or [
+                {"accion": "Creado", "fecha": date.today()}
+            ],
+        }
+        VentaInMemoryRepository._db.append(registro)
+        return registro
+
+    def actualizar(self, venta_id: int, datos: dict[str, Any]) -> dict[str, Any]:
+        venta = self.obtener_por_id(venta_id)
+        if not venta:
+            raise VentaNoEncontradaError(venta_id)
+
+        for campo in ("estado_venta", "estado_pago", "metodo_pago"):
+            if campo in datos and datos[campo] is not None:
+                venta[campo] = datos[campo]
+
+        historial = venta.get("historial", [])
+        historial.append({"accion": "Actualizado", "fecha": date.today()})
+        venta["historial"] = historial
+        return venta
+
+    def eliminar(self, venta_id: int) -> bool:
+        venta = self.obtener_por_id(venta_id)
+        if not venta:
+            raise VentaNoEncontradaError(venta_id)
+
+        VentaInMemoryRepository._db = [
+            v for v in VentaInMemoryRepository._db if v["id"] != venta_id
+        ]
+        return True
+
 
 class VentaPostgresRepository:
     """Estructura preparada para la persistencia de ventas en PostgreSQL.

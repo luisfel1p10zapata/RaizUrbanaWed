@@ -1145,8 +1145,6 @@ textarea.ru-campo-control {
    TÍTULO IGUAL AL MÓDULO USUARIOS
 ========================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&display=swap');
-
 .ru-productos .ru-header h1 {
   font-family: 'Playfair Display', Georgia, serif !important;
   font-size: 36px !important;
