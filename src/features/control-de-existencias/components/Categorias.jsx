@@ -15,11 +15,10 @@ import {
   ChevronsLeft,
   ChevronsRight,
   CircleCheck,
-  AlertTriangle,
-  Check,
 } from 'lucide-react';
 import {
   obtenerCategorias,
+  obtenerCategoriaPorId,
   registrarCategoriaApi,
   editarCategoriaApi,
   cambiarEstadoApi,
@@ -48,23 +47,45 @@ function ModalShell({ children, className = '' }) {
 export default function Categorias() {
   const [categorias, setCategorias] = useState([]);
   const [busqueda, setBusqueda] = useState('');
+  const [filtroEstado, setFiltroEstado] = useState('todos'); // 'todos' | 'activos' | 'inactivos'
   const [modal, setModal] = useState(null);
   const [selected, setSelected] = useState(null);
   const [formNombre, setFormNombre] = useState('');
   const [formEstado, setFormEstado] = useState(true);
   const [pagina, setPagina] = useState(1);
+  const [nombreTocado, setNombreTocado] = useState(false);
+  const [guardando, setGuardando] = useState(false);
+  const [errorServidor, setErrorServidor] = useState('');
+  const [notificacion, setNotificacion] = useState(null);
 
-  // Cargar datos reales al iniciar (Listar)
+  const avisar = (tipo, texto) => {
+    setNotificacion({
+      id: Date.now(),
+      type: tipo === 'exito' ? 'success' : tipo,
+      title:
+        tipo === 'exito'
+          ? '¡Éxito!'
+          : tipo === 'info'
+          ? 'Información'
+          : tipo === 'warning'
+          ? 'Advertencia'
+          : 'Error',
+      message: texto,
+    });
+  };
+
+  // Cargar datos reales al iniciar y tras cambios
   const cargarDatos = async () => {
     try {
       const data = await obtenerCategorias();
-      const normalizados = data.map(item => ({
+      const normalizados = data.map((item) => ({
         ...item,
-        id: item.id_categoria ? `#${item.id_categoria}` : item.id
+        id: item.id_categoria ? `#${item.id_categoria}` : item.id,
       }));
       setCategorias(normalizados);
     } catch (error) {
       console.error('Error al listar categorías:', error);
+      avisar('error', 'No se pudo conectar con el backend para listar categorías.');
     }
   };
 
@@ -72,16 +93,25 @@ export default function Categorias() {
     cargarDatos();
   }, []);
 
+  // Filtrado compuesto: por estado y por texto en tiempo real
   const filtradas = useMemo(() => {
-    const texto = busqueda.trim().toLowerCase();
-    if (!texto) return categorias;
+    let resultado = categorias;
 
-    return categorias.filter((categoria) =>
+    if (filtroEstado === 'activos') {
+      resultado = resultado.filter((c) => c.estado);
+    } else if (filtroEstado === 'inactivos') {
+      resultado = resultado.filter((c) => !c.estado);
+    }
+
+    const texto = busqueda.trim().toLowerCase();
+    if (!texto) return resultado;
+
+    return resultado.filter((categoria) =>
       `${categoria.id} ${categoria.nombre} ${categoria.estado ? 'activo' : 'inactivo'}`
         .toLowerCase()
         .includes(texto)
     );
-  }, [categorias, busqueda]);
+  }, [categorias, busqueda, filtroEstado]);
 
   const categoriasPorPagina = 5;
   const totalPaginas = Math.max(1, Math.ceil(filtradas.length / categoriasPorPagina));
@@ -105,13 +135,23 @@ export default function Categorias() {
     setSelected(null);
     setNombreTocado(false);
     setErrorServidor('');
-    setNotificacion(null);
     setModal('registrar');
   };
 
-  const abrirDetalle = (categoria) => {
+  const abrirDetalle = async (categoria) => {
     setSelected(categoria);
     setModal('detalle');
+    // Consultar detalle completo al backend
+    try {
+      const idReal = categoria.id_categoria || String(categoria.id).replace('#', '');
+      const detalle = await obtenerCategoriaPorId(idReal);
+      setSelected({
+        ...detalle,
+        id: detalle.id_categoria ? `#${detalle.id_categoria}` : detalle.id,
+      });
+    } catch {
+      // Se mantiene el objeto seleccionado en caso de error de red
+    }
   };
 
   const abrirEditar = (categoria) => {
@@ -120,7 +160,6 @@ export default function Categorias() {
     setFormEstado(categoria.estado);
     setNombreTocado(false);
     setErrorServidor('');
-    setNotificacion(null);
     setModal('editar');
   };
 
@@ -130,29 +169,35 @@ export default function Categorias() {
     setModal('estado');
   };
 
+  const abrirEliminar = (categoria) => {
+    setSelected(categoria);
+    setModal('eliminar');
+  };
+
+  // Validación en tiempo real del nombre
   const validarNombre = (valor) => {
     const nombre = valor.trim();
     if (!nombre) return 'El nombre de la categoría es obligatorio.';
     if (nombre.length < 2) return 'El nombre debe tener al menos 2 caracteres.';
     if (nombre.length > 100) return 'El nombre no puede superar los 100 caracteres.';
-    if (!/^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ ]+$/.test(nombre)) return 'Solo se permiten letras y espacios; no números ni símbolos.';
+    if (!/^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ ]+$/.test(nombre)) {
+      return 'Solo se permiten letras y espacios; no números ni símbolos.';
+    }
     const duplicado = categorias.some((categoria) => {
       const idCategoria = String(categoria.id_categoria ?? categoria.id).replace('#', '');
       const idActual = String(selected?.id_categoria ?? selected?.id ?? '').replace('#', '');
-      return categoria.nombre?.trim().toLocaleLowerCase('es') === nombre.toLocaleLowerCase('es')
-        && !(modal === 'editar' && idCategoria === idActual);
+      return (
+        categoria.nombre?.trim().toLocaleLowerCase('es') === nombre.toLocaleLowerCase('es') &&
+        !(modal === 'editar' && idCategoria === idActual)
+      );
     });
     if (duplicado) return 'Ya existe una categoría con ese nombre.';
     return '';
   };
 
   const errorNombre = validarNombre(formNombre);
-  const [nombreTocado, setNombreTocado] = useState(false);
-  const [guardando, setGuardando] = useState(false);
-  const [errorServidor, setErrorServidor] = useState('');
-  const [notificacion, setNotificacion] = useState(null);
-  const avisar = (tipo, texto) => setNotificacion({ tipo, texto, id: Date.now() });
 
+  // Registrar con Backend
   const registrar = async () => {
     setNombreTocado(true);
     if (errorNombre || guardando) return;
@@ -163,6 +208,7 @@ export default function Categorias() {
       setModal(null);
       setFormNombre('');
       await cargarDatos();
+      setPagina(1);
       avisar('exito', '¡Categoría registrada correctamente!');
     } catch (error) {
       setErrorServidor(error.message || 'No se pudo registrar la categoría.');
@@ -172,6 +218,7 @@ export default function Categorias() {
     }
   };
 
+  // Editar con Backend
   const guardarCambios = async () => {
     setNombreTocado(true);
     if (errorNombre || !selected || guardando) return;
@@ -194,7 +241,7 @@ export default function Categorias() {
   // Cambiar Estado con Backend
   const aplicarEstado = async () => {
     if (!selected) return;
-    const idReal = selected.id_categoria || selected.id.replace('#', '');
+    const idReal = selected.id_categoria || String(selected.id).replace('#', '');
 
     try {
       await cambiarEstadoApi(idReal, formEstado);
@@ -206,15 +253,10 @@ export default function Categorias() {
     }
   };
 
-  const abrirEliminar = (categoria) => {
-    setSelected(categoria);
-    setModal('eliminar');
-  };
-
-  // Eliminar con Backend
+  // Eliminar con Backend y validación de dependencias
   const eliminar = async () => {
     if (!selected) return;
-    const idReal = selected.id_categoria || selected.id.replace('#', '');
+    const idReal = selected.id_categoria || String(selected.id).replace('#', '');
 
     try {
       await eliminarCategoriaApi(idReal);
@@ -223,6 +265,7 @@ export default function Categorias() {
       await cargarDatos();
       avisar('error', 'Categoría eliminada correctamente.');
     } catch (error) {
+      setModal(null);
       avisar('error', error.message || 'No se puede eliminar la categoría porque tiene productos asociados.');
     }
   };
@@ -232,17 +275,24 @@ export default function Categorias() {
     setPagina(1);
   };
 
+  const alternarFiltroEstado = (estadoNuevo) => {
+    setFiltroEstado((prev) => (prev === estadoNuevo ? 'todos' : estadoNuevo));
+    setPagina(1);
+  };
+
   return (
     <div className="categorias-page">
+      {/* Alerta flotante estándar de Raíz Urbana */}
       {notificacion && (
         <AppAlert
           key={notificacion.id}
-          type={notificacion.tipo === 'exito' ? 'success' : notificacion.tipo}
-          title={notificacion.tipo === 'exito' ? '¡Éxito!' : notificacion.tipo === 'info' ? 'Información' : notificacion.tipo === 'warning' ? 'Advertencia' : 'Notificación'}
-          message={notificacion.texto}
+          type={notificacion.type}
+          title={notificacion.title}
+          message={notificacion.message}
           onClose={() => setNotificacion(null)}
         />
       )}
+
       <header className="categorias-header">
         <div>
           <span className="categorias-module-label">MÓDULO</span>
@@ -256,35 +306,52 @@ export default function Categorias() {
         </button>
       </header>
 
+      {/* Tarjetas KPI interactivas para conteos y filtrado por estado */}
       <section className="categorias-kpis">
-        <article className="categoria-kpi-card">
+        <article
+          className={`categoria-kpi-card ${filtroEstado === 'todos' ? 'active-filter' : ''}`}
+          style={{ cursor: 'pointer' }}
+          onClick={() => alternarFiltroEstado('todos')}
+          title="Ver todas las categorías"
+        >
           <div>
             <span className="kpi-label">Total categorías</span>
             <strong>{total}</strong>
-            <small><span>Registradas</span></small>
+            <small><span>{filtroEstado === 'todos' ? 'Mostrando todas' : 'Filtrar todas'}</span></small>
           </div>
           <div className="kpi-icon"><FolderOpen size={16} /></div>
         </article>
 
-        <article className="categoria-kpi-card">
+        <article
+          className={`categoria-kpi-card ${filtroEstado === 'activos' ? 'active-filter' : ''}`}
+          style={{ cursor: 'pointer' }}
+          onClick={() => alternarFiltroEstado('activos')}
+          title="Filtrar categorías activas"
+        >
           <div>
             <span className="kpi-label">Activas</span>
             <strong>{activas}</strong>
-            <small><span>Disponibles</span></small>
+            <small><span>{filtroEstado === 'activos' ? 'Filtro activo' : 'Disponibles'}</span></small>
           </div>
           <div className="kpi-icon"><CheckCircle2 size={16} /></div>
         </article>
 
-        <article className="categoria-kpi-card">
+        <article
+          className={`categoria-kpi-card ${filtroEstado === 'inactivos' ? 'active-filter' : ''}`}
+          style={{ cursor: 'pointer' }}
+          onClick={() => alternarFiltroEstado('inactivos')}
+          title="Filtrar categorías inactivas"
+        >
           <div>
             <span className="kpi-label">Inactivas</span>
             <strong>{inactivas}</strong>
-            <small><span>Deshabilitadas</span></small>
+            <small><span>{filtroEstado === 'inactivos' ? 'Filtro activo' : 'Deshabilitadas'}</span></small>
           </div>
           <div className="kpi-icon"><XCircle size={16} /></div>
         </article>
       </section>
 
+      {/* Buscador de categorías en tiempo real */}
       <section className="categorias-search-card">
         <div className="search-card-title">
           <Filter size={15} strokeWidth={1.8} />
@@ -303,6 +370,7 @@ export default function Categorias() {
         </div>
       </section>
 
+      {/* Tabla principal con paginación de 5 registros */}
       <section className="categorias-table-card">
         <div className="table-card-header">
           <div className="table-title">
@@ -363,18 +431,66 @@ export default function Categorias() {
             </tbody>
           </table>
         </div>
+
+        {/* Paginador estricto de 5 en 5 */}
         <div className="table-pagination">
           <span>
-            Mostrando {filtradas.length === 0 ? 0 : (paginaActual - 1) * categoriasPorPagina + 1}–{Math.min(paginaActual * categoriasPorPagina, filtradas.length)} de {filtradas.length} categorías
+            Mostrando {filtradas.length === 0 ? 0 : (paginaActual - 1) * categoriasPorPagina + 1}–
+            {Math.min(paginaActual * categoriasPorPagina, filtradas.length)} de {filtradas.length} categorías
           </span>
           <div className="pagination-controls" aria-label="Paginación de categorías">
-            <button type="button" title="Primera página" aria-label="Primera página" disabled={paginaActual === 1} onClick={() => cambiarPagina(1)}><ChevronsLeft size={17} /></button>
-            <button type="button" title="Página anterior" aria-label="Página anterior" disabled={paginaActual === 1} onClick={() => cambiarPagina(paginaActual - 1)}><ChevronLeft size={17} /></button>
-            {Array.from({ length: totalPaginas }, (_, i) => i + 1).filter(n => Math.abs(n - paginaActual) <= 2 || n === 1 || n === totalPaginas).map(n => (
-              <button type="button" key={n} className={n === paginaActual ? 'current-page' : ''} aria-label={`Página ${n}`} aria-current={n === paginaActual ? 'page' : undefined} onClick={() => cambiarPagina(n)}>{n}</button>
-            ))}
-            <button type="button" title="Página siguiente" aria-label="Página siguiente" disabled={paginaActual === totalPaginas} onClick={() => cambiarPagina(paginaActual + 1)}><ChevronRight size={17} /></button>
-            <button type="button" title="Última página" aria-label="Última página" disabled={paginaActual === totalPaginas} onClick={() => cambiarPagina(totalPaginas)}><ChevronsRight size={17} /></button>
+            <button
+              type="button"
+              title="Primera página"
+              aria-label="Primera página"
+              disabled={paginaActual === 1}
+              onClick={() => cambiarPagina(1)}
+            >
+              <ChevronsLeft size={17} />
+            </button>
+            <button
+              type="button"
+              title="Página anterior"
+              aria-label="Página anterior"
+              disabled={paginaActual === 1}
+              onClick={() => cambiarPagina(paginaActual - 1)}
+            >
+              <ChevronLeft size={17} />
+            </button>
+            {Array.from({ length: totalPaginas }, (_, i) => i + 1)
+              .filter(
+                (n) => Math.abs(n - paginaActual) <= 2 || n === 1 || n === totalPaginas
+              )
+              .map((n) => (
+                <button
+                  type="button"
+                  key={n}
+                  className={n === paginaActual ? 'current-page' : ''}
+                  aria-label={`Página ${n}`}
+                  aria-current={n === paginaActual ? 'page' : undefined}
+                  onClick={() => cambiarPagina(n)}
+                >
+                  {n}
+                </button>
+              ))}
+            <button
+              type="button"
+              title="Página siguiente"
+              aria-label="Página siguiente"
+              disabled={paginaActual === totalPaginas}
+              onClick={() => cambiarPagina(paginaActual + 1)}
+            >
+              <ChevronRight size={17} />
+            </button>
+            <button
+              type="button"
+              title="Última página"
+              aria-label="Última página"
+              disabled={paginaActual === totalPaginas}
+              onClick={() => cambiarPagina(totalPaginas)}
+            >
+              <ChevronsRight size={17} />
+            </button>
           </div>
         </div>
       </section>
@@ -387,26 +503,50 @@ export default function Categorias() {
               <span className="categoria-modal-eyebrow">NUEVO REGISTRO</span>
               <h2>Registrar Categoría</h2>
             </div>
-            <button className="categoria-modal-close" onClick={() => setModal(null)}><X size={20} /></button>
+            <button className="categoria-modal-close" onClick={() => setModal(null)}>
+              <X size={20} />
+            </button>
           </div>
           <div className="categoria-modal-content">
-            <label>NOMBRE <span style={{ color: "#dc3545" }} aria-hidden="true">*</span></label>
+            <label>
+              NOMBRE <span style={{ color: '#dc3545' }} aria-hidden="true">*</span>
+            </label>
             <input
               autoFocus
               required
               value={formNombre}
-              onChange={(e) => { setFormNombre(e.target.value); setNombreTocado(true); setErrorServidor(''); }}
+              onChange={(e) => {
+                setFormNombre(e.target.value);
+                setNombreTocado(true);
+                setErrorServidor('');
+              }}
               placeholder="Ej: Ropa, Calzado..."
-              onKeyDown={(e) => { if (e.key === 'Enter') registrar(); }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') registrar();
+              }}
               onBlur={() => setNombreTocado(true)}
               aria-invalid={nombreTocado && Boolean(errorNombre)}
             />
-            {nombreTocado && errorNombre && <small className="categoria-error-tiempo-real" role="alert">{errorNombre}</small>}
-            {errorServidor && <small className="categoria-error-tiempo-real" role="alert">{errorServidor}</small>}
+            {nombreTocado && errorNombre && (
+              <small className="categoria-error-tiempo-real" role="alert">
+                {errorNombre}
+              </small>
+            )}
+            {errorServidor && (
+              <small className="categoria-error-tiempo-real" role="alert">
+                {errorServidor}
+              </small>
+            )}
           </div>
           <div className="categoria-modal-footer">
-            <button className="categoria-secondary-button" onClick={() => setModal(null)}>Cancelar</button>
-            <button className="categoria-primary-modal-button" disabled={Boolean(errorNombre) || guardando} onClick={registrar}>
+            <button className="categoria-secondary-button" onClick={() => setModal(null)}>
+              Cancelar
+            </button>
+            <button
+              className="categoria-primary-modal-button"
+              disabled={Boolean(errorNombre) || guardando}
+              onClick={registrar}
+            >
               {guardando ? 'Registrando...' : 'Registrar categoría'}
             </button>
           </div>
@@ -421,21 +561,33 @@ export default function Categorias() {
               <span className="categoria-modal-eyebrow normal">{selected.nombre}</span>
               <h2>Cambiar Estado</h2>
             </div>
-            <button className="categoria-modal-close" onClick={() => setModal(null)}><X size={20} /></button>
+            <button className="categoria-modal-close" onClick={() => setModal(null)}>
+              <X size={20} />
+            </button>
           </div>
           <div className="categoria-modal-content categoria-state-content">
-            <button className={`categoria-state-option ${formEstado ? 'selected' : ''}`} onClick={() => setFormEstado(true)}>
+            <button
+              className={`categoria-state-option ${formEstado ? 'selected' : ''}`}
+              onClick={() => setFormEstado(true)}
+            >
               <span><strong>Activo</strong></span>
               {formEstado && <CircleCheck size={15} />}
             </button>
-            <button className={`categoria-state-option ${!formEstado ? 'selected' : ''}`} onClick={() => setFormEstado(false)}>
+            <button
+              className={`categoria-state-option ${!formEstado ? 'selected' : ''}`}
+              onClick={() => setFormEstado(false)}
+            >
               <span><strong>Inactivo</strong></span>
               {!formEstado && <CircleCheck size={15} />}
             </button>
           </div>
           <div className="categoria-modal-footer">
-            <button className="categoria-secondary-button" onClick={() => setModal(null)}>Cancelar</button>
-            <button className="categoria-primary-modal-button" onClick={aplicarEstado}>Aplicar</button>
+            <button className="categoria-secondary-button" onClick={() => setModal(null)}>
+              Cancelar
+            </button>
+            <button className="categoria-primary-modal-button" onClick={aplicarEstado}>
+              Aplicar
+            </button>
           </div>
         </ModalShell>
       )}
@@ -448,7 +600,9 @@ export default function Categorias() {
               <span className="categoria-modal-eyebrow">CONSULTA</span>
               <h2>Detalle Categoría</h2>
             </div>
-            <button className="categoria-modal-close" onClick={() => setModal(null)}><X size={20} /></button>
+            <button className="categoria-modal-close" onClick={() => setModal(null)}>
+              <X size={20} />
+            </button>
           </div>
           <div className="categoria-detail-fields">
             <div><span>ID</span><strong>{selected.id}</strong></div>
@@ -456,7 +610,9 @@ export default function Categorias() {
             <div><span>Estado</span><EstadoBadge activo={selected.estado} /></div>
           </div>
           <div className="categoria-modal-footer">
-            <button className="categoria-secondary-button" onClick={() => setModal(null)}>Cerrar</button>
+            <button className="categoria-secondary-button" onClick={() => setModal(null)}>
+              Cerrar
+            </button>
           </div>
         </ModalShell>
       )}
@@ -469,17 +625,46 @@ export default function Categorias() {
               <span className="categoria-modal-eyebrow">EDITAR</span>
               <h2>Modificar Categoría</h2>
             </div>
-            <button className="categoria-modal-close" onClick={() => setModal(null)}><X size={20} /></button>
+            <button className="categoria-modal-close" onClick={() => setModal(null)}>
+              <X size={20} />
+            </button>
           </div>
           <div className="categoria-modal-content">
-            <label>NOMBRE <span style={{ color: "#dc3545" }} aria-hidden="true">*</span></label>
-            <input value={formNombre} onChange={(e) => { setFormNombre(e.target.value); setNombreTocado(true); setErrorServidor(''); }} onBlur={() => setNombreTocado(true)} aria-invalid={nombreTocado && Boolean(errorNombre)} />
-            {nombreTocado && errorNombre && <small className="categoria-error-tiempo-real" role="alert">{errorNombre}</small>}
-            {errorServidor && <small className="categoria-error-tiempo-real" role="alert">{errorServidor}</small>}
+            <label>
+              NOMBRE <span style={{ color: '#dc3545' }} aria-hidden="true">*</span>
+            </label>
+            <input
+              value={formNombre}
+              onChange={(e) => {
+                setFormNombre(e.target.value);
+                setNombreTocado(true);
+                setErrorServidor('');
+              }}
+              onBlur={() => setNombreTocado(true)}
+              aria-invalid={nombreTocado && Boolean(errorNombre)}
+            />
+            {nombreTocado && errorNombre && (
+              <small className="categoria-error-tiempo-real" role="alert">
+                {errorNombre}
+              </small>
+            )}
+            {errorServidor && (
+              <small className="categoria-error-tiempo-real" role="alert">
+                {errorServidor}
+              </small>
+            )}
           </div>
           <div className="categoria-modal-footer">
-            <button className="categoria-secondary-button" onClick={() => setModal(null)}>Cancelar</button>
-            <button className="categoria-primary-modal-button" disabled={Boolean(errorNombre) || guardando} onClick={guardarCambios}>{guardando ? 'Guardando...' : 'Guardar cambios'}</button>
+            <button className="categoria-secondary-button" onClick={() => setModal(null)}>
+              Cancelar
+            </button>
+            <button
+              className="categoria-primary-modal-button"
+              disabled={Boolean(errorNombre) || guardando}
+              onClick={guardarCambios}
+            >
+              {guardando ? 'Guardando...' : 'Guardar cambios'}
+            </button>
           </div>
         </ModalShell>
       )}
@@ -492,8 +677,16 @@ export default function Categorias() {
             <p>Estás a punto de eliminar <strong>{selected.nombre}</strong>.</p>
           </div>
           <div className="categoria-modal-footer">
-            <button className="categoria-secondary-button" onClick={() => setModal(null)}>Cancelar</button>
-            <button className="categoria-primary-modal-button" style={{backgroundColor: '#e74c3c'}} onClick={eliminar}>Eliminar</button>
+            <button className="categoria-secondary-button" onClick={() => setModal(null)}>
+              Cancelar
+            </button>
+            <button
+              className="categoria-primary-modal-button"
+              style={{ backgroundColor: '#e74c3c' }}
+              onClick={eliminar}
+            >
+              Eliminar
+            </button>
           </div>
         </ModalShell>
       )}

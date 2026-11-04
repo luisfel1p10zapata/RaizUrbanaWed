@@ -24,3 +24,8 @@ class CategoriaInvalidaError(CategoriaError):
     """Lanzada cuando los datos de una categoría no son válidos."""
     pass
 
+
+class CategoriaAsociadaError(CategoriaError):
+    """Lanzada cuando una categoría no puede eliminarse por tener productos asociados."""
+    def __init__(self, mensaje: str = "No se puede eliminar la categoría porque tiene productos asociados."):
+        super().__init__(mensaje)

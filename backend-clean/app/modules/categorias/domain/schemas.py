@@ -47,3 +47,9 @@ class CategoriaResponse(CamelModel):
     nombre: str
     estado: bool
 
+
+class CategoriaConteoResponse(CamelModel):
+    """Esquema de respuesta para métricas y conteos de categorías."""
+    total: int
+    activas: int
+    inactivas: int

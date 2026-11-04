@@ -1,10 +1,10 @@
-
 """Lógica de negocio del módulo de Categorías."""
 
 from app.modules.categorias.domain.schemas import (
     CategoriaCreate,
     CategoriaUpdate,
     CategoriaResponse,
+    CategoriaConteoResponse,
 )
 from app.modules.categorias.domain.exceptions import (
     CategoriaNoEncontradaError,
@@ -32,8 +32,12 @@ class CategoriaService:
 
         return CategoriaResponse.model_validate(creado)
 
-    def listar_categorias(self) -> list[CategoriaResponse]:
-        registros = self.repositorio.listar()
+    def listar_categorias(
+        self,
+        buscar: str | None = None,
+        estado: bool | None = None,
+    ) -> list[CategoriaResponse]:
+        registros = self.repositorio.listar(buscar=buscar, estado=estado)
 
         return [
             CategoriaResponse.model_validate(registro)
@@ -70,12 +74,30 @@ class CategoriaService:
         categoria_id: int,
         estado: bool,
     ) -> CategoriaResponse:
-        actualizado = self.repositorio.actualizar(
-            categoria_id,
-            {"estado": estado},
-        )
+        if hasattr(self.repositorio, "cambiar_estado"):
+            actualizado = self.repositorio.cambiar_estado(categoria_id, estado)
+        else:
+            actualizado = self.repositorio.actualizar(
+                categoria_id,
+                {"estado": estado},
+            )
 
         return CategoriaResponse.model_validate(actualizado)
 
     def eliminar_categoria(self, categoria_id: int) -> None:
         self.repositorio.eliminar(categoria_id)
+
+    def obtener_conteos(self) -> CategoriaConteoResponse:
+        if hasattr(self.repositorio, "conteo"):
+            datos = self.repositorio.conteo()
+            return CategoriaConteoResponse(**datos)
+        
+        # Fallback a conteo manual sobre el listado completo
+        todos = self.repositorio.listar()
+        total = len(todos)
+        activas = sum(1 for c in todos if c.get("estado", True))
+        return CategoriaConteoResponse(
+            total=total,
+            activas=activas,
+            inactivas=total - activas,
+        )

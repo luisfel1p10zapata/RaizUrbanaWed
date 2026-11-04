@@ -1,14 +1,13 @@
-
 /**
  * Servicio de Categorías - Raíz Urbana.
- * Conexión temporal con FastAPI mientras se prepara PostgreSQL.
+ * Conexión completa con backend FastAPI y PostgreSQL.
  */
 
 const API_URL = 'http://127.0.0.1:8000/api/categorias';
 
 const normalizarCategoria = (categoria) => ({
   ...categoria,
-  id_categoria: categoria.id,
+  id_categoria: categoria.id ?? categoria.id_categoria,
 });
 
 const solicitar = async (ruta = '', opciones = {}) => {
@@ -55,11 +54,30 @@ const solicitar = async (ruta = '', opciones = {}) => {
   return respuesta.json();
 };
 
-// LISTAR
-export const obtenerCategorias = async () => {
-  const categorias = await solicitar();
+// LISTAR CON BÚSQUEDA Y FILTRO
+export const obtenerCategorias = async (params = {}) => {
+  const query = new URLSearchParams();
+  if (params.buscar) query.append('buscar', params.buscar);
+  if (params.estado !== undefined && params.estado !== null) {
+    query.append('estado', params.estado);
+  }
+
+  const qs = query.toString() ? `?${query.toString()}` : '';
+  const categorias = await solicitar(qs);
 
   return categorias.map(normalizarCategoria);
+};
+
+// CONTEOS Y MÉTRICAS
+export const obtenerConteosCategorias = async () => {
+  return solicitar('/conteos');
+};
+
+// CONSULTAR POR ID
+export const obtenerCategoriaPorId = async (id) => {
+  const idLimpio = String(id).replace('#', '');
+  const categoria = await solicitar(`/${idLimpio}`);
+  return normalizarCategoria(categoria);
 };
 
 // REGISTRAR
@@ -80,8 +98,9 @@ export const registrarCategoriaApi = async (categoriaData) => {
 // EDITAR
 export const editarCategoriaApi = async (id, categoriaData) => {
   const nombre = validarNombreCategoria(categoriaData.nombre);
+  const idLimpio = String(id).replace('#', '');
 
-  const actualizada = await solicitar(`/${id}`, {
+  const actualizada = await solicitar(`/${idLimpio}`, {
     method: 'PUT',
     body: JSON.stringify({
       nombre,
@@ -94,7 +113,9 @@ export const editarCategoriaApi = async (id, categoriaData) => {
 
 // CAMBIAR ESTADO
 export const cambiarEstadoApi = async (id, estado) => {
-  const actualizada = await solicitar(`/${id}/estado`, {
+  const idLimpio = String(id).replace('#', '');
+
+  const actualizada = await solicitar(`/${idLimpio}/estado`, {
     method: 'PATCH',
     body: JSON.stringify({ estado }),
   });
@@ -104,7 +125,9 @@ export const cambiarEstadoApi = async (id, estado) => {
 
 // ELIMINAR
 export const eliminarCategoriaApi = async (id) => {
-  await solicitar(`/${id}`, {
+  const idLimpio = String(id).replace('#', '');
+
+  await solicitar(`/${idLimpio}`, {
     method: 'DELETE',
   });
 
@@ -130,6 +153,12 @@ export const validarNombreCategoria = (nombre) => {
   if (/^\d+$/.test(limpio)) {
     throw new Error(
       'El nombre de la categoría no puede estar compuesto únicamente por números.'
+    );
+  }
+
+  if (!/^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ ]+$/.test(limpio)) {
+    throw new Error(
+      'Solo se permiten letras y espacios en el nombre de la categoría.'
     );
   }
 

@@ -1,7 +1,6 @@
-
 """Rutas HTTP del módulo de Categorías."""
 
-from fastapi import APIRouter, HTTPException, status # type: ignore
+from fastapi import APIRouter, HTTPException, status, Query # type: ignore
 from pydantic import BaseModel # type: ignore
 
 from app.modules.categorias.application.service import CategoriaService
@@ -9,11 +8,13 @@ from app.modules.categorias.domain.schemas import (
     CategoriaCreate,
     CategoriaUpdate,
     CategoriaResponse,
+    CategoriaConteoResponse,
 )
 from app.modules.categorias.domain.exceptions import (
     CategoriaDuplicadaError,
     CategoriaNoEncontradaError,
     CategoriaInvalidaError,
+    CategoriaAsociadaError,
 )
 
 
@@ -28,7 +29,7 @@ def manejar_error(error: Exception):
     if isinstance(error, CategoriaNoEncontradaError):
         raise HTTPException(status_code=404, detail=str(error)) from error
 
-    if isinstance(error, CategoriaDuplicadaError):
+    if isinstance(error, (CategoriaDuplicadaError, CategoriaAsociadaError)):
         raise HTTPException(status_code=409, detail=str(error)) from error
 
     if isinstance(error, (CategoriaInvalidaError, ValueError)):
@@ -36,7 +37,7 @@ def manejar_error(error: Exception):
 
     raise HTTPException(
         status_code=500,
-        detail="Error interno al procesar la categoría.",
+        detail=str(error) if str(error) else "Error interno al procesar la categoría.",
     ) from error
 
 
@@ -56,9 +57,24 @@ def registrar_categoria(datos: CategoriaCreate):
     "",
     response_model=list[CategoriaResponse],
 )
-def listar_categorias():
+def listar_categorias(
+    buscar: str | None = None,
+    estado: bool | None = None,
+):
     try:
-        return CategoriaService().listar_categorias()
+        return CategoriaService().listar_categorias(buscar=buscar, estado=estado)
+    except Exception as error:
+        manejar_error(error)
+
+
+@router.get(
+    "/conteos",
+    response_model=CategoriaConteoResponse,
+)
+def obtener_conteos():
+    """Retorna los conteos de categorías totales, activas e inactivas."""
+    try:
+        return CategoriaService().obtener_conteos()
     except Exception as error:
         manejar_error(error)
 
