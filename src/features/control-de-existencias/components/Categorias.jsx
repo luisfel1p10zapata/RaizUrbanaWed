@@ -390,9 +390,10 @@ export default function Categorias() {
             <button className="categoria-modal-close" onClick={() => setModal(null)}><X size={20} /></button>
           </div>
           <div className="categoria-modal-content">
-            <label>NOMBRE *</label>
+            <label>NOMBRE <span style={{ color: "#dc3545" }} aria-hidden="true">*</span></label>
             <input
               autoFocus
+              required
               value={formNombre}
               onChange={(e) => { setFormNombre(e.target.value); setNombreTocado(true); setErrorServidor(''); }}
               placeholder="Ej: Ropa, Calzado..."
@@ -471,7 +472,7 @@ export default function Categorias() {
             <button className="categoria-modal-close" onClick={() => setModal(null)}><X size={20} /></button>
           </div>
           <div className="categoria-modal-content">
-            <label>NOMBRE *</label>
+            <label>NOMBRE <span style={{ color: "#dc3545" }} aria-hidden="true">*</span></label>
             <input value={formNombre} onChange={(e) => { setFormNombre(e.target.value); setNombreTocado(true); setErrorServidor(''); }} onBlur={() => setNombreTocado(true)} aria-invalid={nombreTocado && Boolean(errorNombre)} />
             {nombreTocado && errorNombre && <small className="categoria-error-tiempo-real" role="alert">{errorNombre}</small>}
             {errorServidor && <small className="categoria-error-tiempo-real" role="alert">{errorServidor}</small>}

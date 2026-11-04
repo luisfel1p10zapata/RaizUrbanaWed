@@ -453,6 +453,18 @@ function Modal({
   );
 }
 
+const errorNombreInsumo = (valor) => {
+  const nombre = String(valor ?? '').trim();
+  if (!nombre) return 'Ingresa el nombre del insumo.';
+  if (nombre.length < 2) return 'El nombre debe tener al menos 2 letras.';
+  if (!/^[\p{L}\s]+$/u.test(nombre)) {
+    return 'El nombre solo permite letras y espacios, sin números ni caracteres especiales.';
+  }
+  return '';
+};
+
+const ELEMENTOS_POR_PAGINA = 5;
+
 const errorCantidadCompra = (valor) =>
   esCantidadValida(valor) ? '' : 'La cantidad debe ser un número entero mayor que cero.';
 const errorPrecioCompra = (valor) =>
@@ -685,6 +697,13 @@ function PurchaseForm({
   });
 
   const [editingIndex, setEditingIndex] = useState(null);
+  const [paginaElementos, setPaginaElementos] = useState(1);
+  const totalPaginasElementos = Math.max(1, Math.ceil(form.products.length / ELEMENTOS_POR_PAGINA));
+  const paginaActualElementos = Math.min(paginaElementos, totalPaginasElementos);
+  const elementosVisibles = form.products.slice(
+    (paginaActualElementos - 1) * ELEMENTOS_POR_PAGINA,
+    paginaActualElementos * ELEMENTOS_POR_PAGINA
+  );
   const [insumoTocado, setInsumoTocado] = useState(false);
   const [intentoGuardar, setIntentoGuardar] = useState(false);
   const [alertaFormulario, setAlertaFormulario] = useState(null);
@@ -816,6 +835,11 @@ function PurchaseForm({
       }
     }
 
+    if (!isProduct && errorNombreInsumo(item.product)) {
+      avisarFormulario(errorNombreInsumo(item.product));
+      return;
+    }
+
     if (!esCantidadValida(item.quantity)) {
       avisarFormulario('La cantidad debe ser un número entero mayor que cero.');
       return;
@@ -835,6 +859,9 @@ function PurchaseForm({
           ),
     }));
     setEditingIndex(null);
+    if (editingIndex === null) {
+      setPaginaElementos(Math.ceil((form.products.length + 1) / ELEMENTOS_POR_PAGINA));
+    }
 
     if (isProduct) {
       setDraftProduct((current) => ({
@@ -857,6 +884,7 @@ function PurchaseForm({
     else if (editingIndex !== null && editingIndex > index) {
       setEditingIndex(editingIndex - 1);
     }
+    setPaginaElementos((current) => Math.min(current, Math.max(1, Math.ceil((form.products.length - 1) / ELEMENTOS_POR_PAGINA))));
     setForm((current) => ({
       ...current,
       products: current.products.filter(
@@ -918,6 +946,7 @@ function PurchaseForm({
 
       if (item.itemType === 'Insumo') {
         return (
+          Boolean(errorNombreInsumo(item.product)) ||
           !esOpcionValida(item.category, supplyCategories) ||
           !esOpcionValida(item.color, supplyColors) ||
           !esOpcionValida(item.material, supplyMaterials) ||
@@ -1263,7 +1292,7 @@ function PurchaseForm({
                       updateSupply('product', event.target.value)
                     }
                   />
-                  {insumoTocado && <MensajeCampo mensaje={draftSupply.product.trim() ? '' : 'Ingresa el nombre del insumo.'} />}
+                  {insumoTocado && <MensajeCampo mensaje={errorNombreInsumo(draftSupply.product)} />}
                 </label>
               </div>
 
@@ -1368,7 +1397,7 @@ function PurchaseForm({
                   type="button"
                   className="primary-button add-product-button"
                   onClick={addProduct}
-                  disabled={Boolean(errorCantidadCompra(draftSupply.quantity) || errorPrecioCompra(draftSupply.unitPrice) || !draftSupply.product.trim())}
+                  disabled={Boolean(errorCantidadCompra(draftSupply.quantity) || errorPrecioCompra(draftSupply.unitPrice) || errorNombreInsumo(draftSupply.product))}
                 >
                   <Plus size={17} />
                   {editingIndex !== null ? 'Guardar elemento' : 'Agregar insumo'}
@@ -1406,7 +1435,9 @@ function PurchaseForm({
                 <span>ACCIÓN</span>
               </div>
 
-              {form.products.map((item, index) => (
+              {elementosVisibles.map((item, visibleIndex) => {
+                const index = (paginaActualElementos - 1) * ELEMENTOS_POR_PAGINA + visibleIndex;
+                return (
                 <div
                   className="products-added-row"
                   key={`${item.product}-${index}`}
@@ -1474,7 +1505,26 @@ function PurchaseForm({
                   </button>
                   </span>
                 </div>
-              ))}
+                );
+              })}
+
+              {totalPaginasElementos > 1 && (
+                <nav className="compras-elementos-paginacion" aria-label="Paginación de elementos">
+                  <span>Página {paginaActualElementos} de {totalPaginasElementos}</span>
+                  <div>
+                    <button type="button" disabled={paginaActualElementos === 1}
+                      onClick={() => setPaginaElementos(paginaActualElementos - 1)}>Anterior</button>
+                    {Array.from({ length: totalPaginasElementos }, (_, index) => (
+                      <button type="button" key={index + 1}
+                        className={paginaActualElementos === index + 1 ? 'activo' : ''}
+                        aria-current={paginaActualElementos === index + 1 ? 'page' : undefined}
+                        onClick={() => setPaginaElementos(index + 1)}>{index + 1}</button>
+                    ))}
+                    <button type="button" disabled={paginaActualElementos === totalPaginasElementos}
+                      onClick={() => setPaginaElementos(paginaActualElementos + 1)}>Siguiente</button>
+                  </div>
+                </nav>
+              )}
 
               <div className="products-total">
                 <strong>
@@ -1611,7 +1661,7 @@ export default function Compras() {
     dateFilter,
   ]);
 
-  const pageSize = 6;
+  const pageSize = ELEMENTOS_POR_PAGINA;
 
   const pageCount = Math.max(
     1,
