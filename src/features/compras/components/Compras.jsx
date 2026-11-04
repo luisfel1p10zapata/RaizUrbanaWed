@@ -3,15 +3,9 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   CalendarDays,
   CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
   Eye,
-  Filter,
   Pencil,
   Plus,
-  Search,
   ShoppingCart,
   Trash2,
   X,
@@ -21,6 +15,11 @@ import {
   CreditCard,
 } from 'lucide-react';
 
+import AppAlert from '../../../components/ui/AppAlert';
+import KpiGlobal from '../../../components/ui/KpiGlobal';
+import FiltrarBuscarGlobal from '../../../components/ui/FiltrarBuscarGlobal';
+import TableGlobal from '../../../components/ui/TableGlobal';
+import '../../ventas/styles/Ventas.css';
 import './Compras.css';
 import {
   obtenerCompras,
@@ -328,7 +327,7 @@ const esCantidadValida = (value) =>
   Number.isInteger(Number(value));
 
 const esPrecioValido = (value) =>
-  esNumeroValido(value, 0);
+  esNumeroValido(value, 0.01);
 
 const totalPurchase = (purchase) => {
   const products = Array.isArray(purchase?.products)
@@ -454,6 +453,20 @@ function Modal({
   );
 }
 
+const errorCantidadCompra = (valor) =>
+  esCantidadValida(valor) ? '' : 'La cantidad debe ser un número entero mayor que cero.';
+const errorPrecioCompra = (valor) =>
+  esPrecioValido(valor) ? '' : 'El precio unitario debe ser mayor que $0.';
+const errorFechaCompra = (valor) => {
+  if (!valor) return 'Selecciona una fecha.';
+  const fecha = new Date(`${valor}T00:00:00`);
+  return Number.isNaN(fecha.getTime()) || fecha.toISOString().slice(0, 10) !== valor
+    ? 'La fecha no es válida.' : '';
+};
+const MensajeCampo = ({ mensaje }) => mensaje ? (
+  <small className="ru-compras-live-error" role="alert">{mensaje}</small>
+) : null;
+
 /* =====================================================
    EDITOR DE PRODUCTOS
 ===================================================== */
@@ -571,15 +584,8 @@ function ProductEditor({ value, onChange, onAdd, editing = false, onCancelEdit }
                 quantity: input === '' ? '' : input,
               });
             }}
-            onBlur={() =>
-              onChange({
-                ...value,
-                quantity: esCantidadValida(value.quantity)
-                  ? Number(value.quantity)
-                  : 1,
-              })
-            }
           />
+          <MensajeCampo mensaje={errorCantidadCompra(value.quantity)} />
         </label>
       </div>
 
@@ -589,7 +595,7 @@ function ProductEditor({ value, onChange, onAdd, editing = false, onCancelEdit }
 
           <input
             type="number"
-            min="0"
+            min="0.01"
             step="0.01"
             value={value.unitPrice}
             onChange={(event) => {
@@ -600,21 +606,15 @@ function ProductEditor({ value, onChange, onAdd, editing = false, onCancelEdit }
                 unitPrice: input === '' ? '' : input,
               });
             }}
-            onBlur={() =>
-              onChange({
-                ...value,
-                unitPrice: esPrecioValido(value.unitPrice)
-                  ? Number(value.unitPrice)
-                  : 0,
-              })
-            }
           />
+          <MensajeCampo mensaje={errorPrecioCompra(value.unitPrice)} />
         </label>
 
         <button
           type="button"
           className="primary-button add-product-button"
           onClick={onAdd}
+          disabled={Boolean(errorCantidadCompra(value.quantity) || errorPrecioCompra(value.unitPrice))}
         >
           <Plus size={17} />
           {editing ? 'Guardar elemento' : 'Agregar'}
@@ -685,6 +685,10 @@ function PurchaseForm({
   });
 
   const [editingIndex, setEditingIndex] = useState(null);
+  const [insumoTocado, setInsumoTocado] = useState(false);
+  const [intentoGuardar, setIntentoGuardar] = useState(false);
+  const [alertaFormulario, setAlertaFormulario] = useState(null);
+  const avisarFormulario = (message) => setAlertaFormulario({ message, id: Date.now() });
 
   const resetProductDraft = () => setDraftProduct({
     product: productCatalog[0].name,
@@ -730,6 +734,7 @@ function PurchaseForm({
   };
 
   const updateSupply = (field, value) => {
+    if (field === 'product') setInsumoTocado(true);
     setDraftSupply((current) => ({
       ...current,
       [field]: value,
@@ -738,6 +743,7 @@ function PurchaseForm({
 
   /* Agregar producto o insumo con validaciones. */
   const addProduct = () => {
+    if (purchaseType === 'Insumos') setInsumoTocado(true);
     const isProduct = purchaseType === 'Productos';
     const draft = isProduct ? draftProduct : draftSupply;
 
@@ -745,7 +751,7 @@ function PurchaseForm({
       (item) => (item.itemType === 'Insumo') !== !isProduct
     );
     if (yaHayOtroTipo) {
-      alert('Una compra debe contener solo productos o solo insumos. Retira los elementos anteriores para cambiar de tipo.');
+      avisarFormulario('Una compra debe contener solo productos o solo insumos. Retira los elementos anteriores para cambiar de tipo.');
       return;
     }
 
@@ -757,7 +763,7 @@ function PurchaseForm({
     };
 
     if (!tieneContenido(item.product)) {
-      alert(
+      avisarFormulario(
         isProduct
           ? 'Selecciona un producto.'
           : 'Ingresa el nombre del insumo.'
@@ -770,7 +776,7 @@ function PurchaseForm({
       : supplyCategories.includes(item.category);
 
     if (!validCategory) {
-      alert('Selecciona una categoría válida.');
+      avisarFormulario('Selecciona una categoría válida.');
       return;
     }
 
@@ -785,38 +791,38 @@ function PurchaseForm({
         !product.sizes.includes(item.size) ||
         item.category !== product.category
       ) {
-        alert('Revisa el producto, la categoría, el color y la talla.');
+        avisarFormulario('Revisa el producto, la categoría, el color y la talla.');
         return;
       }
     } else {
       if (!esOpcionValida(item.category, supplyCategories)) {
-        alert('Selecciona una categoría válida.');
+        avisarFormulario('Selecciona una categoría válida.');
         return;
       }
 
       if (!esOpcionValida(item.color, supplyColors)) {
-        alert('Selecciona un color válido.');
+        avisarFormulario('Selecciona un color válido.');
         return;
       }
 
       if (!esOpcionValida(item.material, supplyMaterials)) {
-        alert('Selecciona un material válido.');
+        avisarFormulario('Selecciona un material válido.');
         return;
       }
 
       if (!esOpcionValida(item.size, supplySizes)) {
-        alert('Selecciona un tamaño válido.');
+        avisarFormulario('Selecciona un tamaño válido.');
         return;
       }
     }
 
     if (!esCantidadValida(item.quantity)) {
-      alert('La cantidad debe ser un número entero mayor que cero.');
+      avisarFormulario('La cantidad debe ser un número entero mayor que cero.');
       return;
     }
 
     if (!esPrecioValido(item.unitPrice)) {
-      alert('El precio debe ser numérico y mayor o igual a cero.');
+      avisarFormulario('El precio unitario debe ser mayor que $0.');
       return;
     }
 
@@ -861,12 +867,13 @@ function PurchaseForm({
 
   /* Validar todos los datos antes de guardar. */
   const save = () => {
+    setIntentoGuardar(true);
     if (editingIndex !== null) {
-      alert('Primero pulsa Guardar elemento para confirmar la edición.');
+      avisarFormulario('Primero pulsa Guardar elemento para confirmar la edición.');
       return;
     }
     if (!tieneContenido(form.date)) {
-      alert('Selecciona la fecha de la compra.');
+      avisarFormulario('Selecciona la fecha de la compra.');
       return;
     }
 
@@ -876,27 +883,27 @@ function PurchaseForm({
       Number.isNaN(date.getTime()) ||
       date.toISOString().slice(0, 10) !== form.date
     ) {
-      alert('La fecha de la compra no es válida.');
+      avisarFormulario('La fecha de la compra no es válida.');
       return;
     }
 
     if (!esOpcionValida(form.provider, providers)) {
-      alert('Selecciona un proveedor válido.');
+      avisarFormulario('Selecciona un proveedor válido.');
       return;
     }
 
     if (!esOpcionValida(form.payment, paymentMethods)) {
-      alert('Selecciona un método de pago válido.');
+      avisarFormulario('Selecciona un método de pago válido.');
       return;
     }
 
     if (!esOpcionValida(form.status, statuses)) {
-      alert('Selecciona un estado válido.');
+      avisarFormulario('Selecciona un estado válido.');
       return;
     }
 
     if (!Array.isArray(form.products) || form.products.length === 0) {
-      alert('Agrega al menos un producto o insumo.');
+      avisarFormulario('Agrega al menos un producto o insumo.');
       return;
     }
 
@@ -931,7 +938,7 @@ function PurchaseForm({
     });
 
     if (invalidItem) {
-      alert('Revisa los productos o insumos: hay datos inválidos.');
+      avisarFormulario('Revisa los productos o insumos: hay datos inválidos.');
       return;
     }
 
@@ -968,6 +975,9 @@ function PurchaseForm({
       onClose={onClose}
       className="purchase-form-modal"
     >
+      {alertaFormulario && (
+        <AppAlert key={alertaFormulario.id} type="warning" message={alertaFormulario.message} onClose={() => setAlertaFormulario(null)} />
+      )}
       <div className="compras-modal-body">
         <section className="form-section">
           <div className="section-divider">
@@ -993,6 +1003,7 @@ function PurchaseForm({
 
                 <CalendarDays size={16} />
               </div>
+              {(intentoGuardar || form.date !== '') && <MensajeCampo mensaje={errorFechaCompra(form.date)} />}
             </label>
 
             <label>
@@ -1060,17 +1071,7 @@ function PurchaseForm({
         </section>
 
         {!initialValue && (
-          <section
-            style={{
-              marginTop: 24,
-              marginBottom: 24,
-              padding: 20,
-              borderRadius: 18,
-              border: '1px solid rgba(190, 180, 220, 0.28)',
-              background:
-                'linear-gradient(135deg, rgba(100, 94, 145, 0.20), rgba(25, 27, 44, 0.95))',
-            }}
-          >
+          <section className="compras-tipo-selector">
             <div style={{ marginBottom: 18 }}>
               <span
                 style={{
@@ -1078,7 +1079,7 @@ function PurchaseForm({
                   fontSize: 11,
                   fontWeight: 800,
                   letterSpacing: 2,
-                  color: '#c6b4c3',
+                  color: 'var(--muted)',
                   marginBottom: 7,
                 }}
               >
@@ -1089,7 +1090,7 @@ function PurchaseForm({
                 style={{
                   margin: '0 0 7px',
                   fontSize: 19,
-                  color: '#f2eff8',
+                  color: 'var(--ink)',
                 }}
               >
                 ¿Qué deseas registrar?
@@ -1100,7 +1101,7 @@ function PurchaseForm({
                   margin: 0,
                   fontSize: 13,
                   lineHeight: 1.5,
-                  color: '#bcbccc',
+                  color: 'var(--ink-soft)',
                 }}
               >
                 Selecciona una opción para mostrar el formulario correspondiente.
@@ -1134,7 +1135,7 @@ function PurchaseForm({
                     type="button"
                     onClick={() => {
                       if (form.products.length > 0 && option.type !== purchaseType) {
-                        alert('Retira los elementos agregados antes de cambiar el tipo de compra.');
+                        avisarFormulario('Retira los elementos agregados antes de cambiar el tipo de compra.');
                         return;
                       }
                       setPurchaseType(option.type);
@@ -1148,13 +1149,13 @@ function PurchaseForm({
                       textAlign: 'left',
                       borderRadius: 15,
                       cursor: 'pointer',
-                      color: '#f5f3fb',
+                      color: 'var(--ink)',
                       border: selected
-                        ? '1px solid #c7bde9'
-                        : '1px solid rgba(180, 176, 203, 0.20)',
+                        ? '1px solid var(--dark)'
+                        : '1px solid var(--border)',
                       background: selected
-                        ? 'linear-gradient(135deg, #625d86, #45435f)'
-                        : 'rgba(20, 22, 37, 0.72)',
+                        ? 'var(--soft-bg)'
+                        : 'var(--panel)',
                       boxShadow: selected
                         ? '0 8px 22px rgba(0, 0, 0, 0.20)'
                         : 'none',
@@ -1169,7 +1170,7 @@ function PurchaseForm({
                         height: 48,
                         flexShrink: 0,
                         borderRadius: 13,
-                        background: 'rgba(255, 255, 255, 0.12)',
+                        background: 'var(--soft-bg)',
                         fontSize: 23,
                       }}
                     >
@@ -1190,7 +1191,7 @@ function PurchaseForm({
                       <small
                         style={{
                           display: 'block',
-                          color: '#d2cfdf',
+                          color: 'var(--muted)',
                           lineHeight: 1.4,
                         }}
                       >
@@ -1227,9 +1228,8 @@ function PurchaseForm({
               style={{
                 padding: 20,
                 borderRadius: 16,
-                border: '1px solid rgba(190, 180, 220, 0.35)',
-                background:
-                  'linear-gradient(145deg, rgba(37, 39, 59, 0.96), rgba(26, 28, 44, 0.96))',
+                border: '1px solid var(--border)',
+                background: 'var(--editor-bg)',
               }}
             >
               <div className="form-grid form-grid-2">
@@ -1263,6 +1263,7 @@ function PurchaseForm({
                       updateSupply('product', event.target.value)
                     }
                   />
+                  {insumoTocado && <MensajeCampo mensaje={draftSupply.product.trim() ? '' : 'Ingresa el nombre del insumo.'} />}
                 </label>
               </div>
 
@@ -1339,15 +1340,8 @@ function PurchaseForm({
                         input === '' ? '' : input
                       );
                     }}
-                    onBlur={() =>
-                      updateSupply(
-                        'quantity',
-                        esCantidadValida(draftSupply.quantity)
-                          ? Number(draftSupply.quantity)
-                          : 1
-                      )
-                    }
                   />
+                  <MensajeCampo mensaje={errorCantidadCompra(draftSupply.quantity)} />
                 </label>
 
                 <label>
@@ -1355,7 +1349,7 @@ function PurchaseForm({
 
                   <input
                     type="number"
-                    min="0"
+                    min="0.01"
                     step="0.01"
                     value={draftSupply.unitPrice}
                     onChange={(event) => {
@@ -1366,21 +1360,15 @@ function PurchaseForm({
                         input === '' ? '' : input
                       );
                     }}
-                    onBlur={() =>
-                      updateSupply(
-                        'unitPrice',
-                        esPrecioValido(draftSupply.unitPrice)
-                          ? Number(draftSupply.unitPrice)
-                          : 0
-                      )
-                    }
                   />
+                  <MensajeCampo mensaje={errorPrecioCompra(draftSupply.unitPrice)} />
                 </label>
 
                 <button
                   type="button"
                   className="primary-button add-product-button"
                   onClick={addProduct}
+                  disabled={Boolean(errorCantidadCompra(draftSupply.quantity) || errorPrecioCompra(draftSupply.unitPrice) || !draftSupply.product.trim())}
                 >
                   <Plus size={17} />
                   {editingIndex !== null ? 'Guardar elemento' : 'Agregar insumo'}
@@ -1546,6 +1534,8 @@ export default function Compras() {
   const [modal, setModal] = useState(null);
   const [selectedPurchase, setSelectedPurchase] = useState(null);
   const [pendingStatus, setPendingStatus] = useState('');
+  const [alerta, setAlerta] = useState(null);
+  const notificar = (type, message) => setAlerta({ type, message, id: Date.now() });
 
   useEffect(() => {
     let activo = true;
@@ -1556,7 +1546,7 @@ export default function Compras() {
         if (activo) setPurchases(comprasDesdeBackend(datos));
       } catch (error) {
         console.error('Error cargando compras:', error);
-        if (activo) alert(`No se pudieron cargar las compras: ${error.message}`);
+        if (activo) notificar('error', `No se pudieron cargar las compras: ${error.message}`);
       } finally {
         if (activo) setLoadingCompras(false);
       }
@@ -1671,10 +1661,10 @@ export default function Compras() {
       setPurchases((actuales) => [compraDesdeBackend(respuesta), ...actuales]);
       setPage(1);
       setModal(null);
-      alert('Compra registrada correctamente.');
+      notificar('success', 'Compra registrada correctamente.');
     } catch (error) {
       console.error('Error registrando compra:', error);
-      alert(error.message || 'No se pudo registrar la compra.');
+      notificar('error', error.message || 'No se pudo registrar la compra.');
     } finally {
       setSavingCompras(false);
     }
@@ -1692,10 +1682,10 @@ export default function Compras() {
       ));
       setSelectedPurchase(null);
       setModal(null);
-      alert('Compra actualizada correctamente.');
+      notificar('info', 'Compra actualizada correctamente.');
     } catch (error) {
       console.error('Error actualizando compra:', error);
-      alert(error.message || 'No se pudo actualizar la compra.');
+      notificar('error', error.message || 'No se pudo actualizar la compra.');
     } finally {
       setSavingCompras(false);
     }
@@ -1719,10 +1709,10 @@ export default function Compras() {
       setSelectedPurchase(null);
       setPendingStatus('');
       setModal(null);
-      alert('Estado actualizado correctamente.');
+      notificar('warning', 'Estado actualizado correctamente.');
     } catch (error) {
       console.error('Error cambiando estado:', error);
-      alert(error.message || 'No se pudo cambiar el estado.');
+      notificar('error', error.message || 'No se pudo cambiar el estado.');
     } finally {
       setSavingCompras(false);
     }
@@ -1744,10 +1734,10 @@ export default function Compras() {
       ));
       setSelectedPurchase(null);
       setModal(null);
-      alert('Compra eliminada correctamente.');
+      notificar('error', 'Compra eliminada correctamente.');
     } catch (error) {
       console.error('Error eliminando compra:', error);
-      alert(error.message || 'No se pudo eliminar la compra.');
+      notificar('error', error.message || 'No se pudo eliminar la compra.');
     } finally {
       setSavingCompras(false);
     }
@@ -1761,364 +1751,99 @@ export default function Compras() {
     setDateFilter('');
   };
 
+  const kpis = [
+    { icon: <ShoppingCart size={20} />, title: 'Total compras', value: stats.count, label: 'registradas' },
+    { icon: <Banknote size={20} />, title: 'Monto total', value: money(stats.total), label: 'acumulado' },
+    { icon: <CalendarDays size={20} />, title: 'Pendientes', value: stats.pending, label: 'por procesar' },
+    { icon: <CheckCircle2 size={20} />, title: 'Recibidas', value: stats.received, label: 'confirmadas' },
+  ];
+
+  const columns = [
+    { header: 'Foto', width: '7%', render: (purchase) => (
+      <div className={`purchase-photo photo-${(purchase.number % 4) + 1}`}><Package size={19} /></div>
+    ) },
+    { header: 'ID', width: '9%', render: (purchase) => <span className="id-pill">#{purchase.number}</span> },
+    { header: 'Fecha', width: '12%', render: (purchase) => formatDate(purchase.date) },
+    { header: 'Proveedor', width: '21%', render: (purchase) => (
+      <div className="provider-cell"><strong>{purchase.provider}</strong>
+        <span>{purchase.products.length} {purchase.tipoCompra === 'Insumos' ? 'insumo(s)' : 'producto(s)'}</span>
+      </div>
+    ) },
+    { header: 'Método de pago', width: '16%', render: (purchase) => (
+      <span className="payment-cell">{paymentIcon(purchase.payment)}{purchase.payment}</span>
+    ) },
+    { header: 'Estado', width: '12%', render: (purchase) => (
+      <button type="button" className="detail-status-button" title="Cambiar estado" onClick={() => openStatusModal(purchase)}>
+        <StatusBadge status={purchase.status} />
+      </button>
+    ) },
+    { header: 'Total', width: '12%', render: (purchase) => <strong>{money(totalPurchase(purchase))}</strong> },
+    { header: 'Acciones', width: '11%', render: (purchase) => (
+      <div className="ru-actions compras-actions">
+        <button className="ru-icon-btn view" title="Ver detalle" type="button" onClick={() => { setSelectedPurchase(purchase); setModal('detail'); }}><Eye size={17} /></button>
+        <button className="ru-icon-btn edit" title="Editar" type="button" onClick={() => { setSelectedPurchase(purchase); setModal('edit'); }}><Pencil size={17} /></button>
+        <button className="ru-icon-btn delete" title="Eliminar" type="button" onClick={() => { setSelectedPurchase(purchase); setModal('delete'); }}><Trash2 size={17} /></button>
+      </div>
+    ) },
+  ];
+
   return (
-    <div className="compras-page" aria-busy={loadingCompras || savingCompras}>
-      {loadingCompras && (
-        <div role="status" style={{ padding: '8px 0', fontSize: 13 }}>
-          Cargando compras desde el servidor...
-        </div>
-      )}
-      <header className="compras-page-header">
-        <div>
-          <span className="module-label">MÓDULO</span>
-
-          <h1>Gestión de Compras</h1>
-
-          <p>
-            Registro y seguimiento de órdenes de compra de productos e insumos
-          </p>
-        </div>
-
-        <button
-          className="primary-button header-register-button"
-          onClick={() => setModal('register')}
-          type="button"
-        >
-          <Plus size={17} />
-          REGISTRAR COMPRA
-        </button>
-      </header>
-
-      <section className="kpi-grid">
-        <div className="kpi-card">
-          <div className="kpi-icon">
-            <ShoppingCart size={17} />
-          </div>
-
-          <div className="kpi-content">
-            <div className="kpi-top">
-              <span>Total compras</span>
-            </div>
-
-            <strong>{stats.count}</strong>
-            <small className="positive">Registradas</small>
-          </div>
-        </div>
-
-        <div className="kpi-card">
-          <div className="kpi-icon">$</div>
-
-          <div className="kpi-content">
-            <div className="kpi-top">
-              <span>Monto total</span>
-            </div>
-
-            <strong>{money(stats.total)}</strong>
-            <small className="positive">Mensual</small>
-          </div>
-        </div>
-
-        <div className="kpi-card">
-          <div className="kpi-icon">
-            <span>◷</span>
-          </div>
-
-          <div className="kpi-content">
-            <div className="kpi-top">
-              <span>Pendientes</span>
-            </div>
-
-            <strong>{stats.pending}</strong>
-            <small className="negative">por procesar</small>
-          </div>
-        </div>
-
-        <div className="kpi-card">
-          <div className="kpi-icon">
-            <CheckCircle2 size={17} />
-          </div>
-
-          <div className="kpi-content">
-            <div className="kpi-top">
-              <span>Recibidas</span>
-            </div>
-
-            <strong>{stats.received}</strong>
-            <small className="positive">confirmadas</small>
-          </div>
-        </div>
-      </section>
-
-      <section className="filters-card">
-        <div className="filters-title">
-          <Filter size={17} />
-          <strong>Filtros y búsqueda</strong>
-        </div>
-
-        <div className="filters-row">
-          <div className="search-control">
-            <Search size={17} />
-
-            <input
-              type="text"
-              placeholder="Buscar por ID, proveedor, estado..."
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-            />
-          </div>
-
-          <select
-            value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value)}
-          >
-            <option value="">Todos los estados</option>
-
-            {statuses.map((status) => (
-              <option key={status} value={status}>
-                {status}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={providerFilter}
-            onChange={(event) => setProviderFilter(event.target.value)}
-          >
-            <option value="">Todos los proveedores</option>
-
-            {providers.map((provider) => (
-              <option key={provider} value={provider}>
-                {provider}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={paymentFilter}
-            onChange={(event) => setPaymentFilter(event.target.value)}
-          >
-            <option value="">Método de pago</option>
-
-            {paymentMethods.map((payment) => (
-              <option key={payment} value={payment}>
-                {payment}
-              </option>
-            ))}
-          </select>
-
-          <label className="date-control">
-            <input
-              type="date"
-              value={dateFilter}
-              onChange={(event) => setDateFilter(event.target.value)}
-            />
-
-            <CalendarDays size={17} />
-          </label>
-
-          {(search ||
-            statusFilter ||
-            providerFilter ||
-            paymentFilter ||
-            dateFilter) && (
-            <button
-              className="clear-filters"
-              onClick={clearFilters}
-              type="button"
-            >
-              Limpiar
-            </button>
-          )}
-        </div>
-      </section>
-
-      <section className="table-card">
-        <div className="table-card-header">
+    <div className="ru-root compras-page" aria-busy={loadingCompras || savingCompras}>
+      <div className="ru-page">
+        {loadingCompras && <div role="status" className="compras-loading">Cargando compras desde el servidor...</div>}
+        <header className="ru-v-header">
           <div>
-            <strong>Listado de Compras</strong>
-            <span className="count-pill">{filtered.length}</span>
+            <div className="ru-eyebrow">MÓDULO</div>
+            <h1 className="ru-v-title">Gestión de Compras</h1>
+            <p className="ru-v-subtitle">Registro y seguimiento de órdenes de compra de productos e insumos</p>
           </div>
+          <button className="btn btn-primary" onClick={() => setModal('register')} type="button" disabled={savingCompras}>
+            <Plus size={17} /><span>REGISTRAR COMPRA</span>
+          </button>
+        </header>
 
-          <span>
-            Página {Math.min(page, pageCount)} de {pageCount}
-          </span>
-        </div>
+        <KpiGlobal kpis={kpis} />
 
-        <div className="purchase-table-wrap">
-          <table className="purchase-table">
-            <thead>
-              <tr>
-                <th>FOTO</th>
-                <th>ID</th>
-                <th>FECHA</th>
-                <th>PROVEEDOR</th>
-                <th>MÉTODO DE PAGO</th>
-                <th>ESTADO</th>
-                <th>TOTAL</th>
-                <th>ACCIONES</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {visible.map((purchase) => (
-                <tr key={purchase.number}>
-                  <td>
-                    <div
-                      className={`purchase-photo photo-${(purchase.number % 4) + 1}`}
-                    >
-                      <Package size={19} />
-                    </div>
-                  </td>
-
-                  <td>
-                    <span className="id-pill">
-                      #{purchase.number}
-                    </span>
-                  </td>
-
-                  <td>{formatDate(purchase.date)}</td>
-
-                  <td>
-                    <div className="provider-cell">
-                      <strong>{purchase.provider}</strong>
-
-                      <span>
-                        {purchase.products.length} {purchase.tipoCompra === 'Insumos' ? 'insumo(s)' : 'producto(s)'}
-                      </span>
-                    </div>
-                  </td>
-
-                  <td>
-                    <span className="payment-cell">
-                      {paymentIcon(purchase.payment)}
-                      {purchase.payment}
-                    </span>
-                  </td>
-
-                  <td>
-                    <button
-                      type="button"
-                      className="detail-status-button"
-                      title="Cambiar estado"
-                      onClick={() => openStatusModal(purchase)}
-                    >
-                      <StatusBadge status={purchase.status} />
-                    </button>
-                  </td>
-
-                  <td>
-                    <strong>{money(totalPurchase(purchase))}</strong>
-                  </td>
-
-                  <td>
-                    <div className="actions-cell">
-                      <button
-                        title="Ver detalle"
-                        type="button"
-                        onClick={() => {
-                          setSelectedPurchase(purchase);
-                          setModal('detail');
-                        }}
-                      >
-                        <Eye size={17} />
-                      </button>
-
-                      <button
-                        title="Editar"
-                        type="button"
-                        onClick={() => {
-                          setSelectedPurchase(purchase);
-                          setModal('edit');
-                        }}
-                      >
-                        <Pencil size={17} />
-                      </button>
-
-                      <button
-                        title="Eliminar"
-                        type="button"
-                        className="delete-action"
-                        onClick={() => {
-                          setSelectedPurchase(purchase);
-                          setModal('delete');
-                        }}
-                      >
-                        <Trash2 size={17} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-
-              {visible.length === 0 && (
-                <tr>
-                  <td colSpan="8">
-                    <div className="table-empty">
-                      <Search size={24} />
-
-                      <strong>No se encontraron compras</strong>
-
-                      <span>
-                        Prueba con otros criterios de búsqueda.
-                      </span>
-                    </div>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="table-footer">
-          <span>
-            Mostrando{' '}
-            {filtered.length ? (page - 1) * pageSize + 1 : 0}
-            –
-            {Math.min(page * pageSize, filtered.length)} de{' '}
-            {filtered.length} registros
-          </span>
-
-          <div className="pagination">
-            <button
-              disabled={page <= 1}
-              onClick={() => setPage(1)}
-              type="button"
-            >
-              <ChevronsLeft size={16} />
-            </button>
-
-            <button
-              disabled={page <= 1}
-              onClick={() => setPage((current) => Math.max(1, current - 1))}
-              type="button"
-            >
-              <ChevronLeft size={17} />
-            </button>
-
-            <span className="current-page">
-              {Math.min(page, pageCount)}
-            </span>
-
-            <button
-              disabled={page >= pageCount}
-              onClick={() =>
-                setPage((current) => Math.min(pageCount, current + 1))
-              }
-              type="button"
-            >
-              <ChevronRight size={17} />
-            </button>
-
-            <button
-              disabled={page >= pageCount}
-              onClick={() => setPage(pageCount)}
-              type="button"
-            >
-              <ChevronsRight size={16} />
-            </button>
+        <div className="compras-filter-block">
+          <FiltrarBuscarGlobal
+            filterTitle="Buscar y filtrar"
+            searchPlaceholder="Buscar por ID, proveedor, estado..."
+            searchValue={search}
+            onSearchChange={(value) => { setSearch(value); setPage(1); }}
+            filterValue={statusFilter}
+            onFilterChange={(value) => { setStatusFilter(value); setPage(1); }}
+            filterOptions={[{ value: '', label: 'Todos los estados' }, ...statuses.map((status) => ({ value: status, label: status }))]}
+          />
+          <div className="compras-extra-filters">
+            <select className="ru-select" aria-label="Filtrar por proveedor" value={providerFilter} onChange={(event) => { setProviderFilter(event.target.value); setPage(1); }}>
+              <option value="">Todos los proveedores</option>
+              {providers.map((provider) => <option key={provider} value={provider}>{provider}</option>)}
+            </select>
+            <select className="ru-select" aria-label="Filtrar por método de pago" value={paymentFilter} onChange={(event) => { setPaymentFilter(event.target.value); setPage(1); }}>
+              <option value="">Método de pago</option>
+              {paymentMethods.map((payment) => <option key={payment} value={payment}>{payment}</option>)}
+            </select>
+            <label className="compras-date-filter"><CalendarDays size={17} /><input type="date" aria-label="Filtrar por fecha" value={dateFilter} onChange={(event) => { setDateFilter(event.target.value); setPage(1); }} /></label>
+            {(search || statusFilter || providerFilter || paymentFilter || dateFilter) && <button className="compras-clear-filters" type="button" onClick={() => { clearFilters(); setPage(1); }}>Limpiar filtros</button>}
           </div>
         </div>
-      </section>
+
+        <TableGlobal
+          title="Listado de Compras"
+          totalCount={filtered.length}
+          pageInfoTop={`Página ${Math.min(page, pageCount)} de ${pageCount}`}
+          columns={columns}
+          data={visible}
+          paginationText={`Mostrando ${filtered.length ? (page - 1) * pageSize + 1 : 0}–${Math.min(page * pageSize, filtered.length)} de ${filtered.length} registros`}
+          currentPage={Math.min(page, pageCount)}
+          totalPages={pageCount}
+          onPageChange={setPage}
+        />
+      </div>
+
+      {alerta && (
+        <AppAlert key={alerta.id} type={alerta.type} message={alerta.message} onClose={() => setAlerta(null)} />
+      )}
 
       {modal === 'register' && (
         <PurchaseForm

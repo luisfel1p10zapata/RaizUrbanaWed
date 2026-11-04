@@ -1,4 +1,10 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
+import {
+  obtenerUsuarios,
+  crearUsuario,
+  actualizarUsuario,
+  eliminarUsuario,
+} from "../services/usuariosService";
 import {
   Search, Filter, Eye, Pencil, Trash2, X, Mail, Phone, IdCard,
   ShoppingBag, Activity, MapPin, ChevronsLeft, ChevronLeft,
@@ -341,6 +347,9 @@ function EditUserModal({ user, index, onClose, onSave }) {
    ============================================================ */
 export default function Usuarios() {
   const [users, setUsers] = useState(INITIAL_USERS);
+  const [loading, setLoading] = useState(true);
+  const [totalRecords, setTotalRecords] = useState(INITIAL_USERS.length);
+  const [totalPagesBackend, setTotalPagesBackend] = useState(1);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("Todos los roles");
   const [statusFilter, setStatusFilter] = useState("Todos los estados");
@@ -349,64 +358,141 @@ export default function Usuarios() {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [alertMessage, setAlertMessage] = useState(null);
 
-  const uniqueRoles = useMemo(() => [...new Set(users.map((u) => u.rol))], [users]);
+  const normalizarUsuario = useCallback((u) => ({
+    ...u,
+    nombre: u.nombre || `${u.nombres || ""} ${u.apellidos || ""}`.trim() || "Usuario",
+    cedula: u.cedula || u.numeroDoc || "N/A",
+    fecha: u.fecha || u.fechaRegistro || "Reciente",
+    registrado: u.registrado || u.fechaRegistro || u.fecha || "Reciente",
+  }), []);
 
-  const filteredUsers = useMemo(() => {
-    return users.filter((u) => {
-      const matchSearch =
-        u.nombre.toLowerCase().includes(search.toLowerCase()) ||
-        u.correo.toLowerCase().includes(search.toLowerCase()) ||
-        u.cedula.includes(search);
-      const matchRole = roleFilter === "Todos los roles" || u.rol === roleFilter;
-      const matchStatus = statusFilter === "Todos los estados" || u.estado === statusFilter;
-      return matchSearch && matchRole && matchStatus;
-    });
-  }, [users, search, roleFilter, statusFilter]);
+  const cargarUsuarios = useCallback(async () => {
+    setLoading(true);
+    try {
+      const resp = await obtenerUsuarios({
+        search,
+        rol: roleFilter,
+        estado: statusFilter,
+        page,
+        pageSize: PAGE_SIZE,
+      });
 
-  const totalRecords = filteredUsers.length;
-  const totalPages = Math.ceil(totalRecords / PAGE_SIZE) || 1;
+      if (resp && Array.isArray(resp.items)) {
+        const norm = resp.items.map(normalizarUsuario);
+        setUsers(norm);
+        setTotalRecords(resp.total ?? norm.length);
+        setTotalPagesBackend(resp.totalPages || Math.ceil((resp.total || 1) / PAGE_SIZE));
+      } else if (Array.isArray(resp)) {
+        const norm = resp.map(normalizarUsuario);
+        setUsers(norm);
+        setTotalRecords(norm.length);
+        setTotalPagesBackend(Math.max(1, Math.ceil(norm.length / PAGE_SIZE)));
+      }
+    } catch (error) {
+      console.warn("FastAPI no disponible para usuarios, usando datos locales:", error.message);
+      const filtrados = INITIAL_USERS.filter((u) => {
+        const matchSearch =
+          !search.trim() ||
+          u.nombre.toLowerCase().includes(search.toLowerCase()) ||
+          u.correo.toLowerCase().includes(search.toLowerCase()) ||
+          u.cedula.includes(search);
+        const matchRole = roleFilter === "Todos los roles" || u.rol === roleFilter;
+        const matchStatus = statusFilter === "Todos los estados" || u.estado === statusFilter;
+        return matchSearch && matchRole && matchStatus;
+      });
+      setTotalRecords(filtrados.length);
+      const tPages = Math.ceil(filtrados.length / PAGE_SIZE) || 1;
+      setTotalPagesBackend(tPages);
+      const safeP = Math.min(page, tPages);
+      const start = (safeP - 1) * PAGE_SIZE;
+      setUsers(filtrados.slice(start, start + PAGE_SIZE));
+    } finally {
+      setLoading(false);
+    }
+  }, [search, roleFilter, statusFilter, page, normalizarUsuario]);
+
+  useEffect(() => {
+    cargarUsuarios();
+  }, [cargarUsuarios]);
+
+  const uniqueRoles = useMemo(() => {
+    const rolesBase = ["Todos los roles", "Administrador", "Supervisor", "Supervisora", "Vendedor", "Empleado", "Bodeguero"];
+    const fromUsers = users.map((u) => u.rol).filter(Boolean);
+    return [...new Set([...rolesBase, ...fromUsers])];
+  }, [users]);
+
+  const totalPages = Math.max(1, totalPagesBackend);
   const safePage = Math.min(page, totalPages);
-  const pageItems = useMemo(() => {
-    const start = (safePage - 1) * PAGE_SIZE;
-    return filteredUsers.slice(start, start + PAGE_SIZE);
-  }, [filteredUsers, safePage]);
-
+  const pageItems = users;
   const showingFrom = totalRecords === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1;
   const showingTo = Math.min(safePage * PAGE_SIZE, totalRecords);
 
   const activeUser = modal?.userId ? users.find((u) => u.id === modal.userId) : null;
   const activeIndex = activeUser ? users.findIndex((u) => u.id === activeUser.id) : -1;
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!deleteTarget) return;
     const nombre = deleteTarget.nombre;
-    setUsers((prev) => prev.filter((u) => u.id !== deleteTarget.id));
-    setAlertMessage({
-      type: "error",
-      title: "Eliminado",
-      message: `El usuario "${nombre}" fue eliminado correctamente del sistema.`,
-    });
-    setDeleteTarget(null);
+    try {
+      await eliminarUsuario(deleteTarget.id);
+      setDeleteTarget(null);
+      await cargarUsuarios();
+      setAlertMessage({
+        type: "error",
+        title: "Eliminado",
+        message: `El usuario "${nombre}" fue eliminado correctamente del sistema.`,
+      });
+    } catch (error) {
+      setUsers((prev) => prev.filter((u) => u.id !== deleteTarget.id));
+      setDeleteTarget(null);
+      setAlertMessage({
+        type: "error",
+        title: "Eliminado",
+        message: `Usuario eliminado localmente (${error.message}).`,
+      });
+    }
   };
 
-  const handleCreate = (newUser) => {
-    setUsers((prev) => [newUser, ...prev]);
-    setModal(null);
-    setAlertMessage({
-      type: "success",
-      title: "¡Éxito!",
-      message: `El usuario "${newUser.nombre}" fue registrado correctamente en el sistema.`,
-    });
+  const handleCreate = async (newUser) => {
+    try {
+      const creado = await crearUsuario(newUser);
+      setModal(null);
+      await cargarUsuarios();
+      setAlertMessage({
+        type: "success",
+        title: "¡Éxito!",
+        message: `El usuario "${creado.nombres || newUser.nombre}" fue registrado correctamente en el sistema.`,
+      });
+    } catch (error) {
+      setUsers((prev) => [normalizarUsuario(newUser), ...prev]);
+      setModal(null);
+      setAlertMessage({
+        type: "success",
+        title: "¡Éxito!",
+        message: `Usuario creado localmente (${error.message}).`,
+      });
+    }
   };
 
-  const handleSave = (updated) => {
-    setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
-    setModal(null);
-    setAlertMessage({
-      type: "info",
-      title: "Información",
-      message: `Los datos del usuario "${updated.nombre}" fueron actualizados con éxito.`,
-    });
+  const handleSave = async (updated) => {
+    try {
+      await actualizarUsuario(updated.id, updated);
+      setModal(null);
+      await cargarUsuarios();
+      setAlertMessage({
+        type: "info",
+        title: "Información",
+        message: `Los datos del usuario "${updated.nombre}" fueron actualizados con éxito.`,
+      });
+    } catch (error) {
+      setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
+      setModal(null);
+      setAlertMessage({
+        type: "info",
+        title: "Información",
+        message: `Usuario actualizado localmente (${error.message}).`,
+      });
+    }
   };
 
   const columns = [
@@ -486,13 +572,13 @@ export default function Usuarios() {
                 className="ru-input"
                 placeholder="Buscar por nombre, correo o documento..."
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
               />
             </div>
             <select
               className="ru-select"
               value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value)}
+              onChange={(e) => { setRoleFilter(e.target.value); setPage(1); }}
             >
               <option value="Todos los roles">Todos los roles</option>
               {uniqueRoles.map((r) => <option key={r} value={r}>{r}</option>)}
@@ -500,7 +586,7 @@ export default function Usuarios() {
             <select
               className="ru-select"
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
             >
               <option value="Todos los estados">Todos los estados</option>
               <option value="Activo">Activo</option>
