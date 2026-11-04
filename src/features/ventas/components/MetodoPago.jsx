@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 
 import './MetodoPago.css';
+import AppAlert from '../../../components/ui/AppAlert';
 
 import {
   obtenerMetodosPago,
@@ -31,6 +32,21 @@ import {
 } from '../services/metodoPagoService';
 
 const REGISTROS_POR_PAGINA = 5;
+
+const validarCampo = (campo, valor, metodos, idActual) => {
+  const limpio = valor.trim();
+  if (campo === 'nombre') {
+    if (!limpio) return 'El nombre es obligatorio.';
+    if (!/^[\p{L}\s]+$/u.test(limpio)) return 'Solo se permiten letras y espacios; no números ni símbolos.';
+    if (limpio.length < 2) return 'Debe tener al menos 2 caracteres.';
+    if (limpio.length > 100) return 'No puede superar los 100 caracteres.';
+    if (metodos.some(m => m.id !== idActual && m.nombre?.trim().toLocaleLowerCase('es') === limpio.toLocaleLowerCase('es'))) return 'Ya existe un método de pago con ese nombre.';
+  } else if (campo === 'numeroCuenta') {
+    if (limpio && !/^\d+$/.test(limpio)) return 'El número de cuenta solo puede contener dígitos.';
+    if (limpio && (limpio.length < 8 || limpio.length > 20)) return 'Debe tener entre 8 y 20 dígitos.';
+  }
+  return '';
+};
 
 const FORMULARIO_INICIAL = {
   nombre: '',
@@ -52,6 +68,12 @@ const MetodoPago = () => {
     ...FORMULARIO_INICIAL,
   });
 
+  const [camposTocados, setCamposTocados] = useState({});
+  const errores = {
+    nombre: validarCampo('nombre', formulario.nombre, metodos, metodoSeleccionado?.id),
+    numeroCuenta: validarCampo('numeroCuenta', formulario.numeroCuenta, metodos, metodoSeleccionado?.id),
+  };
+
   const [estadoTemporal, setEstadoTemporal] = useState('');
   const [pagina, setPagina] = useState(1);
   const [alerta, setAlerta] = useState(null);
@@ -70,15 +92,6 @@ const MetodoPago = () => {
     });
   };
 
-  useEffect(() => {
-    if (!alerta) return undefined;
-
-    const temporizador = setTimeout(() => {
-      setAlerta(null);
-    }, 3500);
-
-    return () => clearTimeout(temporizador);
-  }, [alerta]);
 
   // =====================================================
   // CONEXIÓN CON FASTAPI
@@ -196,11 +209,13 @@ const MetodoPago = () => {
 
   const abrirRegistrar = () => {
     setFormulario({ ...FORMULARIO_INICIAL });
+    setCamposTocados({});
     setMetodoSeleccionado(null);
     setModal('registrar');
   };
 
   const abrirEditar = (metodo) => {
+    setCamposTocados({});
     setMetodoSeleccionado(metodo);
 
     setFormulario({
@@ -241,115 +256,17 @@ const MetodoPago = () => {
 
   const manejarCambioFormulario = (e) => {
     const { name, value } = e.target;
-
-    if (name === 'numeroCuenta') {
-      if (!/^\d*$/.test(value)) {
-        mostrarAlerta(
-          'El número de cuenta solo puede contener números.',
-          'error'
-        );
-        return;
-      }
-
-      if (value.length > 20) {
-        mostrarAlerta(
-          'El número de cuenta no puede superar los 20 dígitos.',
-          'error'
-        );
-        return;
-      }
-    }
-
-    setFormulario((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormulario(prev => ({ ...prev, [name]: value }));
+    setCamposTocados(prev => ({ ...prev, [name]: true }));
   };
 
   const validarFormulario = () => {
-    const nombre = formulario.nombre.trim();
-    const numeroCuenta = formulario.numeroCuenta.trim();
-
-    if (!nombre) {
-      mostrarAlerta(
-        'Debes ingresar el nombre del método de pago.',
-        'error'
-      );
+    setCamposTocados({ nombre: true, numeroCuenta: true });
+    const error = errores.nombre || errores.numeroCuenta;
+    if (error) {
+      mostrarAlerta(error, 'error');
       return false;
     }
-
-    const soloLetras =
-      /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/;
-
-    if (!soloLetras.test(nombre)) {
-      mostrarAlerta(
-        'El nombre solo puede contener letras y espacios. No se permiten números ni símbolos.',
-        'error'
-      );
-      return false;
-    }
-
-    if (nombre.length < 2) {
-      mostrarAlerta(
-        'El nombre debe tener al menos 2 caracteres.',
-        'error'
-      );
-      return false;
-    }
-
-    if (nombre.length > 60) {
-      mostrarAlerta(
-        'El nombre no puede superar los 60 caracteres.',
-        'error'
-      );
-      return false;
-    }
-
-    // Efectivo y otros métodos existentes pueden
-    // tener la cuenta vacía. Para nuevos registros
-    // conservamos la validación del formulario.
-    const permiteCuentaVacia =
-      modal === 'editar' &&
-      !metodoSeleccionado?.numeroCuenta &&
-      !numeroCuenta;
-
-    if (!numeroCuenta && !permiteCuentaVacia) {
-      mostrarAlerta(
-        'Debes ingresar el número de cuenta.',
-        'error'
-      );
-      return false;
-    }
-
-    if (
-      numeroCuenta &&
-      !/^\d{8,20}$/.test(numeroCuenta)
-    ) {
-      mostrarAlerta(
-        'El número de cuenta debe contener entre 8 y 20 dígitos numéricos.',
-        'error'
-      );
-      return false;
-    }
-
-    const nombreNormalizado = nombre.toLowerCase();
-
-    const existeNombre = metodos.some(
-      (metodo) =>
-        (metodo.nombre || '')
-          .trim()
-          .toLowerCase() === nombreNormalizado &&
-        metodo.id !== metodoSeleccionado?.id
-    );
-
-    if (existeNombre) {
-      mostrarAlerta(
-        'Ya existe un método de pago con ese nombre.',
-        'error'
-      );
-      return false;
-    }
-
     return true;
   };
 
@@ -444,7 +361,7 @@ const MetodoPago = () => {
 
       mostrarAlerta(
         '¡Método de pago actualizado correctamente!',
-        'success'
+        'info'
       );
     } catch (error) {
       mostrarAlerta(error.message, 'error');
@@ -482,7 +399,7 @@ const MetodoPago = () => {
 
       mostrarAlerta(
         'El estado del método de pago se actualizó correctamente.',
-        'success'
+        'warning'
       );
     } catch (error) {
       mostrarAlerta(error.message, 'error');
@@ -534,7 +451,7 @@ const MetodoPago = () => {
 
       mostrarAlerta(
         'El método de pago se eliminó correctamente.',
-        'success'
+        'error'
       );
     } catch (error) {
       mostrarAlerta(error.message, 'error');
@@ -550,68 +467,14 @@ const MetodoPago = () => {
   return (
     <div className="metodo-page">
 
-      {/* NOTIFICACIONES */}
+      {/* Notificaciones globales del proyecto */}
       {alerta && (
-        <div
+        <AppAlert
           key={alerta.id}
-          role="alert"
-          aria-live="polite"
-          style={{
-            position: 'fixed',
-            top: '24px',
-            right: '24px',
-            zIndex: 99999,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            width: 'max-content',
-            maxWidth: 'min(420px, calc(100vw - 32px))',
-            padding: '15px 18px',
-            borderRadius: '10px',
-            backgroundColor:
-              alerta.tipo === 'success'
-                ? '#e8f7ed'
-                : '#fff3cd',
-            color:
-              alerta.tipo === 'success'
-                ? '#216e39'
-                : '#856404',
-            border: `1px solid ${
-              alerta.tipo === 'success'
-                ? '#a8dfb8'
-                : '#ffe08a'
-            }`,
-            boxShadow:
-              '0 4px 15px rgba(0, 0, 0, 0.12)',
-            fontSize: '14px',
-            fontWeight: 500,
-          }}
-        >
-          {alerta.tipo === 'success' ? (
-            <CircleCheck size={22} />
-          ) : (
-            <AlertTriangle size={22} />
-          )}
-
-          <span>{alerta.mensaje}</span>
-
-          <button
-            type="button"
-            onClick={() => setAlerta(null)}
-            aria-label="Cerrar notificación"
-            style={{
-              background: 'transparent',
-              border: 'none',
-              color: 'inherit',
-              fontSize: '21px',
-              cursor: 'pointer',
-              marginLeft: 'auto',
-              padding: '0 0 0 8px',
-            }}
-          >
-            ×
-          </button>
-        </div>
+          type={alerta.tipo}
+          message={alerta.mensaje}
+          onClose={() => setAlerta(null)}
+        />
       )}
 
       {/* ENCABEZADO */}
@@ -976,7 +839,7 @@ const MetodoPago = () => {
                     placeholder="Ej: Nequi, Efectivo, Transferencia"
                     autoFocus
                     required
-                    maxLength={60}
+                    maxLength={101}
                     aria-describedby="nombre-ayuda"
                     disabled={procesando}
                   />
@@ -996,21 +859,22 @@ const MetodoPago = () => {
                     name="numeroCuenta"
                     type="text"
                     inputMode="numeric"
-                    pattern="[0-9]{8,20}"
-                    minLength={8}
-                    maxLength={20}
+                    pattern="[0-9]*"
+                                        maxLength={20}
                     value={formulario.numeroCuenta}
                     onChange={
                       manejarCambioFormulario
                     }
                     placeholder="Ej: 12345678"
-                    required
                     disabled={procesando}
                   />
 
                   <small>
                     Ingresa entre 8 y 20 dígitos numéricos.
                   </small>
+                  {camposTocados.numeroCuenta && errores.numeroCuenta && (
+                    <small role="alert" style={{ color: '#dc3545' }}>{errores.numeroCuenta}</small>
+                  )}
                 </div>
               </div>
 
@@ -1027,7 +891,7 @@ const MetodoPago = () => {
                 <button
                   type="submit"
                   className="metodo-btn-dark"
-                  disabled={procesando}
+                  disabled={procesando || Boolean(errores.nombre || errores.numeroCuenta)}
                 >
                   {procesando
                     ? 'Registrando...'
@@ -1222,13 +1086,13 @@ const MetodoPago = () => {
                         manejarCambioFormulario
                       }
                       required
-                      maxLength={60}
+                      maxLength={101}
                       aria-describedby="editar-nombre-ayuda"
                       disabled={procesando}
                     />
 
-                    <small id="editar-nombre-ayuda">
-                      Solo se permiten letras y espacios.
+                    <small id="editar-nombre-ayuda" style={{ color: camposTocados.nombre && errores.nombre ? '#dc3545' : undefined }}>
+                      {camposTocados.nombre && errores.nombre ? errores.nombre : 'Solo se permiten letras y espacios.'}
                     </small>
                   </div>
 
@@ -1242,23 +1106,15 @@ const MetodoPago = () => {
                       name="numeroCuenta"
                       type="text"
                       inputMode="numeric"
-                      pattern="[0-9]{8,20}"
-                      minLength={
-                        metodoSeleccionado.numeroCuenta
-                          ? 8
-                          : undefined
-                      }
+                      pattern="[0-9]*"
+                      
                       maxLength={20}
                       value={formulario.numeroCuenta}
                       onChange={
                         manejarCambioFormulario
                       }
                       placeholder="Ej: 12345678"
-                      required={
-                        Boolean(
-                          metodoSeleccionado.numeroCuenta
-                        )
-                      }
+                      
                       disabled={procesando}
                     />
 
@@ -1267,6 +1123,9 @@ const MetodoPago = () => {
                       numéricos. Los métodos sin
                       cuenta pueden conservarla vacía.
                     </small>
+                    {camposTocados.numeroCuenta && errores.numeroCuenta && (
+                      <small role="alert" style={{ color: '#dc3545' }}>{errores.numeroCuenta}</small>
+                    )}
                   </div>
                 </div>
 
@@ -1283,7 +1142,7 @@ const MetodoPago = () => {
                   <button
                     type="submit"
                     className="metodo-btn-dark"
-                    disabled={procesando}
+                    disabled={procesando || Boolean(errores.nombre || errores.numeroCuenta)}
                   >
                     {procesando
                       ? 'Guardando...'

@@ -25,6 +25,7 @@ import {
   cambiarEstadoApi,
   eliminarCategoriaApi,
 } from '../services/categoriaService';
+import AppAlert from '../../../components/ui/AppAlert';
 import './Categorias.css';
 
 function EstadoBadge({ activo }) {
@@ -82,6 +83,18 @@ export default function Categorias() {
     );
   }, [categorias, busqueda]);
 
+  const categoriasPorPagina = 5;
+  const totalPaginas = Math.max(1, Math.ceil(filtradas.length / categoriasPorPagina));
+  const paginaActual = Math.min(pagina, totalPaginas);
+  const categoriasVisibles = filtradas.slice(
+    (paginaActual - 1) * categoriasPorPagina,
+    paginaActual * categoriasPorPagina
+  );
+
+  const cambiarPagina = (nuevaPagina) => {
+    setPagina(Math.max(1, Math.min(nuevaPagina, totalPaginas)));
+  };
+
   const total = categorias.length;
   const activas = categorias.filter((item) => item.estado).length;
   const inactivas = categorias.filter((item) => !item.estado).length;
@@ -89,6 +102,10 @@ export default function Categorias() {
   const abrirRegistrar = () => {
     setFormNombre('');
     setFormEstado(true);
+    setSelected(null);
+    setNombreTocado(false);
+    setErrorServidor('');
+    setNotificacion(null);
     setModal('registrar');
   };
 
@@ -101,6 +118,9 @@ export default function Categorias() {
     setSelected(categoria);
     setFormNombre(categoria.nombre);
     setFormEstado(categoria.estado);
+    setNombreTocado(false);
+    setErrorServidor('');
+    setNotificacion(null);
     setModal('editar');
   };
 
@@ -110,148 +130,64 @@ export default function Categorias() {
     setModal('estado');
   };
 
-  // Registrar enviando directamente al Backend
-// Registrar categoría con validaciones y mensaje de éxito
-const registrar = async () => {
-  const nombre = formNombre.trim();
+  const validarNombre = (valor) => {
+    const nombre = valor.trim();
+    if (!nombre) return 'El nombre de la categoría es obligatorio.';
+    if (nombre.length < 2) return 'El nombre debe tener al menos 2 caracteres.';
+    if (nombre.length > 100) return 'El nombre no puede superar los 100 caracteres.';
+    if (!/^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ ]+$/.test(nombre)) return 'Solo se permiten letras y espacios; no números ni símbolos.';
+    const duplicado = categorias.some((categoria) => {
+      const idCategoria = String(categoria.id_categoria ?? categoria.id).replace('#', '');
+      const idActual = String(selected?.id_categoria ?? selected?.id ?? '').replace('#', '');
+      return categoria.nombre?.trim().toLocaleLowerCase('es') === nombre.toLocaleLowerCase('es')
+        && !(modal === 'editar' && idCategoria === idActual);
+    });
+    if (duplicado) return 'Ya existe una categoría con ese nombre.';
+    return '';
+  };
 
-  // Validar que el campo no esté vacío
-  if (!nombre) {
-    window.alert('Por favor, ingresa el nombre de la categoría.');
-    return;
-  }
+  const errorNombre = validarNombre(formNombre);
+  const [nombreTocado, setNombreTocado] = useState(false);
+  const [guardando, setGuardando] = useState(false);
+  const [errorServidor, setErrorServidor] = useState('');
+  const [notificacion, setNotificacion] = useState(null);
+  const avisar = (tipo, texto) => setNotificacion({ tipo, texto, id: Date.now() });
 
-  if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/.test(nombre)) {
-  const alerta = document.createElement('div');
-  alerta.className = 'categoria-alerta-validacion';
-
-  alerta.innerHTML = `
-    <div class="categoria-alerta-icono">
-      <span id="icono-alerta-categoria"></span>
-    </div>
-
-    <div class="categoria-alerta-texto">
-      <strong>¡Ups! Nombre no válido</strong>
-      <p>
-        El nombre de la categoría solo puede contener letras y espacios.
-        <br><br>
-        <b>Ejemplo:</b> Ropa, Calzado, Ropa deportiva.
-      </p>
-    </div>
-
-    <button class="categoria-alerta-cerrar" aria-label="Cerrar alerta">
-      <span id="cerrar-alerta-categoria"></span>
-    </button>
-  `;
-
-  document.body.appendChild(alerta);
-
-  // Insertar los iconos de Lucide
-  const icono = document.getElementById('icono-alerta-categoria');
-  const cerrar = document.getElementById('cerrar-alerta-categoria');
-
-  if (icono) {
-    const svgAlerta = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svgAlerta.setAttribute('width', '23');
-    svgAlerta.setAttribute('height', '23');
-    svgAlerta.setAttribute('viewBox', '0 0 24 24');
-    svgAlerta.setAttribute('fill', 'none');
-    svgAlerta.setAttribute('stroke', 'currentColor');
-    svgAlerta.setAttribute('stroke-width', '2');
-    svgAlerta.innerHTML = `
-      <path d="m10.29 3.86-8.3 14.36A2 2 0 0 0 3.72 21h16.56a2 2 0 0 0 1.73-2.78l-8.3-14.36a2 2 0 0 0-3.42 0Z"/>
-      <path d="M12 9v4"/>
-      <path d="M12 17h.01"/>
-    `;
-    icono.appendChild(svgAlerta);
-  }
-
-  if (cerrar) {
-    const svgCerrar = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svgCerrar.setAttribute('width', '18');
-    svgCerrar.setAttribute('height', '18');
-    svgCerrar.setAttribute('viewBox', '0 0 24 24');
-    svgCerrar.setAttribute('fill', 'none');
-    svgCerrar.setAttribute('stroke', 'currentColor');
-    svgCerrar.setAttribute('stroke-width', '2');
-    svgCerrar.innerHTML = `
-      <path d="m18 6-12 12"/>
-      <path d="m6 6 12 12"/>
-    `;
-    cerrar.appendChild(svgCerrar);
-  }
-
-  // Permitir cerrar la alerta manualmente
-  alerta.querySelector('.categoria-alerta-cerrar').addEventListener('click', () => {
-    alerta.remove();
-  });
-
-  // Desaparecer automáticamente después de 5 segundos
-  setTimeout(() => {
-    alerta.remove();
-  }, 5000);
-
-  return;
-}
-
-  // Validar longitud mínima
-  if (nombre.length < 2) {
-    window.alert('El nombre de la categoría debe tener al menos 2 caracteres.');
-    return;
-  }
-
-  try {
-    await registrarCategoriaApi({ nombre, estado: true });
-
-    setModal(null);
-    setFormNombre('');
-    await cargarDatos();
-
-    // Mensaje de éxito con fondo verde
-    const alerta = document.createElement('div');
-    alerta.textContent = '¡Categoría registrada con éxito!';
-    alerta.style.cssText = `
-      position: fixed;
-      top: 25px;
-      right: 25px;
-      background-color: #28a745;
-      color: white;
-      padding: 16px 24px;
-      border-radius: 8px;
-      font-size: 15px;
-      font-weight: 600;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      z-index: 99999;
-    `;
-
-    document.body.appendChild(alerta);
-
-    setTimeout(() => {
-      alerta.remove();
-    }, 3000);
-
-  } catch (error) {
-    window.alert(
-      error.message ||
-      'Error al registrar la categoría. Es posible que ya exista en la base de datos.'
-    );
-    console.error(error);
-  }
-};
-
-  // Guardar Cambios / Editar con Backend
-  const guardarCambios = async () => {
-    const nombre = formNombre.trim();
-    if (!nombre || !selected) return;
-
-    const idReal = selected.id_categoria || selected.id.replace('#', '');
-
+  const registrar = async () => {
+    setNombreTocado(true);
+    if (errorNombre || guardando) return;
+    setGuardando(true);
+    setErrorServidor('');
     try {
-      await editarCategoriaApi(idReal, { nombre, estado: formEstado });
+      await registrarCategoriaApi({ nombre: formNombre.trim(), estado: true });
       setModal(null);
-      cargarDatos();
+      setFormNombre('');
+      await cargarDatos();
+      avisar('exito', '¡Categoría registrada correctamente!');
     } catch (error) {
-      window.alert('Error al actualizar la categoría.');
+      setErrorServidor(error.message || 'No se pudo registrar la categoría.');
+      avisar('error', error.message || 'No se pudo registrar la categoría.');
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  const guardarCambios = async () => {
+    setNombreTocado(true);
+    if (errorNombre || !selected || guardando) return;
+    setGuardando(true);
+    setErrorServidor('');
+    const idReal = selected.id_categoria || String(selected.id).replace('#', '');
+    try {
+      await editarCategoriaApi(idReal, { nombre: formNombre.trim(), estado: formEstado });
+      setModal(null);
+      await cargarDatos();
+      avisar('info', '¡Categoría actualizada correctamente!');
+    } catch (error) {
+      setErrorServidor(error.message || 'No se pudo actualizar la categoría.');
+      avisar('error', error.message || 'No se pudo actualizar la categoría.');
+    } finally {
+      setGuardando(false);
     }
   };
 
@@ -263,9 +199,10 @@ const registrar = async () => {
     try {
       await cambiarEstadoApi(idReal, formEstado);
       setModal(null);
-      cargarDatos();
+      await cargarDatos();
+      avisar('warning', 'Estado de la categoría actualizado correctamente.');
     } catch (error) {
-      window.alert('Error al cambiar el estado.');
+      avisar('error', error.message || 'Error al cambiar el estado.');
     }
   };
 
@@ -283,9 +220,10 @@ const registrar = async () => {
       await eliminarCategoriaApi(idReal);
       setModal(null);
       setSelected(null);
-      cargarDatos();
+      await cargarDatos();
+      avisar('error', 'Categoría eliminada correctamente.');
     } catch (error) {
-      window.alert('No se puede eliminar la categoría porque tiene productos asociados.');
+      avisar('error', error.message || 'No se puede eliminar la categoría porque tiene productos asociados.');
     }
   };
 
@@ -296,6 +234,15 @@ const registrar = async () => {
 
   return (
     <div className="categorias-page">
+      {notificacion && (
+        <AppAlert
+          key={notificacion.id}
+          type={notificacion.tipo === 'exito' ? 'success' : notificacion.tipo}
+          title={notificacion.tipo === 'exito' ? '¡Éxito!' : notificacion.tipo === 'info' ? 'Información' : notificacion.tipo === 'warning' ? 'Advertencia' : 'Notificación'}
+          message={notificacion.texto}
+          onClose={() => setNotificacion(null)}
+        />
+      )}
       <header className="categorias-header">
         <div>
           <span className="categorias-module-label">MÓDULO</span>
@@ -361,7 +308,7 @@ const registrar = async () => {
           <div className="table-title">
             Listado de Categorías <span>{filtradas.length}</span>
           </div>
-          <span className="page-label">Página {pagina} de 1</span>
+          <span className="page-label">Página {paginaActual} de {totalPaginas}</span>
         </div>
 
         <div className="categorias-table-wrapper">
@@ -375,7 +322,7 @@ const registrar = async () => {
               </tr>
             </thead>
             <tbody>
-              {filtradas.map((categoria) => (
+              {categoriasVisibles.map((categoria) => (
                 <tr key={categoria.id_categoria || categoria.id}>
                   <td><span className="id-pill">{categoria.id}</span></td>
                   <td>
@@ -416,6 +363,20 @@ const registrar = async () => {
             </tbody>
           </table>
         </div>
+        <div className="table-pagination">
+          <span>
+            Mostrando {filtradas.length === 0 ? 0 : (paginaActual - 1) * categoriasPorPagina + 1}–{Math.min(paginaActual * categoriasPorPagina, filtradas.length)} de {filtradas.length} categorías
+          </span>
+          <div className="pagination-controls" aria-label="Paginación de categorías">
+            <button type="button" title="Primera página" aria-label="Primera página" disabled={paginaActual === 1} onClick={() => cambiarPagina(1)}><ChevronsLeft size={17} /></button>
+            <button type="button" title="Página anterior" aria-label="Página anterior" disabled={paginaActual === 1} onClick={() => cambiarPagina(paginaActual - 1)}><ChevronLeft size={17} /></button>
+            {Array.from({ length: totalPaginas }, (_, i) => i + 1).filter(n => Math.abs(n - paginaActual) <= 2 || n === 1 || n === totalPaginas).map(n => (
+              <button type="button" key={n} className={n === paginaActual ? 'current-page' : ''} aria-label={`Página ${n}`} aria-current={n === paginaActual ? 'page' : undefined} onClick={() => cambiarPagina(n)}>{n}</button>
+            ))}
+            <button type="button" title="Página siguiente" aria-label="Página siguiente" disabled={paginaActual === totalPaginas} onClick={() => cambiarPagina(paginaActual + 1)}><ChevronRight size={17} /></button>
+            <button type="button" title="Última página" aria-label="Última página" disabled={paginaActual === totalPaginas} onClick={() => cambiarPagina(totalPaginas)}><ChevronsRight size={17} /></button>
+          </div>
+        </div>
       </section>
 
       {/* Modal Registrar */}
@@ -433,15 +394,19 @@ const registrar = async () => {
             <input
               autoFocus
               value={formNombre}
-              onChange={(e) => setFormNombre(e.target.value)}
+              onChange={(e) => { setFormNombre(e.target.value); setNombreTocado(true); setErrorServidor(''); }}
               placeholder="Ej: Ropa, Calzado..."
               onKeyDown={(e) => { if (e.key === 'Enter') registrar(); }}
+              onBlur={() => setNombreTocado(true)}
+              aria-invalid={nombreTocado && Boolean(errorNombre)}
             />
+            {nombreTocado && errorNombre && <small className="categoria-error-tiempo-real" role="alert">{errorNombre}</small>}
+            {errorServidor && <small className="categoria-error-tiempo-real" role="alert">{errorServidor}</small>}
           </div>
           <div className="categoria-modal-footer">
             <button className="categoria-secondary-button" onClick={() => setModal(null)}>Cancelar</button>
-            <button className="categoria-primary-modal-button" disabled={!formNombre.trim()} onClick={registrar}>
-              Registrar categoría
+            <button className="categoria-primary-modal-button" disabled={Boolean(errorNombre) || guardando} onClick={registrar}>
+              {guardando ? 'Registrando...' : 'Registrar categoría'}
             </button>
           </div>
         </ModalShell>
@@ -507,11 +472,13 @@ const registrar = async () => {
           </div>
           <div className="categoria-modal-content">
             <label>NOMBRE *</label>
-            <input value={formNombre} onChange={(e) => setFormNombre(e.target.value)} />
+            <input value={formNombre} onChange={(e) => { setFormNombre(e.target.value); setNombreTocado(true); setErrorServidor(''); }} onBlur={() => setNombreTocado(true)} aria-invalid={nombreTocado && Boolean(errorNombre)} />
+            {nombreTocado && errorNombre && <small className="categoria-error-tiempo-real" role="alert">{errorNombre}</small>}
+            {errorServidor && <small className="categoria-error-tiempo-real" role="alert">{errorServidor}</small>}
           </div>
           <div className="categoria-modal-footer">
             <button className="categoria-secondary-button" onClick={() => setModal(null)}>Cancelar</button>
-            <button className="categoria-primary-modal-button" onClick={guardarCambios}>Guardar cambios</button>
+            <button className="categoria-primary-modal-button" disabled={Boolean(errorNombre) || guardando} onClick={guardarCambios}>{guardando ? 'Guardando...' : 'Guardar cambios'}</button>
           </div>
         </ModalShell>
       )}
@@ -532,44 +499,3 @@ const registrar = async () => {
     </div>
   );
 }
-// Validación estricta antes de registrar la categoría
-const validarYRegistrar = async (e) => {
-  e.preventDefault();
-
-  const nombreTrim = nombreCategoria.trim();
-
-  // 1. Validar que el campo no esté vacío
-  if (!nombreTrim) {
-    alert("Por favor, ingresa el nombre de la categoría.");
-    return;
-  }
-
-  // 2. Validar que no contenga solo números (Evita registros erróneos como "12345")
-  const esSoloNumeros = /^\d+$/.test(nombreTrim);
-  if (esSoloNumeros) {
-    alert("El nombre de la categoría no puede contener únicamente números.");
-    return;
-  }
-
-  // 3. Validar longitud mínima (ej. al menos 2 caracteres)
-  if (nombreTrim.length < 2) {
-    alert("El nombre de la categoría debe tener al menos 2 caracteres.");
-    return;
-  }
-
-  try {
-    // Llamada al servicio de registro con la validación de duplicados que hicimos antes
-    await registrarCategoriaApi({ nombre: nombreTrim, estado: true });
-    
-    // Alerta de éxito al finalizar
-    alert("¡Categoría registrada con éxito!");
-    
-    // Limpiar formulario y cerrar modal
-    setNombreCategoria("");
-    onCloseModal();
-    cargarDatos(); // Recargar la tabla
-  } catch (error) {
-    // Alerta de error de negocio (ej. duplicados)
-    alert(error.message || "Error al registrar la categoría.");
-  }
-};

@@ -1937,3 +1937,15 @@
     max-width: none;
   }
 }
+/* Validaciones en tiempo real: estilos aislados, sin alterar el diseño original */
+.categorias-page .categoria-error-tiempo-real { display: block; margin-top: 7px; color: #dc3545; font-size: 12px; font-weight: 500; line-height: 1.4; }
+.categorias-page .categoria-modal-content input[aria-invalid="true"] { border-color: #dc3545; }
+
+/* Alertas y validaciones: extensión sin reemplazar los estilos existentes */
+.categorias-page { position: relative; }
+.categoria-notificacion { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:13px 16px; margin:0 0 18px; border-radius:9px; font-weight:600; border:1px solid; }
+.categoria-notificacion-exito { color:#176b39; background:#e8f6ed; border-color:#a8dfb9; }
+.categoria-notificacion-error { color:#a61b1b; background:#fff0f0; border-color:#efb1b1; }
+.categoria-notificacion button { background:transparent; border:0; color:inherit; cursor:pointer; display:flex; align-items:center; }
+.categoria-error-tiempo-real { display:block; color:#d43b3b; font-size:12px; margin-top:7px; font-weight:600; }
+.ru-cat-modal input[aria-invalid="true"] { border-color:#d43b3b !important; }

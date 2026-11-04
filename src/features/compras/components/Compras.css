@@ -658,3 +658,66 @@
     flex-basis: 28px;
   }
 }
+
+/* Estandarización de la pantalla principal con el sistema global de Ventas. */
+.compras-page.ru-root { padding: 0; width: 100%; }
+.compras-page .ru-page { padding-top: 0; }
+.compras-page .ru-v-header { margin-bottom: 24px; }
+.compras-page .ru-v-title { font-family: 'Playfair Display', Georgia, serif !important; }
+.compras-page .compras-filter-block { margin-bottom: 22px; }
+.compras-page .compras-extra-filters {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 12px;
+  padding: 0 20px 18px; margin-top: -3px;
+  border: 1px solid var(--card-border); border-top: 0;
+  background: var(--card-bg); border-radius: 0 0 14px 14px;
+}
+.compras-page .ru-filters-card { margin-bottom: 0; border-radius: 14px 14px 0 0; }
+.compras-page .compras-extra-filters .ru-select { min-width: 165px; max-width: 240px; }
+.compras-page .compras-date-filter {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 40px;
+  border: 1px solid var(--card-border); background: var(--card-bg);
+  border-radius: 8px; padding: 0 12px; color: var(--secondary);
+}
+.compras-page .compras-date-filter input { background: transparent; border: 0; color: var(--primary); outline: none; }
+.compras-page .compras-clear-filters { background: transparent; border: 0; color: var(--secondary); font-weight: 600; cursor: pointer; }
+.compras-page .compras-loading { padding: 8px 0; font-size: 13px; }
+.compras-page .compras-actions { display: flex; align-items: center; gap: 6px; }
+.compras-page .produccion-table-wrapper { overflow-x: auto; }
+.compras-page .produccion-table { min-width: 930px; }
+.compras-page .produccion-table td { vertical-align: middle; }
+.compras-page .produccion-table .provider-cell { display: flex; flex-direction: column; gap: 3px; }
+.compras-page .produccion-table .payment-cell { display: inline-flex; align-items: center; gap: 6px; }
+@media (max-width: 700px) {
+  .compras-page .compras-extra-filters { padding: 12px; }
+  .compras-page .compras-extra-filters .ru-select { width: 100%; max-width: none; }
+}
+
+/* Validaciones instantáneas, compatibles con los estilos existentes */
+.ru-compras-live-error {
+  display: block;
+  margin-top: 6px;
+  color: #dc3545;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.product-editor button:disabled,
+.purchase-form-modal button:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+/* Selector de tipo de compra: respeta los colores del tema activo. */
+.compras-modal-backdrop .compras-tipo-selector {
+  margin: 24px 0;
+  padding: 20px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--editor-bg);
+}
+.compras-modal-backdrop .compras-tipo-selector button:hover {
+  border-color: var(--dark) !important;
+}
+.compras-modal-backdrop .compras-tipo-selector button[aria-pressed="true"] {
+  outline: 1px solid var(--dark);
+}
