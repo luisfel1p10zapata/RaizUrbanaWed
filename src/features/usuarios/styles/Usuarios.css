@@ -41,6 +41,7 @@
   --row-hover: rgba(242, 233, 228, 0.35);/* hover de filas de la tabla */
   --ok-bg: #E8F8F0;  --ok-fg: #1F9D55;  --ok-bd: #A9E3C0;   /* estado Activo */
   --bad-bg: #FDE6E3; --bad-fg: #D8483A; --bad-bd: #F5B8B1;  /* estado Inactivo */
+  --pending-bg: #FEF3C7; --pending-fg: #D97706; --pending-bd: #FDE68A; /* estado Pendiente */
   --select-arrow: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%234A4E69' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>");
 
   --font-logo: 'Playfair Display', 'Georgia', serif;
@@ -89,6 +90,7 @@
   --row-hover: rgba(201, 173, 167, 0.08);
   --ok-bg: rgba(34, 197, 94, 0.15);  --ok-fg: #4ADE80;  --ok-bd: rgba(34, 197, 94, 0.35);
   --bad-bg: rgba(239, 68, 68, 0.15); --bad-fg: #F87171; --bad-bd: rgba(239, 68, 68, 0.35);
+  --pending-bg: rgba(217, 119, 6, 0.15); --pending-fg: #FBBF24; --pending-bd: rgba(217, 119, 6, 0.35);
   --select-arrow: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23C9ADA7' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>");
 }
 
@@ -358,6 +360,7 @@
 .ru-status .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
 .ru-status.active   { background-color: var(--ok-bg);  color: var(--ok-fg);  border-color: var(--ok-bd); }
 .ru-status.inactive { background-color: var(--bad-bg); color: var(--bad-fg); border-color: var(--bad-bd); }
+.ru-status.pending  { background-color: var(--pending-bg); color: var(--pending-fg); border-color: var(--pending-bd); }
 
 /* ---------- Acciones ---------- */
 .ru-actions { display: flex; align-items: center; justify-content: center; gap: 16px; }

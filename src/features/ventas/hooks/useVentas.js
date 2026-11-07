@@ -1,6 +1,5 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import {
-  VENTAS_INICIALES,
   PAGE_SIZE,
   formatoMoneda,
 } from "../../../data/dataVentas";
@@ -22,11 +21,20 @@ export function useVentas() {
   const [backendConectado, setBackendConectado] = useState(true);
 
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [estadoFilter, setEstadoFilter] = useState("Todos los estados");
   const [page, setPage] = useState(1);
   const [modal, setModal] = useState(null); // { type: "create" | "view" | "edit" | "status", ventaId? }
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [alertMessage, setAlertMessage] = useState(null);
+
+  // Debounce para optimizar búsqueda en tiempo real
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [search]);
 
   // Cierre de alerta toast estable
   const closeAlert = useCallback(() => setAlertMessage(null), []);
@@ -35,13 +43,16 @@ export function useVentas() {
   const cargarDatos = useCallback(async () => {
     setLoading(true);
     try {
-      // 1. Cargar lista de ventas
-      const respuestaVentas = await obtenerVentas({
-        search,
-        estadoVenta: estadoFilter,
-        page,
-        pageSize: PAGE_SIZE,
-      });
+      // Cargar lista de ventas y métricas en paralelo (Promise.all)
+      const [respuestaVentas, respuestaMetricas] = await Promise.all([
+        obtenerVentas({
+          search: debouncedSearch,
+          estadoVenta: estadoFilter,
+          page,
+          pageSize: PAGE_SIZE,
+        }),
+        obtenerMetricasVentas().catch(() => null),
+      ]);
 
       if (respuestaVentas && Array.isArray(respuestaVentas.items)) {
         setVentas(respuestaVentas.items);
@@ -55,41 +66,19 @@ export function useVentas() {
         setBackendConectado(true);
       }
 
-      // 2. Cargar métricas KPI
-      try {
-        const respuestaMetricas = await obtenerMetricasVentas();
-        if (respuestaMetricas) {
-          setMetricasData(respuestaMetricas);
-        }
-      } catch (errKpi) {
-        // Métricas opcionales calculadas en fallback
+      if (respuestaMetricas) {
+        setMetricasData(respuestaMetricas);
       }
     } catch (error) {
-      console.warn("FastAPI no disponible para ventas, usando datos locales:", error.message);
+      console.error("Error al conectar con la base de datos de ventas:", error.message);
       setBackendConectado(false);
-
-      // Fallback a datos locales iniciales
-      const q = search.trim().toLowerCase();
-      const filtradas = VENTAS_INICIALES.filter((v) => {
-        const matchQ = !q ||
-          v.codigo?.toLowerCase().includes(q) ||
-          v.cliente?.nombre?.toLowerCase().includes(q) ||
-          v.cliente?.email?.toLowerCase().includes(q) ||
-          v.fecha?.includes(q);
-        const matchE = estadoFilter === "Todos los estados" || v.estadoVenta === estadoFilter;
-        return matchQ && matchE;
-      });
-
-      setTotalRecords(filtradas.length);
-      const tPages = Math.max(1, Math.ceil(filtradas.length / PAGE_SIZE));
-      setTotalPagesBackend(tPages);
-      const safeP = Math.min(Math.max(1, page), tPages);
-      const start = (safeP - 1) * PAGE_SIZE;
-      setVentas(filtradas.slice(start, start + PAGE_SIZE));
+      setVentas([]);
+      setTotalRecords(0);
+      setTotalPagesBackend(1);
     } finally {
       setLoading(false);
     }
-  }, [search, estadoFilter, page]);
+  }, [debouncedSearch, estadoFilter, page]);
 
   useEffect(() => {
     cargarDatos();
@@ -160,23 +149,13 @@ export function useVentas() {
       setAlertMessage({
         type: "success",
         title: "¡Éxito!",
-        message: `La venta "${ventaRegistrada.codigo || "Nueva"}" fue registrada correctamente en el sistema.`,
+        message: `La venta "${ventaRegistrada.codigo || "Nueva"}" fue registrada correctamente en la base de datos.`,
       });
     } catch (error) {
-      // Fallback local si falla la red
-      const codigoNuevo = `VT-${Math.floor(100 + Math.random() * 900)}`;
-      const registroLocal = {
-        ...nueva,
-        id: Date.now(),
-        codigo: codigoNuevo,
-        fecha: new Date().toISOString().slice(0, 10),
-      };
-      setVentas((prev) => [registroLocal, ...prev]);
-      setModal(null);
       setAlertMessage({
-        type: "success",
-        title: "¡Éxito!",
-        message: `Venta registrada localmente (${error.message}).`,
+        type: "error",
+        title: "Error al registrar",
+        message: error.message || "No se pudo registrar la venta en la base de datos.",
       });
     }
   }, [cargarDatos]);
@@ -189,15 +168,13 @@ export function useVentas() {
       setAlertMessage({
         type: "info",
         title: "Información",
-        message: `Los cambios de la venta "${updated.codigo}" se actualizaron en el backend.`,
+        message: `Los cambios de la venta "${updated.codigo}" se actualizaron en la base de datos.`,
       });
     } catch (error) {
-      setVentas((prev) => prev.map((v) => (v.id === updated.id ? updated : v)));
-      setModal(null);
       setAlertMessage({
-        type: "info",
-        title: "Información",
-        message: `Cambios actualizados localmente (${error.message}).`,
+        type: "error",
+        title: "Error al actualizar",
+        message: error.message || "No se pudieron actualizar los datos de la venta.",
       });
     }
   }, [cargarDatos]);
@@ -209,16 +186,14 @@ export function useVentas() {
       await cargarDatos();
       setAlertMessage({
         type: "warning",
-        title: "Advertencia",
-        message: `El estado de la venta "${updated.codigo}" cambió a "${updated.estadoVenta}".`,
+        title: "Estado Actualizado",
+        message: `El estado de la venta "${updated.codigo}" cambió a "${updated.estadoVenta}" en la base de datos.`,
       });
     } catch (error) {
-      setVentas((prev) => prev.map((v) => (v.id === updated.id ? { ...v, estadoVenta: updated.estadoVenta } : v)));
-      setModal(null);
       setAlertMessage({
-        type: "warning",
-        title: "Advertencia",
-        message: `Estado actualizado localmente (${error.message}).`,
+        type: "error",
+        title: "Error al cambiar estado",
+        message: error.message || "No se pudo cambiar el estado de la venta.",
       });
     }
   }, [cargarDatos]);
@@ -233,15 +208,13 @@ export function useVentas() {
       setAlertMessage({
         type: "error",
         title: "Eliminado",
-        message: `La venta "${codigo}" fue eliminada del sistema.`,
+        message: `La venta "${codigo}" fue eliminada correctamente de la base de datos.`,
       });
     } catch (error) {
-      setVentas((prev) => prev.filter((v) => v.id !== deleteTarget.id));
-      setDeleteTarget(null);
       setAlertMessage({
         type: "error",
-        title: "Eliminado",
-        message: `Venta eliminada localmente (${error.message}).`,
+        title: "Error al eliminar",
+        message: error.message || "No se pudo eliminar la venta de la base de datos.",
       });
     }
   }, [deleteTarget, cargarDatos]);

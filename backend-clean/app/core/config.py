@@ -8,6 +8,7 @@ load_dotenv(_BASE_DIR / ".env")
 
 
 class Settings:
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "")
     DB_HOST: str = os.getenv("DB_HOST", "localhost")
     DB_PORT: int = int(os.getenv("DB_PORT", "5432"))
     DB_NAME: str = os.getenv("DB_NAME", "")

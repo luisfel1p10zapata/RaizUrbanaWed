@@ -106,12 +106,12 @@ export async function crearUsuario(datos) {
   }
 
   const payload = {
-    nombres: nombres || 'Usuario',
-    apellidos: apellidos || 'Sistema',
+    nombres: nombres.trim(),
+    apellidos: apellidos.trim(),
     tipoDoc: datos.tipoDoc || datos.tipo_doc || 'C.C.',
     numeroDoc: String(datos.numeroDoc || datos.cedula || '').trim(),
     correo: String(datos.correo || '').trim().toLowerCase(),
-    contrasena: datos.contrasena || datos.password || 'Usuario2026*',
+    contrasena: datos.contrasena || datos.password || null,
     telefono: datos.telefono ? String(datos.telefono).trim() : null,
     direccion: datos.direccion ? String(datos.direccion).trim() : null,
     genero: datos.genero || 'Masculino',
@@ -121,6 +121,23 @@ export async function crearUsuario(datos) {
   return solicitar('', {
     method: 'POST',
     body: JSON.stringify(payload),
+  });
+}
+
+/**
+ * Validar un token de activación recibido por correo.
+ */
+export async function validarTokenActivacion(token) {
+  return solicitar(`/activar/${encodeURIComponent(token)}`);
+}
+
+/**
+ * Activar la cuenta de un usuario estableciendo su contraseña mediante token.
+ */
+export async function activarUsuarioConToken(token, contrasena) {
+  return solicitar('/activar', {
+    method: 'POST',
+    body: JSON.stringify({ token, contrasena }),
   });
 }
 

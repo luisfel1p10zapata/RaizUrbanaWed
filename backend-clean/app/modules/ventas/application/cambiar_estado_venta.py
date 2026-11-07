@@ -4,17 +4,16 @@ from app.modules.ventas.application.schemas import (
     VentaResponse,
 )
 from app.modules.ventas.infrastructure.venta_repository import (
-    VentaInMemoryRepository,
+    VentaRepository,
 )
 
 
 class CambiarEstadoVenta:
     def __init__(self, repositorio=None):
-        self.repositorio = repositorio or VentaInMemoryRepository()
+        self.repositorio = repositorio or VentaRepository()
 
     def ejecutar(self, venta_id: int, nuevo_estado: EstadoVenta) -> VentaResponse:
         venta_actualizada = self.repositorio.actualizar(
             venta_id, {"estado_venta": nuevo_estado}
         )
         return VentaResponse.model_validate(venta_actualizada)
-

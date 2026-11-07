@@ -6,13 +6,13 @@ from app.modules.usuarios.application.schemas import (
     UsuarioResponse,
 )
 from app.modules.usuarios.infrastructure.usuario_repository import (
-    UsuarioInMemoryRepository,
+    UsuarioRepository,
 )
 
 
 class ListarUsuarios:
     def __init__(self, repositorio=None):
-        self.repositorio = repositorio or UsuarioInMemoryRepository()
+        self.repositorio = repositorio or UsuarioRepository()
 
     def ejecutar(self, filtros: UsuarioFiltros) -> UsuarioPagina:
         items_db, total = self.repositorio.listar(filtros)
@@ -27,4 +27,3 @@ class ListarUsuarios:
             page_size=filtros.page_size,
             total_pages=total_pages,
         )
-

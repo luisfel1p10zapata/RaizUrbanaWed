@@ -30,9 +30,10 @@ export function Avatar({ nombres, apellidos, id, size = 42 }) {
 }
 
 export function StatusBadge({ estado }) {
-  const active = estado === "Activo";
+  const norm = (estado || "Activo").toLowerCase();
+  const cls = norm === "activo" ? "active" : norm === "pendiente" ? "pending" : "inactive";
   return (
-    <span className={`ru-status ${active ? "active" : "inactive"}`} data-label="Estado">
+    <span className={`ru-status ${cls}`} data-label="Estado">
       <span className="dot" /> {estado}
     </span>
   );
@@ -114,7 +115,7 @@ export function ViewUserModal({ user, index, onClose, onEdit }) {
 export function CreateUserModal({ nextId, onClose, onCreate }) {
   const [form, setForm] = useState({
     nombres: "", apellidos: "", tipoDoc: "C.C.", numeroDoc: "",
-    telefono: "", direccion: "", correo: "", contrasena: "", genero: "Masculino", rol: "Empleado"
+    telefono: "", direccion: "", correo: "", genero: "Masculino", rol: "Empleado"
   });
   const [errors, setErrors] = useState({});
 
@@ -129,7 +130,6 @@ export function CreateUserModal({ nextId, onClose, onCreate }) {
     if (!form.apellidos.trim()) errs.apellidos = "Obligatorio";
     if (!form.numeroDoc.trim()) errs.numeroDoc = "Obligatorio";
     if (!form.correo.trim() || !/\S+@\S+\.\S+/.test(form.correo)) errs.correo = "Correo válido requerido";
-    if (!form.contrasena || form.contrasena.length < 6) errs.contrasena = "Mínimo 6 caracteres";
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -141,7 +141,7 @@ export function CreateUserModal({ nextId, onClose, onCreate }) {
       onClose={onClose}
       footer={<>
         <button type="button" className="btn btn-outline" onClick={onClose}>Cancelar</button>
-        <button type="button" className="btn btn-primary" onClick={() => validate() && onCreate({ id: nextId, ...form, estado: "Activo", fecha: new Date().toISOString().slice(0, 10) })}>Registrar usuario</button>
+        <button type="button" className="btn btn-primary" onClick={() => validate() && onCreate({ id: nextId, ...form, estado: "Pendiente", fecha: new Date().toISOString().slice(0, 10) })}>Registrar usuario</button>
       </>}
     >
       <div className="ru-form-grid">
@@ -154,7 +154,6 @@ export function CreateUserModal({ nextId, onClose, onCreate }) {
         </Field>
         <Field label="NÚMERO DOC" required error={errors.numeroDoc}><TextInput placeholder="1023456789" value={form.numeroDoc} onChange={set("numeroDoc")} /></Field>
         <Field label="CORREO" required error={errors.correo}><TextInput icon={<Mail size={15} />} type="email" placeholder="correo@empresa.com" value={form.correo} onChange={set("correo")} /></Field>
-        <Field label="CONTRASEÑA" required error={errors.contrasena}><TextInput type="password" placeholder="******" value={form.contrasena} onChange={set("contrasena")} /></Field>
         <Field label="TELÉFONO"><TextInput icon={<Phone size={15} />} placeholder="+57 300..." value={form.telefono} onChange={set("telefono")} /></Field>
         <Field label="GÉNERO">
           <select className="ru-form-input ru-select" value={form.genero} onChange={set("genero")}>

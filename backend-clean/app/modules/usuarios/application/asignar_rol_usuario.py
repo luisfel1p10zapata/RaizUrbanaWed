@@ -3,13 +3,13 @@ from app.modules.usuarios.application.schemas import UsuarioResponse
 from app.modules.usuarios.application.registrar_usuario import ROLES_VALIDOS
 from app.modules.usuarios.domain.exceptions import RolInvalidoError
 from app.modules.usuarios.infrastructure.usuario_repository import (
-    UsuarioInMemoryRepository,
+    UsuarioRepository,
 )
 
 
 class AsignarRolUsuario:
     def __init__(self, repositorio=None):
-        self.repositorio = repositorio or UsuarioInMemoryRepository()
+        self.repositorio = repositorio or UsuarioRepository()
 
     def ejecutar(self, usuario_id: int, nuevo_rol: str) -> UsuarioResponse:
         rol_limpio = nuevo_rol.strip()
@@ -21,4 +21,3 @@ class AsignarRolUsuario:
             nuevo_rol=rol_limpio
         )
         return UsuarioResponse.model_validate(usuario_actualizado)
-

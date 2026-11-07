@@ -26,24 +26,26 @@ class Genero(StrEnum):
 class EstadoUsuario(StrEnum):
     ACTIVO = "Activo"
     INACTIVO = "Inactivo"
+    PENDIENTE = "Pendiente"
 
 
 # --------------------------------------------------------------------------
 # ENTRADA (lo que RECIBE la API)
 # --------------------------------------------------------------------------
 class UsuarioCreate(CamelModel):
+    """El administrador registra al usuario SIN contraseña.
+    El sistema envía un enlace al correo para que el usuario la defina."""
     nombres: str = Field(min_length=1, max_length=80)
     apellidos: str = Field(min_length=1, max_length=80)
     tipo_doc: TipoDocumento = TipoDocumento.CC
     numero_doc: str = Field(min_length=1, max_length=20)
     correo: EmailStr
-    # Llega en texto plano UNA sola vez; se encripta antes de guardar
-    # (usando la función de hash de core/security.py) y nunca se devuelve.
-    contrasena: str = Field(min_length=6, max_length=128)
+    # Opcional en el registro: si es None, el usuario queda Pendiente
+    # y define su clave mediante el enlace de activación.
+    contrasena: str | None = Field(default=None, max_length=128)
     telefono: str | None = Field(default=None, max_length=20)
     direccion: str | None = Field(default=None, max_length=200)
     genero: Genero = Genero.MASCULINO
-    # Nombre del rol asignado
     rol: str = Field(default="Empleado", min_length=1, max_length=50)
 
 
@@ -66,6 +68,23 @@ class AsignarRolRequest(CamelModel):
     """Asignar o reemplazar el rol de un usuario."""
 
     rol: str = Field(min_length=1, max_length=50, description="Nombre o identificador del nuevo rol")
+
+
+class ActivarUsuarioRequest(CamelModel):
+    """Establecer contraseña y activar la cuenta mediante token."""
+
+    token: str = Field(min_length=10, description="Token recibido en el correo de activación")
+    contrasena: str = Field(min_length=6, max_length=128, description="Nueva contraseña del usuario")
+
+
+class ValidarTokenResponse(CamelModel):
+    """Resultado de la verificación de un token de activación."""
+
+    valido: bool
+    usuario_id: int | None = None
+    nombre: str | None = None
+    correo: str | None = None
+    mensaje: str | None = None
 
 
 class UsuarioFiltros(CamelModel):
@@ -94,7 +113,9 @@ class UsuarioResponse(CamelModel):
     genero: Genero
     rol: str
     estado: EstadoUsuario
-    fecha_registro: date
+    fecha_registro: date = Field(default_factory=date.today)
+    enlace_activacion: str | None = None
+    token_activacion: str | None = None
 
 
 # Listado paginado: GET /usuarios  ->  { items, total, page, pageSize, totalPages }
