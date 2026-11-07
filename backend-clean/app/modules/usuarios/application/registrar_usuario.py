@@ -6,7 +6,7 @@ from app.modules.usuarios.application.schemas import (
 )
 from app.modules.usuarios.domain.exceptions import RolInvalidoError
 from app.modules.usuarios.infrastructure.usuario_repository import (
-    UsuarioInMemoryRepository,
+    UsuarioRepository,
 )
 
 ROLES_VALIDOS = {
@@ -23,7 +23,7 @@ ROLES_VALIDOS = {
 
 class RegistrarUsuario:
     def __init__(self, repositorio=None):
-        self.repositorio = repositorio or UsuarioInMemoryRepository()
+        self.repositorio = repositorio or UsuarioRepository()
 
     def ejecutar(self, datos: UsuarioCreate) -> UsuarioResponse:
         # Validar el rol
@@ -31,8 +31,8 @@ class RegistrarUsuario:
         if not rol_limpio or rol_limpio.lower() not in ROLES_VALIDOS:
             raise RolInvalidoError(datos.rol)
 
-        # Hashear la contraseña con bcrypt
-        password_hash = hash_password(datos.contrasena)
+        # Hashear la contraseña con bcrypt sólo si viene proporcionada
+        password_hash = hash_password(datos.contrasena) if datos.contrasena else None
 
         datos_guardar = {
             "nombres": datos.nombres.strip(),
@@ -44,9 +44,9 @@ class RegistrarUsuario:
             "direccion": datos.direccion.strip() if datos.direccion else None,
             "genero": datos.genero,
             "rol": rol_limpio,
+            "contrasena": datos.contrasena,
             "password_hash": password_hash,
         }
 
         usuario_creado = self.repositorio.guardar(datos_guardar)
         return UsuarioResponse.model_validate(usuario_creado)
-

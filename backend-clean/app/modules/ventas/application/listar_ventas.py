@@ -6,13 +6,13 @@ from app.modules.ventas.application.schemas import (
     VentaResponse,
 )
 from app.modules.ventas.infrastructure.venta_repository import (
-    VentaInMemoryRepository,
+    VentaRepository,
 )
 
 
 class ListarVentas:
     def __init__(self, repositorio=None):
-        self.repositorio = repositorio or VentaInMemoryRepository()
+        self.repositorio = repositorio or VentaRepository()
 
     def ejecutar(self, filtros: VentaFiltros) -> VentaPagina:
         items_db, total = self.repositorio.listar(filtros)
@@ -27,4 +27,3 @@ class ListarVentas:
             page_size=filtros.page_size,
             total_pages=total_pages,
         )
-

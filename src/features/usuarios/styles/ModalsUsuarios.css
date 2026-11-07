@@ -187,6 +187,79 @@
   cursor: pointer;
 }
 
+.ru-form-input.is-invalid {
+  border-color: var(--negative, #D1495B) !important;
+  background-color: rgba(209, 73, 91, 0.04);
+}
+
+.ru-field-error {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--negative, #D1495B);
+  font-size: 11.5px;
+  font-weight: 500;
+  margin-top: 5px;
+}
+
+.ru-field-hint {
+  font-size: 11px;
+  color: var(--muted-text);
+  margin-top: 4px;
+}
+
+.ru-activation-banner {
+  background: rgba(201, 151, 63, 0.1);
+  border: 1px solid var(--warn-amber, #C9973F);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.ru-activation-link-box {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-top: 10px;
+}
+
+.ru-activation-link-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  font-family: monospace;
+  font-size: 12px;
+  color: var(--primary);
+  outline: none;
+}
+
+.ru-pwd-rules {
+  background: var(--background);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ru-pwd-rule {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted-text);
+}
+
+.ru-pwd-rule.valid {
+  color: var(--positive, #2E9E5B);
+  font-weight: 500;
+}
+
 /* Selector Activo / Inactivo */
 .ru-status-toggle-row { display: flex; gap: 12px; }
 

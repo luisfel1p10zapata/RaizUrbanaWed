@@ -2,12 +2,15 @@
 from fastapi import APIRouter, HTTPException, Query, status
 
 from app.modules.usuarios.application.actualizar_usuario import ActualizarUsuario
+from app.modules.usuarios.application.activar_usuario import ActivarUsuario
 from app.modules.usuarios.application.asignar_rol_usuario import AsignarRolUsuario
 from app.modules.usuarios.application.eliminar_usuario import EliminarUsuario
 from app.modules.usuarios.application.listar_usuarios import ListarUsuarios
 from app.modules.usuarios.application.obtener_usuario import ObtenerUsuario
 from app.modules.usuarios.application.registrar_usuario import RegistrarUsuario
+from app.modules.usuarios.application.validar_token_usuario import ValidarTokenUsuario
 from app.modules.usuarios.application.schemas import (
+    ActivarUsuarioRequest,
     AsignarRolRequest,
     EstadoUsuario,
     UsuarioCreate,
@@ -15,11 +18,14 @@ from app.modules.usuarios.application.schemas import (
     UsuarioPagina,
     UsuarioResponse,
     UsuarioUpdate,
+    ValidarTokenResponse,
 )
 from app.modules.usuarios.domain.exceptions import (
     CorreoDuplicadoError,
     DocumentoDuplicadoError,
     RolInvalidoError,
+    TokenInvalidoError,
+    UsuarioConDependenciasError,
     UsuarioNoEncontradoError,
 )
 
@@ -74,6 +80,37 @@ def registrar_usuario(datos: UsuarioCreate):
         )
 
 
+@router.get("/activar/{token}", response_model=ValidarTokenResponse, status_code=status.HTTP_200_OK)
+def validar_token_activacion(token: str):
+    """Valida un token de activación de cuenta."""
+    caso_uso = ValidarTokenUsuario()
+    try:
+        return caso_uso.ejecutar(token)
+    except TokenInvalidoError as err:
+        return ValidarTokenResponse(
+            valido=False,
+            mensaje=str(err)
+        )
+
+
+@router.post("/activar", response_model=UsuarioResponse, status_code=status.HTTP_200_OK)
+def activar_usuario(datos: ActivarUsuarioRequest):
+    """Establece la contraseña y activa la cuenta del usuario mediante token."""
+    caso_uso = ActivarUsuario()
+    try:
+        return caso_uso.ejecutar(datos)
+    except TokenInvalidoError as err:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(err)
+        )
+    except ValueError as err:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(err)
+        )
+
+
 @router.get("/{usuario_id}", response_model=UsuarioResponse, status_code=status.HTTP_200_OK)
 def obtener_usuario(usuario_id: int):
     """Obtiene el detalle de un usuario por su ID."""
@@ -83,6 +120,11 @@ def obtener_usuario(usuario_id: int):
     except UsuarioNoEncontradoError as err:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(err)
+        )
+    except UsuarioConDependenciasError as err:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
             detail=str(err)
         )
 
@@ -97,6 +139,11 @@ def actualizar_usuario(usuario_id: int, datos: UsuarioUpdate):
     except UsuarioNoEncontradoError as err:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(err)
+        )
+    except UsuarioConDependenciasError as err:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
             detail=str(err)
         )
     except CorreoDuplicadoError as err:
@@ -122,6 +169,11 @@ def asignar_rol(usuario_id: int, datos: AsignarRolRequest):
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(err)
         )
+    except UsuarioConDependenciasError as err:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(err)
+        )
     except RolInvalidoError as err:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -139,5 +191,10 @@ def eliminar_usuario(usuario_id: int):
     except UsuarioNoEncontradoError as err:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(err)
+        )
+    except UsuarioConDependenciasError as err:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
             detail=str(err)
         )

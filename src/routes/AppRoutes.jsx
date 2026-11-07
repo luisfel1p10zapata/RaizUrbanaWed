@@ -40,6 +40,7 @@ import Roles from '../features/config/components/Roles';
 import InicioSesion from '../features/usuarios/components/InicioSesion';
 import Registro from '../features/usuarios/components/Registro';
 import RecuperarContrasena from '../features/usuarios/components/RecuperarContrasena';
+import ActivarCuenta from '../features/usuarios/components/ActivarCuenta';
 import Perfil from '../features/usuarios/components/Perfil';
 
 const AppRoutes = () => {
@@ -74,6 +75,11 @@ const AppRoutes = () => {
         <Route
           path="/cuenta/recuperar-contrasena"
           element={<RecuperarContrasena />}
+        />
+
+        <Route
+          path="/activar-cuenta"
+          element={<ActivarCuenta />}
         />
 
 

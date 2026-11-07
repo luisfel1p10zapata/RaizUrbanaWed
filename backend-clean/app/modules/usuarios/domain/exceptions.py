@@ -29,3 +29,14 @@ class RolInvalidoError(UsuarioError):
     def __init__(self, rol: str):
         super().__init__(f"El rol '{rol}' no es válido.")
 
+
+class UsuarioConDependenciasError(UsuarioError):
+    """No se puede eliminar el usuario porque tiene registros asociados."""
+    def __init__(self, identificador: str | int):
+        super().__init__(f"No se puede eliminar el usuario #{identificador} porque tiene registros asociados (ventas, compras, etc.).")
+
+
+class TokenInvalidoError(UsuarioError):
+    """El token de activación o recuperación es inválido, expiró o ya fue utilizado."""
+    def __init__(self, mensaje: str = "El enlace de activación es inválido o ha expirado."):
+        super().__init__(mensaje)
