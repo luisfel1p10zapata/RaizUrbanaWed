@@ -28,6 +28,8 @@ class CategoriaService:
         creado = self.repositorio.guardar({
             "nombre": datos.nombre.strip(),
             "estado": datos.estado,
+            "tipo_categoria": datos.tipo_categoria,
+            "foto_categoria": datos.foto_categoria,
         })
 
         return CategoriaResponse.model_validate(creado)
@@ -36,8 +38,12 @@ class CategoriaService:
         self,
         buscar: str | None = None,
         estado: bool | None = None,
+        tipo_categoria: str | None = None,
     ) -> list[CategoriaResponse]:
-        registros = self.repositorio.listar(buscar=buscar, estado=estado)
+        if "tipo_categoria" in self.repositorio.listar.__code__.co_varnames:
+            registros = self.repositorio.listar(buscar=buscar, estado=estado, tipo_categoria=tipo_categoria)
+        else:
+            registros = self.repositorio.listar(buscar=buscar, estado=estado)
 
         return [
             CategoriaResponse.model_validate(registro)

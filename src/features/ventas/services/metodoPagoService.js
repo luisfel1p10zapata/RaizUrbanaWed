@@ -4,54 +4,30 @@
  * Raíz Urbana.
  */
 
-const API_URL = 'http://127.0.0.1:8000/api/metodos-pago';
+import { apiRequest } from '../../../utils/apiClient';
 
 const solicitar = async (ruta = '', opciones = {}) => {
-  let respuesta;
-
-  try {
-    respuesta = await fetch(`${API_URL}${ruta}`, {
-      ...opciones,
-      headers: {
-        'Content-Type': 'application/json',
-        ...opciones.headers,
-      },
-    });
-  } catch {
-    throw new Error(
-      'No se pudo conectar con FastAPI. Verifica que el backend esté funcionando.'
-    );
-  }
-
-  if (!respuesta.ok) {
-    let mensaje = 'No se pudo completar la operación.';
-
-    try {
-      const datos = await respuesta.json();
-
-      if (typeof datos.detail === 'string') {
-        mensaje = datos.detail;
-      } else if (Array.isArray(datos.detail)) {
-        mensaje = datos.detail.map(
-          (error) => error.msg
-        ).join(', ');
-      }
-    } catch {
-      // Mantener el mensaje predeterminado.
-    }
-
-    throw new Error(mensaje);
-  }
-
-  if (respuesta.status === 204) {
-    return null;
-  }
-
-  return respuesta.json();
+  return apiRequest('metodos-pago', ruta, opciones);
 };
 
-export const obtenerMetodosPago = async () => {
-  return solicitar();
+export const obtenerMetodosPago = async (params = {}) => {
+  const query = new URLSearchParams();
+  if (params.buscar) query.append('buscar', params.buscar);
+  if (params.estado) query.append('estado', params.estado);
+  if (params.limite) query.append('limite', params.limite);
+  if (params.offset) query.append('offset', params.offset);
+
+  const qs = query.toString() ? `?${query.toString()}` : '';
+  const datos = await solicitar(qs);
+  return Array.isArray(datos) ? datos : (datos?.data || []);
+};
+
+export const obtenerMetricasMetodosPago = async () => {
+  return solicitar('/metricas');
+};
+
+export const obtenerConteosMetodosPago = async () => {
+  return solicitar('/conteos');
 };
 
 export const obtenerMetodoPagoPorId = async (id) => {

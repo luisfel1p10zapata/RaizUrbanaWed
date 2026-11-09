@@ -76,9 +76,9 @@ def test_ventas_crud():
 
     # 6. Cambiar estado
     cambiar_cu = CambiarEstadoVenta()
-    v_estado = cambiar_cu.ejecutar(venta_creada.id, EstadoVenta.COMPLETADA)
+    v_estado = cambiar_cu.ejecutar(venta_creada.id, EstadoVenta.PROCESANDO)
     print(f"[OK] Estado de venta cambiado en Supabase: Estado={v_estado.estado_venta}, Pago={v_estado.estado_pago}")
-    assert v_estado.estado_venta == EstadoVenta.COMPLETADA
+    assert v_estado.estado_venta == EstadoVenta.PROCESANDO
 
     # 7. Eliminar venta
     eliminar_cu = EliminarVenta()

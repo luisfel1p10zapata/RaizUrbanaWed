@@ -12,6 +12,7 @@ from app.modules.metodo_pago.domain.schemas import (
     MetodoPagoUpdate,
     MetodoPagoEstadoUpdate,
     MetodoPagoResponse,
+    MetodoPagoMetricasResponse,
 )
 
 from app.modules.metodo_pago.domain.exceptions import (
@@ -68,9 +69,31 @@ def registrar_metodo_pago(datos: MetodoPagoCreate):
     "",
     response_model=list[MetodoPagoResponse],
 )
-def listar_metodos_pago():
+def listar_metodos_pago(
+    buscar: str | None = None,
+    estado: str | None = None,
+    limite: int = 500,
+    offset: int = 0,
+):
     try:
-        return MetodoPagoService().listar_metodos()
+        return MetodoPagoService().listar_metodos(
+            buscar=buscar, estado=estado, limite=limite, offset=offset
+        )
+    except Exception as error:
+        manejar_error(error)
+
+
+@router.get(
+    "/conteos",
+    response_model=MetodoPagoMetricasResponse,
+)
+@router.get(
+    "/metricas",
+    response_model=MetodoPagoMetricasResponse,
+)
+def obtener_metricas_metodo_pago():
+    try:
+        return MetodoPagoService().obtener_metricas()
     except Exception as error:
         manejar_error(error)
 

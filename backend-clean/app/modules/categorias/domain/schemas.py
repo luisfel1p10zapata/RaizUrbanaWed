@@ -7,6 +7,8 @@ class CategoriaCreate(CamelModel):
     """Esquema para el registro de una nueva categoría."""
     nombre: str = Field(..., min_length=2, max_length=100, description="Nombre identificador de la categoría")
     estado: bool = Field(default=True, description="Estado de disponibilidad de la categoría")
+    tipo_categoria: str | None = Field(default="Producto", max_length=50, description="Tipo de categoría")
+    foto_categoria: str | None = Field(default=None, max_length=255, description="Foto o imagen de la categoría")
 
     @field_validator("nombre")
     @classmethod
@@ -25,6 +27,8 @@ class CategoriaUpdate(CamelModel):
     """Esquema para la actualización parcial de una categoría."""
     nombre: str | None = Field(default=None, min_length=2, max_length=100)
     estado: bool | None = None
+    tipo_categoria: str | None = Field(default=None, max_length=50)
+    foto_categoria: str | None = Field(default=None, max_length=255)
 
     @field_validator("nombre")
     @classmethod
@@ -46,6 +50,8 @@ class CategoriaResponse(CamelModel):
     id: int
     nombre: str
     estado: bool
+    tipo_categoria: str | None = "Producto"
+    foto_categoria: str | None = None
 
 
 class CategoriaConteoResponse(CamelModel):

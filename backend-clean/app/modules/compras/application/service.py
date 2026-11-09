@@ -7,6 +7,7 @@ from app.modules.compras.domain.schemas import (
     CompraCreate,
     CompraUpdate,
     CompraResponse,
+    CompraMetricasResponse,
 )
 
 from app.modules.compras.domain.exceptions import (
@@ -78,15 +79,40 @@ class CompraService:
 
         return CompraResponse.model_validate(compra)
 
-    def listar_compras(self) -> list[CompraResponse]:
-        """Lista todas las compras."""
+    def listar_compras(
+        self,
+        buscar: str | None = None,
+        proveedor_id: int | None = None,
+        estado: str | None = None,
+        fecha_desde: date | None = None,
+        fecha_hasta: date | None = None,
+        limite: int = 500,
+        offset: int = 0,
+    ) -> list[CompraResponse]:
+        """Lista todas las compras con filtros opcionales."""
 
-        registros = self.repositorio.listar()
+        if "buscar" in self.repositorio.listar.__code__.co_varnames:
+            registros = self.repositorio.listar(
+                buscar=buscar,
+                proveedor_id=proveedor_id,
+                estado=estado,
+                fecha_desde=fecha_desde,
+                fecha_hasta=fecha_hasta,
+                limite=limite,
+                offset=offset,
+            )
+        else:
+            registros = self.repositorio.listar()
 
         return [
             CompraResponse.model_validate(registro)
             for registro in registros
         ]
+
+    def obtener_metricas(self) -> CompraMetricasResponse:
+        """Obtiene métricas y estadísticas del módulo de compras."""
+        datos = self.repositorio.obtener_metricas()
+        return CompraMetricasResponse.model_validate(datos)
 
     def obtener_compra_por_id(
         self,
@@ -136,3 +162,14 @@ class CompraService:
         """Elimina una compra existente."""
 
         self.repositorio.eliminar_compra(compra_id)
+
+    def obtener_catalogo_recursos(self) -> dict:
+        """Obtiene proveedores, métodos de pago, insumos y variantes disponibles."""
+        if hasattr(self.repositorio, "obtener_catalogo_recursos"):
+            return self.repositorio.obtener_catalogo_recursos()
+        return {
+            "proveedores": [],
+            "metodos_pago": [],
+            "insumos": [],
+            "productos": [],
+        }

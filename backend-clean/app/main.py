@@ -59,7 +59,7 @@ app = FastAPI(
 
 
 # =========================================================
-# CONFIGURACIÓN CORS
+# CONFIGURACIÓN CORS Y PRIVATE NETWORK ACCESS
 # =========================================================
 
 app.add_middleware(
@@ -67,11 +67,42 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:5173",
         "http://127.0.0.1:5173",
+        "http://localhost:5174",
+        "http://127.0.0.1:5174",
+        "http://localhost:5175",
+        "http://127.0.0.1:5175",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
     ],
+    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def soporte_private_network_middleware(request, call_next):
+    """Permite llamadas entre localhost y 127.0.0.1 bajo la directiva Private Network Access de Chrome."""
+    if request.method == "OPTIONS" and request.headers.get("access-control-request-private-network"):
+        from fastapi.responses import Response
+        res = Response(status_code=200)
+        origin = request.headers.get("origin")
+        if origin:
+            res.headers["Access-Control-Allow-Origin"] = origin
+            res.headers["Access-Control-Allow-Credentials"] = "true"
+        res.headers["Access-Control-Allow-Private-Network"] = "true"
+        res.headers["Access-Control-Allow-Methods"] = "*"
+        res.headers["Access-Control-Allow-Headers"] = "*"
+        return res
+
+    response = await call_next(request)
+    if request.headers.get("access-control-request-private-network"):
+        response.headers["Access-Control-Allow-Private-Network"] = "true"
+    return response
 
 
 # =========================================================

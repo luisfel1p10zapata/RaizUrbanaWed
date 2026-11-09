@@ -3,6 +3,7 @@
 from typing import Any
 import psycopg
 
+from app.core.config import settings
 from app.core.database import get_connection, is_database_available
 from app.modules.categorias.domain.exceptions import (
     CategoriaDuplicadaError,
@@ -132,60 +133,50 @@ class CategoriaInMemoryRepository:
 
 
 class CategoriaPostgresRepository:
-    """Implementación conectada a PostgreSQL mediante procedimientos almacenados."""
-
-    @staticmethod
-    def _obtener_registros(cursor) -> list[dict[str, Any]]:
-        columnas = [columna.name for columna in cursor.description]
-        return [
-            dict(zip(columnas, fila))
-            for fila in cursor.fetchall()
-        ]
+    """Implementación conectada a PostgreSQL mediante procedimientos almacenados de Supabase."""
 
     def _mapear_error(self, error: Exception, nombre: str | None = None, id_cat: int | None = None):
         msg = str(error).lower()
         sqlstate = getattr(error, "sqlstate", None)
 
-        if sqlstate == "23505" or "ya existe una categoría" in msg:
+        if sqlstate == "23505" or "duplicad" in msg or "ya existe" in msg:
             raise CategoriaDuplicadaError(nombre or "indicado") from error
 
-        if sqlstate == "23503" or "productos asociados" in msg:
+        if sqlstate == "23503" or "asociad" in msg or "productos asociados" in msg:
             raise CategoriaAsociadaError(
-                "No se puede eliminar la categoría porque tiene productos asociados."
+                "No se puede eliminar la categoría porque tiene dependencias asociadas (productos, subcategorías o insumos)."
             ) from error
 
-        if sqlstate == "P0002" or "no se encontró" in msg:
+        if sqlstate == "P0002" or "no encontrad" in msg or "no se encontró" in msg:
             raise CategoriaNoEncontradaError(id_cat or 0) from error
 
-        if sqlstate == "22023":
+        if sqlstate == "22023" or "inválid" in msg:
             raise CategoriaInvalidaError(str(error)) from error
 
     def guardar(self, datos: dict[str, Any]) -> dict[str, Any]:
         nombre = datos["nombre"].strip()
-        estado = datos.get("estado", True)
+        estado_bool = datos.get("estado", True)
+        estado_str = "Activo" if estado_bool else "Inactivo"
+        tipo_cat = datos.get("tipo_categoria") or "Producto"
+        foto_cat = datos.get("foto_categoria") or None
 
         try:
             with get_connection() as conn:
                 with conn.cursor() as cursor:
                     cursor.execute(
-                        "CALL sp_insertarcategoria(NULL, %s, %s)",
-                        (nombre, estado),
+                        "SELECT sp_registrar_categoria(p_nombre => %s, p_tipo_categoria => %s, p_estado => %s, p_foto_categoria => %s);",
+                        (nombre, tipo_cat, estado_str, foto_cat),
                     )
-                    resultado = cursor.fetchone()
-                    id_categoria = resultado[0] if resultado else None
-
-                    if id_categoria is None:
-                        cursor.execute(
-                            "SELECT id_Categoria FROM tb_Categorias WHERE LOWER(BTRIM(Nombre)) = LOWER(BTRIM(%s))",
-                            (nombre,),
-                        )
-                        fila = cursor.fetchone()
-                        id_categoria = fila[0] if fila else None
+                    row = cursor.fetchone()
+                    id_categoria = row[0] if row else None
+                    conn.commit()
 
                     return {
                         "id": id_categoria,
                         "nombre": nombre,
-                        "estado": estado,
+                        "estado": estado_bool,
+                        "tipo_categoria": tipo_cat,
+                        "foto_categoria": foto_cat or "",
                     }
         except psycopg.Error as error:
             self._mapear_error(error, nombre=nombre)
@@ -195,23 +186,28 @@ class CategoriaPostgresRepository:
         self,
         buscar: str | None = None,
         estado: bool | None = None,
+        tipo_categoria: str | None = None,
     ) -> list[dict[str, Any]]:
+        estado_filtro = None
+        if estado is not None:
+            estado_filtro = "Activo" if estado else "Inactivo"
+
         try:
             with get_connection() as conn:
                 with conn.cursor() as cursor:
-                    if buscar:
-                        cursor.execute("SELECT * FROM sp_buscarcategoria(%s)", (buscar.strip(),))
-                    elif estado is not None:
-                        cursor.execute("SELECT * FROM sp_filtrarcategorias(%s)", (estado,))
-                    else:
-                        cursor.execute("SELECT * FROM sp_listarcategorias()")
-
-                    filas = self._obtener_registros(cursor)
+                    cursor.execute(
+                        "SELECT id_categoria, nombre, estado, tipo_categoria, foto_categoria "
+                        "FROM sp_listar_categorias(p_buscar => %s, p_estado => %s, p_tipo_categoria => %s, p_limite => 500);",
+                        (buscar.strip() if buscar else None, estado_filtro, tipo_categoria.strip() if tipo_categoria else None),
+                    )
+                    filas = cursor.fetchall()
                     return [
                         {
-                            "id": f.get("id_categoria", f.get("id")),
-                            "nombre": f.get("nombre", f.get("Nombre")),
-                            "estado": f.get("estado", f.get("Estado")),
+                            "id": f[0],
+                            "nombre": f[1],
+                            "estado": True if str(f[2]).lower() in ("activo", "true", "1") else False,
+                            "tipo_categoria": f[3] or "Producto",
+                            "foto_categoria": f[4] or "",
                         }
                         for f in filas
                     ]
@@ -223,18 +219,45 @@ class CategoriaPostgresRepository:
         try:
             with get_connection() as conn:
                 with conn.cursor() as cursor:
-                    cursor.execute("SELECT * FROM sp_obtenercategoriaporid(%s)", (categoria_id,))
-                    filas = self._obtener_registros(cursor)
-                    if not filas:
+                    cursor.execute("SELECT sp_obtener_categoria(%s);", (categoria_id,))
+                    row = cursor.fetchone()
+                    if not row or not row[0]:
                         return None
-                    f = filas[0]
+                    f = row[0]
                     return {
-                        "id": f.get("id_categoria", f.get("id")),
-                        "nombre": f.get("nombre", f.get("Nombre")),
-                        "estado": f.get("estado", f.get("Estado")),
+                        "id": f.get("id_categoria"),
+                        "nombre": f.get("nombre"),
+                        "estado": True if str(f.get("estado")).lower() in ("activo", "true", "1") else False,
+                        "tipo_categoria": f.get("tipo_categoria") or "Producto",
+                        "foto_categoria": f.get("foto_categoria") or "",
                     }
         except psycopg.Error as error:
+            sqlstate = getattr(error, "sqlstate", None)
+            if sqlstate == "P0002" or "no encontrad" in str(error).lower():
+                return None
             self._mapear_error(error, id_cat=categoria_id)
+            raise
+
+    def obtener_por_nombre(self, nombre: str) -> dict[str, Any] | None:
+        try:
+            with get_connection() as conn:
+                with conn.cursor() as cursor:
+                    cursor.execute(
+                        "SELECT id_categoria, nombre, estado, tipo_categoria, foto_categoria FROM tb_categorias WHERE LOWER(BTRIM(nombre)) = LOWER(BTRIM(%s)) LIMIT 1;",
+                        (nombre.strip(),),
+                    )
+                    row = cursor.fetchone()
+                    if not row:
+                        return None
+                    return {
+                        "id": row[0],
+                        "nombre": row[1],
+                        "estado": True if str(row[2]).lower() in ("activo", "true", "1") else False,
+                        "tipo_categoria": row[3] or "Producto",
+                        "foto_categoria": row[4] or "",
+                    }
+        except psycopg.Error as error:
+            self._mapear_error(error, nombre=nombre)
             raise
 
     def actualizar(
@@ -242,16 +265,28 @@ class CategoriaPostgresRepository:
         categoria_id: int,
         datos: dict[str, Any],
     ) -> dict[str, Any]:
-        nombre = datos.get("nombre")
-        estado = datos.get("estado")
+        actual = self.obtener_por_id(categoria_id)
+        if not actual:
+            raise CategoriaNoEncontradaError(categoria_id)
+
+        nombre = datos.get("nombre") or actual["nombre"]
+        estado_str = None
+        if "estado" in datos and datos["estado"] is not None:
+            estado_str = "Activo" if datos["estado"] else "Inactivo"
+        elif "estado" in actual:
+            estado_str = "Activo" if actual["estado"] else "Inactivo"
+
+        tipo_cat = datos.get("tipo_categoria") or actual.get("tipo_categoria")
+        foto_cat = datos.get("foto_categoria") or actual.get("foto_categoria")
 
         try:
             with get_connection() as conn:
                 with conn.cursor() as cursor:
                     cursor.execute(
-                        "CALL sp_actualizarcategoria(%s, %s, %s)",
-                        (categoria_id, nombre, estado),
+                        "SELECT sp_actualizar_categoria(p_id_categoria => %s, p_nombre => %s, p_tipo_categoria => %s, p_estado => %s, p_foto_categoria => %s);",
+                        (categoria_id, nombre, tipo_cat, estado_str, foto_cat),
                     )
+                    conn.commit()
                     actualizado = self.obtener_por_id(categoria_id)
                     if not actualizado:
                         raise CategoriaNoEncontradaError(categoria_id)
@@ -261,13 +296,15 @@ class CategoriaPostgresRepository:
             raise
 
     def cambiar_estado(self, categoria_id: int, estado: bool) -> dict[str, Any]:
+        estado_str = "Activo" if estado else "Inactivo"
         try:
             with get_connection() as conn:
                 with conn.cursor() as cursor:
                     cursor.execute(
-                        "CALL sp_cambiarestadocategoria(%s, %s)",
-                        (categoria_id, estado),
+                        "SELECT sp_cambiar_estado_categoria(p_id_categoria => %s, p_estado => %s);",
+                        (categoria_id, estado_str),
                     )
+                    conn.commit()
                     actualizado = self.obtener_por_id(categoria_id)
                     if not actualizado:
                         raise CategoriaNoEncontradaError(categoria_id)
@@ -281,9 +318,10 @@ class CategoriaPostgresRepository:
             with get_connection() as conn:
                 with conn.cursor() as cursor:
                     cursor.execute(
-                        "CALL sp_eliminarcategoria(%s)",
+                        "SELECT sp_eliminar_categoria(p_id_categoria => %s);",
                         (categoria_id,),
                     )
+                    conn.commit()
         except psycopg.Error as error:
             self._mapear_error(error, id_cat=categoria_id)
             raise
@@ -292,13 +330,14 @@ class CategoriaPostgresRepository:
         try:
             with get_connection() as conn:
                 with conn.cursor() as cursor:
-                    cursor.execute("SELECT * FROM sp_conteocategorias()")
-                    fila = cursor.fetchone()
-                    if fila:
+                    cursor.execute("SELECT sp_metricas_categorias();")
+                    row = cursor.fetchone()
+                    if row and row[0]:
+                        m = row[0]
                         return {
-                            "total": fila[0] or 0,
-                            "activas": fila[1] or 0,
-                            "inactivas": fila[2] or 0,
+                            "total": int(m.get("total", 0)),
+                            "activas": int(m.get("activas", 0)),
+                            "inactivas": int(m.get("inactivas", 0)),
                         }
                     return {"total": 0, "activas": 0, "inactivas": 0}
         except Exception:
@@ -306,7 +345,9 @@ class CategoriaPostgresRepository:
 
 
 def CategoriaRepository():
-    """Fábrica de repositorio: selecciona PostgreSQL si está disponible, o Memoria en caso contrario."""
+    """Fábrica de repositorio: selecciona PostgreSQL si la base de datos está configurada, o Memoria en caso contrario."""
+    if settings.DATABASE_URL or (settings.DB_NAME and settings.DB_USER):
+        return CategoriaPostgresRepository()
     if is_database_available():
         return CategoriaPostgresRepository()
     return CategoriaInMemoryRepository()

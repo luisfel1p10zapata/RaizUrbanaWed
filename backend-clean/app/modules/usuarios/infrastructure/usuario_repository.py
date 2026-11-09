@@ -1,11 +1,15 @@
 """Repositorio de infraestructura para la gestión de usuarios conectado a PostgreSQL (Supabase).
 
-Utiliza los procedimientos almacenados y tablas oficiales desplegados en la base de datos:
-- sp_registrar_usuario: Registro con hashing crypt blowfish o registro en estado 'Pendiente' cuando no se envía contraseña.
-- sp_actualizar_usuario: Actualización de datos personales y rol.
-- sp_cambiar_estado_usuario: Transición de estado (Activo, Inactivo, Pendiente).
-- sp_login_usuario: Autenticación de credenciales.
-- tb_token_usuario: Generación y canje de tokens de activación con expiración y control de un solo uso.
+Utiliza los procedimientos almacenados y funciones oficiales desplegados en Supabase:
+- sp_registrar_usuario: Registro validado en PostgreSQL; si no se envía contraseña, queda en 'Pendiente' con contraseña NULL.
+- sp_crear_token_usuario: Generación de tokens de activación en tb_token_usuario con expiración y revocación previa.
+- sp_validar_token_usuario: Verificación de vigencia y no-uso de tokens de activación.
+- sp_activar_cuenta: Asignación de contraseña crypt blowfish, transición a 'Activo' y consumo del token en una sola transacción.
+- sp_actualizar_usuario: Actualización de datos personales y rol con protección de cuenta sistema y último administrador.
+- sp_cambiar_estado_usuario: Cambio seguro de estado con validaciones de clave existente.
+- sp_eliminar_usuario: Eliminación con control estricto de integridad (ventas, producción, bajas).
+- sp_obtener_usuario: Consulta individual por ID.
+- sp_listar_usuarios: Listado y búsqueda global con exclusión de cuentas de sistema.
 """
 from datetime import date
 import secrets
@@ -31,12 +35,12 @@ from app.modules.usuarios.domain.exceptions import (
 
 
 class UsuarioPostgresRepository:
-    """Implementación de persistencia definitiva en PostgreSQL (Supabase)."""
+    """Implementación de persistencia conectada a las funciones y procedimientos oficiales de Supabase."""
 
     def __init__(self):
         self._get_connection = get_connection
 
-    def _resolver_tipo_doc_enum(self, sigla: str | None, nombre: str | None) -> TipoDocumento:
+    def _resolver_tipo_doc_enum(self, sigla: str | None, nombre: str | None = None) -> TipoDocumento:
         s = (sigla or "").upper().strip()
         n = (nombre or "").upper().strip()
         if s == "CC" or "CIUDADAN" in n:
@@ -59,27 +63,9 @@ class UsuarioPostgresRepository:
         if fila:
             return fila[0]
 
-        if td_str in ("CC", "CEDULA"):
-            sigla, nombre = "CC", "Cédula de Ciudadanía"
-        elif td_str in ("CE", "EXTRANJERIA"):
-            sigla, nombre = "CE", "Cédula de Extranjería"
-        elif td_str in ("TI", "TARJETA"):
-            sigla, nombre = "TI", "Tarjeta de Identidad"
-        elif td_str in ("PA", "PASAPORTE"):
-            sigla, nombre = "PA", "Pasaporte"
-        else:
-            sigla, nombre = "CC", "Cédula de Ciudadanía"
-
-        cursor.execute("SELECT id_tipodoc FROM tb_tipodoc WHERE UPPER(sigla) = %s LIMIT 1;", (sigla,))
-        row = cursor.fetchone()
-        if row:
-            return row[0]
-
-        cursor.execute(
-            "INSERT INTO tb_tipodoc (sigla, nombre) VALUES (%s, %s) ON CONFLICT (sigla) DO UPDATE SET nombre = EXCLUDED.nombre RETURNING id_tipodoc;",
-            (sigla, nombre)
-        )
-        return cursor.fetchone()[0]
+        cursor.execute("SELECT id_tipodoc FROM tb_tipodoc ORDER BY id_tipodoc ASC LIMIT 1;")
+        fila = cursor.fetchone()
+        return fila[0] if fila else 1
 
     def _resolver_id_rol(self, cursor, rol_nombre: str) -> int:
         nombre_limpio = rol_nombre.strip()
@@ -91,19 +77,13 @@ class UsuarioPostgresRepository:
         if fila:
             return fila[0]
 
-        try:
-            cursor.execute(
-                "INSERT INTO tb_roles (nombre, descripción, estado) VALUES (%s, %s, true) RETURNING id_rol;",
-                (nombre_limpio, f"Rol {nombre_limpio}")
-            )
-            return cursor.fetchone()[0]
-        except Exception:
-            cursor.execute("SELECT id_rol FROM tb_roles WHERE LOWER(nombre) = 'empleado' LIMIT 1;")
-            f = cursor.fetchone()
-            return f[0] if f else 1
+        cursor.execute("SELECT id_rol FROM tb_roles WHERE LOWER(nombre) = 'empleado' LIMIT 1;")
+        f = cursor.fetchone()
+        return f[0] if f else 1
 
     def _mapear_fila(self, f: dict[str, Any]) -> dict[str, Any]:
-        tipo_doc_enum = self._resolver_tipo_doc_enum(f.get("tipo_doc_sigla"), f.get("tipo_doc_nombre"))
+        sigla_doc = f.get("tipodoc") or f.get("tipo_doc_sigla")
+        tipo_doc_enum = self._resolver_tipo_doc_enum(sigla_doc)
 
         genero_raw = (f.get("genero") or "").lower().strip()
         if "fem" in genero_raw or genero_raw == "f":
@@ -131,155 +111,109 @@ class UsuarioPostgresRepository:
             "telefono": f.get("telefono"),
             "direccion": f.get("direccion"),
             "genero": genero_enum,
-            "rol": f.get("rol_nombre") or "Empleado",
+            "rol": f.get("rol") or f.get("rol_nombre") or "Empleado",
             "estado": estado_enum,
             "fecha_registro": date.today(),
         }
 
     def obtener_por_id(self, usuario_id: int) -> dict[str, Any] | None:
-        sql = """
-            SELECT u.id_usuario, u.nombres, u.apellidos, td.sigla AS tipo_doc_sigla, td.nombre AS tipo_doc_nombre,
-                   u.numerodoc, u.correo, u.telefono, u.direccion, u.genero, r.nombre AS rol_nombre, u.estado
-            FROM tb_usuario u
-            LEFT JOIN tb_tipodoc td ON u.id_tipodoc = td.id_tipodoc
-            LEFT JOIN tb_roles r ON u.id_rol = r.id_rol
-            WHERE u.id_usuario = %s;
-        """
+        """Obtiene un usuario utilizando sp_obtener_usuario de Supabase."""
         with self._get_connection() as conn:
             with conn.cursor(row_factory=dict_row) as cursor:
-                cursor.execute(sql, (usuario_id,))
+                cursor.execute("SELECT * FROM sp_obtener_usuario(%s);", (usuario_id,))
                 fila = cursor.fetchone()
                 return self._mapear_fila(fila) if fila else None
 
     def obtener_por_correo(self, correo: str) -> dict[str, Any] | None:
-        sql = """
-            SELECT u.id_usuario, u.nombres, u.apellidos, td.sigla AS tipo_doc_sigla, td.nombre AS tipo_doc_nombre,
-                   u.numerodoc, u.correo, u.telefono, u.direccion, u.genero, r.nombre AS rol_nombre, u.estado
-            FROM tb_usuario u
-            LEFT JOIN tb_tipodoc td ON u.id_tipodoc = td.id_tipodoc
-            LEFT JOIN tb_roles r ON u.id_rol = r.id_rol
-            WHERE LOWER(TRIM(u.correo)) = LOWER(TRIM(%s));
-        """
+        """Busca un usuario por correo mediante sp_listar_usuarios de Supabase."""
+        c_clean = correo.strip().lower()
         with self._get_connection() as conn:
             with conn.cursor(row_factory=dict_row) as cursor:
-                cursor.execute(sql, (correo.strip(),))
+                cursor.execute(
+                    "SELECT * FROM sp_listar_usuarios(NULL, NULL, %s, true) WHERE LOWER(BTRIM(correo)) = %s LIMIT 1;",
+                    (c_clean, c_clean)
+                )
                 fila = cursor.fetchone()
                 return self._mapear_fila(fila) if fila else None
 
     def obtener_por_documento(self, numero_doc: str) -> dict[str, Any] | None:
-        sql = """
-            SELECT u.id_usuario, u.nombres, u.apellidos, td.sigla AS tipo_doc_sigla, td.nombre AS tipo_doc_nombre,
-                   u.numerodoc, u.correo, u.telefono, u.direccion, u.genero, r.nombre AS rol_nombre, u.estado
-            FROM tb_usuario u
-            LEFT JOIN tb_tipodoc td ON u.id_tipodoc = td.id_tipodoc
-            LEFT JOIN tb_roles r ON u.id_rol = r.id_rol
-            WHERE TRIM(u.numerodoc) = TRIM(%s);
-        """
+        """Busca un usuario por documento mediante sp_listar_usuarios de Supabase."""
+        doc_clean = numero_doc.strip()
         with self._get_connection() as conn:
             with conn.cursor(row_factory=dict_row) as cursor:
-                cursor.execute(sql, (numero_doc.strip(),))
+                cursor.execute(
+                    "SELECT * FROM sp_listar_usuarios(NULL, NULL, %s, true) WHERE BTRIM(numerodoc) = %s LIMIT 1;",
+                    (doc_clean, doc_clean)
+                )
                 fila = cursor.fetchone()
                 return self._mapear_fila(fila) if fila else None
 
     def listar(self, filtros: UsuarioFiltros) -> tuple[list[dict[str, Any]], int]:
-        where_parts = []
-        params = []
-
-        if filtros.search:
-            s = f"%{filtros.search.strip()}%"
-            where_parts.append("(u.nombres ILIKE %s OR u.apellidos ILIKE %s OR u.correo ILIKE %s OR u.numerodoc ILIKE %s)")
-            params.extend([s, s, s, s])
-
-        if filtros.rol:
-            where_parts.append("LOWER(r.nombre) = LOWER(%s)")
-            params.append(filtros.rol.strip())
-
-        if filtros.estado:
-            where_parts.append("u.estado = %s")
-            params.append(str(filtros.estado))
-
-        where_sql = ("WHERE " + " AND ".join(where_parts)) if where_parts else ""
-
+        """Obtiene la lista paginada y filtrada invocando sp_listar_usuarios de Supabase."""
         with self._get_connection() as conn:
             with conn.cursor(row_factory=dict_row) as cursor:
-                count_sql = f"""
-                    SELECT COUNT(*) AS total
-                    FROM tb_usuario u
-                    LEFT JOIN tb_tipodoc td ON u.id_tipodoc = td.id_tipodoc
-                    LEFT JOIN tb_roles r ON u.id_rol = r.id_rol
-                    {where_sql};
-                """
-                cursor.execute(count_sql, params)
-                total = cursor.fetchone()["total"]
+                id_rol = None
+                if filtros.rol:
+                    cursor.execute(
+                        "SELECT id_rol FROM tb_roles WHERE LOWER(nombre) = LOWER(%s) LIMIT 1;",
+                        (filtros.rol.strip(),)
+                    )
+                    r_f = cursor.fetchone()
+                    if r_f:
+                        id_rol = r_f["id_rol"]
 
+                estado_param = str(filtros.estado) if filtros.estado else None
+                buscar_param = filtros.search.strip() if filtros.search else None
+
+                # Invocar función oficial de Supabase
+                cursor.execute(
+                    "SELECT * FROM sp_listar_usuarios(%s, %s, %s, false);",
+                    (id_rol, estado_param, buscar_param)
+                )
+                todas_filas = cursor.fetchall()
+                total = len(todas_filas)
+
+                # Paginación
                 offset = (filtros.page - 1) * filtros.page_size
-                data_sql = f"""
-                    SELECT u.id_usuario, u.nombres, u.apellidos, td.sigla AS tipo_doc_sigla, td.nombre AS tipo_doc_nombre,
-                           u.numerodoc, u.correo, u.telefono, u.direccion, u.genero, r.nombre AS rol_nombre, u.estado
-                    FROM tb_usuario u
-                    LEFT JOIN tb_tipodoc td ON u.id_tipodoc = td.id_tipodoc
-                    LEFT JOIN tb_roles r ON u.id_rol = r.id_rol
-                    {where_sql}
-                    ORDER BY u.id_usuario ASC
-                    LIMIT %s OFFSET %s;
-                """
-                cursor.execute(data_sql, params + [filtros.page_size, offset])
-                filas = cursor.fetchall()
-                items = [self._mapear_fila(f) for f in filas]
+                filas_paginadas = todas_filas[offset:offset + filtros.page_size]
+
+                items = [self._mapear_fila(f) for f in filas_paginadas]
                 return items, total
 
     def crear_token_activacion(self, usuario_id: int) -> tuple[str, str]:
-        """Crea un token de activación en tb_token_usuario (48h de vigencia) y genera el enlace."""
+        """Genera un token de activación utilizando el procedimiento sp_crear_token_usuario de Supabase."""
+        usr = self.obtener_por_id(usuario_id)
+        if not usr:
+            raise UsuarioNoEncontradoError(usuario_id)
+
         token = secrets.token_urlsafe(32)
         with self._get_connection() as conn:
             with conn.cursor() as cursor:
-                cursor.execute("""
-                    INSERT INTO tb_token_usuario (id_usuario, tipo, token_hash, fecha_creacion, fecha_expira)
-                    VALUES (%s, 'Activacion', %s, now(), now() + interval '48 hours')
-                    RETURNING id_token;
-                """, (usuario_id, token))
+                # sp_crear_token_usuario: 2880 minutos = 48 horas
+                cursor.execute(
+                    "SELECT * FROM sp_crear_token_usuario(%s, 'Activacion', %s, 2880);",
+                    (usr["correo"], token)
+                )
                 conn.commit()
 
         enlace = f"http://localhost:5173/activar-cuenta?token={token}"
         return token, enlace
 
-    def enviar_correo_activacion_simulado(self, correo: str, nombres: str, enlace: str) -> None:
-        """Simula el envío de correo de activación registrándolo en consola/logs."""
-        print(f"""
-================================================================================
-[CORREO ENVIADO] ACTIVACIÓN DE CUENTA - RAÍZ URBANA
-Para: {correo}
-Asunto: Activa tu cuenta en Raíz Urbana
-Hola {nombres}, has sido registrado en la plataforma de Raíz Urbana.
-Por favor ingresa al siguiente enlace para configurar y confirmar tu contraseña:
-{enlace}
-(Este enlace vence en 48 horas)
-================================================================================
-        """)
-
     def validar_token_activacion(self, token: str) -> dict[str, Any]:
-        """Valida si un token existe, no ha sido usado y no ha expirado."""
-        sql = """
-            SELECT t.id_token, t.id_usuario, u.nombres, u.apellidos, u.correo, t.fecha_expira, t.fecha_uso
-            FROM tb_token_usuario t
-            JOIN tb_usuario u ON t.id_usuario = u.id_usuario
-            WHERE t.token_hash = %s AND t.tipo = 'Activacion';
-        """
+        """Valida el token de activación mediante la función sp_validar_token_usuario de Supabase."""
         with self._get_connection() as conn:
             with conn.cursor(row_factory=dict_row) as cursor:
-                cursor.execute(sql, (token.strip(),))
+                cursor.execute(
+                    "SELECT * FROM sp_validar_token_usuario(%s, 'Activacion');",
+                    (token.strip(),)
+                )
                 fila = cursor.fetchone()
 
         if not fila:
-            return {"valido": False, "mensaje": "El enlace de activación no es válido."}
-
-        if fila["fecha_uso"] is not None:
-            return {"valido": False, "mensaje": "Este enlace de activación ya fue utilizado previamente."}
-
-        from datetime import datetime, timezone
-        ahora = datetime.now(timezone.utc)
-        if fila["fecha_expira"] < ahora:
-            return {"valido": False, "mensaje": "El enlace de activación ha expirado."}
+            return {
+                "valido": False,
+                "mensaje": "El enlace de activación no es válido, ya fue utilizado o ha expirado."
+            }
 
         nombre_completo = f"{fila['nombres']} {fila['apellidos']}".strip()
         return {
@@ -291,39 +225,32 @@ Por favor ingresa al siguiente enlace para configurar y confirmar tu contraseña
         }
 
     def activar_con_token(self, token: str, contrasena: str) -> dict[str, Any]:
-        """Establece la contraseña del usuario con blowfish crypt, cambia el estado a 'Activo'
-        y marca el token como utilizado en tb_token_usuario."""
+        """Activa la cuenta y establece la contraseña invocando sp_activar_cuenta de Supabase."""
+        # 1. Obtener el id_usuario antes de activar
         val = self.validar_token_activacion(token)
         if not val["valido"]:
-            raise TokenInvalidoError(val["mensaje"] or "Enlace inválido o expirado.")
+            raise TokenInvalidoError(val["mensaje"] or "Enlace de activación inválido o expirado.")
 
         usuario_id = val["usuario_id"]
 
         with self._get_connection() as conn:
             with conn.cursor() as cursor:
-                # 1. Asignar contraseña hasheada y pasar estado a Activo
-                cursor.execute("""
-                    UPDATE tb_usuario
-                    SET "contraseña" = crypt(%s, gen_salt('bf', 12)),
-                        estado = 'Activo'
-                    WHERE id_usuario = %s;
-                """, (contrasena.strip(), usuario_id))
-
-                # 2. Quemar token (fecha_uso = now())
-                cursor.execute("""
-                    UPDATE tb_token_usuario
-                    SET fecha_uso = now()
-                    WHERE token_hash = %s;
-                """, (token.strip(),))
-
-                conn.commit()
+                try:
+                    # sp_activar_cuenta en Supabase
+                    cursor.execute(
+                        "SELECT sp_activar_cuenta(%s, %s);",
+                        (token.strip(), contrasena.strip())
+                    )
+                    conn.commit()
+                except psycopg.errors.RaiseException as e:
+                    conn.rollback()
+                    msg = str(e).split("\n")[0]
+                    raise TokenInvalidoError(msg)
 
         return self.obtener_por_id(usuario_id)
 
     def guardar(self, datos_usuario: dict[str, Any]) -> dict[str, Any]:
-        """Registra un nuevo usuario con sp_registrar_usuario.
-        Si no se envía contraseña, el usuario queda en estado 'Pendiente'
-        y se genera el enlace de activación por correo."""
+        """Registra un nuevo usuario con sp_registrar_usuario de Supabase."""
         correo = datos_usuario["correo"].strip().lower()
         numero_doc = datos_usuario["numero_doc"].strip()
 
@@ -337,7 +264,6 @@ Por favor ingresa al siguiente enlace para configurar y confirmar tu contraseña
                 id_tipodoc = self._resolver_id_tipodoc(cursor, datos_usuario["tipo_doc"])
                 id_rol = self._resolver_id_rol(cursor, datos_usuario.get("rol", "Empleado"))
 
-                # Si no se envía contraseña (flujo por seguridad del admin), se envía NULL
                 clave = datos_usuario.get("contrasena")
                 genero_val = str(datos_usuario.get("genero") or "Masculino")
                 tel_val = (datos_usuario.get("telefono") or "").strip()
@@ -364,16 +290,15 @@ Por favor ingresa al siguiente enlace para configurar y confirmar tu contraseña
                     ))
                     nuevo_id = cursor.fetchone()[0]
                     conn.commit()
-                except psycopg.errors.UniqueViolation as e:
+                except psycopg.errors.RaiseException as e:
                     conn.rollback()
                     msg = str(e).lower()
                     if "correo" in msg:
                         raise CorreoDuplicadoError(correo)
-                    elif "numerodoc" in msg or "documento" in msg:
+                    elif "documento" in msg or "numerodoc" in msg:
                         raise DocumentoDuplicadoError(numero_doc)
-                    raise
+                    raise ValueError(str(e).split("\n")[0])
 
-        # Si no traía contraseña, generar token y enlace de activación por correo
         enlace_act = None
         token_act = None
         if not clave:
@@ -387,7 +312,7 @@ Por favor ingresa al siguiente enlace para configurar y confirmar tu contraseña
         return usuario_dict
 
     def actualizar(self, usuario_id: int, datos: dict[str, Any]) -> dict[str, Any]:
-        """Actualiza un usuario utilizando los procedimientos almacenados sp_actualizar_usuario y sp_cambiar_estado_usuario."""
+        """Actualiza un usuario mediante sp_actualizar_usuario y sp_cambiar_estado_usuario de Supabase."""
         usuario_actual = self.obtener_por_id(usuario_id)
         if not usuario_actual:
             raise UsuarioNoEncontradoError(usuario_id)
@@ -403,17 +328,21 @@ Por favor ingresa al siguiente enlace para configurar y confirmar tu contraseña
                 direccion = datos.get("direccion") if "direccion" in datos else usuario_actual["direccion"]
                 genero = str(datos.get("genero") or usuario_actual["genero"])
 
-                cursor.execute("""
-                    SELECT sp_actualizar_usuario(%s, %s, %s, %s, %s, %s, %s);
-                """, (
-                    usuario_id,
-                    nombres.strip(),
-                    apellidos.strip(),
-                    (telefono or "").strip(),
-                    (direccion or "").strip(),
-                    genero,
-                    id_rol,
-                ))
+                try:
+                    cursor.execute("""
+                        SELECT sp_actualizar_usuario(%s, %s, %s, %s, %s, %s, %s);
+                    """, (
+                        usuario_id,
+                        nombres.strip(),
+                        apellidos.strip(),
+                        (telefono or "").strip(),
+                        (direccion or "").strip(),
+                        genero,
+                        id_rol,
+                    ))
+                except psycopg.errors.RaiseException as e:
+                    conn.rollback()
+                    raise ValueError(str(e).split("\n")[0])
 
                 if "correo" in datos and datos["correo"]:
                     correo_nuevo = datos["correo"].strip().lower()
@@ -426,14 +355,18 @@ Por favor ingresa al siguiente enlace para configurar y confirmar tu contraseña
                 if "estado" in datos and datos["estado"] is not None:
                     estado_str = str(datos["estado"])
                     if estado_str in ("Activo", "Inactivo", "Pendiente"):
-                        cursor.execute("SELECT sp_cambiar_estado_usuario(%s, %s);", (usuario_id, estado_str))
+                        try:
+                            cursor.execute("SELECT sp_cambiar_estado_usuario(%s, %s);", (usuario_id, estado_str))
+                        except psycopg.errors.RaiseException as e:
+                            conn.rollback()
+                            raise ValueError(str(e).split("\n")[0])
 
                 conn.commit()
 
         return self.obtener_por_id(usuario_id)
 
     def reemplazar_rol(self, usuario_id: int, nuevo_rol: str) -> dict[str, Any]:
-        """Asigna un nuevo rol al usuario en PostgreSQL."""
+        """Asigna un nuevo rol al usuario en PostgreSQL utilizando sp_actualizar_usuario."""
         usuario = self.obtener_por_id(usuario_id)
         if not usuario:
             raise UsuarioNoEncontradoError(usuario_id)
@@ -441,26 +374,36 @@ Por favor ingresa al siguiente enlace para configurar y confirmar tu contraseña
         with self._get_connection() as conn:
             with conn.cursor() as cursor:
                 id_rol = self._resolver_id_rol(cursor, nuevo_rol)
-                cursor.execute("UPDATE tb_usuario SET id_rol = %s WHERE id_usuario = %s;", (id_rol, usuario_id))
+                cursor.execute("""
+                    SELECT sp_actualizar_usuario(%s, %s, %s, %s, %s, %s, %s);
+                """, (
+                    usuario_id,
+                    usuario["nombres"],
+                    usuario["apellidos"],
+                    usuario["telefono"] or "3000000000",
+                    usuario["direccion"] or "Sin direccion",
+                    str(usuario["genero"]),
+                    id_rol,
+                ))
                 conn.commit()
 
         return self.obtener_por_id(usuario_id)
 
     def eliminar(self, usuario_id: int) -> bool:
-        """Elimina un usuario por su ID físico en PostgreSQL con validación de integridad referencial."""
-        usuario = self.obtener_por_id(usuario_id)
-        if not usuario:
-            raise UsuarioNoEncontradoError(usuario_id)
-
+        """Elimina un usuario invocando sp_eliminar_usuario de Supabase."""
         with self._get_connection() as conn:
             with conn.cursor() as cursor:
                 try:
-                    cursor.execute("DELETE FROM tb_usuario WHERE id_usuario = %s;", (usuario_id,))
+                    cursor.execute("SELECT sp_eliminar_usuario(%s);", (usuario_id,))
                     conn.commit()
                     return True
-                except psycopg.errors.ForeignKeyViolation:
+                except psycopg.errors.RaiseException as e:
                     conn.rollback()
-                    raise UsuarioConDependenciasError(usuario_id)
+                    msg = str(e).split("\n")[0]
+                    if "No existe el usuario" in msg:
+                        raise UsuarioNoEncontradoError(usuario_id)
+                    else:
+                        raise UsuarioConDependenciasError(usuario_id)
 
 
 def UsuarioRepository() -> UsuarioPostgresRepository:

@@ -194,6 +194,7 @@ def probar_modulo_compras():
             ),
         ],
         observaciones="Compra de reposición periódica",
+        estado="Completada",
     )
 
     compra_creada = servicio.registrar_compra(compra_dto)
@@ -271,7 +272,7 @@ def probar_modulo_compras():
     # Intentar compra con primer ítem válido (101) pero segundo ítem inválido (producto inexistente)
     try:
         repo.guardar_compra_transaccional(
-            cabecera={"proveedor_id": "Textiles SA", "metodo_pago": "Efectivo"},
+            cabecera={"proveedor_id": "Textiles SA", "metodo_pago": "Efectivo", "estado": "Completada"},
             detalles_data=[
                 {"producto_id": "101", "cantidad": 50, "precio_unitario": 20000.0},
                 {"producto_id": "PRODUCTO_FALLIDO_999", "cantidad": 10, "precio_unitario": 5000.0},
@@ -336,9 +337,30 @@ def probar_controladores_http():
     print("5. VERIFICACIÓN DIRECTA DE CONTROLADORES Y CÓDIGOS HTTP")
     print("=" * 60)
     from fastapi import HTTPException
-    from app.modules.categorias.presentation.controller import registrar_categoria, listar_categorias
-    from app.modules.metodo_pago.presentation.router import registrar_metodo_pago, listar_metodos_pago
-    from app.modules.compras.presentation.router import registrar_compra, listar_compras
+    from app.modules.categorias.presentation.controller import registrar_categoria, listar_categorias, CategoriaService
+    from app.modules.metodo_pago.presentation.router import registrar_metodo_pago, listar_metodos_pago, MetodoPagoService
+    from app.modules.compras.presentation.router import registrar_compra, listar_compras, CompraService
+
+    # Limpieza previa de pruebas anteriores
+    cat_srv = CategoriaService()
+    for c in cat_srv.listar_categorias():
+        c_nom = getattr(c, "nombre", None) or (c.get("nombre") if isinstance(c, dict) else "")
+        c_id = getattr(c, "id", None) or (c.get("id") if isinstance(c, dict) else None)
+        if "test http" in str(c_nom).lower():
+            try:
+                cat_srv.eliminar_categoria(c_id)
+            except Exception:
+                pass
+
+    mp_srv = MetodoPagoService()
+    for m in mp_srv.listar_metodos():
+        m_nom = getattr(m, "nombre", None) or (m.get("nombre") if isinstance(m, dict) else "")
+        m_id = getattr(m, "id", None) or (m.get("id") if isinstance(m, dict) else None)
+        if "test http" in str(m_nom).lower():
+            try:
+                mp_srv.eliminar_metodo(m_id)
+            except Exception:
+                pass
 
     # 5.1 Categorías HTTP
     cat_ok = registrar_categoria(CategoriaCreate(nombre="Categoría Test HTTP"))
@@ -397,6 +419,20 @@ def probar_controladores_http():
     comps = listar_compras()
     assert isinstance(comps, list) and len(comps) >= 1
     print(f"   [HTTP 200] listar_compras: OK ({len(comps)} compras)")
+
+    # Limpieza final de entidades de prueba
+    try:
+        CompraService().eliminar_compra(comp_ok.id)
+    except Exception:
+        pass
+    try:
+        cat_srv.eliminar_categoria(cat_ok.id)
+    except Exception:
+        pass
+    try:
+        mp_srv.eliminar_metodo(mp_ok.id)
+    except Exception:
+        pass
 
 
 if __name__ == "__main__":

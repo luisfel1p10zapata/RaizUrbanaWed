@@ -111,3 +111,12 @@ class MetodoPagoResponse(CamelModel):
     nombre: str
     numero_cuenta: str | None = ""
     estado: str = "Activo"
+
+
+class MetodoPagoMetricasResponse(CamelModel):
+    """Métricas y estadísticas del catálogo de métodos de pago."""
+    total: int = 0
+    activos: int = 0
+    inactivos: int = 0
+    con_cuenta: int = 0
+

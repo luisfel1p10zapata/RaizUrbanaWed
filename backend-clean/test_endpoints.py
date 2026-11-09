@@ -18,6 +18,8 @@ from app.modules.usuarios.application.schemas import (
 from app.modules.usuarios.application.registrar_usuario import RegistrarUsuario
 from app.modules.usuarios.application.listar_usuarios import ListarUsuarios
 from app.modules.usuarios.application.asignar_rol_usuario import AsignarRolUsuario
+from app.modules.usuarios.application.eliminar_usuario import EliminarUsuario
+from app.modules.usuarios.infrastructure.usuario_repository import UsuarioRepository
 from app.modules.usuarios.domain.exceptions import (
     CorreoDuplicadoError,
     RolInvalidoError,
@@ -56,6 +58,11 @@ listar_caso = ListarUsuarios()
 pagina = listar_caso.ejecutar(UsuarioFiltros(page=1, page_size=10))
 print(f"Usuarios iniciales cargados: {pagina.total}")
 assert pagina.total >= 4, "Deberían existir al menos 4 usuarios iniciales"
+
+# Limpiar usuario previo si quedó de una corrida anterior
+prev = UsuarioRepository().obtener_por_correo("alejandro.martinez@empresa.com")
+if prev:
+    EliminarUsuario().ejecutar(prev["id"])
 
 # Registrar nuevo usuario
 reg_caso = RegistrarUsuario()
@@ -110,6 +117,9 @@ json_data = usuario_actualizado.model_dump(by_alias=True)
 assert "contrasena" not in json_data and "password" not in json_data and "passwordHash" not in json_data
 assert "tipoDoc" in json_data and "numeroDoc" in json_data and "fechaRegistro" in json_data
 print(f"Serialización JSON camelCase: {json.dumps(json_data, default=str)}")
+
+# Limpiar usuario creado en prueba
+EliminarUsuario().ejecutar(usuario_creado.id)
 
 print("\n==================================================")
 print("4. VERIFICACIÓN DE GESTIÓN DE VENTAS")

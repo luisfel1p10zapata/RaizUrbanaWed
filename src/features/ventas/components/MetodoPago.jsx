@@ -41,6 +41,7 @@ import {
 import './MetodoPago.css';
 
 import AppAlert from '../../../components/ui/AppAlert';
+import ConfirmModal from '../../../components/ui/ConfirmModal';
 
 import {
 
@@ -131,6 +132,8 @@ const MetodoPago = () => {
 
   const [estadoTemporal, setEstadoTemporal] = useState('');
 
+  const [filtroEstado, setFiltroEstado] = useState('todos');
+
   const [pagina, setPagina] = useState(1);
 
   const [alerta, setAlerta] = useState(null);
@@ -177,7 +180,7 @@ const MetodoPago = () => {
 
         if (activo) {
 
-          setMetodos(datos);
+          setMetodos(Array.isArray(datos) ? datos : []);
 
         }
 
@@ -223,9 +226,11 @@ const MetodoPago = () => {
 
     const datos = await obtenerMetodosPago();
 
-    setMetodos(datos);
+    const lista = Array.isArray(datos) ? datos : [];
 
-    return datos;
+    setMetodos(lista);
+
+    return lista;
 
   };
 
@@ -239,15 +244,23 @@ const MetodoPago = () => {
 
     setPagina(1);
 
-  }, [busqueda]);
+  }, [busqueda, filtroEstado]);
 
   const metodosFiltrados = useMemo(() => {
 
+    let lista = metodos;
+
+    if (filtroEstado === 'Activo') {
+      lista = lista.filter((m) => m.estado === 'Activo');
+    } else if (filtroEstado === 'Inactivo') {
+      lista = lista.filter((m) => m.estado === 'Inactivo');
+    }
+
     const termino = busqueda.trim().toLowerCase();
 
-    if (!termino) return metodos;
+    if (!termino) return lista;
 
-    return metodos.filter((metodo) => {
+    return lista.filter((metodo) => {
 
       return (
 
@@ -261,13 +274,25 @@ const MetodoPago = () => {
 
           .toLowerCase()
 
+          .includes(termino) ||
+
+        (metodo.estado || '')
+
+          .toLowerCase()
+
+          .includes(termino) ||
+
+        String(metodo.id || '')
+
+          .toLowerCase()
+
           .includes(termino)
 
       );
 
     });
 
-  }, [metodos, busqueda]);
+  }, [metodos, busqueda, filtroEstado]);
 
   const totalMetodos = metodos.length;
 
@@ -603,45 +628,31 @@ const MetodoPago = () => {
 
   // =====================================================
 
-  // CAMBIAR ESTADO
+  // =====================================================
+
+  // CAMBIAR ESTADO DIRECTO
 
   // =====================================================
 
-  const aplicarEstado = async () => {
+  const cambiarEstadoDirecto = async (metodo) => {
 
-    if (
+    if (procesando || !metodo) return;
 
-      procesando ||
-
-      !metodoSeleccionado ||
-
-      !estadoTemporal
-
-    ) {
-
-      return;
-
-    }
+    const nuevoEstado = metodo.estado === 'Activo' ? 'Inactivo' : 'Activo';
 
     setProcesando(true);
 
     try {
 
-      await cambiarEstadoMetodoPagoApi(
-
-        metodoSeleccionado.id,
-
-        estadoTemporal
-
-      );
+      await cambiarEstadoMetodoPagoApi(metodo.id, nuevoEstado);
 
       await cargarMetodos();
 
-      setModal(null);
+      if (metodoSeleccionado && metodoSeleccionado.id === metodo.id) {
 
-      setMetodoSeleccionado(null);
+        setMetodoSeleccionado((prev) => (prev ? { ...prev, estado: nuevoEstado } : null));
 
-      setEstadoTemporal('');
+      }
 
       mostrarAlerta(
 
@@ -823,7 +834,12 @@ const MetodoPago = () => {
 
       <div className="metodo-kpis">
 
-        <div className="metodo-kpi-card">
+        <div
+          className={`metodo-kpi-card ${filtroEstado === 'todos' ? 'active' : ''}`}
+          style={{ cursor: 'pointer' }}
+          onClick={() => setFiltroEstado('todos')}
+          title="Mostrar todos los métodos"
+        >
 
           <div className="metodo-kpi-top">
 
@@ -847,7 +863,12 @@ const MetodoPago = () => {
 
         </div>
 
-        <div className="metodo-kpi-card">
+        <div
+          className={`metodo-kpi-card ${filtroEstado === 'Activo' ? 'active' : ''}`}
+          style={{ cursor: 'pointer' }}
+          onClick={() => setFiltroEstado((prev) => (prev === 'Activo' ? 'todos' : 'Activo'))}
+          title="Filtrar sólo métodos activos"
+        >
 
           <div className="metodo-kpi-top">
 
@@ -871,7 +892,12 @@ const MetodoPago = () => {
 
         </div>
 
-        <div className="metodo-kpi-card">
+        <div
+          className={`metodo-kpi-card ${filtroEstado === 'Inactivo' ? 'active' : ''}`}
+          style={{ cursor: 'pointer' }}
+          onClick={() => setFiltroEstado((prev) => (prev === 'Inactivo' ? 'todos' : 'Inactivo'))}
+          title="Filtrar sólo métodos inactivos"
+        >
 
           <div className="metodo-kpi-top">
 
@@ -1075,11 +1101,13 @@ const MetodoPago = () => {
 
                         onClick={() =>
 
-                          abrirEstado(metodo)
+                          cambiarEstadoDirecto(metodo)
 
                         }
 
-                        title="Cambiar estado"
+                        disabled={procesando}
+
+                        title={`Cambiar a ${metodo.estado === 'Activo' ? 'Inactivo' : 'Activo'}`}
 
                       >
 
@@ -1624,9 +1652,11 @@ const MetodoPago = () => {
 
                   onClick={() =>
 
-                    abrirEstado(metodoSeleccionado)
+                    cambiarEstadoDirecto(metodoSeleccionado)
 
                   }
+
+                  disabled={procesando}
 
                 >
 
@@ -1702,9 +1732,11 @@ const MetodoPago = () => {
 
                     onClick={() =>
 
-                      abrirEstado(metodoSeleccionado)
+                      cambiarEstadoDirecto(metodoSeleccionado)
 
                     }
+
+                    disabled={procesando}
 
                   >
 
@@ -1731,24 +1763,6 @@ const MetodoPago = () => {
                 >
 
                   Cerrar
-
-                </button>
-
-                <button
-
-                  type="button"
-
-                  className="metodo-btn-dark"
-
-                  onClick={() =>
-
-                    abrirEditar(metodoSeleccionado)
-
-                  }
-
-                >
-
-                  Editar
 
                 </button>
 
@@ -1969,311 +1983,18 @@ const MetodoPago = () => {
 
         )}
 
-      {/* MODAL CAMBIAR ESTADO */}
 
-      {modal === 'estado' &&
 
-        metodoSeleccionado && (
-
-          <div
-
-            className="metodo-overlay"
-
-            onMouseDown={cerrarModal}
-
-          >
-
-            <div
-
-              className="metodo-modal metodo-modal-status"
-
-              onMouseDown={(e) =>
-
-                e.stopPropagation()
-
-              }
-
-            >
-
-              <div className="metodo-modal-header">
-
-                <div>
-
-                  <span className="metodo-modal-eyebrow">
-
-                    CU.11.06 ·{' '}
-
-                    {metodoSeleccionado.nombre}
-
-                  </span>
-
-                  <h2>Cambiar Estado</h2>
-
-                </div>
-
-                <button
-
-                  type="button"
-
-                  className="metodo-close"
-
-                  onClick={cerrarModal}
-
-                  disabled={procesando}
-
-                >
-
-                  <X size={21} />
-
-                </button>
-
-              </div>
-
-              <div className="metodo-status-options">
-
-                <button
-
-                  type="button"
-
-                  className={`metodo-status-option ${
-
-                    estadoTemporal === 'Activo'
-
-                      ? 'selected'
-
-                      : ''
-
-                  }`}
-
-                  onClick={() =>
-
-                    setEstadoTemporal('Activo')
-
-                  }
-
-                  disabled={procesando}
-
-                >
-
-                  <div className="status-option-dot active"></div>
-
-                  <div>
-
-                    <strong>Activo</strong>
-
-                    <span>
-
-                      Disponible para cobros
-
-                    </span>
-
-                  </div>
-
-                  {estadoTemporal === 'Activo' && (
-
-                    <Check size={17} />
-
-                  )}
-
-                </button>
-
-                <button
-
-                  type="button"
-
-                  className={`metodo-status-option ${
-
-                    estadoTemporal === 'Inactivo'
-
-                      ? 'selected'
-
-                      : ''
-
-                  }`}
-
-                  onClick={() =>
-
-                    setEstadoTemporal('Inactivo')
-
-                  }
-
-                  disabled={procesando}
-
-                >
-
-                  <div className="status-option-dot inactive"></div>
-
-                  <div>
-
-                    <strong>Inactivo</strong>
-
-                    <span>
-
-                      No disponible para cobros
-
-                    </span>
-
-                  </div>
-
-                  {estadoTemporal === 'Inactivo' && (
-
-                    <Check size={17} />
-
-                  )}
-
-                </button>
-
-              </div>
-
-              <div className="metodo-modal-footer">
-
-                <button
-
-                  type="button"
-
-                  className="metodo-btn-secondary"
-
-                  onClick={cerrarModal}
-
-                  disabled={procesando}
-
-                >
-
-                  Cancelar
-
-                </button>
-
-                <button
-
-                  type="button"
-
-                  className="metodo-btn-dark"
-
-                  onClick={aplicarEstado}
-
-                  disabled={procesando}
-
-                >
-
-                  {procesando
-
-                    ? 'Aplicando...'
-
-                    : 'Aplicar'}
-
-                </button>
-
-              </div>
-
-            </div>
-
-          </div>
-
-        )}
-
-      {/* MODAL ELIMINAR */}
-
-      {modal === 'eliminar' &&
-
-        metodoSeleccionado && (
-
-          <div
-
-            className="metodo-overlay"
-
-            onMouseDown={cerrarModal}
-
-          >
-
-            <div
-
-              className="metodo-modal metodo-modal-delete"
-
-              onMouseDown={(e) =>
-
-                e.stopPropagation()
-
-              }
-
-            >
-
-              <div className="metodo-delete-content">
-
-                <div className="metodo-delete-icon">
-
-                  <Trash2 size={23} />
-
-                </div>
-
-                <span className="metodo-modal-eyebrow">
-
-                  CU.11.05 · ELIMINAR MÉTODO
-
-                </span>
-
-                <h2>Confirmar eliminación</h2>
-
-                <p>
-
-                  ¿Estás seguro de eliminar{' '}
-
-                  <strong>
-
-                    "{metodoSeleccionado.nombre}"
-
-                  </strong>
-
-                  ? Esta acción no se puede deshacer.
-
-                </p>
-
-              </div>
-
-              <div className="metodo-modal-footer">
-
-                <button
-
-                  type="button"
-
-                  className="metodo-btn-secondary"
-
-                  onClick={cerrarModal}
-
-                  disabled={procesando}
-
-                >
-
-                  Cancelar
-
-                </button>
-
-                <button
-
-                  type="button"
-
-                  className="metodo-btn-danger"
-
-                  onClick={eliminarMetodo}
-
-                  disabled={procesando}
-
-                >
-
-                  {procesando
-
-                    ? 'Eliminando...'
-
-                    : 'Eliminar'}
-
-                </button>
-
-              </div>
-
-            </div>
-
-          </div>
-
-        )}
+      {/* MODAL ELIMINAR ESTÁNDAR RAÍZ URBANA */}
+      {modal === 'eliminar' && metodoSeleccionado && (
+        <ConfirmModal
+          title="¿Eliminar Método de Pago?"
+          message={`¿Estás seguro de eliminar el método de pago "${metodoSeleccionado.nombre}"? Si cuenta con transacciones asociadas en compras o ventas, la operación será bloqueada para proteger la integridad contable.`}
+          confirmText="Sí, eliminar"
+          onConfirm={eliminarMetodo}
+          onClose={cerrarModal}
+        />
+      )}
 
     </div>
 

@@ -60,15 +60,22 @@ def registrar_categoria(datos: CategoriaCreate):
 def listar_categorias(
     buscar: str | None = None,
     estado: bool | None = None,
+    tipo_categoria: str | None = None,
 ):
     try:
-        return CategoriaService().listar_categorias(buscar=buscar, estado=estado)
+        return CategoriaService().listar_categorias(
+            buscar=buscar, estado=estado, tipo_categoria=tipo_categoria
+        )
     except Exception as error:
         manejar_error(error)
 
 
 @router.get(
     "/conteos",
+    response_model=CategoriaConteoResponse,
+)
+@router.get(
+    "/metricas",
     response_model=CategoriaConteoResponse,
 )
 def obtener_conteos():
