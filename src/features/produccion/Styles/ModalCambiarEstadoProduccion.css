@@ -1,0 +1,46 @@
+/* ==================================================================
+   ModalCambiarEstadoProduccion.css — Estilos del Modal de Cambio de Estado
+   ================================================================== */
+
+.prod-status-modal {
+  max-width: 480px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.prod-status-modal .ru-modal-body {
+  max-height: calc(85vh - 120px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.prod-status-info-box {
+  margin-bottom: 16px;
+}
+
+.prod-status-label {
+  margin-bottom: 6px;
+  display: block;
+}
+
+.prod-status-product-name {
+  margin: 0;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-main, #22223B);
+}
+
+[data-theme="dark"] .prod-status-product-name {
+  color: #F2E9E4;
+}
+
+.prod-status-resp {
+  font-size: 12px;
+  color: var(--text-muted, #94a3b8);
+}
+
+.prod-status-current-box {
+  margin-bottom: 20px;
+}

@@ -1,0 +1,61 @@
+/* ==================================================================
+   ModalEditarDevoluciones.css — Estilos del Modal de Editar Devolución
+   ================================================================== */
+
+.dev-edit-modal {
+  max-width: 580px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.dev-edit-modal-body {
+  max-height: calc(85vh - 130px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.dev-edit-info-card {
+  background: rgba(59, 130, 246, 0.05);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+  font-size: 12.5px;
+}
+
+[data-theme="dark"] .dev-edit-info-card {
+  background: rgba(59, 130, 246, 0.12);
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.dev-edit-info-label {
+  color: var(--text-muted, #94a3b8);
+  display: block;
+}
+
+.dev-edit-grid-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.dev-edit-field {
+  margin-bottom: 16px;
+}
+
+.dev-edit-textarea {
+  resize: vertical;
+}
+
+@media (max-width: 600px) {
+  .dev-edit-grid-2col {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
