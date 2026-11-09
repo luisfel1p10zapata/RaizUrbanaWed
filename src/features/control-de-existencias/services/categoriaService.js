@@ -3,7 +3,7 @@
  * Conexión completa con backend FastAPI y PostgreSQL.
  */
 
-const API_URL = 'http://127.0.0.1:8000/api/categorias';
+import { apiRequest } from '../../../utils/apiClient';
 
 const normalizarCategoria = (categoria) => ({
   ...categoria,
@@ -11,47 +11,7 @@ const normalizarCategoria = (categoria) => ({
 });
 
 const solicitar = async (ruta = '', opciones = {}) => {
-  let respuesta;
-
-  try {
-    respuesta = await fetch(`${API_URL}${ruta}`, {
-      ...opciones,
-      headers: {
-        'Content-Type': 'application/json',
-        ...opciones.headers,
-      },
-    });
-  } catch {
-    throw new Error(
-      'No se pudo conectar con el backend. Verifica que FastAPI esté funcionando.'
-    );
-  }
-
-  if (!respuesta.ok) {
-    let mensaje = 'Ocurrió un error al procesar la solicitud.';
-
-    try {
-      const error = await respuesta.json();
-
-      if (typeof error.detail === 'string') {
-        mensaje = error.detail;
-      } else if (Array.isArray(error.detail)) {
-        mensaje = error.detail
-          .map((item) => item.msg)
-          .join(', ');
-      }
-    } catch {
-      // Se conserva el mensaje predeterminado.
-    }
-
-    throw new Error(mensaje);
-  }
-
-  if (respuesta.status === 204) {
-    return null;
-  }
-
-  return respuesta.json();
+  return apiRequest('categorias', ruta, opciones);
 };
 
 // LISTAR CON BÚSQUEDA Y FILTRO
@@ -65,12 +25,17 @@ export const obtenerCategorias = async (params = {}) => {
   const qs = query.toString() ? `?${query.toString()}` : '';
   const categorias = await solicitar(qs);
 
-  return categorias.map(normalizarCategoria);
+  const lista = Array.isArray(categorias) ? categorias : (categorias?.data || []);
+  return lista.map(normalizarCategoria);
 };
 
 // CONTEOS Y MÉTRICAS
 export const obtenerConteosCategorias = async () => {
   return solicitar('/conteos');
+};
+
+export const obtenerMetricasCategorias = async () => {
+  return solicitar('/metricas');
 };
 
 // CONSULTAR POR ID

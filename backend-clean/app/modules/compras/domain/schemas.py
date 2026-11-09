@@ -7,11 +7,22 @@ from app.shared.schemas import CamelModel, Pagina
 
 
 ESTADOS_COMPRA = {
+    "Registrada",
     "Pendiente",
-    "Aprobada",
-    "Recibida",
+    "Procesando",
     "Completada",
     "Cancelada",
+}
+
+ESTADOS_MAPA_REAL = {
+    "registrada": "Registrada",
+    "pendiente": "Pendiente",
+    "procesando": "Procesando",
+    "completada": "Completada",
+    "cancelada": "Cancelada",
+    # Mapeo de sinónimos históricos para compatibilidad
+    "aprobada": "Procesando",
+    "recibida": "Completada",
 }
 
 TIPOS_COMPRA = {"Productos", "Insumos"}
@@ -51,9 +62,12 @@ class CompraCreate(CamelModel):
     @field_validator("estado")
     @classmethod
     def validar_estado(cls, valor: str) -> str:
-        if valor not in ESTADOS_COMPRA:
-            raise ValueError("El estado de la compra no es válido.")
-        return valor
+        s = str(valor or "").strip().lower()
+        if s not in ESTADOS_MAPA_REAL:
+            raise ValueError(
+                f"El estado '{valor}' no es válido. Debe ser uno de: Registrada, Pendiente, Procesando, Completada, Cancelada."
+            )
+        return ESTADOS_MAPA_REAL[s]
 
     @field_validator("tipo_compra")
     @classmethod
@@ -79,9 +93,12 @@ class CompraEstadoUpdate(CamelModel):
     @field_validator("estado")
     @classmethod
     def validar_estado(cls, valor: str) -> str:
-        if valor not in ESTADOS_COMPRA:
-            raise ValueError("El estado de la compra no es válido.")
-        return valor
+        s = str(valor or "").strip().lower()
+        if s not in ESTADOS_MAPA_REAL:
+            raise ValueError(
+                f"El estado '{valor}' no es válido. Debe ser uno de: Registrada, Pendiente, Procesando, Completada, Cancelada."
+            )
+        return ESTADOS_MAPA_REAL[s]
 
 
 class CompraDetalleResponse(CamelModel):
@@ -113,6 +130,15 @@ class CompraResponse(CamelModel):
     total_articulos: int
     observaciones: str | None = None
     tipo_compra: str = "Productos"
+
+
+class CompraMetricasResponse(CamelModel):
+    """Métricas y estadísticas del módulo de compras."""
+    total_compras: int = 0
+    compras_mes: int = 0
+    monto_total: float = 0.0
+    promedio: float = 0.0
+    por_estado: dict[str, int] = Field(default_factory=dict)
 
 
 CompraPagina = Pagina[CompraResponse]

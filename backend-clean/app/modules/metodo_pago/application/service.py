@@ -5,6 +5,7 @@ from app.modules.metodo_pago.domain.schemas import (
     MetodoPagoCreate,
     MetodoPagoUpdate,
     MetodoPagoResponse,
+    MetodoPagoMetricasResponse,
 )
 
 from app.modules.metodo_pago.domain.exceptions import (
@@ -35,13 +36,28 @@ class MetodoPagoService:
 
         return MetodoPagoResponse.model_validate(registro)
 
-    def listar_metodos(self) -> list[MetodoPagoResponse]:
-        registros = self.repositorio.listar()
+    def listar_metodos(
+        self,
+        buscar: str | None = None,
+        estado: str | None = None,
+        limite: int = 500,
+        offset: int = 0,
+    ) -> list[MetodoPagoResponse]:
+        if "buscar" in self.repositorio.listar.__code__.co_varnames:
+            registros = self.repositorio.listar(
+                buscar=buscar, estado=estado, limite=limite, offset=offset
+            )
+        else:
+            registros = self.repositorio.listar()
 
         return [
             MetodoPagoResponse.model_validate(registro)
             for registro in registros
         ]
+
+    def obtener_metricas(self) -> MetodoPagoMetricasResponse:
+        datos = self.repositorio.obtener_metricas()
+        return MetodoPagoMetricasResponse.model_validate(datos)
 
     def obtener_metodo_por_id(
         self,

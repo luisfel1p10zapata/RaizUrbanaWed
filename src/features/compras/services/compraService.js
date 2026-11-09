@@ -1,54 +1,49 @@
 
-const API_URL = 'http://127.0.0.1:8000/api/compras';
+import { apiRequest } from '../../../utils/apiClient';
 
 /**
- * Procesa las respuestas del backend y muestra
- * los mensajes de error enviados por FastAPI.
- */
-async function procesarRespuesta(response) {
-  if (response.status === 204) {
-    return null;
-  }
-
-  const resultado = await response.json().catch(() => null);
-
-  if (!response.ok) {
-    let mensaje = `Error HTTP ${response.status}`;
-
-    if (typeof resultado?.detail === 'string') {
-      mensaje = resultado.detail;
-    } else if (Array.isArray(resultado?.detail)) {
-      mensaje = resultado.detail
-        .map((error) => error.msg || 'Datos inválidos')
-        .join(', ');
-    }
-
-    throw new Error(mensaje);
-  }
-
-  return resultado;
-}
-
-/**
- * Función común para realizar peticiones HTTP.
+ * Función común para realizar peticiones HTTP a Compras.
  */
 async function solicitar(ruta = '', opciones = {}) {
-  const response = await fetch(`${API_URL}${ruta}`, {
-    ...opciones,
-    headers: {
-      'Content-Type': 'application/json',
-      ...opciones.headers,
-    },
-  });
-
-  return procesarRespuesta(response);
+  return apiRequest('compras', ruta, opciones);
 }
 
 /**
- * Obtener todas las compras.
+ * Obtener compras con filtros opcionales de búsqueda y paginación.
  */
-export async function obtenerCompras() {
-  return solicitar();
+export async function obtenerCompras(params = {}) {
+  const query = new URLSearchParams();
+  if (params.buscar) query.append('buscar', params.buscar);
+  if (params.proveedorId || params.proveedor_id) {
+    query.append('proveedor_id', params.proveedorId || params.proveedor_id);
+  }
+  if (params.estado) query.append('estado', params.estado);
+  if (params.fechaDesde || params.fecha_desde) {
+    query.append('fecha_desde', params.fechaDesde || params.fecha_desde);
+  }
+  if (params.fechaHasta || params.fecha_hasta) {
+    query.append('fecha_hasta', params.fechaHasta || params.fecha_hasta);
+  }
+  if (params.limite) query.append('limite', params.limite);
+  if (params.offset) query.append('offset', params.offset);
+
+  const qs = query.toString() ? `?${query.toString()}` : '';
+  const datos = await solicitar(qs);
+  return Array.isArray(datos) ? datos : (datos?.data || []);
+}
+
+/**
+ * Obtener métricas consolidadas de compras desde Supabase.
+ */
+export async function obtenerMetricasCompras() {
+  return solicitar('/metricas');
+}
+
+/**
+ * Obtener conteos de compras desde Supabase.
+ */
+export async function obtenerConteosCompras() {
+  return solicitar('/conteos');
 }
 
 /**
@@ -123,6 +118,13 @@ export async function eliminarCompra(id) {
   });
 }
 
+/**
+ * Obtener proveedores, métodos de pago, insumos y variantes reales de Supabase.
+ */
+export async function obtenerCatalogoRecursos() {
+  return solicitar('/catalogo-recursos');
+}
+
 const compraService = {
   obtenerCompras,
   obtenerComprasProductos,
@@ -132,6 +134,9 @@ const compraService = {
   actualizarCompra,
   cambiarEstadoCompra,
   eliminarCompra,
+  obtenerCatalogoRecursos,
+  obtenerMetricasCompras,
+  obtenerConteosCompras,
 };
 
 export default compraService;

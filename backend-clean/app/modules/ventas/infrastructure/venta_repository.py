@@ -1,10 +1,15 @@
 """Repositorio de infraestructura para la gestión de ventas conectado a PostgreSQL (Supabase).
 
-Utiliza los procedimientos almacenados oficiales desplegados en la base de datos:
-- sp_registrar_venta: Registro transaccional de venta, inserción de detalle y control/descuento de stock en tb_producto_variante.
-- sp_actualizar_estado_venta: Actualización del estado de la venta (id_estado_comp).
+Utiliza los procedimientos almacenados y funciones oficiales desplegados en Supabase:
+- sp_registrar_venta: Registro transaccional de venta, verificación y descuento atómico de stock mediante fn_cargar_detalles_venta.
+- sp_actualizar_estado_venta: Cambio de estado con reintegro automático de stock si se cancela la venta (fn_reintegrar_stock_venta).
+- sp_actualizar_venta: Edición de método de pago, fecha de entrega y actualización transaccional de detalles con ajuste de stock.
+- sp_obtener_venta: Consulta unificada en formato JSONB con cabecera y detalle completo de productos, variantes, colores y tallas.
+- sp_listar_ventas: Listado y búsqueda global de ventas en base de datos.
+- sp_obtener_cliente_general: Consulta de la cuenta de cliente general para ventas de mostrador.
 """
 from datetime import date
+from decimal import Decimal
 import json
 from typing import Any
 import psycopg
@@ -22,7 +27,7 @@ from app.modules.ventas.domain.exceptions import VentaNoEncontradaError
 
 
 class VentaPostgresRepository:
-    """Implementación de persistencia definitiva en PostgreSQL (Supabase)."""
+    """Implementación de persistencia conectada a los procedimientos almacenados oficiales de Supabase."""
 
     def __init__(self):
         self._get_connection = get_connection
@@ -78,76 +83,53 @@ class VentaPostgresRepository:
 
         row = cursor.fetchone()
         if row:
-            return row[0]
-        cursor.execute("SELECT id_metodo_pago FROM tb_metodo_pago LIMIT 1;")
+            return row["id_metodo_pago"] if isinstance(row, dict) else row[0]
+        cursor.execute("SELECT id_metodo_pago FROM tb_metodo_pago ORDER BY id_metodo_pago ASC LIMIT 1;")
         row = cursor.fetchone()
-        return row[0] if row else 1
+        return (row["id_metodo_pago"] if isinstance(row, dict) else row[0]) if row else 1
 
-    def _cargar_detalles_ventas(self, cursor, ids_ventas: list[int]) -> dict[int, list[dict[str, Any]]]:
-        if not ids_ventas:
-            return {}
+    def _mapear_json_a_venta(self, v: dict[str, Any]) -> dict[str, Any]:
+        """Mapea el objeto JSONB retornado por sp_obtener_venta al esquema de VentaResponse."""
+        id_venta = v["id_venta"]
+        id_usuario = v.get("id_usuario") or 1
+        nombre_cliente = (v.get("cliente") or "").strip() or "Cliente"
+        correo = v.get("correo") or "cliente@empresa.com"
 
-        sql = """
-            SELECT dv.id_det_venta, dv.id_ventas, p.id_producto, p.nombre AS producto_nombre,
-                   dv.cantidad, dv.precio_unitario,
-                   COALESCE(c.nombre, 'Único') AS color_nombre,
-                   COALESCE(t.nombre, 'M') AS talla_nombre
-            FROM tb_det_ventas dv
-            JOIN tb_producto_variante pv ON dv.id_producto_vari = pv.id_producto_vari
-            JOIN tb_productos p ON pv.id_producto = p.id_producto
-            LEFT JOIN tb_colores c ON pv.id_color = c.id_color
-            LEFT JOIN tb_tallas t ON pv.id_talla = t.id_talla
-            WHERE dv.id_ventas = ANY(%s)
-            ORDER BY dv.id_det_venta ASC;
-        """
-        cursor.execute(sql, (ids_ventas,))
-        detalles_map: dict[int, list[dict[str, Any]]] = {vid: [] for vid in ids_ventas}
+        estado_nom = v.get("estado") or "Pendiente"
+        estado_venta = self._mapear_estado_venta(estado_nom)
+        estado_pago = self._mapear_estado_pago(estado_nom)
+        metodo_pago = self._mapear_metodo_pago(v.get("metodo_pago") or "Efectivo")
 
-        for fila in cursor.fetchall():
-            vid = fila["id_ventas"]
-            cant = int(fila["cantidad"])
-            pu = float(fila["precio_unitario"])
-            sub = float(cant * pu)
+        costo_total = float(v.get("costo_total") or 0.0)
 
-            detalles_map[vid].append({
-                "producto": {
-                    "id": fila["id_producto"],
-                    "nombre": fila["producto_nombre"],
-                    "precio": pu,
-                },
-                "cantidad": cant,
-                "talla": fila["talla_nombre"],
-                "color": fila["color_nombre"],
-                "subtotal": sub,
-            })
-
-        return detalles_map
-
-    def _mapear_venta(self, cabecera: dict[str, Any], items: list[dict[str, Any]]) -> dict[str, Any]:
-        id_venta = cabecera["id_venta"]
-        id_usuario = cabecera.get("id_usuario") or 1
-        nombres = (cabecera.get("nombres") or "").strip()
-        apellidos = (cabecera.get("apellidos") or "").strip()
-        nombre_completo = f"{nombres} {apellidos}".strip() or "Cliente"
-        correo = cabecera.get("correo") or "cliente@empresa.com"
-
-        estado_comp_nom = cabecera.get("estado_comp") or "Pendiente"
-        estado_venta = self._mapear_estado_venta(estado_comp_nom)
-        estado_pago = self._mapear_estado_pago(estado_comp_nom)
-        metodo_pago = self._mapear_metodo_pago(cabecera.get("metodo_pago") or "Efectivo")
-
-        costo_total = float(cabecera.get("costo_total") or 0.0)
-
-        fecha_val = cabecera.get("fecha") or date.today()
-        if not isinstance(fecha_val, date):
+        fecha_raw = v.get("fecha")
+        if isinstance(fecha_raw, str):
+            fecha_val = date.fromisoformat(fecha_raw)
+        elif isinstance(fecha_raw, date):
+            fecha_val = fecha_raw
+        else:
             fecha_val = date.today()
+
+        items = []
+        for d in v.get("detalles", []):
+            items.append({
+                "producto": {
+                    "id": d["id_producto"],
+                    "nombre": d["producto"],
+                    "precio": float(d["precio_unitario"]),
+                },
+                "cantidad": d["cantidad"],
+                "talla": d.get("talla") or "M",
+                "color": d.get("color") or "Único",
+                "subtotal": float(d["subtotal"]),
+            })
 
         return {
             "id": id_venta,
             "codigo": f"VT-{id_venta:03d}",
             "cliente": {
                 "id": id_usuario,
-                "nombre": nombre_completo,
+                "nombre": nombre_cliente,
                 "email": correo,
             },
             "fecha": fecha_val,
@@ -162,78 +144,73 @@ class VentaPostgresRepository:
         }
 
     def obtener_por_id(self, venta_id: int) -> dict[str, Any] | None:
-        sql = """
-            SELECT v.id_venta, v.id_usuario, u.nombres, u.apellidos, u.correo,
-                   v.fecha, v.costo_total, ec.nombre AS estado_comp, mp.nombre AS metodo_pago
-            FROM tb_ventas v
-            LEFT JOIN tb_usuario u ON v.id_usuario = u.id_usuario
-            LEFT JOIN tb_estado_comp ec ON v.id_estado_comp = ec.id_estado_comp
-            LEFT JOIN tb_metodo_pago mp ON v.id_metodo_pago = mp.id_metodo_pago
-            WHERE v.id_venta = %s;
-        """
+        """Obtiene el detalle completo de una venta utilizando la función oficial sp_obtener_venta de Supabase."""
         with self._get_connection() as conn:
             with conn.cursor(row_factory=dict_row) as cursor:
-                cursor.execute(sql, (venta_id,))
-                cabecera = cursor.fetchone()
-                if not cabecera:
+                cursor.execute("SELECT sp_obtener_venta(%s) AS venta_json;", (venta_id,))
+                fila = cursor.fetchone()
+                if not fila or not fila.get("venta_json"):
                     return None
 
-                detalles_map = self._cargar_detalles_ventas(cursor, [venta_id])
-                items = detalles_map.get(venta_id, [])
-                return self._mapear_venta(cabecera, items)
+                v_json = fila["venta_json"]
+                if isinstance(v_json, str):
+                    v_json = json.loads(v_json)
+
+                return self._mapear_json_a_venta(v_json)
 
     def listar(self, filtros: VentaFiltros) -> tuple[list[dict[str, Any]], int]:
-        where_parts = []
-        params = []
-
-        if filtros.search:
-            s = f"%{filtros.search.strip()}%"
-            where_parts.append("(v.id_venta::text ILIKE %s OR u.nombres ILIKE %s OR u.apellidos ILIKE %s OR u.correo ILIKE %s)")
-            params.extend([s, s, s, s])
-
-        if filtros.estado_venta:
-            where_parts.append("LOWER(ec.nombre) = LOWER(%s)")
-            params.append(str(filtros.estado_venta).strip())
-
-        where_sql = ("WHERE " + " AND ".join(where_parts)) if where_parts else ""
-
+        """Obtiene la lista de ventas invocando sp_listar_ventas y sp_obtener_venta de Supabase."""
         with self._get_connection() as conn:
             with conn.cursor(row_factory=dict_row) as cursor:
-                count_sql = f"""
-                    SELECT COUNT(*) AS total
-                    FROM tb_ventas v
-                    LEFT JOIN tb_usuario u ON v.id_usuario = u.id_usuario
-                    LEFT JOIN tb_estado_comp ec ON v.id_estado_comp = ec.id_estado_comp
-                    {where_sql};
-                """
-                cursor.execute(count_sql, params)
-                total = cursor.fetchone()["total"]
+                id_estado_comp = None
+                if filtros.estado_venta:
+                    id_estado_comp = self._resolver_estado_comp(str(filtros.estado_venta))
 
+                buscar_param = filtros.search.strip() if filtros.search else None
+
+                # Invocar función oficial de Supabase
+                cursor.execute(
+                    "SELECT * FROM sp_listar_ventas(NULL, %s, NULL, NULL, NULL, %s);",
+                    (id_estado_comp, buscar_param)
+                )
+                todas_filas = cursor.fetchall()
+                total = len(todas_filas)
+
+                # Paginación
                 offset = (filtros.page - 1) * filtros.page_size
-                data_sql = f"""
-                    SELECT v.id_venta, v.id_usuario, u.nombres, u.apellidos, u.correo,
-                           v.fecha, v.costo_total, ec.nombre AS estado_comp, mp.nombre AS metodo_pago
-                    FROM tb_ventas v
-                    LEFT JOIN tb_usuario u ON v.id_usuario = u.id_usuario
-                    LEFT JOIN tb_estado_comp ec ON v.id_estado_comp = ec.id_estado_comp
-                    LEFT JOIN tb_metodo_pago mp ON v.id_metodo_pago = mp.id_metodo_pago
-                    {where_sql}
-                    ORDER BY v.fecha DESC, v.id_venta DESC
-                    LIMIT %s OFFSET %s;
-                """
-                cursor.execute(data_sql, params + [filtros.page_size, offset])
-                cabeceras = cursor.fetchall()
+                paginadas = todas_filas[offset:offset + filtros.page_size]
 
-                ids_ventas = [c["id_venta"] for c in cabeceras]
-                detalles_map = self._cargar_detalles_ventas(cursor, ids_ventas)
+                # Cargar cada venta detallada mediante sp_obtener_venta
+                items = []
+                for p in paginadas:
+                    v_detallada = self.obtener_por_id(p["id_venta"])
+                    if v_detallada:
+                        items.append(v_detallada)
+                    else:
+                        # Respaldo con los datos devueltos por sp_listar_ventas
+                        items.append({
+                            "id": p["id_venta"],
+                            "codigo": f"VT-{p['id_venta']:03d}",
+                            "cliente": {
+                                "id": p["id_usuario"],
+                                "nombre": p["cliente"],
+                                "email": "cliente@empresa.com",
+                            },
+                            "fecha": p["fecha"] if isinstance(p["fecha"], date) else date.today(),
+                            "estado_venta": self._mapear_estado_venta(p["estado"]),
+                            "estado_pago": self._mapear_estado_pago(p["estado"]),
+                            "metodo_pago": self._mapear_metodo_pago(p["metodo_pago"]),
+                            "items": [],
+                            "total": float(p["costo_total"] or 0.0),
+                            "historial": [
+                                {"accion": "Registrada", "fecha": p["fecha"]}
+                            ],
+                        })
 
-                items = [
-                    self._mapear_venta(c, detalles_map.get(c["id_venta"], []))
-                    for c in cabeceras
-                ]
                 return items, total
 
     def obtener_metricas(self) -> VentasMetricas:
+        """Calcula los indicadores KPI de ventas en Supabase."""
         sql = """
             SELECT
                 COUNT(*) AS ventas_totales,
@@ -255,10 +232,10 @@ class VentaPostgresRepository:
                 )
 
     def guardar(self, datos: dict[str, Any]) -> dict[str, Any]:
-        """Registra una venta utilizando el procedimiento almacenado sp_registrar_venta."""
+        """Registra una venta utilizando el procedimiento almacenado sp_registrar_venta de Supabase."""
         with self._get_connection() as conn:
-            with conn.cursor() as cursor:
-                # 1. Determinar el cliente / id_usuario
+            with conn.cursor(row_factory=dict_row) as cursor:
+                # 1. Determinar el cliente / id_usuario o usar cliente general
                 id_usuario = None
                 if "cliente_id" in datos and datos["cliente_id"]:
                     id_usuario = datos["cliente_id"]
@@ -267,13 +244,12 @@ class VentaPostgresRepository:
                 elif hasattr(datos.get("cliente"), "id"):
                     id_usuario = getattr(datos.get("cliente"), "id")
 
-                # Verificar si el usuario existe en tb_usuario, sino tomar el primero existente
-                cursor.execute("SELECT id_usuario FROM tb_usuario WHERE id_usuario = %s;", (id_usuario,))
-                if not cursor.fetchone():
-                    cursor.execute("SELECT id_usuario FROM tb_usuario ORDER BY id_usuario ASC LIMIT 1;")
-                    f_u = cursor.fetchone()
-                    id_usuario = f_u[0] if f_u else 1
+                if id_usuario:
+                    cursor.execute("SELECT id_usuario FROM tb_usuario WHERE id_usuario = %s;", (id_usuario,))
+                    if not cursor.fetchone():
+                        id_usuario = None
 
+                # Si es None, sp_registrar_venta buscará automáticamente el cliente general
                 # 2. Resolver id_metodo_pago
                 metodo_val = datos.get("metodo_pago", "Efectivo")
                 id_metodo_pago = self._resolver_id_metodo_pago(cursor, str(metodo_val))
@@ -295,7 +271,7 @@ class VentaPostgresRepository:
                         if prod_dict:
                             prod_id = prod_dict.get("id") if isinstance(prod_dict, dict) else getattr(prod_dict, "id", None)
 
-                    # Buscar variante
+                    # Buscar variante asociada
                     cursor.execute("""
                         SELECT pv.id_producto_vari, pv.precio
                         FROM tb_producto_variante pv
@@ -307,19 +283,15 @@ class VentaPostgresRepository:
                         cursor.execute("SELECT id_producto_vari, precio FROM tb_producto_variante ORDER BY id_producto_vari ASC LIMIT 1;")
                         f_vari = cursor.fetchone()
 
-                    id_vari = f_vari[0]
-                    precio_vari = float(f_vari[1])
-                    precio_unitario = (sub / cant) if sub > 0 else precio_vari
-
+                    id_vari = f_vari["id_producto_vari"]
                     detalles_json_list.append({
                         "id_producto_vari": id_vari,
                         "cantidad": cant,
-                        "precio_unitario": precio_unitario,
                     })
 
                 detalles_json_str = json.dumps(detalles_json_list)
 
-                # 5. Invocar sp_registrar_venta
+                # 5. Invocar sp_registrar_venta de Supabase
                 try:
                     cursor.execute("""
                         SELECT sp_registrar_venta(
@@ -333,48 +305,71 @@ class VentaPostgresRepository:
                         id_estado_comp,
                         detalles_json_str,
                     ))
-                    nuevo_id_venta = cursor.fetchone()[0]
+                    nuevo_id_venta = cursor.fetchone()["sp_registrar_venta"]
                     conn.commit()
                 except psycopg.errors.RaiseException as e:
                     conn.rollback()
-                    raise ValueError(str(e))
+                    raise ValueError(str(e).split("\n")[0])
 
         return self.obtener_por_id(nuevo_id_venta)
 
     def actualizar(self, venta_id: int, datos: dict[str, Any]) -> dict[str, Any]:
-        """Actualiza el estado o método de pago de una venta."""
+        """Actualiza el estado o información de la venta utilizando los procedimientos sp_actualizar_estado_venta y sp_actualizar_venta."""
         venta_actual = self.obtener_por_id(venta_id)
         if not venta_actual:
             raise VentaNoEncontradaError(venta_id)
 
         with self._get_connection() as conn:
-            with conn.cursor() as cursor:
+            with conn.cursor(row_factory=dict_row) as cursor:
                 if "estado_venta" in datos and datos["estado_venta"] is not None:
                     id_estado = self._resolver_estado_comp(str(datos["estado_venta"]))
-                    cursor.execute("SELECT sp_actualizar_estado_venta(%s, %s);", (venta_id, id_estado))
+                    try:
+                        cursor.execute("SELECT sp_actualizar_estado_venta(%s, %s);", (venta_id, id_estado))
+                    except psycopg.errors.RaiseException as e:
+                        conn.rollback()
+                        raise ValueError(str(e).split("\n")[0])
                 elif "estado_pago" in datos and datos["estado_pago"] is not None:
                     if str(datos["estado_pago"]).lower() == "pagado":
-                        cursor.execute("SELECT sp_actualizar_estado_venta(%s, %s);", (venta_id, 4))
+                        try:
+                            cursor.execute("SELECT sp_actualizar_estado_venta(%s, %s);", (venta_id, 4))
+                        except psycopg.errors.RaiseException as e:
+                            conn.rollback()
+                            raise ValueError(str(e).split("\n")[0])
 
                 if "metodo_pago" in datos and datos["metodo_pago"] is not None:
                     id_mp = self._resolver_id_metodo_pago(cursor, str(datos["metodo_pago"]))
-                    cursor.execute("UPDATE tb_ventas SET id_metodo_pago = %s WHERE id_venta = %s;", (id_mp, venta_id))
+                    try:
+                        cursor.execute(
+                            "SELECT sp_actualizar_venta(%s, %s, NULL, NULL, NULL);",
+                            (venta_id, id_mp)
+                        )
+                    except psycopg.errors.RaiseException as e:
+                        conn.rollback()
+                        raise ValueError(str(e).split("\n")[0])
 
                 conn.commit()
 
         return self.obtener_por_id(venta_id)
 
     def eliminar(self, venta_id: int) -> bool:
-        """Elimina la venta y sus detalles de PostgreSQL."""
+        """Cancela la venta utilizando sp_actualizar_estado_venta para reintegrar automáticamente el stock."""
         venta_actual = self.obtener_por_id(venta_id)
         if not venta_actual:
             raise VentaNoEncontradaError(venta_id)
 
         with self._get_connection() as conn:
             with conn.cursor() as cursor:
-                cursor.execute("DELETE FROM tb_det_ventas WHERE id_ventas = %s;", (venta_id,))
-                cursor.execute("DELETE FROM tb_ventas WHERE id_venta = %s;", (venta_id,))
-                conn.commit()
+                # Si la venta ya está cancelada o se cancela, se pasa a estado Cancelada (5)
+                # Lo que dispara fn_reintegrar_stock_venta de forma segura en Supabase
+                try:
+                    cursor.execute("SELECT sp_actualizar_estado_venta(%s, 5);", (venta_id,))
+                    conn.commit()
+                except psycopg.errors.RaiseException:
+                    conn.rollback()
+                    # Si no se puede cambiar a cancelada (ej. ya estaba completada o cancelada), intentar borrado
+                    cursor.execute("DELETE FROM tb_det_ventas WHERE id_ventas = %s;", (venta_id,))
+                    cursor.execute("DELETE FROM tb_ventas WHERE id_venta = %s;", (venta_id,))
+                    conn.commit()
 
         return True
 

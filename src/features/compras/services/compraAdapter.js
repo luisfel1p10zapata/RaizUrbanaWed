@@ -66,12 +66,19 @@ export function compraParaBackend(compra) {
 
   const tipoCompra = obtenerTipoCompra(productos);
 
-  const proveedorId = PROVEEDORES[compra.provider];
+  let proveedorId = compra.providerId;
+  if (!proveedorId && compra.provider) {
+    if (typeof compra.provider === 'number') {
+      proveedorId = compra.provider;
+    } else if (PROVEEDORES[compra.provider]) {
+      proveedorId = PROVEEDORES[compra.provider];
+    } else {
+      proveedorId = compra.provider;
+    }
+  }
 
   if (!proveedorId) {
-    throw new Error(
-      `El proveedor "${compra.provider}" no está disponible en el backend.`
-    );
+    throw new Error('Debes seleccionar un proveedor válido.');
   }
 
   const detalles = productos.map((producto, index) => {
@@ -85,18 +92,22 @@ export function compraParaBackend(compra) {
       );
     }
 
-    const productoId = esInsumo
-      ? String(
-          producto.productId ||
-          producto.id ||
-          `INS-${index + 1}-${nombre}`
-        )
-      : PRODUCTOS[nombre];
-
-    if (!productoId) {
-      throw new Error(
-        `El producto "${nombre}" no existe en el catálogo temporal.`
-      );
+    let productoId;
+    if (esInsumo) {
+      if (producto.insumoId && Number.isInteger(Number(producto.insumoId)) && Number(producto.insumoId) > 0) {
+        productoId = Number(producto.insumoId);
+      } else if (producto.productId && Number.isInteger(Number(producto.productId)) && Number(producto.productId) > 0) {
+        productoId = Number(producto.productId);
+      } else {
+        productoId = `INS-${index + 1}-${nombre}`;
+      }
+    } else {
+      const candId = Number(producto.productId || producto.variantId || producto.id_producto_vari);
+      if (Number.isInteger(candId) && candId > 0 && candId <= 1000) {
+        productoId = candId;
+      } else {
+        productoId = PRODUCTOS[nombre] || nombre;
+      }
     }
 
     const cantidad = Number(producto.quantity);
@@ -113,10 +124,10 @@ export function compraParaBackend(compra) {
 
     if (
       !Number.isFinite(precioUnitario) ||
-      precioUnitario < 0
+      precioUnitario <= 0
     ) {
       throw new Error(
-        `El precio de "${nombre}" no es válido.`
+        `El precio unitario de "${nombre}" debe ser mayor que cero.`
       );
     }
 
@@ -134,8 +145,8 @@ export function compraParaBackend(compra) {
 
   return {
     proveedorId,
-    metodoPago: compra.payment || 'Transferencia',
-    estado: compra.status || 'Pendiente',
+    metodoPago: compra.payment || 'Tarjeta Débito',
+    estado: compra.status || 'Registrada',
     tipoCompra,
     observaciones: compra.observations || null,
     detalles,

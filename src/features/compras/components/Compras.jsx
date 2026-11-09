@@ -1,5 +1,5 @@
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   CalendarDays,
   CheckCircle2,
@@ -19,6 +19,7 @@ import AppAlert from '../../../components/ui/AppAlert';
 import KpiGlobal from '../../../components/ui/KpiGlobal';
 import FiltrarBuscarGlobal from '../../../components/ui/FiltrarBuscarGlobal';
 import TableGlobal from '../../../components/ui/TableGlobal';
+import ConfirmModal from '../../../components/ui/ConfirmModal';
 import '../../ventas/styles/Ventas.css';
 import './Compras.css';
 import {
@@ -27,6 +28,7 @@ import {
   actualizarCompra,
   cambiarEstadoCompra,
   eliminarCompra,
+  obtenerCatalogoRecursos,
 } from '../services/compraService';
 import {
   compraParaBackend,
@@ -37,60 +39,113 @@ import {
 const STORAGE_KEY = 'raiz-urbana-compras-v2';
 
 const providers = [
-  'Textiles SA',
-  'Moda Global',
-  'FashionPro',
-  'Industrias Ropa',
-  'Confecciones Norte',
-  'Materias Primas SA',
-  'Insumos del Norte',
-  'TextilPro',
-  'Distribuidora Central',
+  'Textiles Andinos SAS',
+  'Insumos Creativos Colombia',
+  'Distribuciones El Dorado',
+  'Mercería La Estrella',
+  'Moda Mayorista Nacional',
 ];
 
 const paymentMethods = [
-  'Transferencia',
-  'Tarjeta',
-  'Efectivo',
-  'Cheque',
+  'Tarjeta Débito',
+  'Tarjeta Crédito',
+  'Nequi',
+  'Bancolombiaa',
 ];
 
 const statuses = [
+  'Registrada',
   'Pendiente',
-  'Aprobada',
-  'Recibida',
+  'Procesando',
   'Completada',
   'Cancelada',
 ];
 
+const TRANSICIONES_PERMITIDAS = {
+  Registrada: ['Pendiente', 'Procesando', 'Completada', 'Cancelada'],
+  Pendiente: ['Registrada', 'Procesando', 'Completada', 'Cancelada'],
+  Procesando: ['Pendiente', 'Registrada', 'Completada', 'Cancelada'],
+  Completada: ['Cancelada'],
+  Cancelada: [],
+};
+
+const esTransicionPermitida = (estadoActual, nuevoEstado) => {
+  if (!estadoActual || !nuevoEstado) return false;
+  if (estadoActual === nuevoEstado) return false;
+  const permitidas = TRANSICIONES_PERMITIDAS[estadoActual] || [];
+  return permitidas.includes(nuevoEstado);
+};
+
 const productCatalog = [
   {
-    id: 'PRO01',
-    name: 'Camisas',
+    id: 1,
+    name: 'Camisa urbana de algodón',
     category: 'Ropa',
-    colors: ['Blanco', 'Negro', 'Azul'],
-    sizes: ['S', 'M', 'L', 'XL'],
+    colors: ['Blanco'],
+    sizes: ['M'],
   },
   {
-    id: 'PRO02',
-    name: 'Pulseras',
+    id: 2,
+    name: 'Camiseta básica negra',
+    category: 'Ropa',
+    colors: ['Negro'],
+    sizes: ['M'],
+  },
+  {
+    id: 3,
+    name: 'Pulsera tejida artesanal',
     category: 'Accesorios',
-    colors: ['Dorado', 'Plateado', 'Beige'],
+    colors: ['Rojo'],
     sizes: ['Única'],
   },
   {
-    id: 'PRO03',
-    name: 'Collares',
+    id: 4,
+    name: 'Cadena urbana de acero',
     category: 'Accesorios',
-    colors: ['Dorado', 'Plateado', 'Negro'],
+    colors: ['Negro'],
     sizes: ['Única'],
   },
   {
-    id: 'PRO04',
-    name: 'Par de aretes',
+    id: 5,
+    name: 'Pulsera de hilo encerado',
     category: 'Accesorios',
-    colors: ['Dorado', 'Plateado'],
+    colors: ['Azul'],
     sizes: ['Única'],
+  },
+  {
+    id: 6,
+    name: 'Pantalón cargo negro',
+    category: 'Ropa',
+    colors: ['Negro'],
+    sizes: ['L'],
+  },
+  {
+    id: 7,
+    name: 'Collar minimalista plata',
+    category: 'Accesorios',
+    colors: ['Blanco'],
+    sizes: ['Única'],
+  },
+  {
+    id: 8,
+    name: 'Manilla de cuero',
+    category: 'Accesorios',
+    colors: ['Negro'],
+    sizes: ['Única'],
+  },
+  {
+    id: 9,
+    name: 'Camisa oversize blanca',
+    category: 'Ropa',
+    colors: ['Blanco'],
+    sizes: ['M'],
+  },
+  {
+    id: 10,
+    name: 'Pantalón jogger gris',
+    category: 'Ropa',
+    colors: ['Negro'],
+    sizes: ['L'],
   },
 ];
 
@@ -161,7 +216,7 @@ const initialPurchases = [
     date: '2026-06-01',
     provider: 'Textiles SA',
     payment: 'Transferencia',
-    status: 'Recibida',
+    status: 'Completada',
     products: [
       {
         product: 'Camisas',
@@ -187,7 +242,7 @@ const initialPurchases = [
     date: '2026-06-05',
     provider: 'Moda Global',
     payment: 'Tarjeta',
-    status: 'Aprobada',
+    status: 'Procesando',
     products: [
       {
         product: 'Camisas',
@@ -231,7 +286,7 @@ const initialPurchases = [
     date: '2026-06-10',
     provider: 'Industrias Ropa',
     payment: 'Transferencia',
-    status: 'Recibida',
+    status: 'Completada',
     products: [
       {
         product: 'Camisas',
@@ -376,11 +431,14 @@ function readPurchases() {
 
 function statusClass(status) {
   const classes = {
+    Registrada: 'registered',
     Pendiente: 'pending',
-    Aprobada: 'approved',
-    Recibida: 'received',
+    Procesando: 'processing',
     Completada: 'received',
     Cancelada: 'cancelled',
+    // Compatibilidad hacia atrás
+    Aprobada: 'processing',
+    Recibida: 'received',
   };
 
   return classes[status] || 'pending';
@@ -483,13 +541,148 @@ const MensajeCampo = ({ mensaje }) => mensaje ? (
    EDITOR DE PRODUCTOS
 ===================================================== */
 
-function ProductEditor({ value, onChange, onAdd, editing = false, onCancelEdit }) {
-  const selected = productCatalog.find(
+function ProductEditor({
+  value,
+  onChange,
+  onAdd,
+  editing = false,
+  onCancelEdit,
+  catalog = productCatalog,
+  variantes = [],
+}) {
+  const currentCatalog = Array.isArray(catalog) && catalog.length > 0 ? catalog : productCatalog;
+  const rawVariants = Array.isArray(variantes) && variantes.length > 0 ? variantes : [];
+
+  const selected = currentCatalog.find(
     (product) => product.name === value.product
+  ) || null;
+
+  // Filtrar variantes reales correspondientes al producto seleccionado
+  const productVariants = useMemo(() => {
+    if (!value.product) return [];
+    return rawVariants.filter(
+      (v) => v.nombre === value.product || (selected && v.id_producto === selected.id)
+    );
+  }, [rawVariants, value.product, selected]);
+
+  // Colores reales disponibles exclusivamente para este producto
+  const availableColors = useMemo(() => {
+    if (!value.product) return [];
+    const setColores = new Set();
+    productVariants.forEach((v) => {
+      if (v.color && v.color !== 'No aplica') {
+        setColores.add(v.color);
+      }
+    });
+    if (setColores.size === 0) {
+      return ['No aplica'];
+    }
+    return Array.from(setColores);
+  }, [value.product, productVariants]);
+
+  // Tallas disponibles exclusivamente para el producto y el color seleccionado
+  const availableSizes = useMemo(() => {
+    if (!value.product || !value.color) return [];
+    const matchingVariants = productVariants.filter((v) => {
+      const vColor = v.color || 'No aplica';
+      return vColor === value.color;
+    });
+    const setTallas = new Set();
+    matchingVariants.forEach((v) => {
+      if (v.talla && v.talla !== 'No aplica') {
+        setTallas.add(v.talla);
+      }
+    });
+    if (setTallas.size === 0) {
+      return ['No aplica'];
+    }
+    return Array.from(setTallas);
+  }, [value.product, value.color, productVariants]);
+
+  const resolverVarianteExacta = useCallback(
+    (nombre, color, talla) => {
+      if (!nombre || !color || !talla) return null;
+      return (
+        productVariants.find((v) => {
+          const vColor = v.color || 'No aplica';
+          const vTalla = v.talla || 'No aplica';
+          return v.nombre === nombre && vColor === color && vTalla === talla;
+        }) || null
+      );
+    },
+    [productVariants]
   );
 
-  const colors = selected?.colors || [];
-  const sizes = selected?.sizes || [];
+  const handleProductChange = (event) => {
+    const productName = event.target.value;
+    if (!productName) {
+      onChange({
+        ...value,
+        product: '',
+        category: '',
+        color: '',
+        size: '',
+        productId: null,
+        variantId: null,
+        unitPrice: 0,
+      });
+      return;
+    }
+
+    const prod = currentCatalog.find((item) => item.name === productName);
+    const prodVariants = rawVariants.filter(
+      (v) => v.nombre === productName || (prod && v.id_producto === prod.id)
+    );
+    const prodCategory = prod?.category || prodVariants[0]?.categoria || '';
+
+    // Limpia automáticamente color, talla y variante seleccionados anteriormente
+    onChange({
+      ...value,
+      product: productName,
+      category: prodCategory,
+      color: '',
+      size: '',
+      productId: null,
+      variantId: null,
+      unitPrice: 0,
+    });
+  };
+
+  const handleColorChange = (event) => {
+    const newColor = event.target.value;
+    onChange({
+      ...value,
+      color: newColor,
+      size: '',
+      productId: null,
+      variantId: null,
+      unitPrice: 0,
+    });
+  };
+
+  const handleSizeChange = (event) => {
+    const newSize = event.target.value;
+    const variante = resolverVarianteExacta(value.product, value.color, newSize);
+    onChange({
+      ...value,
+      size: newSize,
+      productId: variante?.id_producto_vari || variante?.id || null,
+      variantId: variante?.id_producto_vari || variante?.id || null,
+      unitPrice:
+        variante?.precio !== undefined
+          ? Number(variante.precio)
+          : Number(value.unitPrice || 0),
+    });
+  };
+
+  const puedeAgregar = Boolean(
+    value.product &&
+    value.color &&
+    value.size &&
+    value.variantId &&
+    !errorCantidadCompra(value.quantity) &&
+    !errorPrecioCompra(value.unitPrice)
+  );
 
   return (
     <div className="product-editor">
@@ -498,23 +691,12 @@ function ProductEditor({ value, onChange, onAdd, editing = false, onCancelEdit }
           <span>PRODUCTO</span>
 
           <select
-            value={value.product}
-            onChange={(event) => {
-              const product = productCatalog.find(
-                (item) => item.name === event.target.value
-              );
-
-              onChange({
-                ...value,
-                product: event.target.value,
-                category: product?.category || '',
-                color: product?.colors?.[0] || '',
-                size: product?.sizes?.[0] || '',
-              });
-            }}
+            value={value.product || ''}
+            onChange={handleProductChange}
           >
-            {productCatalog.map((product) => (
-              <option key={product.id} value={product.name}>
+            <option value="">Selecciona un producto...</option>
+            {currentCatalog.map((product) => (
+              <option key={product.id || product.name} value={product.name}>
                 {product.name}
               </option>
             ))}
@@ -524,18 +706,12 @@ function ProductEditor({ value, onChange, onAdd, editing = false, onCancelEdit }
         <label>
           <span>CATEGORÍA</span>
 
-          <select
-            value={value.category}
-            onChange={(event) =>
-              onChange({
-                ...value,
-                category: event.target.value,
-              })
-            }
-          >
-            <option value="Ropa">Ropa</option>
-            <option value="Accesorios">Accesorios</option>
-          </select>
+          <input
+            type="text"
+            readOnly
+            value={value.category || selected?.category || ''}
+            placeholder="Categoría del producto"
+          />
         </label>
       </div>
 
@@ -544,15 +720,16 @@ function ProductEditor({ value, onChange, onAdd, editing = false, onCancelEdit }
           <span>COLOR</span>
 
           <select
-            value={value.color}
-            onChange={(event) =>
-              onChange({
-                ...value,
-                color: event.target.value,
-              })
-            }
+            value={value.color || ''}
+            disabled={!value.product}
+            onChange={handleColorChange}
           >
-            {colors.map((color) => (
+            <option value="">
+              {!value.product
+                ? 'Primero selecciona un producto'
+                : 'Selecciona un color...'}
+            </option>
+            {availableColors.map((color) => (
               <option key={color} value={color}>
                 {color}
               </option>
@@ -564,15 +741,16 @@ function ProductEditor({ value, onChange, onAdd, editing = false, onCancelEdit }
           <span>TALLA</span>
 
           <select
-            value={value.size}
-            onChange={(event) =>
-              onChange({
-                ...value,
-                size: event.target.value,
-              })
-            }
+            value={value.size || ''}
+            disabled={!value.color}
+            onChange={handleSizeChange}
           >
-            {sizes.map((size) => (
+            <option value="">
+              {!value.color
+                ? 'Primero selecciona un color'
+                : 'Selecciona una talla...'}
+            </option>
+            {availableSizes.map((size) => (
               <option key={size} value={size}>
                 {size}
               </option>
@@ -622,20 +800,22 @@ function ProductEditor({ value, onChange, onAdd, editing = false, onCancelEdit }
           <MensajeCampo mensaje={errorPrecioCompra(value.unitPrice)} />
         </label>
 
-        <button
-          type="button"
-          className="primary-button add-product-button"
-          onClick={onAdd}
-          disabled={Boolean(errorCantidadCompra(value.quantity) || errorPrecioCompra(value.unitPrice))}
-        >
-          <Plus size={17} />
-          {editing ? 'Guardar elemento' : 'Agregar'}
-        </button>
-        {editing && (
-          <button type="button" className="secondary-button" onClick={onCancelEdit}>
-            Cancelar edición
+        <div className="product-editor-buttons">
+          <button
+            type="button"
+            className="primary-button add-product-button"
+            onClick={onAdd}
+            disabled={!puedeAgregar}
+          >
+            <Plus size={17} />
+            {editing ? 'Guardar elemento' : 'Agregar'}
           </button>
-        )}
+          {editing && (
+            <button type="button" className="secondary-button" onClick={onCancelEdit}>
+              Cancelar edición
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -651,21 +831,93 @@ function PurchaseForm({
   onClose,
   title,
   eyebrow,
+  catalogoRecursos = {},
 }) {
+  const listaProveedores = useMemo(() => {
+    const lista = (catalogoRecursos?.proveedores || []).map((p) => p.nombre).filter(Boolean);
+    if (initialValue?.provider && !lista.includes(initialValue.provider)) {
+      lista.unshift(initialValue.provider);
+    }
+    return lista.length > 0 ? lista : providers;
+  }, [catalogoRecursos?.proveedores, initialValue]);
+
+  const listaMetodosPago = useMemo(() => {
+    const lista = (catalogoRecursos?.metodos_pago || []).map((m) => m.nombre).filter(Boolean);
+    if (initialValue?.payment && !lista.includes(initialValue.payment)) {
+      lista.unshift(initialValue.payment);
+    }
+    return lista.length > 0 ? lista : paymentMethods;
+  }, [catalogoRecursos?.metodos_pago, initialValue]);
+
+  const catalogoProductos = useMemo(() => {
+    if (Array.isArray(catalogoRecursos?.productos) && catalogoRecursos.productos.length > 0) {
+      const mapa = new Map();
+      catalogoRecursos.productos.forEach((p) => {
+        if (!mapa.has(p.nombre)) {
+          mapa.set(p.nombre, {
+            id: p.id_producto || p.id,
+            name: p.nombre,
+            category: p.categoria || 'Sin categoría',
+            colors: new Set(),
+            sizes: new Set(),
+          });
+        }
+        const item = mapa.get(p.nombre);
+        if (p.categoria && (!item.category || item.category === 'Sin categoría')) {
+          item.category = p.categoria;
+        }
+        if (p.color && p.color !== 'No aplica') item.colors.add(p.color);
+        if (p.talla && p.talla !== 'No aplica') item.sizes.add(p.talla);
+      });
+      return Array.from(mapa.values()).map((p) => ({
+        ...p,
+        colors: Array.from(p.colors),
+        sizes: Array.from(p.sizes),
+      }));
+    }
+    return productCatalog;
+  }, [catalogoRecursos?.productos]);
+
+  const catalogoInsumos = useMemo(() => {
+    return Array.isArray(catalogoRecursos?.insumos) ? catalogoRecursos.insumos : [];
+  }, [catalogoRecursos?.insumos]);
+
+  const buscarVariante = useCallback((nombre, color, talla) => {
+    const raw = Array.isArray(catalogoRecursos?.productos) ? catalogoRecursos.productos : [];
+    if (raw.length === 0 || !nombre) return null;
+    return raw.find((item) => {
+      const matchNombre = item.nombre === nombre;
+      const itemColor = item.color || 'No aplica';
+      const paramColor = color || 'No aplica';
+      const matchColor = !color || itemColor === paramColor;
+      const itemTalla = item.talla || 'No aplica';
+      const paramTalla = talla || 'No aplica';
+      const matchTalla = !talla || itemTalla === paramTalla;
+      return matchNombre && matchColor && matchTalla;
+    }) || null;
+  }, [catalogoRecursos?.productos]);
+
   const [form, setForm] = useState(() => ({
     ...(initialValue || {
       date: new Date().toISOString().slice(0, 10),
-      provider: providers[0],
-      payment: paymentMethods[0],
+      provider: listaProveedores[0] || providers[0],
+      payment: listaMetodosPago[0] || paymentMethods[0],
       status: 'Pendiente',
       products: [],
     }),
     products: Array.isArray(initialValue?.products)
-      ? initialValue.products.map((item) => ({
-          ...item,
-          quantity: Number(item.quantity) || 1,
-          unitPrice: Number(item.unitPrice) || 0,
-        }))
+      ? initialValue.products.map((item) => {
+          const esInsumo = item.itemType === 'Insumo';
+          const v = !esInsumo ? buscarVariante(item.product, item.color, item.size) : null;
+          return {
+            ...item,
+            category: item.category || v?.categoria || '',
+            productId: v?.id_producto_vari || v?.id || item.productId || item.variantId,
+            variantId: !esInsumo ? (v?.id_producto_vari || v?.id || item.productId || item.variantId) : undefined,
+            quantity: Number(item.quantity) || 1,
+            unitPrice: Number(item.unitPrice) || 0,
+          };
+        })
       : [],
   }));
 
@@ -678,12 +930,14 @@ function PurchaseForm({
   );
 
   const [draftProduct, setDraftProduct] = useState({
-    product: productCatalog[0].name,
-    category: productCatalog[0].category,
-    color: productCatalog[0].colors[0],
-    size: productCatalog[0].sizes[0],
+    product: '',
+    category: '',
+    color: '',
+    size: '',
     quantity: 1,
     unitPrice: 0,
+    productId: null,
+    variantId: null,
   });
 
   const [draftSupply, setDraftSupply] = useState({
@@ -709,14 +963,18 @@ function PurchaseForm({
   const [alertaFormulario, setAlertaFormulario] = useState(null);
   const avisarFormulario = (message) => setAlertaFormulario({ message, id: Date.now() });
 
-  const resetProductDraft = () => setDraftProduct({
-    product: productCatalog[0].name,
-    category: productCatalog[0].category,
-    color: productCatalog[0].colors[0],
-    size: productCatalog[0].sizes[0],
-    quantity: 1,
-    unitPrice: 0,
-  });
+  const resetProductDraft = () => {
+    setDraftProduct({
+      product: '',
+      category: '',
+      color: '',
+      size: '',
+      quantity: 1,
+      unitPrice: 0,
+      productId: null,
+      variantId: null,
+    });
+  };
 
   const resetSupplyDraft = () => setDraftSupply({
     category: 'Telas',
@@ -741,7 +999,14 @@ function PurchaseForm({
     if (item.itemType === 'Insumo') {
       setDraftSupply({ ...item });
     } else {
-      setDraftProduct({ ...item });
+      const v = buscarVariante(item.product, item.color, item.size);
+      const prod = catalogoProductos.find((p) => p.name === item.product);
+      setDraftProduct({
+        ...item,
+        category: item.category || prod?.category || v?.categoria || '',
+        productId: v?.id_producto_vari || v?.id || item.productId || item.variantId,
+        variantId: v?.id_producto_vari || v?.id || item.productId || item.variantId,
+      });
     }
   };
 
@@ -774,71 +1039,48 @@ function PurchaseForm({
       return;
     }
 
+    let finalProductId = draft.productId || draft.variantId;
+    if (isProduct) {
+      if (!tieneContenido(draft.product)) {
+        avisarFormulario('Selecciona un producto del catálogo.');
+        return;
+      }
+      if (!tieneContenido(draft.color)) {
+        avisarFormulario('Selecciona el color del producto.');
+        return;
+      }
+      if (!tieneContenido(draft.size)) {
+        avisarFormulario('Selecciona la talla del producto.');
+        return;
+      }
+      const v = buscarVariante(draft.product, draft.color, draft.size);
+      if (v) {
+        finalProductId = v.id_producto_vari || v.id;
+      }
+      if (!finalProductId) {
+        avisarFormulario('No se encontró una variante válida para la combinación seleccionada.');
+        return;
+      }
+    } else {
+      if (!tieneContenido(draft.product)) {
+        avisarFormulario('Ingresa el nombre del insumo.');
+        return;
+      }
+      const insumo = (catalogoRecursos?.insumos || []).find(
+        (i) => i.nombre.toLowerCase() === (draft.product || '').trim().toLowerCase()
+      );
+      if (insumo) finalProductId = insumo.id;
+    }
+
     const item = {
       ...draft,
+      productId: finalProductId,
+      variantId: isProduct ? finalProductId : undefined,
+      insumoId: !isProduct ? finalProductId : undefined,
       itemType: isProduct ? 'Producto' : 'Insumo',
       quantity: Number(draft.quantity),
       unitPrice: Number(draft.unitPrice),
     };
-
-    if (!tieneContenido(item.product)) {
-      avisarFormulario(
-        isProduct
-          ? 'Selecciona un producto.'
-          : 'Ingresa el nombre del insumo.'
-      );
-      return;
-    }
-
-    const validCategory = isProduct
-      ? productCatalog.find((p) => p.name === item.product)?.category
-      : supplyCategories.includes(item.category);
-
-    if (!validCategory) {
-      avisarFormulario('Selecciona una categoría válida.');
-      return;
-    }
-
-    if (isProduct) {
-      const product = productCatalog.find(
-        (p) => p.name === item.product
-      );
-
-      if (
-        !product ||
-        !product.colors.includes(item.color) ||
-        !product.sizes.includes(item.size) ||
-        item.category !== product.category
-      ) {
-        avisarFormulario('Revisa el producto, la categoría, el color y la talla.');
-        return;
-      }
-    } else {
-      if (!esOpcionValida(item.category, supplyCategories)) {
-        avisarFormulario('Selecciona una categoría válida.');
-        return;
-      }
-
-      if (!esOpcionValida(item.color, supplyColors)) {
-        avisarFormulario('Selecciona un color válido.');
-        return;
-      }
-
-      if (!esOpcionValida(item.material, supplyMaterials)) {
-        avisarFormulario('Selecciona un material válido.');
-        return;
-      }
-
-      if (!esOpcionValida(item.size, supplySizes)) {
-        avisarFormulario('Selecciona un tamaño válido.');
-        return;
-      }
-    }
-
-    if (!isProduct && errorNombreInsumo(item.product)) {
-      avisarFormulario(errorNombreInsumo(item.product));
-      return;
-    }
 
     if (!esCantidadValida(item.quantity)) {
       avisarFormulario('La cantidad debe ser un número entero mayor que cero.');
@@ -864,18 +1106,9 @@ function PurchaseForm({
     }
 
     if (isProduct) {
-      setDraftProduct((current) => ({
-        ...current,
-        quantity: 1,
-        unitPrice: 0,
-      }));
+      resetProductDraft();
     } else {
-      setDraftSupply((current) => ({
-        ...current,
-        product: '',
-        quantity: 1,
-        unitPrice: 0,
-      }));
+      resetSupplyDraft();
     }
   };
 
@@ -915,12 +1148,12 @@ function PurchaseForm({
       return;
     }
 
-    if (!esOpcionValida(form.provider, providers)) {
+    if (!tieneContenido(form.provider)) {
       avisarFormulario('Selecciona un proveedor válido.');
       return;
     }
 
-    if (!esOpcionValida(form.payment, paymentMethods)) {
+    if (!tieneContenido(form.payment)) {
       avisarFormulario('Selecciona un método de pago válido.');
       return;
     }
@@ -936,48 +1169,45 @@ function PurchaseForm({
     }
 
     const invalidItem = form.products.some((item) => {
-      if (
-        !tieneContenido(item.product) ||
-        !esCantidadValida(item.quantity) ||
-        !esPrecioValido(item.unitPrice)
-      ) {
-        return true;
-      }
-
-      if (item.itemType === 'Insumo') {
-        return (
-          Boolean(errorNombreInsumo(item.product)) ||
-          !esOpcionValida(item.category, supplyCategories) ||
-          !esOpcionValida(item.color, supplyColors) ||
-          !esOpcionValida(item.material, supplyMaterials) ||
-          !esOpcionValida(item.size, supplySizes)
-        );
-      }
-
-      const product = productCatalog.find(
-        (p) => p.name === item.product
-      );
-
+      const cant = Number(item.quantity);
+      const precio = Number(item.unitPrice);
       return (
-        !product ||
-        item.category !== product.category ||
-        !product.colors.includes(item.color) ||
-        !product.sizes.includes(item.size)
+        !tieneContenido(item.product) ||
+        !Number.isInteger(cant) ||
+        cant <= 0 ||
+        !Number.isFinite(precio) ||
+        precio <= 0
       );
     });
 
     if (invalidItem) {
-      avisarFormulario('Revisa los productos o insumos: hay datos inválidos.');
+      avisarFormulario('Revisa los productos o insumos: la cantidad debe ser un entero positivo y el precio debe ser mayor a 0.');
       return;
     }
 
     onSave({
       ...form,
-      products: form.products.map((item) => ({
-        ...item,
-        quantity: Number(item.quantity),
-        unitPrice: Number(item.unitPrice),
-      })),
+      products: form.products.map((item) => {
+        const esInsumo = item.itemType === 'Insumo';
+        let resolvedId = item.productId || item.variantId;
+        if (!esInsumo) {
+          const v = buscarVariante(item.product, item.color, item.size);
+          if (v) resolvedId = v.id_producto_vari || v.id;
+        } else {
+          const insumo = (catalogoRecursos?.insumos || []).find(
+            (i) => i.nombre.toLowerCase() === (item.product || '').trim().toLowerCase()
+          );
+          if (insumo) resolvedId = insumo.id;
+        }
+        return {
+          ...item,
+          productId: resolvedId,
+          variantId: !esInsumo ? resolvedId : undefined,
+          insumoId: esInsumo ? resolvedId : undefined,
+          quantity: Number(item.quantity),
+          unitPrice: Number(item.unitPrice),
+        };
+      }),
     });
   };
 
@@ -1048,7 +1278,7 @@ function PurchaseForm({
                   }))
                 }
               >
-                {providers.map((provider) => (
+                {listaProveedores.map((provider) => (
                   <option key={provider} value={provider}>
                     {provider}
                   </option>
@@ -1069,7 +1299,7 @@ function PurchaseForm({
                   }))
                 }
               >
-                {paymentMethods.map((payment) => (
+                {listaMetodosPago.map((payment) => (
                   <option key={payment} value={payment}>
                     {payment}
                   </option>
@@ -1089,7 +1319,7 @@ function PurchaseForm({
                   }))
                 }
               >
-                {statuses.map((status) => (
+                {statuses.filter((status) => status !== 'Cancelada').map((status) => (
                   <option key={status} value={status}>
                     {status}
                   </option>
@@ -1245,6 +1475,8 @@ function PurchaseForm({
 
           {purchaseType === 'Productos' ? (
             <ProductEditor
+              catalog={catalogoProductos}
+              variantes={catalogoRecursos?.productos}
               value={draftProduct}
               onChange={setDraftProduct}
               onAdd={addProduct}
@@ -1252,15 +1484,7 @@ function PurchaseForm({
               onCancelEdit={cancelItemEdit}
             />
           ) : (
-            <div
-              className="product-editor"
-              style={{
-                padding: 20,
-                borderRadius: 16,
-                border: '1px solid var(--border)',
-                background: 'var(--editor-bg)',
-              }}
-            >
+            <div className="product-editor">
               <div className="form-grid form-grid-2">
                 <label>
                   <span>CATEGORÍA</span>
@@ -1393,28 +1617,30 @@ function PurchaseForm({
                   <MensajeCampo mensaje={errorPrecioCompra(draftSupply.unitPrice)} />
                 </label>
 
-                <button
-                  type="button"
-                  className="primary-button add-product-button"
-                  onClick={addProduct}
-                  disabled={Boolean(errorCantidadCompra(draftSupply.quantity) || errorPrecioCompra(draftSupply.unitPrice) || errorNombreInsumo(draftSupply.product))}
-                >
-                  <Plus size={17} />
-                  {editingIndex !== null ? 'Guardar elemento' : 'Agregar insumo'}
-                </button>
-                {editingIndex !== null && (
-                  <button type="button" className="secondary-button" onClick={cancelItemEdit}>
-                    Cancelar edición
+                <div className="product-editor-buttons">
+                  <button
+                    type="button"
+                    className="primary-button add-product-button"
+                    onClick={addProduct}
+                    disabled={Boolean(errorCantidadCompra(draftSupply.quantity) || errorPrecioCompra(draftSupply.unitPrice) || errorNombreInsumo(draftSupply.product))}
+                  >
+                    <Plus size={17} />
+                    {editingIndex !== null ? 'Guardar elemento' : 'Agregar insumo'}
                   </button>
-                )}
+                  {editingIndex !== null && (
+                    <button type="button" className="secondary-button" onClick={cancelItemEdit}>
+                      Cancelar edición
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           )}
 
           {editingIndex !== null && (
-            <p style={{ color: '#c6b8ee', fontSize: 12, marginTop: 12 }}>
+            <div className="compras-editing-banner">
               Editando elemento {editingIndex + 1}. Guarda el elemento antes de guardar la compra.
-            </p>
+            </div>
           )}
 
           {form.products.length === 0 ? (
@@ -1483,26 +1709,25 @@ function PurchaseForm({
                   <span>{item.quantity}</span>
                   <span>{money(item.unitPrice)}</span>
 
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span className="products-added-actions">
                     <button
                       type="button"
-                      className="icon-button"
+                      className="compras-item-btn edit"
                       title="Editar elemento"
                       aria-label={`Editar ${item.product}`}
                       onClick={() => editItem(index)}
-                      style={{ color: '#82b8ff' }}
                     >
                       <Pencil size={15} />
                     </button>
-                  <button
-                    type="button"
-                    className="danger-icon"
-                    title="Eliminar elemento"
-                    aria-label={`Eliminar ${item.product}`}
-                    onClick={() => removeProduct(index)}
-                  >
-                    <Trash2 size={15} />
-                  </button>
+                    <button
+                      type="button"
+                      className="compras-item-btn delete"
+                      title="Eliminar elemento"
+                      aria-label={`Eliminar ${item.product}`}
+                      onClick={() => removeProduct(index)}
+                    >
+                      <Trash2 size={15} />
+                    </button>
                   </span>
                 </div>
                 );
@@ -1573,6 +1798,12 @@ function PurchaseForm({
 
 export default function Compras() {
   const [purchases, setPurchases] = useState([]);
+  const [catalogoRecursos, setCatalogoRecursos] = useState({
+    proveedores: [],
+    metodos_pago: [],
+    insumos: [],
+    productos: [],
+  });
   const [loadingCompras, setLoadingCompras] = useState(true);
   const [savingCompras, setSavingCompras] = useState(false);
   const [search, setSearch] = useState('');
@@ -1587,24 +1818,34 @@ export default function Compras() {
   const [alerta, setAlerta] = useState(null);
   const notificar = (type, message) => setAlerta({ type, message, id: Date.now() });
 
-  useEffect(() => {
-    let activo = true;
-
-    const cargarCompras = async () => {
-      try {
-        const datos = await obtenerCompras();
-        if (activo) setPurchases(comprasDesdeBackend(datos));
-      } catch (error) {
-        console.error('Error cargando compras:', error);
-        if (activo) notificar('error', `No se pudieron cargar las compras: ${error.message}`);
-      } finally {
-        if (activo) setLoadingCompras(false);
+  const cargarRecursos = useCallback(async () => {
+    try {
+      const data = await obtenerCatalogoRecursos();
+      if (data && typeof data === 'object') {
+        setCatalogoRecursos(data);
       }
-    };
-
-    cargarCompras();
-    return () => { activo = false; };
+    } catch (err) {
+      console.warn('No se pudieron precargar los catálogos en Compras:', err);
+    }
   }, []);
+
+  const cargarCompras = useCallback(async () => {
+    try {
+      setLoadingCompras(true);
+      const datos = await obtenerCompras();
+      setPurchases(comprasDesdeBackend(Array.isArray(datos) ? datos : []));
+    } catch (error) {
+      console.error('Error cargando compras:', error);
+      notificar('error', `No se pudieron cargar las compras: ${error.message}`);
+    } finally {
+      setLoadingCompras(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    cargarCompras();
+    cargarRecursos();
+  }, [cargarCompras, cargarRecursos]);
 
   useEffect(() => {
     setPage(1);
@@ -1661,6 +1902,24 @@ export default function Compras() {
     dateFilter,
   ]);
 
+  const filtrosProveedores = useMemo(() => {
+    const conjunto = new Set([
+      ...(catalogoRecursos?.proveedores || []).map((p) => p.nombre).filter(Boolean),
+      ...purchases.map((p) => p.provider).filter(Boolean),
+      ...providers,
+    ]);
+    return Array.from(conjunto);
+  }, [catalogoRecursos?.proveedores, purchases]);
+
+  const filtrosMetodos = useMemo(() => {
+    const conjunto = new Set([
+      ...(catalogoRecursos?.metodos_pago || []).map((m) => m.nombre).filter(Boolean),
+      ...purchases.map((p) => p.payment).filter(Boolean),
+      ...paymentMethods,
+    ]);
+    return Array.from(conjunto);
+  }, [catalogoRecursos?.metodos_pago, purchases]);
+
   const pageSize = ELEMENTOS_POR_PAGINA;
 
   const pageCount = Math.max(
@@ -1680,16 +1939,19 @@ export default function Compras() {
       0
     ),
     pending: purchases.filter(
-      (purchase) => purchase.status === 'Pendiente'
+      (purchase) =>
+        purchase.status === 'Pendiente' ||
+        purchase.status === 'Procesando' ||
+        purchase.status === 'Registrada'
     ).length,
     received: purchases.filter(
-      (purchase) => purchase.status === 'Recibida'
+      (purchase) =>
+        purchase.status === 'Completada' ||
+        purchase.status === 'Recibida'
     ).length,
   }), [purchases]);
 
   const validarFechaDeRegistro = (data) => {
-    // El backend actual asigna la fecha del servidor al registrar.
-    // No enviar silenciosamente una fecha elegida que no se guardará.
     const hoy = new Date();
     const fechaLocal = [
       hoy.getFullYear(),
@@ -1707,8 +1969,8 @@ export default function Compras() {
       validarFechaDeRegistro(data);
       const datos = compraParaBackend(data);
       setSavingCompras(true);
-      const respuesta = await registrarCompra(datos);
-      setPurchases((actuales) => [compraDesdeBackend(respuesta), ...actuales]);
+      await registrarCompra(datos);
+      await cargarCompras();
       setPage(1);
       setModal(null);
       notificar('success', 'Compra registrada correctamente.');
@@ -1722,14 +1984,15 @@ export default function Compras() {
 
   const updatePurchase = async (data) => {
     if (!selectedPurchase || savingCompras) return;
+    if (['Completada', 'Cancelada'].includes(selectedPurchase.status)) {
+      notificar('warning', `No se pueden modificar los ítems de una compra ${selectedPurchase.status.toLowerCase()}.`);
+      return;
+    }
     try {
       const datos = compraParaBackend(data);
       setSavingCompras(true);
-      const respuesta = await actualizarCompra(selectedPurchase.backendId, datos);
-      const actualizada = compraDesdeBackend(respuesta);
-      setPurchases((actuales) => actuales.map((compra) =>
-        compra.backendId === actualizada.backendId ? actualizada : compra
-      ));
+      await actualizarCompra(selectedPurchase.backendId, datos);
+      await cargarCompras();
       setSelectedPurchase(null);
       setModal(null);
       notificar('info', 'Compra actualizada correctamente.');
@@ -1743,23 +2006,45 @@ export default function Compras() {
 
   const openStatusModal = (purchase) => {
     setSelectedPurchase(purchase);
-    setPendingStatus(purchase.status);
+    if (purchase.status === 'Cancelada') {
+      notificar('warning', `La compra #${purchase.number} está cancelada y no puede reabrirse según las reglas del sistema.`);
+    }
+    const permitidas = TRANSICIONES_PERMITIDAS[purchase.status] || [];
+    setPendingStatus(permitidas.length > 0 ? permitidas[0] : purchase.status);
     setModal('status');
   };
 
   const applyStatus = async () => {
-    if (!selectedPurchase || !statuses.includes(pendingStatus) || savingCompras) return;
+    if (!selectedPurchase || savingCompras) return;
+
+    if (selectedPurchase.status === 'Cancelada') {
+      notificar('error', 'Una compra cancelada no puede reabrirse.');
+      return;
+    }
+
+    if (pendingStatus === selectedPurchase.status) {
+      notificar('info', `La compra ya se encuentra en estado ${pendingStatus}.`);
+      return;
+    }
+
+    if (!esTransicionPermitida(selectedPurchase.status, pendingStatus)) {
+      if (selectedPurchase.status === 'Completada') {
+        notificar('error', 'Una compra completada únicamente puede ser cancelada.');
+      } else {
+        notificar('error', `Transición no permitida desde ${selectedPurchase.status} hacia ${pendingStatus}.`);
+      }
+      return;
+    }
+
     try {
       setSavingCompras(true);
       const respuesta = await cambiarEstadoCompra(selectedPurchase.backendId, pendingStatus);
       const actualizada = compraDesdeBackend(respuesta);
-      setPurchases((actuales) => actuales.map((compra) =>
-        compra.backendId === actualizada.backendId ? actualizada : compra
-      ));
+      await cargarCompras();
       setSelectedPurchase(null);
       setPendingStatus('');
       setModal(null);
-      notificar('warning', 'Estado actualizado correctamente.');
+      notificar('warning', `Estado de la compra #${actualizada.number} actualizado a ${actualizada.status} correctamente.`);
     } catch (error) {
       console.error('Error cambiando estado:', error);
       notificar('error', error.message || 'No se pudo cambiar el estado.');
@@ -1776,15 +2061,19 @@ export default function Compras() {
 
   const deletePurchase = async () => {
     if (!selectedPurchase || savingCompras) return;
+    if (selectedPurchase.status === 'Cancelada') {
+      notificar('info', 'La compra ya se encuentra cancelada.');
+      setSelectedPurchase(null);
+      setModal(null);
+      return;
+    }
     try {
       setSavingCompras(true);
       await eliminarCompra(selectedPurchase.backendId);
-      setPurchases((actuales) => actuales.filter((compra) =>
-        compra.backendId !== selectedPurchase.backendId
-      ));
+      await cargarCompras();
       setSelectedPurchase(null);
       setModal(null);
-      notificar('error', 'Compra eliminada correctamente.');
+      notificar('warning', 'La compra fue cancelada en el sistema correctamente.');
     } catch (error) {
       console.error('Error eliminando compra:', error);
       notificar('error', error.message || 'No se pudo eliminar la compra.');
@@ -1805,7 +2094,7 @@ export default function Compras() {
     { icon: <ShoppingCart size={20} />, title: 'Total compras', value: stats.count, label: 'registradas' },
     { icon: <Banknote size={20} />, title: 'Monto total', value: money(stats.total), label: 'acumulado' },
     { icon: <CalendarDays size={20} />, title: 'Pendientes', value: stats.pending, label: 'por procesar' },
-    { icon: <CheckCircle2 size={20} />, title: 'Recibidas', value: stats.received, label: 'confirmadas' },
+    { icon: <CheckCircle2 size={20} />, title: 'Completadas', value: stats.received, label: 'confirmadas' },
   ];
 
   const columns = [
@@ -1831,8 +2120,32 @@ export default function Compras() {
     { header: 'Acciones', width: '11%', render: (purchase) => (
       <div className="ru-actions compras-actions">
         <button className="ru-icon-btn view" title="Ver detalle" type="button" onClick={() => { setSelectedPurchase(purchase); setModal('detail'); }}><Eye size={17} /></button>
-        <button className="ru-icon-btn edit" title="Editar" type="button" onClick={() => { setSelectedPurchase(purchase); setModal('edit'); }}><Pencil size={17} /></button>
-        <button className="ru-icon-btn delete" title="Eliminar" type="button" onClick={() => { setSelectedPurchase(purchase); setModal('delete'); }}><Trash2 size={17} /></button>
+        <button
+          className={`ru-icon-btn edit ${['Completada', 'Cancelada'].includes(purchase.status) ? 'disabled' : ''}`}
+          title={['Completada', 'Cancelada'].includes(purchase.status) ? `Compra ${purchase.status.toLowerCase()} no editable` : "Editar"}
+          type="button"
+          onClick={() => {
+            if (['Completada', 'Cancelada'].includes(purchase.status)) {
+              notificar('warning', `No se pueden modificar compras ${purchase.status.toLowerCase()}s para proteger el inventario.`);
+              return;
+            }
+            setSelectedPurchase(purchase);
+            setModal('edit');
+          }}
+        ><Pencil size={17} /></button>
+        <button
+          className={`ru-icon-btn delete ${purchase.status === 'Cancelada' ? 'disabled' : ''}`}
+          title={purchase.status === 'Cancelada' ? "Compra ya cancelada" : "Cancelar / Eliminar"}
+          type="button"
+          onClick={() => {
+            if (purchase.status === 'Cancelada') {
+              notificar('info', 'La compra ya se encuentra cancelada.');
+              return;
+            }
+            setSelectedPurchase(purchase);
+            setModal('delete');
+          }}
+        ><Trash2 size={17} /></button>
       </div>
     ) },
   ];
@@ -1867,11 +2180,11 @@ export default function Compras() {
           <div className="compras-extra-filters">
             <select className="ru-select" aria-label="Filtrar por proveedor" value={providerFilter} onChange={(event) => { setProviderFilter(event.target.value); setPage(1); }}>
               <option value="">Todos los proveedores</option>
-              {providers.map((provider) => <option key={provider} value={provider}>{provider}</option>)}
+              {filtrosProveedores.map((provider) => <option key={provider} value={provider}>{provider}</option>)}
             </select>
             <select className="ru-select" aria-label="Filtrar por método de pago" value={paymentFilter} onChange={(event) => { setPaymentFilter(event.target.value); setPage(1); }}>
               <option value="">Método de pago</option>
-              {paymentMethods.map((payment) => <option key={payment} value={payment}>{payment}</option>)}
+              {filtrosMetodos.map((payment) => <option key={payment} value={payment}>{payment}</option>)}
             </select>
             <label className="compras-date-filter"><CalendarDays size={17} /><input type="date" aria-label="Filtrar por fecha" value={dateFilter} onChange={(event) => { setDateFilter(event.target.value); setPage(1); }} /></label>
             {(search || statusFilter || providerFilter || paymentFilter || dateFilter) && <button className="compras-clear-filters" type="button" onClick={() => { clearFilters(); setPage(1); }}>Limpiar filtros</button>}
@@ -1899,6 +2212,7 @@ export default function Compras() {
         <PurchaseForm
           title="Registrar Compra"
           eyebrow="NUEVA ORDEN"
+          catalogoRecursos={catalogoRecursos}
           onClose={() => setModal(null)}
           onSave={registerPurchase}
         />
@@ -1909,6 +2223,7 @@ export default function Compras() {
           title="Editar Compra"
           eyebrow={`EDITANDO COMPRA #${selectedPurchase.number}`}
           initialValue={selectedPurchase}
+          catalogoRecursos={catalogoRecursos}
           onClose={() => {
             setSelectedPurchase(null);
             setModal(null);
@@ -1981,29 +2296,63 @@ export default function Compras() {
                   <span>P.UNIT.</span>
                 </div>
 
-                {selectedPurchase.products.map((product, index) => (
-                  <div
-                    className="detail-products-row"
-                    key={`${product.product}-${index}`}
-                  >
-                    <div>
-                      <strong>{product.product}</strong>
-                      <small>{product.category}</small>
+                {selectedPurchase.products.map((product, index) => {
+                  let color = product.color || '';
+                  let size = product.size || '';
+                  let category = product.category || '';
+                  let material = product.material || '';
+
+                  // Resolución enriquecida con catalogoRecursos si la API devolvió campos vacíos
+                  if (catalogoRecursos) {
+                    if (product.itemType === 'Insumo' && Array.isArray(catalogoRecursos.insumos)) {
+                      const ins = catalogoRecursos.insumos.find(
+                        (i) => i.id === product.productId || i.nombre === product.product
+                      );
+                      if (ins) {
+                        if (!material && ins.material) material = ins.material;
+                        if (!size && (ins.tamano || ins.medida || ins.unidad_medida)) {
+                          size = ins.tamano || ins.medida || ins.unidad_medida;
+                        }
+                        if (!category && ins.categoria) category = ins.categoria;
+                      }
+                    } else if (Array.isArray(catalogoRecursos.productos)) {
+                      const match = catalogoRecursos.productos.find(
+                        (p) =>
+                          (product.productId && (p.id_producto_vari === product.productId || p.id === product.productId)) ||
+                          (p.nombre === product.product)
+                      );
+                      if (match) {
+                        if (!color && match.color && match.color !== 'No aplica') color = match.color;
+                        if (!size && match.talla && match.talla !== 'No aplica') size = match.talla;
+                        if (!category && match.categoria && match.categoria !== 'Sin categoría') category = match.categoria;
+                      }
+                    }
+                  }
+
+                  return (
+                    <div
+                      className="detail-products-row"
+                      key={`${product.product}-${index}`}
+                    >
+                      <div>
+                        <strong>{product.product}</strong>
+                        {category ? <small>{category}</small> : null}
+                      </div>
+
+                      <span>
+                        <small>{color || '—'}</small>{' '}
+                        <small>
+                          {product.itemType === 'Insumo'
+                            ? (material || size ? `${material || '—'} · ${size || '—'}` : '—')
+                            : (size || '—')}
+                        </small>
+                      </span>
+
+                      <span>{product.quantity}</span>
+                      <span>{money(product.unitPrice)}</span>
                     </div>
-
-                    <span>
-                      <small>{product.color || '—'}</small>{' '}
-                      <small>
-                        {product.itemType === 'Insumo'
-                          ? `${product.material || '—'} · ${product.size || '—'}`
-                          : product.size || '—'}
-                      </small>
-                    </span>
-
-                    <span>{product.quantity}</span>
-                    <span>{money(product.unitPrice)}</span>
-                  </div>
-                ))}
+                  );
+                })}
 
                 <div className="detail-total">
                   <strong>Total</strong>
@@ -2026,14 +2375,6 @@ export default function Compras() {
             >
               Cerrar
             </button>
-
-            <button
-              className="primary-button"
-              type="button"
-              onClick={() => setModal('edit')}
-            >
-              Editar
-            </button>
           </div>
         </Modal>
       )}
@@ -2045,28 +2386,87 @@ export default function Compras() {
           onClose={cancelStatusChange}
           className="status-modal"
         >
-          <div className="status-options">
-            {statuses.map((status) => (
-              <button
-                key={status}
-                type="button"
-                className={`status-option ${
-                  pendingStatus === status ? 'selected' : ''
-                }`}
-                onClick={() => setPendingStatus(status)}
-              >
-                <span className={`status-dot ${statusClass(status)}`} />
+          {selectedPurchase.status === 'Cancelada' ? (
+            <div className="status-terminal-notice">
+              <p>
+                <strong>Estado terminal:</strong> Esta compra se encuentra <strong>Cancelada</strong>.
+              </p>
+              <p style={{ marginTop: '6px', fontSize: '13px', color: 'var(--muted)' }}>
+                De acuerdo con las reglas de negocio de la base de datos, una compra cancelada no puede ser reabierta ni cambiar a otro estado.
+              </p>
+            </div>
+          ) : selectedPurchase.status === 'Completada' ? (
+            <div className="status-completed-notice">
+              <p style={{ fontSize: '13px', color: 'var(--muted)', margin: '14px 24px 0' }}>
+                Esta compra está <strong>Completada</strong>. De acuerdo con las reglas del sistema, una compra completada únicamente puede ser cancelada (revirtiendo el inventario).
+              </p>
+              <div className="status-options">
+                {statuses.map((status) => {
+                  const esActual = selectedPurchase.status === status;
+                  const permitida = esTransicionPermitida(selectedPurchase.status, status);
+                  const deshabilitada = !permitida && !esActual;
 
-                <span className="status-option-label">
-                  {status}
-                </span>
+                  return (
+                    <button
+                      key={status}
+                      type="button"
+                      disabled={deshabilitada || esActual}
+                      title={
+                        esActual
+                          ? 'Estado actual'
+                          : deshabilitada
+                          ? 'Una compra completada solo puede cancelarse'
+                          : `Cambiar a ${status}`
+                      }
+                      className={`status-option ${
+                        pendingStatus === status ? 'selected' : ''
+                      } ${deshabilitada ? 'disabled' : ''} ${esActual ? 'is-current' : ''}`}
+                      onClick={() => !deshabilitada && !esActual && setPendingStatus(status)}
+                    >
+                      <span className={`status-dot ${statusClass(status)}`} />
+                      <span className="status-option-label">
+                        {status} {esActual && <small style={{ opacity: 0.7 }}>(Actual)</small>}
+                      </span>
+                      {pendingStatus === status && <CheckCircle2 size={17} />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            <div className="status-options">
+              {statuses.map((status) => {
+                const esActual = selectedPurchase.status === status;
+                const permitida = esTransicionPermitida(selectedPurchase.status, status);
+                const deshabilitada = !permitida && !esActual;
 
-                {pendingStatus === status && (
-                  <CheckCircle2 size={17} />
-                )}
-              </button>
-            ))}
-          </div>
+                return (
+                  <button
+                    key={status}
+                    type="button"
+                    disabled={deshabilitada || esActual}
+                    title={
+                      esActual
+                        ? 'Estado actual'
+                        : deshabilitada
+                        ? `No se permite cambiar de ${selectedPurchase.status} a ${status}`
+                        : `Cambiar a ${status}`
+                    }
+                    className={`status-option ${
+                      pendingStatus === status ? 'selected' : ''
+                    } ${deshabilitada ? 'disabled' : ''} ${esActual ? 'is-current' : ''}`}
+                    onClick={() => !deshabilitada && !esActual && setPendingStatus(status)}
+                  >
+                    <span className={`status-dot ${statusClass(status)}`} />
+                    <span className="status-option-label">
+                      {status} {esActual && <small style={{ opacity: 0.7 }}>(Actual)</small>}
+                    </span>
+                    {pendingStatus === status && <CheckCircle2 size={17} />}
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
           <div className="compras-modal-footer">
             <button
@@ -2074,63 +2474,43 @@ export default function Compras() {
               type="button"
               onClick={cancelStatusChange}
             >
-              Cancelar
+              Cerrar
             </button>
 
-            <button
-              className="primary-button"
-              type="button"
-              onClick={applyStatus}
-            >
-              Aplicar
-            </button>
+            {selectedPurchase.status !== 'Cancelada' && (
+              <button
+                className="primary-button"
+                type="button"
+                disabled={
+                  savingCompras ||
+                  !pendingStatus ||
+                  pendingStatus === selectedPurchase.status ||
+                  !esTransicionPermitida(selectedPurchase.status, pendingStatus)
+                }
+                onClick={applyStatus}
+              >
+                Aplicar
+              </button>
+            )}
           </div>
         </Modal>
       )}
 
       {modal === 'delete' && selectedPurchase && (
-        <Modal
-          title="Eliminar Compra"
+        <ConfirmModal
+          title={`¿Cancelar Compra #${selectedPurchase.number}?`}
+          message={
+            selectedPurchase.status === 'Completada'
+              ? `La compra #${selectedPurchase.number} de "${selectedPurchase.provider}" se encuentra Completada. Al cancelarla, el inventario ingresado será revertido automáticamente en Supabase y el estado cambiará a Cancelada para preservar el historial.`
+              : `¿Deseas cancelar la compra #${selectedPurchase.number} de "${selectedPurchase.provider}"? El registro se conservará como Cancelada para fines de auditoría y trazabilidad histórica.`
+          }
+          confirmText="Sí, cancelar compra"
+          onConfirm={deletePurchase}
           onClose={() => {
             setSelectedPurchase(null);
             setModal(null);
           }}
-          className="delete-modal"
-        >
-          <div className="delete-content">
-            <div className="delete-icon">
-              <Trash2 size={21} />
-            </div>
-
-            <p>
-              ¿Estás seguro de eliminar la compra{' '}
-              <strong>#{selectedPurchase.number}</strong> de{' '}
-              <strong>{selectedPurchase.provider}</strong>? Esta acción
-              no se puede deshacer.
-            </p>
-          </div>
-
-          <div className="compras-modal-footer">
-            <button
-              className="secondary-button"
-              type="button"
-              onClick={() => {
-                setSelectedPurchase(null);
-                setModal(null);
-              }}
-            >
-              Cancelar
-            </button>
-
-            <button
-              className="danger-button"
-              type="button"
-              onClick={deletePurchase}
-            >
-              Eliminar
-            </button>
-          </div>
-        </Modal>
+        />
       )}
     </div>
   );

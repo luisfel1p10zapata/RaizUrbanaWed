@@ -14,7 +14,6 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-  CircleCheck,
 } from 'lucide-react';
 import {
   obtenerCategorias,
@@ -25,6 +24,7 @@ import {
   eliminarCategoriaApi,
 } from '../services/categoriaService';
 import AppAlert from '../../../components/ui/AppAlert';
+import ConfirmModal from '../../../components/ui/ConfirmModal';
 import './Categorias.css';
 
 function EstadoBadge({ activo }) {
@@ -78,14 +78,15 @@ export default function Categorias() {
   const cargarDatos = async () => {
     try {
       const data = await obtenerCategorias();
-      const normalizados = data.map((item) => ({
+      const lista = Array.isArray(data) ? data : [];
+      const normalizados = lista.map((item) => ({
         ...item,
         id: item.id_categoria ? `#${item.id_categoria}` : item.id,
       }));
       setCategorias(normalizados);
     } catch (error) {
       console.error('Error al listar categorías:', error);
-      avisar('error', 'No se pudo conectar con el backend para listar categorías.');
+      avisar('error', error.message || 'No se pudo conectar con el backend para listar categorías.');
     }
   };
 
@@ -163,12 +164,6 @@ export default function Categorias() {
     setModal('editar');
   };
 
-  const abrirEstado = (categoria) => {
-    setSelected(categoria);
-    setFormEstado(categoria.estado);
-    setModal('estado');
-  };
-
   const abrirEliminar = (categoria) => {
     setSelected(categoria);
     setModal('eliminar');
@@ -238,18 +233,20 @@ export default function Categorias() {
     }
   };
 
-  // Cambiar Estado con Backend
-  const aplicarEstado = async () => {
-    if (!selected) return;
-    const idReal = selected.id_categoria || String(selected.id).replace('#', '');
-
+  // Cambiar Estado directamente con un clic (sin modal)
+  const cambiarEstadoDirecto = async (categoria) => {
+    if (guardando || !categoria) return;
+    const idReal = categoria.id_categoria || String(categoria.id).replace('#', '');
+    const nuevoEstado = !categoria.estado;
+    setGuardando(true);
     try {
-      await cambiarEstadoApi(idReal, formEstado);
-      setModal(null);
+      await cambiarEstadoApi(idReal, nuevoEstado);
       await cargarDatos();
-      avisar('warning', 'Estado de la categoría actualizado correctamente.');
+      avisar('info', `Estado de la categoría "${categoria.nombre}" actualizado a ${nuevoEstado ? 'Activo' : 'Inactivo'}.`);
     } catch (error) {
-      avisar('error', error.message || 'Error al cambiar el estado.');
+      avisar('error', error.message || 'Error al cambiar el estado de la categoría.');
+    } finally {
+      setGuardando(false);
     }
   };
 
@@ -263,7 +260,7 @@ export default function Categorias() {
       setModal(null);
       setSelected(null);
       await cargarDatos();
-      avisar('error', 'Categoría eliminada correctamente.');
+      avisar('exito', 'Categoría eliminada correctamente.');
     } catch (error) {
       setModal(null);
       avisar('error', error.message || 'No se puede eliminar la categoría porque tiene productos asociados.');
@@ -403,7 +400,8 @@ export default function Categorias() {
                     <button
                       className="categoria-status-button"
                       title="Cambiar estado"
-                      onClick={() => abrirEstado(categoria)}
+                      disabled={guardando}
+                      onClick={() => cambiarEstadoDirecto(categoria)}
                     >
                       <EstadoBadge activo={categoria.estado} />
                     </button>
@@ -553,45 +551,6 @@ export default function Categorias() {
         </ModalShell>
       )}
 
-      {/* Modal Cambiar Estado */}
-      {modal === 'estado' && selected && (
-        <ModalShell className="categoria-state-modal">
-          <div className="categoria-modal-header">
-            <div>
-              <span className="categoria-modal-eyebrow normal">{selected.nombre}</span>
-              <h2>Cambiar Estado</h2>
-            </div>
-            <button className="categoria-modal-close" onClick={() => setModal(null)}>
-              <X size={20} />
-            </button>
-          </div>
-          <div className="categoria-modal-content categoria-state-content">
-            <button
-              className={`categoria-state-option ${formEstado ? 'selected' : ''}`}
-              onClick={() => setFormEstado(true)}
-            >
-              <span><strong>Activo</strong></span>
-              {formEstado && <CircleCheck size={15} />}
-            </button>
-            <button
-              className={`categoria-state-option ${!formEstado ? 'selected' : ''}`}
-              onClick={() => setFormEstado(false)}
-            >
-              <span><strong>Inactivo</strong></span>
-              {!formEstado && <CircleCheck size={15} />}
-            </button>
-          </div>
-          <div className="categoria-modal-footer">
-            <button className="categoria-secondary-button" onClick={() => setModal(null)}>
-              Cancelar
-            </button>
-            <button className="categoria-primary-modal-button" onClick={aplicarEstado}>
-              Aplicar
-            </button>
-          </div>
-        </ModalShell>
-      )}
-
       {/* Modal Detalle */}
       {modal === 'detalle' && selected && (
         <ModalShell className="categoria-detail-modal">
@@ -669,26 +628,15 @@ export default function Categorias() {
         </ModalShell>
       )}
 
-      {/* Modal Eliminar */}
+      {/* Modal Eliminar Estándar Raíz Urbana */}
       {modal === 'eliminar' && selected && (
-        <ModalShell className="categoria-delete-modal">
-          <div className="categoria-delete-content">
-            <h2>¿Eliminar Categoría?</h2>
-            <p>Estás a punto de eliminar <strong>{selected.nombre}</strong>.</p>
-          </div>
-          <div className="categoria-modal-footer">
-            <button className="categoria-secondary-button" onClick={() => setModal(null)}>
-              Cancelar
-            </button>
-            <button
-              className="categoria-primary-modal-button"
-              style={{ backgroundColor: '#e74c3c' }}
-              onClick={eliminar}
-            >
-              Eliminar
-            </button>
-          </div>
-        </ModalShell>
+        <ConfirmModal
+          title="¿Eliminar Categoría?"
+          message={`¿Estás seguro de eliminar la categoría "${selected.nombre}"? Si tiene productos o dependencias asociadas en Supabase, la acción será rechazada para mantener la integridad del sistema.`}
+          confirmText="Sí, eliminar"
+          onConfirm={eliminar}
+          onClose={() => setModal(null)}
+        />
       )}
     </div>
   );
