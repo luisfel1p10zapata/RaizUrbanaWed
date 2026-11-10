@@ -4,6 +4,7 @@ import {
   obtenerProduccionPorId,
   listarEmpleados,
   listarVariantes,
+  listarEstadosProduccion,
   crearProduccion,
   editarProduccion,
   cambiarEstadoProduccion,
@@ -11,17 +12,18 @@ import {
 } from '../services/produccionService';
 
 export const ESTADOS_ORDEN = [
-  { id: 1, nombre: 'Pendiente' },
-  { id: 2, nombre: 'En Producción' },
-  { id: 3, nombre: 'Terminado' },
-  { id: 4, nombre: 'Entregado' },
-  { id: 5, nombre: 'Producto no Conforme' },
+  { id: 1, id_estado_orden: 1, nombre: 'Pendiente' },
+  { id: 2, id_estado_orden: 2, nombre: 'En Proceso' },
+  { id: 3, id_estado_orden: 3, nombre: 'Terminado' },
+  { id: 4, id_estado_orden: 4, nombre: 'Entregado' },
+  { id: 5, id_estado_orden: 5, nombre: 'Producto no Conforme' },
 ];
 
 export default function useProduccion() {
   const [ordenes, setOrdenes] = useState([]);
   const [empleados, setEmpleados] = useState([]);
   const [variantes, setVariantes] = useState([]);
+  const [estados, setEstados] = useState(ESTADOS_ORDEN);
   const [loading, setLoading] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState(null);
@@ -55,14 +57,18 @@ export default function useProduccion() {
     setLoading(true);
     setError(null);
     try {
-      const [ordenesData, empleadosData, variantesData] = await Promise.all([
+      const [ordenesData, empleadosData, variantesData, estadosData] = await Promise.all([
         listarProduccion(),
         listarEmpleados().catch(() => []),
         listarVariantes().catch(() => []),
+        listarEstadosProduccion().catch(() => []),
       ]);
       setOrdenes(Array.isArray(ordenesData) ? ordenesData : []);
       setEmpleados(Array.isArray(empleadosData) ? empleadosData : []);
       setVariantes(Array.isArray(variantesData) ? variantesData : []);
+      if (Array.isArray(estadosData) && estadosData.length > 0) {
+        setEstados(estadosData);
+      }
     } catch (err) {
       setError(err.message || 'Error al cargar las órdenes de producción.');
       showAlert('error', err.message || 'Error al cargar las órdenes de producción.');
@@ -75,15 +81,19 @@ export default function useProduccion() {
     let cancel = false;
     async function init() {
       try {
-        const [ordenesData, empleadosData, variantesData] = await Promise.all([
+        const [ordenesData, empleadosData, variantesData, estadosData] = await Promise.all([
           listarProduccion(),
           listarEmpleados().catch(() => []),
           listarVariantes().catch(() => []),
+          listarEstadosProduccion().catch(() => []),
         ]);
         if (!cancel) {
           setOrdenes(Array.isArray(ordenesData) ? ordenesData : []);
           setEmpleados(Array.isArray(empleadosData) ? empleadosData : []);
           setVariantes(Array.isArray(variantesData) ? variantesData : []);
+          if (Array.isArray(estadosData) && estadosData.length > 0) {
+            setEstados(estadosData);
+          }
           setLoading(false);
         }
       } catch (err) {
@@ -99,48 +109,39 @@ export default function useProduccion() {
     };
   }, []);
 
-  // Normalización para visualización y relaciones
+  // Normalización para visualización y relaciones (orden ascendente por id)
   const normalizedOrdenes = useMemo(() => {
-    return ordenes.map((item) => {
-      const id = item.id_orden_produccion ?? item.id;
-      const detalles = Array.isArray(item.detalles)
-        ? item.detalles
-        : Array.isArray(item.detalle)
-        ? item.detalle
-        : [];
-      const primerDetalle = detalles[0] || {};
+    return [...ordenes]
+      .sort((a, b) => Number(a.id_orden_produccion ?? a.id ?? 0) - Number(b.id_orden_produccion ?? b.id ?? 0))
+      .map((item) => {
+        const id = item.id_orden_produccion ?? item.id;
+        const productos = item.productos || 'Sin productos registrados';
+        const total_unidades = Number(item.total_unidades ?? item.cantidad ?? 0);
 
-      const producto =
-        primerDetalle.producto ||
-        primerDetalle.nombre_producto ||
-        primerDetalle.nombre_variante ||
-        item.producto ||
-        item.nombre_producto ||
-        'Producto no especificado';
+        const responsable =
+          item.empleado ||
+          item.nombre_empleado ||
+          item.usuario ||
+          (item.nombres && item.apellidos ? `${item.nombres} ${item.apellidos}` : '') ||
+          'Responsable no asignado';
 
-      const responsable =
-        item.empleado ||
-        item.nombre_empleado ||
-        item.usuario ||
-        (item.nombres && item.apellidos ? `${item.nombres} ${item.apellidos}` : '') ||
-        'Responsable no asignado';
+        const idEstado = Number(item.id_estado_orden ?? 1);
+        const nombreEstado = item.estado || item.nombre_estado || 'Pendiente';
+        const puedeModificar = idEstado === 1 || nombreEstado.toLowerCase() === 'pendiente';
 
-      const idEstado = Number(item.id_estado_orden ?? primerDetalle.id_estado_orden ?? 1);
-      const estadoObj = ESTADOS_ORDEN.find((e) => e.id === idEstado);
-      const nombreEstado = item.nombre_estado || item.estado || estadoObj?.nombre || 'Pendiente';
-
-      return {
-        ...item,
-        id,
-        id_orden_produccion: id,
-        producto,
-        responsable,
-        id_estado_orden: idEstado,
-        nombre_estado: nombreEstado,
-        detalles,
-        primerDetalle,
-      };
-    });
+        return {
+          ...item,
+          id,
+          id_orden_produccion: id,
+          productos,
+          total_unidades,
+          responsable,
+          id_estado_orden: idEstado,
+          nombre_estado: nombreEstado,
+          estado: nombreEstado,
+          puedeModificar,
+        };
+      });
   }, [ordenes]);
 
   // Filtros
@@ -150,8 +151,8 @@ export default function useProduccion() {
       const matchesSearch =
         !q ||
         String(orden.id).includes(q) ||
-        orden.producto.toLowerCase().includes(q) ||
-        orden.responsable.toLowerCase().includes(q) ||
+        (orden.productos && orden.productos.toLowerCase().includes(q)) ||
+        (orden.responsable && orden.responsable.toLowerCase().includes(q)) ||
         (orden.observaciones && orden.observaciones.toLowerCase().includes(q));
 
       const matchesStatus =
@@ -322,6 +323,7 @@ export default function useProduccion() {
     filteredOrdenes,
     empleados,
     variantes,
+    estados,
     loading,
     guardando,
     error,

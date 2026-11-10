@@ -25,6 +25,11 @@ export const listarVariantes = async () => {
   return data;
 };
 
+export const listarEstadosProduccion = async () => {
+  const { data } = await apiClient.get('/ordenes-produccion/estados');
+  return data;
+};
+
 export const buscarProduccion = async (filtro = '') => {
   const { data } = await apiClient.get(
     `/ordenes-produccion/buscar?filtro=${encodeURIComponent(filtro)}`
@@ -53,7 +58,6 @@ export const crearProduccion = async (datos) => {
       id_producto_vari: Number(det.id_producto_vari),
       cantidad: Number(det.cantidad),
     })),
-    ...(datos.id_estado_orden ? { id_estado_orden: Number(datos.id_estado_orden) } : {}),
   };
   const { data } = await apiClient.post('/ordenes-produccion', payload);
   return data;

@@ -33,7 +33,7 @@ def manejar_error(error: Exception):
 
     if isinstance(error, psycopg.Error):
         codigo = error.sqlstate
-        mensaje = str(error).split("\n")[0]
+        mensaje = str(error).split("\n")[0].replace("ERROR:", "").strip()
 
         if codigo == "P0002":
             raise HTTPException(
@@ -114,6 +114,7 @@ def registrar_devolucion(datos: RegistrarDevolucionRequest):
             observaciones=datos.observaciones,
             fecha_devolucion=datos.fecha_devolucion,
             id_motivo=datos.id_motivo,
+            reintegra_stock=datos.reintegra_stock,
         )
 
     except Exception as error:
@@ -160,12 +161,14 @@ def filtrar_devoluciones(
     fecha_inicio: date | None = None,
     fecha_fin: date | None = None,
     id_motivo: int | None = Query(default=None, gt=0),
+    estado: str | None = Query(default=None, max_length=50),
 ):
     try:
         return DevolucionService().filtrar(
             fecha_inicio=fecha_inicio,
             fecha_fin=fecha_fin,
             id_motivo=id_motivo,
+            estado=estado,
         )
 
     except Exception as error:
@@ -294,6 +297,7 @@ def actualizar_devolucion(
             observaciones=datos.observaciones,
             fecha_devolucion=datos.fecha_devolucion,
             id_motivo=datos.id_motivo,
+            reintegra_stock=datos.reintegra_stock,
         )
 
         if resultado is None:

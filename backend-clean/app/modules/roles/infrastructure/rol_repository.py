@@ -80,19 +80,11 @@ class RolRepository:
                             "No se pudo obtener el ID del rol registrado."
                         )
 
-                    # Asignar primero los permisos.
-                    if permisos_ids:
-                        cursor.execute(
-                            "CALL sp_asignarpermisos(%s, %s)",
-                            (id_rol, permisos_ids),
-                        )
-
-                    # Asignar los privilegios seleccionados.
-                    if privilegios_ids:
-                        cursor.execute(
-                            "CALL sp_asignarprivilegiosrol(%s, %s)",
-                            (id_rol, privilegios_ids),
-                        )
+                    # Asignar permisos y privilegios atómicamente en la misma transacción.
+                    cursor.execute(
+                        "CALL sp_asignarpermisosprivilegiosrol(%s, %s, %s)",
+                        (id_rol, permisos_ids, privilegios_ids),
+                    )
 
                     return {
                         "id_rol": id_rol,
@@ -155,6 +147,8 @@ class RolRepository:
         nombre: str,
         descripcion: str,
         estado: bool,
+        permisos_ids: list[int] | None = None,
+        privilegios_ids: list[int] | None = None,
     ):
         try:
             with get_connection() as conn:
@@ -163,6 +157,14 @@ class RolRepository:
                         "CALL sp_actualizarrol(%s, %s, %s, %s)",
                         (id_rol, nombre, descripcion, estado),
                     )
+
+                    if permisos_ids is not None and privilegios_ids is not None:
+                        permisos_ids = list(dict.fromkeys(permisos_ids))
+                        privilegios_ids = list(dict.fromkeys(privilegios_ids))
+                        cursor.execute(
+                            "CALL sp_asignarpermisosprivilegiosrol(%s, %s, %s)",
+                            (id_rol, permisos_ids, privilegios_ids),
+                        )
 
                     cursor.execute(
                         "SELECT * FROM sp_obtenerrolporid(%s)",
@@ -286,45 +288,9 @@ class RolRepository:
     # --------------------------------------------------
 
     def listar_permisos_privilegios(self):
-        consulta = """
-            SELECT
-                p.id_Permiso,
-                p.Nombre AS nombre_permiso,
-                pr.id_Privilegio,
-                pr.Nombre AS nombre_privilegio
-            FROM tb_Permisos AS p
-            LEFT JOIN tb_Privilegio AS pr
-                ON pr.id_Permiso = p.id_Permiso
-            WHERE LOWER(p.Nombre) <> 'acceso total'
-            ORDER BY p.id_Permiso, pr.id_Privilegio;
-        """
-
-        permisos = {}
-
         with get_connection() as conn:
             with conn.cursor() as cursor:
-                cursor.execute(consulta)
-                registros = cursor.fetchall()
-
-        for fila in registros:
-            (
-                id_permiso,
-                nombre_permiso,
-                id_privilegio,
-                nombre_privilegio,
-            ) = fila
-
-            if id_permiso not in permisos:
-                permisos[id_permiso] = {
-                    "id_permiso": id_permiso,
-                    "nombre": nombre_permiso,
-                    "privilegios": [],
-                }
-
-            if id_privilegio is not None:
-                permisos[id_permiso]["privilegios"].append({
-                    "id_privilegio": id_privilegio,
-                    "nombre": nombre_privilegio,
-                })
-
-        return list(permisos.values())
+                cursor.execute(
+                    "SELECT id_permiso, permiso, privilegios FROM sp_listarpermisosprivilegios();"
+                )
+                return self._obtener_roles(cursor)

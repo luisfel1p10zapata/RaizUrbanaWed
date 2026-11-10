@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import { Plus, Eye, Pencil, RefreshCw, Trash2 } from 'lucide-react';
+import { Plus } from 'lucide-react';
+import { Icons } from '../../../components/ui/Icons';
 import useProduccion from '../hooks/useProduccion';
 import TableGlobal from '../../../components/ui/TableGlobal';
 import FiltrarBuscarGlobal from '../../../components/ui/FiltrarBuscarGlobal';
@@ -20,6 +21,7 @@ export default function Produccion() {
     filteredOrdenes,
     empleados,
     variantes,
+    estados,
     guardando,
     search,
     setSearch,
@@ -64,17 +66,17 @@ export default function Produccion() {
       },
       {
         header: 'Producto',
-        accessor: 'producto',
+        accessor: 'productos',
         render: (row) => {
-          const cantidad = row.primerDetalle?.cantidad || row.cantidad;
+          const totalUnidades = Number(row.total_unidades || 0);
           return (
             <div>
               <strong className="produccion-product-title">
-                {row.producto}
+                {row.productos}
               </strong>
-              {cantidad && (
-                <span className="produccion-product-qty">
-                  Cantidad: {cantidad} unidades
+              {totalUnidades > 0 && (
+                <span className="produccion-product-qty" style={{ display: 'block', fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
+                  Total: {totalUnidades} {totalUnidades === 1 ? 'unidad' : 'unidades'}
                 </span>
               )}
             </div>
@@ -96,61 +98,82 @@ export default function Produccion() {
         width: '160px',
         render: (row) => {
           let variant = 'pendiente';
-          const lower = (row.nombre_estado || '').toLowerCase();
+          const lower = (row.nombre_estado || row.estado || '').toLowerCase();
           if (lower.includes('terminado') || lower.includes('entregado')) {
             variant = 'activo';
           } else if (lower.includes('no conforme') || lower.includes('cancelado')) {
             variant = 'cancelado';
-          } else if (lower.includes('producción') || lower.includes('produccion')) {
+          } else if (lower.includes('proceso') || lower.includes('producción') || lower.includes('produccion')) {
             variant = 'info';
           }
-          return (
+
+          const badge = (
             <Badge variant={variant} dot>
-              {row.nombre_estado}
+              {row.nombre_estado || row.estado}
             </Badge>
+          );
+
+          const esEntregado = Number(row.id_estado_orden) === 5 || lower.includes('entregado');
+          if (esEntregado) {
+            return (
+              <span title="La orden ya ha sido entregada (estado final)" style={{ cursor: 'not-allowed', display: 'inline-block' }}>
+                {badge}
+              </span>
+            );
+          }
+
+          return (
+            <button
+              type="button"
+              className="ru-v-badge-btn"
+              onClick={() => abrirCambiarEstado(row)}
+              title="Haga clic para cambiar estado"
+            >
+              {badge}
+            </button>
           );
         },
       },
       {
         header: 'Acciones',
         accessor: 'acciones',
-        width: '150px',
-        render: (row) => (
-          <div className="ru-actions">
-            <button
-              type="button"
-              className="ru-icon-btn view"
-              title="Consultar orden"
-              onClick={() => abrirVer(row)}
-            >
-              <Eye size={16} />
-            </button>
-            <button
-              type="button"
-              className="ru-icon-btn edit"
-              title="Editar orden"
-              onClick={() => abrirEditar(row)}
-            >
-              <Pencil size={16} />
-            </button>
-            <button
-              type="button"
-              className="ru-icon-btn produccion-btn-status"
-              title="Cambiar estado"
-              onClick={() => abrirCambiarEstado(row)}
-            >
-              <RefreshCw size={16} />
-            </button>
-            <button
-              type="button"
-              className="ru-icon-btn delete"
-              title="Eliminar orden"
-              onClick={() => abrirEliminar(row)}
-            >
-              <Trash2 size={16} />
-            </button>
-          </div>
-        ),
+        width: '130px',
+        render: (row) => {
+          const idEstado = Number(row.id_estado_orden || 1);
+          const estadoNombre = (row.nombre_estado || row.estado || '').toLowerCase();
+          const esPendiente = idEstado === 1 || estadoNombre === 'pendiente';
+
+          return (
+            <div className="ru-actions">
+              <button
+                type="button"
+                className="ru-icon-btn view"
+                title="Consultar orden"
+                onClick={() => abrirVer(row)}
+              >
+                <Icons.Eye width={16} height={16} />
+              </button>
+              <button
+                type="button"
+                className={`ru-icon-btn edit ${!esPendiente ? 'disabled' : ''}`}
+                title={esPendiente ? 'Editar orden' : 'Solo se pueden editar órdenes en estado Pendiente'}
+                disabled={!esPendiente}
+                onClick={() => esPendiente && abrirEditar(row)}
+              >
+                <Icons.Pencil width={16} height={16} />
+              </button>
+              <button
+                type="button"
+                className={`ru-icon-btn delete ${!esPendiente ? 'disabled' : ''}`}
+                title={esPendiente ? 'Eliminar orden' : 'Solo se pueden eliminar órdenes en estado Pendiente'}
+                disabled={!esPendiente}
+                onClick={() => esPendiente && abrirEliminar(row)}
+              >
+                <Icons.Trash width={16} height={16} />
+              </button>
+            </div>
+          );
+        },
       },
     ],
     [abrirVer, abrirEditar, abrirCambiarEstado, abrirEliminar]
@@ -231,6 +254,7 @@ export default function Produccion() {
         guardando={guardando}
         empleados={empleados}
         variantes={variantes}
+        estados={estados}
       />
 
       <ModalEditarProduccion
@@ -241,6 +265,7 @@ export default function Produccion() {
         selectedOrden={selectedOrden}
         empleados={empleados}
         variantes={variantes}
+        estados={estados}
       />
 
       <ModalCambiarEstadoProduccion
@@ -261,7 +286,7 @@ export default function Produccion() {
       {modalEliminarOpen && selectedOrden && (
         <ConfirmModal
           title="¿Eliminar Orden?"
-          message={`¿Estás seguro de eliminar la orden #${selectedOrden.id} del producto "${selectedOrden.producto}"? Esta acción no se puede deshacer.`}
+          message={`¿Estás seguro de eliminar la orden #${selectedOrden.id}${selectedOrden.productos ? ` (${selectedOrden.productos})` : ''}? Esta acción no se puede deshacer.`}
           confirmText="Sí, eliminar"
           cancelText="Cancelar"
           confirmVariant="destructive"

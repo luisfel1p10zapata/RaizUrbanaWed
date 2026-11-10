@@ -141,7 +141,7 @@ body:has(.roles-container),
   border-top: 1px solid var(--tg-border, #E6CFCB);
 }
 
-/* Proporciones de columna fijas para evitar desbordes */
+/* Proporciones de columna para 5 columnas (ID, Nombre, Descripción, Estado, Acciones) */
 .roles-container .produccion-table th:nth-child(1),
 .roles-container .produccion-table td:nth-child(1) {
   width: 75px !important;
@@ -149,18 +149,24 @@ body:has(.roles-container),
 
 .roles-container .produccion-table th:nth-child(2),
 .roles-container .produccion-table td:nth-child(2) {
-  width: auto !important;
+  width: 170px !important;
   overflow: hidden;
 }
 
 .roles-container .produccion-table th:nth-child(3),
 .roles-container .produccion-table td:nth-child(3) {
-  width: 130px !important;
+  width: auto !important;
+  overflow: hidden;
 }
 
 .roles-container .produccion-table th:nth-child(4),
 .roles-container .produccion-table td:nth-child(4) {
-  width: 130px !important;
+  width: 120px !important;
+}
+
+.roles-container .produccion-table th:nth-child(5),
+.roles-container .produccion-table td:nth-child(5) {
+  width: 120px !important;
   text-align: center;
 }
 
@@ -209,6 +215,13 @@ body:has(.roles-container),
   justify-content: center;
   padding: 6px;
   border-radius: 6px;
+}
+
+.roles-container .ru-icon-btn.disabled,
+.roles-container .ru-icon-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: auto;
 }
 
 @media (max-width: 900px) {

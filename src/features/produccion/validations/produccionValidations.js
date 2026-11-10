@@ -32,6 +32,10 @@ export const validateFechaEstimada = (valor) => {
   if (!valor || String(valor).trim() === '') {
     return 'Este campo es obligatorio';
   }
+  const hoyStr = new Date().toISOString().split('T')[0];
+  if (valor < hoyStr) {
+    return 'La fecha estimada debe ser igual o posterior a la fecha actual';
+  }
   return '';
 };
 

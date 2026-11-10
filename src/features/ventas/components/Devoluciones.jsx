@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import { Plus, Eye, Pencil, Ban } from 'lucide-react';
+import { Plus } from 'lucide-react';
+import { Icons } from '../../../components/ui/Icons';
 import useDevoluciones from '../hooks/useDevoluciones';
 import TableGlobal from '../../../components/ui/TableGlobal';
 import FiltrarBuscarGlobal from '../../../components/ui/FiltrarBuscarGlobal';
@@ -90,46 +91,71 @@ export default function Devoluciones() {
         header: 'Estado',
         accessor: 'estado',
         width: '130px',
-        render: (row) => (
-          <Badge variant={row.anulada ? 'cancelado' : 'activo'} dot>
-            {row.estado}
-          </Badge>
-        ),
+        render: (row) => {
+          const esAnulada = (row.estado || '').toLowerCase() === 'anulada';
+          const badge = (
+            <Badge variant={esAnulada ? 'cancelado' : 'activo'} dot>
+              {row.estado || (esAnulada ? 'Anulada' : 'Registrada')}
+            </Badge>
+          );
+
+          if (esAnulada) {
+            return (
+              <span title="Devolución ya anulada" style={{ cursor: 'not-allowed', display: 'inline-block' }}>
+                {badge}
+              </span>
+            );
+          }
+
+          return (
+            <button
+              type="button"
+              className="ru-v-badge-btn"
+              onClick={() => abrirCambiarEstado(row)}
+              title="Haga clic para anular devolución"
+            >
+              {badge}
+            </button>
+          );
+        },
       },
       {
         header: 'Acciones',
         accessor: 'acciones',
         width: '130px',
-        render: (row) => (
-          <div className="ru-actions">
-            <button
-              type="button"
-              className="ru-icon-btn view"
-              title="Consultar devolución"
-              onClick={() => abrirVer(row)}
-            >
-              <Eye size={16} />
-            </button>
-            <button
-              type="button"
-              className={`ru-icon-btn edit ${row.anulada ? 'devoluciones-action-btn disabled' : ''}`}
-              title={row.anulada ? 'No se puede editar una devolución anulada' : 'Editar devolución'}
-              disabled={row.anulada}
-              onClick={() => !row.anulada && abrirEditar(row)}
-            >
-              <Pencil size={16} />
-            </button>
-            <button
-              type="button"
-              className={`ru-icon-btn delete ${row.anulada ? 'devoluciones-action-btn disabled' : ''}`}
-              title={row.anulada ? 'Devolución ya anulada' : 'Anular devolución'}
-              disabled={row.anulada}
-              onClick={() => !row.anulada && abrirCambiarEstado(row)}
-            >
-              <Ban size={16} />
-            </button>
-          </div>
-        ),
+        render: (row) => {
+          const esAnulada = (row.estado || '').toLowerCase() === 'anulada';
+          return (
+            <div className="ru-actions">
+              <button
+                type="button"
+                className="ru-icon-btn view"
+                title="Consultar devolución"
+                onClick={() => abrirVer(row)}
+              >
+                <Icons.Eye width={16} height={16} />
+              </button>
+              <button
+                type="button"
+                className={`ru-icon-btn edit ${esAnulada ? 'disabled' : ''}`}
+                title={esAnulada ? 'No se puede editar una devolución anulada' : 'Editar devolución'}
+                disabled={esAnulada}
+                onClick={() => !esAnulada && abrirEditar(row)}
+              >
+                <Icons.Pencil width={16} height={16} />
+              </button>
+              <button
+                type="button"
+                className={`ru-icon-btn delete ${esAnulada ? 'disabled' : ''}`}
+                title={esAnulada ? 'Devolución ya anulada' : 'Anular devolución'}
+                disabled={esAnulada}
+                onClick={() => !esAnulada && abrirCambiarEstado(row)}
+              >
+                <Icons.Trash width={16} height={16} />
+              </button>
+            </div>
+          );
+        },
       },
     ],
     [abrirVer, abrirEditar, abrirCambiarEstado]
@@ -178,8 +204,8 @@ export default function Devoluciones() {
           onFilterChange={setStatusFilter}
           filterOptions={[
             { value: 'Todos los estados', label: 'Todos los estados' },
-            { value: 'Vigentes', label: 'Vigentes' },
-            { value: 'Anuladas', label: 'Anuladas' },
+            { value: 'Registrada', label: 'Registradas' },
+            { value: 'Anulada', label: 'Anuladas' },
           ]}
         />
       </div>

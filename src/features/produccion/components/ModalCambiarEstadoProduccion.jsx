@@ -1,9 +1,19 @@
-import { useState } from 'react';
-import { X, RefreshCw } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { X, RefreshCw, AlertCircle } from 'lucide-react';
 import Button from '../../../components/ui/Button';
 import Badge from '../../../components/ui/Badge';
-import { ESTADOS_ORDEN } from '../hooks/useProduccion';
 import '../Styles/ModalCambiarEstadoProduccion.css';
+
+const TRANSICIONES_VALIDAS = {
+  1: [{ id: 2, nombre: 'En Proceso' }],
+  2: [
+    { id: 3, nombre: 'Terminado' },
+    { id: 4, nombre: 'Producto no Conforme' },
+  ],
+  3: [{ id: 5, nombre: 'Entregado' }],
+  4: [{ id: 2, nombre: 'En Proceso' }],
+  5: [],
+};
 
 export default function ModalCambiarEstadoProduccion({
   isOpen,
@@ -13,27 +23,45 @@ export default function ModalCambiarEstadoProduccion({
   selectedOrden,
 }) {
   const currentStatus = Number(selectedOrden?.id_estado_orden || 1);
-  const [selectedStatus, setSelectedStatus] = useState(null);
+  const opcionesDisponibles = TRANSICIONES_VALIDAS[currentStatus] || [];
+  const [selectedStatus, setSelectedStatus] = useState('');
+
+  useEffect(() => {
+    if (isOpen && opcionesDisponibles.length > 0) {
+      setSelectedStatus(opcionesDisponibles[0].id);
+    } else {
+      setSelectedStatus('');
+    }
+  }, [isOpen, currentStatus]);
 
   if (!isOpen || !selectedOrden) return null;
 
-  const nuevoEstado = selectedStatus !== null ? selectedStatus : currentStatus;
-
   const handleClose = () => {
-    setSelectedStatus(null);
+    setSelectedStatus('');
     onClose();
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!selectedStatus) return;
     try {
-      await onSubmit(selectedOrden.id || selectedOrden.id_orden_produccion, nuevoEstado);
-      setSelectedStatus(null);
+      await onSubmit(selectedOrden.id || selectedOrden.id_orden_produccion, Number(selectedStatus));
+      setSelectedStatus('');
       onClose();
     } catch {
       // Manejado en hook
     }
   };
+
+  const lower = (selectedOrden.nombre_estado || selectedOrden.estado || '').toLowerCase();
+  let badgeVariant = 'pendiente';
+  if (lower.includes('terminado') || lower.includes('entregado')) {
+    badgeVariant = 'activo';
+  } else if (lower.includes('no conforme') || lower.includes('cancelado')) {
+    badgeVariant = 'cancelado';
+  } else if (lower.includes('proceso') || lower.includes('producción') || lower.includes('produccion')) {
+    badgeVariant = 'info';
+  }
 
   return (
     <div className="ru-modal-overlay" onClick={handleClose}>
@@ -57,10 +85,10 @@ export default function ModalCambiarEstadoProduccion({
           <div className="ru-modal-body">
             <div className="prod-status-info-box">
               <span className="ru-form-label prod-status-label">
-                PRODUCTO
+                PRODUCTO(S)
               </span>
               <p className="prod-status-product-name">
-                {selectedOrden.producto}
+                {selectedOrden.productos || selectedOrden.producto}
               </p>
               <span className="prod-status-resp">
                 Responsable: {selectedOrden.responsable}
@@ -71,34 +99,45 @@ export default function ModalCambiarEstadoProduccion({
               <span className="ru-form-label prod-status-label">
                 ESTADO ACTUAL
               </span>
-              <Badge variant="pendiente">
-                {selectedOrden.nombre_estado}
+              <Badge variant={badgeVariant} dot>
+                {selectedOrden.nombre_estado || selectedOrden.estado}
               </Badge>
             </div>
 
-            <div className="ru-form-field">
-              <label className="ru-form-label" htmlFor="nuevo-estado">
-                NUEVO ESTADO <span className="req">*</span>
-              </label>
-              <div className="ru-form-input-wrap">
-                <select
-                  id="nuevo-estado"
-                  name="nuevo-estado"
-                  className="ru-form-input"
-                  value={nuevoEstado}
-                  onChange={(e) => setSelectedStatus(Number(e.target.value))}
-                >
-                  {ESTADOS_ORDEN.map((est) => (
-                    <option key={est.id} value={est.id}>
-                      {est.nombre}
-                    </option>
-                  ))}
-                </select>
+            {opcionesDisponibles.length > 0 ? (
+              <div className="ru-form-field">
+                <label className="ru-form-label" htmlFor="nuevo-estado">
+                  NUEVO ESTADO <span className="req">*</span>
+                </label>
+                <div className="ru-form-input-wrap">
+                  <select
+                    id="nuevo-estado"
+                    name="nuevo-estado"
+                    className="ru-form-input"
+                    value={selectedStatus}
+                    onChange={(e) => setSelectedStatus(Number(e.target.value))}
+                  >
+                    {opcionesDisponibles.map((est) => (
+                      <option key={est.id} value={est.id}>
+                        {est.nombre}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {Number(selectedStatus) === 3 && (
+                  <p style={{ fontSize: '12px', color: '#64748b', marginTop: '6px' }}>
+                    * Al pasar a &quot;Terminado&quot;, se descontará el stock de insumos requeridos y se incrementará el stock del producto elaborado.
+                  </p>
+                )}
               </div>
-            </div>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', color: '#64748b', fontSize: '13px' }}>
+                <AlertCircle size={18} color="#94a3b8" />
+                <span>Esta orden ya se encuentra en su estado final ({selectedOrden.nombre_estado || selectedOrden.estado}) y no admite nuevas transiciones.</span>
+              </div>
+            )}
           </div>
 
-          {/* Footer */}
           <div className="ru-modal-footer">
             <Button variant="outline" onClick={handleClose} disabled={guardando}>
               Cancelar
@@ -106,10 +145,10 @@ export default function ModalCambiarEstadoProduccion({
             <Button
               type="submit"
               variant="primary"
-              icon={<RefreshCw size={16} />}
-              disabled={guardando || nuevoEstado === selectedOrden.id_estado_orden}
+              disabled={guardando || opcionesDisponibles.length === 0}
+              icon={<RefreshCw size={14} />}
             >
-              {guardando ? 'Actualizando...' : 'Actualizar estado'}
+              {guardando ? 'Actualizando...' : 'Actualizar Estado'}
             </Button>
           </div>
         </form>

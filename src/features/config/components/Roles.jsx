@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import { Plus, Eye, Pencil, Trash2 } from 'lucide-react';
+import { Plus } from 'lucide-react';
+import { Icons } from '../../../components/ui/Icons';
 import useRoles from '../hooks/useRoles';
 import TableGlobal from '../../../components/ui/TableGlobal';
 import FiltrarBuscarGlobal from '../../../components/ui/FiltrarBuscarGlobal';
@@ -39,18 +40,19 @@ export default function Roles() {
     cerrarModales,
     handleCreateRole,
     handleUpdateRole,
+    handleToggleStatus,
     handleDeleteRole,
     alert,
     closeAlert,
   } = useRoles();
 
-  // Columnas exactas solicitadas: ID, Nombre, Estado, Acciones
+  // Columnas exactas: ID, Nombre, Descripción, Estado, Acciones
   const columns = useMemo(
     () => [
       {
         header: 'ID',
         accessor: 'id',
-        width: '90px',
+        width: '75px',
         render: (row) => (
           <span className="roles-id-cell">
             #{row.id}
@@ -60,64 +62,101 @@ export default function Roles() {
       {
         header: 'Nombre',
         accessor: 'nombre',
+        width: '180px',
         render: (row) => (
-          <div>
-            <strong className="roles-name-title">
-              {row.nombre}
-            </strong>
-            {row.descripcion && (
-              <span className="roles-name-desc">
-                {row.descripcion}
-              </span>
-            )}
-          </div>
+          <strong className="roles-name-title">
+            {row.nombre}
+          </strong>
+        ),
+      },
+      {
+        header: 'Descripción',
+        accessor: 'descripcion',
+        render: (row) => (
+          <span className="roles-name-desc">
+            {row.descripcion || '—'}
+          </span>
         ),
       },
       {
         header: 'Estado',
         accessor: 'estado',
-        width: '130px',
-        render: (row) => (
-          <Badge variant={row.estado ? 'activo' : 'cancelado'} dot>
-            {row.estado ? 'Activo' : 'Inactivo'}
-          </Badge>
-        ),
+        width: '120px',
+        render: (row) => {
+          const esAdmin = row.id === 1 || (row.nombre || '').toLowerCase() === 'administrador';
+          const badge = (
+            <Badge variant={row.estado ? 'activo' : 'cancelado'} dot>
+              {row.estado ? 'Activo' : 'Inactivo'}
+            </Badge>
+          );
+
+          if (esAdmin) {
+            return (
+              <span title="El rol Administrador no se puede desactivar" style={{ cursor: 'not-allowed', display: 'inline-block' }}>
+                {badge}
+              </span>
+            );
+          }
+
+          return (
+            <button
+              type="button"
+              className="ru-v-badge-btn"
+              onClick={() => handleToggleStatus(row)}
+              title={row.estado ? 'Haga clic para desactivar rol' : 'Haga clic para activar rol'}
+            >
+              {badge}
+            </button>
+          );
+        },
       },
       {
         header: 'Acciones',
         accessor: 'acciones',
         width: '130px',
-        render: (row) => (
-          <div className="ru-actions">
-            <button
-              type="button"
-              className="ru-icon-btn view"
-              title="Consultar rol"
-              onClick={() => abrirVer(row)}
-            >
-              <Eye size={16} />
-            </button>
-            <button
-              type="button"
-              className="ru-icon-btn edit"
-              title="Editar rol"
-              onClick={() => abrirEditar(row)}
-            >
-              <Pencil size={16} />
-            </button>
-            <button
-              type="button"
-              className="ru-icon-btn delete"
-              title="Eliminar rol"
-              onClick={() => abrirEliminar(row)}
-            >
-              <Trash2 size={16} />
-            </button>
-          </div>
-        ),
+        render: (row) => {
+          const esAdmin = row.id === 1 || (row.nombre || '').toLowerCase() === 'administrador';
+          const noEliminable = row.puede_eliminar === false || esAdmin || (row.total_usuarios > 0);
+          const motivoEliminar = esAdmin
+            ? 'El rol Administrador está protegido contra eliminación'
+            : row.total_usuarios > 0
+            ? `No se puede eliminar: tiene ${row.total_usuarios} usuario(s) asociado(s)`
+            : 'No se puede eliminar este rol';
+
+          return (
+            <div className="ru-actions">
+              <button
+                type="button"
+                className="ru-icon-btn view"
+                title="Consultar rol"
+                onClick={() => abrirVer(row)}
+              >
+                <Icons.Eye width={16} height={16} />
+              </button>
+              <button
+                type="button"
+                className={`ru-icon-btn edit ${esAdmin ? 'disabled' : ''}`}
+                title={esAdmin ? 'El rol Administrador está protegido contra edición' : 'Editar rol'}
+                disabled={esAdmin}
+                onClick={() => !esAdmin && abrirEditar(row)}
+              >
+                <Icons.Pencil width={16} height={16} />
+              </button>
+              <button
+                type="button"
+                className={`ru-icon-btn delete ${noEliminable ? 'disabled' : ''}`}
+                title={noEliminable ? motivoEliminar : 'Eliminar rol'}
+                disabled={noEliminable}
+                onClick={() => !noEliminable && abrirEliminar(row)}
+              >
+                <Icons.Trash width={16} height={16} />
+              </button>
+            </div>
+          );
+        },
       },
     ],
-    [abrirVer, abrirEditar, abrirEliminar]
+    [abrirVer, abrirEditar, handleToggleStatus, abrirEliminar]
   );
 
   return (
@@ -199,6 +238,7 @@ export default function Roles() {
         onSubmit={handleUpdateRole}
         guardando={guardando}
         selectedRole={selectedRole}
+        permisos={permisos}
       />
 
       <ModalVerRoles

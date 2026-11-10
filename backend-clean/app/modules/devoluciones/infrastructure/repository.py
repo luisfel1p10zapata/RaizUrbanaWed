@@ -30,6 +30,7 @@ class DevolucionRepository:
         observaciones: str | None,
         fecha_devolucion,
         id_motivo: int,
+        reintegra_stock: bool = True,
     ):
         with get_connection() as conn:
             with conn.cursor() as cursor:
@@ -38,6 +39,7 @@ class DevolucionRepository:
                     """
                     CALL sp_insertardevolucion(
                         NULL,
+                        %s,
                         %s,
                         %s,
                         %s,
@@ -51,6 +53,7 @@ class DevolucionRepository:
                         observaciones,
                         fecha_devolucion,
                         id_motivo,
+                        reintegra_stock,
                     ),
                 )
 
@@ -125,6 +128,7 @@ class DevolucionRepository:
         observaciones: str | None,
         fecha_devolucion,
         id_motivo: int,
+        reintegra_stock: bool | None = None,
     ):
         with get_connection() as conn:
             with conn.cursor() as cursor:
@@ -132,6 +136,7 @@ class DevolucionRepository:
                 cursor.execute(
                     """
                     CALL sp_actualizarddevolucion(
+                        %s,
                         %s,
                         %s,
                         %s,
@@ -145,6 +150,7 @@ class DevolucionRepository:
                         observaciones,
                         fecha_devolucion,
                         id_motivo,
+                        reintegra_stock,
                     ),
                 )
 
@@ -197,6 +203,7 @@ class DevolucionRepository:
         fecha_inicio=None,
         fecha_fin=None,
         id_motivo: int | None = None,
+        estado: str | None = None,
     ):
         with get_connection() as conn:
             with conn.cursor() as cursor:
@@ -204,12 +211,13 @@ class DevolucionRepository:
                 cursor.execute(
                     """
                     SELECT *
-                    FROM sp_filtrardevoluciones(%s, %s, %s)
+                    FROM sp_filtrardevoluciones(%s, %s, %s, %s)
                     """,
                     (
                         fecha_inicio,
                         fecha_fin,
                         id_motivo,
+                        estado,
                     ),
                 )
 
@@ -273,17 +281,9 @@ class DevolucionRepository:
     def listar_motivos(self):
         with get_connection() as conn:
             with conn.cursor() as cursor:
-
                 cursor.execute(
-                    """
-                    SELECT
-                        id_motivo,
-                        nombre
-                    FROM tb_motivo
-                    ORDER BY nombre;
-                    """
+                    "SELECT * FROM sp_listarmotivos();"
                 )
-
                 return self._obtener_registros(cursor)
 
     # --------------------------------------------------

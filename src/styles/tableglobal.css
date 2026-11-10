@@ -169,15 +169,19 @@
   font-weight: 400 !important;
 }
 
-/* ---------- Botones de acción en tabla en modo oscuro ---------- */
+/* ---------- Botones de acción en tabla (Paleta Ventas) ---------- */
+.produccion-table-card .ru-actions .ru-icon-btn.view { color: #4A76A8 !important; }
+.produccion-table-card .ru-actions .ru-icon-btn.edit { color: #C9973F !important; }
+.produccion-table-card .ru-actions .ru-icon-btn.delete { color: #D1495B !important; }
+
 [data-theme="dark"] .produccion-table-card .ru-actions .ru-icon-btn.view,
-.dark .produccion-table-card .ru-actions .ru-icon-btn.view { color: #60A5FA; }
+.dark .produccion-table-card .ru-actions .ru-icon-btn.view { color: #60A5FA !important; }
 
 [data-theme="dark"] .produccion-table-card .ru-actions .ru-icon-btn.edit,
-.dark .produccion-table-card .ru-actions .ru-icon-btn.edit { color: #FBBF24; }
+.dark .produccion-table-card .ru-actions .ru-icon-btn.edit { color: #FBBF24 !important; }
 
 [data-theme="dark"] .produccion-table-card .ru-actions .ru-icon-btn.delete,
-.dark .produccion-table-card .ru-actions .ru-icon-btn.delete { color: #F87171; }
+.dark .produccion-table-card .ru-actions .ru-icon-btn.delete { color: #F87171 !important; }
 
 [data-theme="dark"] .produccion-table-card .ru-actions .ru-icon-btn:hover,
 .dark .produccion-table-card .ru-actions .ru-icon-btn:hover {

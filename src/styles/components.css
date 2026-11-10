@@ -56,38 +56,69 @@
 }
 
 /* ---------- BOTONES DE ACCIÓN EN TABLA ---------- */
+/* ==========================================================================
+   BOTONES DE ACCIÓN EN TABLAS (HEREDADOS DE LA PALETA DE VENTAS)
+   ========================================================================== */
 .ru-actions {
-  display: flex;
-  gap: 8px;
-  align-items: center;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 10px !important;
 }
 
 .ru-icon-btn {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: 6px;
-  border-radius: 6px;
-  transition: opacity 0.15s ease, background-color 0.2s ease;
+  background: transparent !important;
+  border: none !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 4px !important;
+  border-radius: 6px !important;
+  transition: opacity 0.15s ease, transform 0.15s ease !important;
 }
 
-.ru-icon-btn.view { color: #2980B9; }
-.ru-icon-btn.view:hover { background-color: rgba(41, 128, 185, 0.1); }
+.ru-icon-btn:hover:not(:disabled):not(.disabled) {
+  opacity: 0.7 !important;
+  transform: translateY(-1px) !important;
+}
 
-.ru-icon-btn.edit { color: #D4AC0D; }
-.ru-icon-btn.edit:hover { background-color: rgba(212, 172, 13, 0.1); }
+.ru-icon-btn.view { color: #4A76A8 !important; }
+.ru-icon-btn.edit { color: #C9973F !important; }
+.ru-icon-btn.delete { color: #D1495B !important; }
 
-.ru-icon-btn.delete { color: #C0392B; }
-.ru-icon-btn.delete:hover { background-color: rgba(192, 57, 43, 0.1); }
+[data-theme="dark"] .ru-icon-btn.view, .dark .ru-icon-btn.view { color: #60A5FA !important; }
+[data-theme="dark"] .ru-icon-btn.edit, .dark .ru-icon-btn.edit { color: #FBBF24 !important; }
+[data-theme="dark"] .ru-icon-btn.delete, .dark .ru-icon-btn.delete { color: #F87171 !important; }
 
-[data-theme="dark"] .ru-icon-btn.view { color: #60A5FA; }
-[data-theme="dark"] .ru-icon-btn.view:hover { background-color: rgba(96, 165, 250, 0.15); }
+.ru-icon-btn:disabled,
+.ru-icon-btn.disabled {
+  opacity: 0.35 !important;
+  cursor: not-allowed !important;
+  pointer-events: auto !important;
+}
 
-[data-theme="dark"] .ru-icon-btn.edit { color: #FBBF24; }
-[data-theme="dark"] .ru-icon-btn.edit:hover { background-color: rgba(251, 191, 36, 0.15); }
+/* Botón interactivo para cambiar estado en el badge */
+.ru-v-badge-btn {
+  border: none !important;
+  background: transparent !important;
+  cursor: pointer !important;
+  padding: 0 !important;
+  font-family: inherit !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  transition: transform 0.15s ease, opacity 0.15s ease !important;
+}
 
-[data-theme="dark"] .ru-icon-btn.delete { color: #F87171; }
-[data-theme="dark"] .ru-icon-btn.delete:hover { background-color: rgba(248, 113, 113, 0.15); }
+.ru-v-badge-btn:hover:not(:disabled) {
+  transform: scale(1.05) !important;
+  opacity: 0.9 !important;
+}
+
+.ru-v-badge-btn:disabled {
+  cursor: not-allowed !important;
+  opacity: 0.7 !important;
+}
 
 /* ==========================================================================
    ETIQUETAS, BADGES Y PÍLDORAS GLOBALES

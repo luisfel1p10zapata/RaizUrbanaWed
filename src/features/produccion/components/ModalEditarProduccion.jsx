@@ -12,6 +12,7 @@ export default function ModalEditarProduccion({
   selectedOrden,
   empleados = [],
   variantes = [],
+  estados = [],
 }) {
   const {
     values,
@@ -43,7 +44,17 @@ export default function ModalEditarProduccion({
     if (!validateAll()) return;
 
     try {
-      await onSubmit(selectedOrden.id || selectedOrden.id_orden_produccion, values);
+      await onSubmit(selectedOrden.id || selectedOrden.id_orden_produccion, {
+        id_usuario: Number(values.id_usuario),
+        fecha_estimada: values.fecha_estimada,
+        observaciones: values.observaciones,
+        detalles: [
+          {
+            id_producto_vari: Number(values.id_producto_vari),
+            cantidad: Number(values.cantidad),
+          },
+        ],
+      });
       onClose();
     } catch {
       // Manejado en hook
@@ -200,6 +211,31 @@ export default function ModalEditarProduccion({
                   </p>
                 )}
               </div>
+            </div>
+
+            {/* Estado (bloqueado, solo se permite editar órdenes en Pendiente) */}
+            <div className="ru-form-field">
+              <label className="ru-form-label" htmlFor="edit-estado">
+                ESTADO DE LA ORDEN
+              </label>
+              <div className="ru-form-input-wrap">
+                <select
+                  id="edit-estado"
+                  name="edit-estado"
+                  className="ru-form-input"
+                  value={Number(selectedOrden.id_estado_orden || 1)}
+                  disabled
+                >
+                  {estados.map((est) => (
+                    <option key={est.id_estado_orden || est.id} value={est.id_estado_orden || est.id}>
+                      {est.nombre}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <p style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+                Solo se pueden editar órdenes en estado Pendiente. Para avanzar la orden, usa el cambio de estado en la tabla.
+              </p>
             </div>
 
             {/* Observaciones */}

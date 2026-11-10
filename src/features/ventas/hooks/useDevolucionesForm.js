@@ -14,6 +14,7 @@ const DEFAULT_INITIAL = {
   fecha_devolucion: new Date().toISOString().slice(0, 10),
   id_motivo: '',
   observaciones: '',
+  reintegra_stock: true,
 };
 
 export default function useDevolucionesForm(initialData = DEFAULT_INITIAL, maxCantidad = null, isEdit = false) {
