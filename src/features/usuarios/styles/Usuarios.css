@@ -146,6 +146,7 @@
 .ru-card {
   box-shadow: var(--shadow-card);
   -webkit-mask-image: -webkit-radial-gradient(white, black);
+  mask-image: radial-gradient(white, black);
 }
 .ru-list-card { padding: 0; margin-top: 20px; }
 

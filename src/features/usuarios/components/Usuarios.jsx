@@ -975,6 +975,7 @@ export default function Usuarios() {
     const params = new URLSearchParams(window.location.search);
     const tokenParam = params.get("token") || params.get("activarToken");
     if (tokenParam) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setModal({ type: "activateAccount", token: tokenParam });
     }
   }, []);
@@ -1027,6 +1028,7 @@ export default function Usuarios() {
   }, [debouncedSearch, roleFilter, statusFilter, page, normalizarUsuario]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     cargarUsuarios();
   }, [cargarUsuarios]);
 

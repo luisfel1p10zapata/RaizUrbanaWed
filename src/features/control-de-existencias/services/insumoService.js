@@ -13,12 +13,12 @@ async function solicitar(ruta = '', opciones = {}) {
         });
     } catch {
         throw new Error(
-            'No se pudo conectar con el backend. Verifica que esté encendido.'
+            'No se pudo conectar con el backend. Verifica que el servidor esté encendido.'
         );
     }
 
     if (!respuesta.ok) {
-        let mensaje = 'No se pudo completar la operación.';
+        let mensaje = `No se pudo completar la operación. Código: ${respuesta.status}.`;
 
         try {
             const error = await respuesta.json();
@@ -27,11 +27,11 @@ async function solicitar(ruta = '', opciones = {}) {
                 mensaje = error.detail;
             } else if (Array.isArray(error.detail)) {
                 mensaje = error.detail
-                    .map((detalle) => detalle.msg)
+                    .map((detalle) => detalle.msg || 'Dato inválido')
                     .join('. ');
             }
         } catch {
-            // Si la respuesta no contiene JSON, se usa el mensaje general.
+            // Si la respuesta no tiene JSON, se conserva el mensaje general.
         }
 
         throw new Error(mensaje);
@@ -48,6 +48,10 @@ export function listarInsumosApi() {
     return solicitar();
 }
 
+export function obtenerInsumoApi(id) {
+    return solicitar(`/${encodeURIComponent(id)}`);
+}
+
 export function registrarInsumoApi(datos) {
     return solicitar('', {
         method: 'POST',
@@ -56,21 +60,21 @@ export function registrarInsumoApi(datos) {
 }
 
 export function actualizarInsumoApi(id, datos) {
-    return solicitar(`/${id}`, {
+    return solicitar(`/${encodeURIComponent(id)}`, {
         method: 'PUT',
         body: JSON.stringify(datos),
     });
 }
 
 export function cambiarEstadoInsumoApi(id, estado) {
-    return solicitar(`/${id}/estado`, {
+    return solicitar(`/${encodeURIComponent(id)}/estado`, {
         method: 'PATCH',
         body: JSON.stringify({ estado }),
     });
 }
 
 export function eliminarInsumoApi(id) {
-    return solicitar(`/${id}`, {
+    return solicitar(`/${encodeURIComponent(id)}`, {
         method: 'DELETE',
     });
 }

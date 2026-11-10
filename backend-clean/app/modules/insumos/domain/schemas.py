@@ -1,136 +1,80 @@
 """Esquemas y validaciones del módulo de Insumos."""
 
 from decimal import Decimal
+from typing import Literal
 
 from pydantic import Field, field_validator, model_validator # type: ignore
 
 from app.shared.schemas import CamelModel
 
 
-class DetalleInsumoCreate(CamelModel):
-    """Datos para registrar un detalle de un insumo."""
+class InsumoDatosBase(CamelModel):
+    """Datos comunes para registrar y editar un insumo."""
 
-    material: str = Field(
+    nombre: str = Field(
         ...,
-        min_length=1,
-        max_length=100,
-        description="Nombre del material del insumo.",
+        min_length=2,
+        max_length=60,
+        description="Nombre del insumo.",
     )
 
-    tamano: str = Field(
+    id_categoria: int = Field(
         ...,
-        min_length=1,
-        max_length=100,
-        description="Tamaño del insumo.",
+        gt=0,
+        description="Identificador de la categoría.",
+    )
+
+    id_tamano: int = Field(
+        ...,
+        gt=0,
+        description="Identificador del tamaño.",
+    )
+
+    id_material: int = Field(
+        ...,
+        gt=0,
+        description="Identificador del material.",
     )
 
     precio_unitario: Decimal = Field(
         ...,
         ge=0,
         allow_inf_nan=False,
-        description="Precio unitario del detalle.",
+        description="Precio unitario del insumo.",
     )
 
-    stock: Decimal = Field(
+    stock_minimo: int = Field(
         ...,
         ge=0,
-        allow_inf_nan=False,
-        description="Cantidad disponible del detalle.",
+        description="Cantidad mínima esperada.",
     )
 
-    unidad_medida: str = Field(
-        default="unidad",
-        min_length=1,
-        max_length=30,
-        description=(
-            "Campo temporal pendiente de definir "
-            "en el modelo de base de datos."
-        ),
+    stock_maximo: int | None = Field(
+        default=None,
+        ge=0,
+        description="Cantidad máxima esperada. Es opcional.",
     )
 
     foto_insumo: str | None = Field(
         default=None,
-        description=(
-            "Foto temporal del detalle. Su almacenamiento "
-            "definitivo se definirá más adelante."
-        ),
+        max_length=255,
+        description="Ruta o URL de la foto del insumo.",
     )
 
-    @field_validator("material", "tamano", "unidad_medida")
+    @field_validator("nombre", mode="before")
     @classmethod
-    def validar_textos(cls, valor: str) -> str:
-        limpio = valor.strip()
+    def limpiar_nombre(cls, valor):
+        if not isinstance(valor, str):
+            return valor
 
-        if not limpio:
-            raise ValueError(
-                "El campo no puede estar vacío."
-            )
-
-        return limpio
-
-
-class DetalleInsumoResponse(DetalleInsumoCreate):
-    """Datos de un detalle devueltos por la API."""
-
-    id_det_insumo: int
-
-
-class InsumoCreate(CamelModel):
-    """Datos para registrar un insumo con sus detalles."""
-
-    nombre: str = Field(
-        ...,
-        min_length=2,
-        max_length=100,
-        description="Nombre del insumo.",
-    )
-
-    categoria: str = Field(
-        ...,
-        min_length=1,
-        max_length=100,
-        description="Categoría temporal del insumo.",
-    )
-
-    estado: bool = Field(
-        default=True,
-        description="Indica si el insumo está activo.",
-    )
-
-    descripcion: str | None = Field(
-        default=None,
-        max_length=500,
-        description=(
-            "Campo opcional temporal pendiente de definir "
-            "en el modelo de base de datos."
-        ),
-    )
-
-    detalles: list[DetalleInsumoCreate] = Field(
-        ...,
-        min_length=1,
-        description="Detalles de material y tamaño del insumo.",
-    )
-
-    @field_validator("nombre", "categoria")
-    @classmethod
-    def validar_textos(cls, valor: str) -> str:
-        limpio = valor.strip()
-
-        if not limpio:
-            raise ValueError(
-                "El campo no puede estar vacío."
-            )
-
-
-        return limpio
+        return valor.strip()
 
     @field_validator("nombre")
     @classmethod
     def validar_nombre(cls, valor: str) -> str:
-        if len(valor) < 2:
+        if not valor:
             raise ValueError(
-                "El nombre debe tener al menos 2 caracteres."
+                "El nombre del insumo es obligatorio."
             )
 
         if valor.isdigit():
@@ -140,41 +84,61 @@ class InsumoCreate(CamelModel):
 
         return valor
 
-    @field_validator("descripcion")
+    @field_validator("foto_insumo", mode="before")
     @classmethod
-    def limpiar_descripcion(
-        cls,
-        valor: str | None,
-    ) -> str | None:
+    def limpiar_foto(cls, valor):
         if valor is None:
             return None
+
+        if not isinstance(valor, str):
+            return valor
 
         limpio = valor.strip()
         return limpio or None
 
     @model_validator(mode="after")
-    def validar_detalles_duplicados(self):
-        combinaciones = set()
-
-        for detalle in self.detalles:
-            combinacion = (
-                detalle.material.casefold(),
-                detalle.tamano.casefold(),
+    def validar_limites_stock(self):
+        if (
+            self.stock_maximo is not None
+            and self.stock_maximo < self.stock_minimo
+        ):
+            raise ValueError(
+                "El stock máximo no puede ser menor "
+                "que el stock mínimo."
             )
-
-            if combinacion in combinaciones:
-                raise ValueError(
-                    "No se puede repetir la misma combinación "
-                    "de material y tamaño."
-                )
-
-            combinaciones.add(combinacion)
 
         return self
 
 
-class InsumoUpdate(InsumoCreate):
-    """Datos para reemplazar la información de un insumo."""
+class InsumoCreate(InsumoDatosBase):
+    """Datos para registrar un insumo con stock inicial."""
+
+    stock: int = Field(
+        ...,
+        ge=0,
+        description="Cantidad inicial disponible.",
+    )
+
+    @model_validator(mode="after")
+    def validar_stock_inicial(self):
+        if (
+            self.stock_maximo is not None
+            and self.stock > self.stock_maximo
+        ):
+            raise ValueError(
+                "El stock inicial no puede superar "
+                "el stock máximo."
+            )
+
+        return self
+
+
+class InsumoUpdate(InsumoDatosBase):
+    """Datos editables de un insumo.
+
+    El stock no se modifica desde este esquema: sus cambios
+    deben quedar registrados como movimientos de inventario.
+    """
 
 
 class InsumoResponse(CamelModel):
@@ -182,13 +146,81 @@ class InsumoResponse(CamelModel):
 
     id_insumo: int
     nombre: str
-    categoria: str
-    estado: bool
-    descripcion: str | None = None
-    detalles: list[DetalleInsumoResponse]
+    estado: Literal["Activo", "Inactivo"]
+    id_categoria: int
+    id_tamano: int
+    id_material: int
+    precio_unitario: Decimal
+    stock: int
+    stock_minimo: int
+    stock_maximo: int | None = None
+    foto_insumo: str | None = None
 
 
 class InsumoEstadoUpdate(CamelModel):
-    """Datos necesarios para cambiar el estado de un insumo."""
+    """Estado que se desea asignar a un insumo."""
 
+    estado: Literal["Activo", "Inactivo"]
+
+
+class MaterialCreate(CamelModel):
+    """Datos para crear un material desde Insumos."""
+
+    nombre: str = Field(
+        ...,
+        min_length=2,
+        max_length=60,
+    )
+
+    @field_validator("nombre", mode="before")
+    @classmethod
+    def limpiar_nombre(cls, valor):
+        if not isinstance(valor, str):
+            return valor
+
+        return valor.strip()
+
+    @field_validator("nombre")
+    @classmethod
+    def validar_nombre(cls, valor: str) -> str:
+        if valor.isdigit():
+            raise ValueError(
+                "El nombre del material no puede "
+                "contener solo números."
+            )
+
+        return valor
+
+
+class MaterialResponse(CamelModel):
+    """Material devuelto por la API."""
+
+    id_material: int
+    nombre: str
+    estado: bool
+
+
+class TamanoCreate(CamelModel):
+    """Datos para crear un tamaño desde Insumos."""
+
+    nombre: str = Field(
+        ...,
+        min_length=1,
+        max_length=60,
+    )
+
+    @field_validator("nombre", mode="before")
+    @classmethod
+    def limpiar_nombre(cls, valor):
+        if not isinstance(valor, str):
+            return valor
+
+        return valor.strip()
+
+
+class TamanoResponse(CamelModel):
+    """Tamaño devuelto por la API."""
+
+    id_tamano: int
+    nombre: str
     estado: bool
