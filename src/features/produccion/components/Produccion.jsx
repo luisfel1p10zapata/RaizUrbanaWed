@@ -68,7 +68,7 @@ export default function Produccion() {
         header: 'Producto',
         accessor: 'productos',
         render: (row) => {
-          const cantidad = row.primerDetalle?.cantidad || row.cantidad;
+          const totalUnidades = Number(row.total_unidades ?? row.primerDetalle?.cantidad ?? row.cantidad ?? 0);
           return (
             <div>
               <strong className="produccion-product-title">

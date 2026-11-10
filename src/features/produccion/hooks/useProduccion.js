@@ -111,22 +111,27 @@ export default function useProduccion() {
 
   // Normalización para visualización y relaciones (orden ascendente por id)
   const normalizedOrdenes = useMemo(() => {
-    return ordenes.map((item) => {
-      const id = item.id_orden_produccion ?? item.id;
-      const detalles = Array.isArray(item.detalles)
-        ? item.detalles
-        : Array.isArray(item.detalle)
-        ? item.detalle
-        : [];
-      const primerDetalle = detalles[0] || {};
+    return [...ordenes]
+      .sort((a, b) => Number(a.id_orden_produccion ?? a.id ?? 0) - Number(b.id_orden_produccion ?? b.id ?? 0))
+      .map((item) => {
+        const id = item.id_orden_produccion ?? item.id;
+        const detalles = Array.isArray(item.detalles)
+          ? item.detalles
+          : Array.isArray(item.detalle)
+          ? item.detalle
+          : [];
+        const primerDetalle = detalles[0] || {};
 
-      const producto =
-        primerDetalle.producto ||
-        primerDetalle.nombre_producto ||
-        primerDetalle.nombre_variante ||
-        item.producto ||
-        item.nombre_producto ||
-        'Producto no especificado';
+        const productos =
+          item.productos ||
+          primerDetalle.producto ||
+          primerDetalle.nombre_producto ||
+          primerDetalle.nombre_variante ||
+          item.producto ||
+          item.nombre_producto ||
+          'Sin productos registrados';
+
+        const total_unidades = Number(item.total_unidades ?? primerDetalle.cantidad ?? item.cantidad ?? 0);
 
         const responsable =
           item.empleado ||
@@ -139,19 +144,23 @@ export default function useProduccion() {
         const nombreEstado = item.estado || item.nombre_estado || 'Pendiente';
         const puedeModificar = idEstado === 1 || nombreEstado.toLowerCase() === 'pendiente';
 
-      return {
-        ...item,
-        id,
-        id_orden_produccion: id,
-        producto,
-        responsable,
-        id_estado_orden: idEstado,
-        nombre_estado: nombreEstado,
-        puedeModificar,
-        detalles,
-        primerDetalle,
-      };
-    });
+        return {
+          ...item,
+          id,
+          id_orden_produccion: id,
+          producto: productos,
+          productos,
+          total_unidades,
+          cantidad: total_unidades,
+          responsable,
+          id_estado_orden: idEstado,
+          nombre_estado: nombreEstado,
+          estado: nombreEstado,
+          puedeModificar,
+          detalles,
+          primerDetalle,
+        };
+      });
   }, [ordenes]);
 
   // Filtros
@@ -161,8 +170,9 @@ export default function useProduccion() {
       const matchesSearch =
         !q ||
         String(orden.id).includes(q) ||
-        orden.producto.toLowerCase().includes(q) ||
-        orden.responsable.toLowerCase().includes(q) ||
+        (orden.productos && orden.productos.toLowerCase().includes(q)) ||
+        (orden.producto && orden.producto.toLowerCase().includes(q)) ||
+        (orden.responsable && orden.responsable.toLowerCase().includes(q)) ||
         (orden.observaciones && orden.observaciones.toLowerCase().includes(q));
 
       const matchesStatus =

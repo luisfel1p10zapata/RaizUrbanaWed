@@ -19,7 +19,7 @@ export default function ModalVerProduccion({
   const primerDet = detalles[0] || selectedOrden.primerDetalle || {};
   const totalCantidad =
     detalles.reduce((acc, d) => acc + Number(d.cantidad || 0), 0) ||
-    Number(selectedOrden.total_unidades || 0);
+    Number(selectedOrden.total_unidades ?? primerDet.cantidad ?? selectedOrden.cantidad ?? 0);
 
   const lower = (selectedOrden.nombre_estado || selectedOrden.estado || '').toLowerCase();
   let badgeVariant = 'pendiente';
@@ -60,7 +60,7 @@ export default function ModalVerProduccion({
               </div>
               <div>
                 <h3 className="prod-view-title">
-                  {selectedOrden.producto}
+                  {selectedOrden.productos || selectedOrden.producto || primerDet.producto || 'Orden de Producción'}
                 </h3>
                 {totalCantidad > 0 && (
                   <span className="prod-view-qty-text">
