@@ -110,7 +110,13 @@ export default function useProduccion() {
         : [];
       const primerDetalle = detalles[0] || {};
 
+      const cantidad =
+        primerDetalle.cantidad ||
+        item.total_unidades ||
+        item.cantidad;
+
       const producto =
+        item.productos ||
         primerDetalle.producto ||
         primerDetalle.nombre_producto ||
         primerDetalle.nombre_variante ||
@@ -134,6 +140,9 @@ export default function useProduccion() {
         id,
         id_orden_produccion: id,
         producto,
+        productos: item.productos || producto,
+        cantidad,
+        total_unidades: item.total_unidades ?? cantidad,
         responsable,
         id_estado_orden: idEstado,
         nombre_estado: nombreEstado,
@@ -150,8 +159,9 @@ export default function useProduccion() {
       const matchesSearch =
         !q ||
         String(orden.id).includes(q) ||
-        orden.producto.toLowerCase().includes(q) ||
-        orden.responsable.toLowerCase().includes(q) ||
+        (orden.producto && orden.producto.toLowerCase().includes(q)) ||
+        (orden.productos && orden.productos.toLowerCase().includes(q)) ||
+        (orden.responsable && orden.responsable.toLowerCase().includes(q)) ||
         (orden.observaciones && orden.observaciones.toLowerCase().includes(q));
 
       const matchesStatus =
