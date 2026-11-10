@@ -10,24 +10,8 @@ export default function ModalVerProduccion({
 }) {
   if (!isOpen || !selectedOrden) return null;
 
-  const detalles = Array.isArray(selectedOrden.detalles) ? selectedOrden.detalles : [];
-  const primerDet = detalles[0] || selectedOrden.primerDetalle || {};
-  const totalCantidad = Number(selectedOrden.total_unidades ?? primerDet.cantidad ?? selectedOrden.cantidad ?? 0);
-
-  const lower = (selectedOrden.nombre_estado || selectedOrden.estado || '').toLowerCase();
-  let badgeVariant = 'pendiente';
-  if (lower.includes('terminado') || lower.includes('entregado')) {
-    badgeVariant = 'activo';
-  } else if (lower.includes('no conforme') || lower.includes('cancelado')) {
-    badgeVariant = 'cancelado';
-  } else if (lower.includes('proceso') || lower.includes('producción') || lower.includes('produccion')) {
-    badgeVariant = 'info';
-  }
-
-  // Verificar si hay algún insumo insuficiente
-  const tieneInsumosInsuficientes = detalles.some((det) =>
-    (det.insumos || []).some((ins) => ins.stock_suficiente === false)
-  );
+  const primerDet = selectedOrden.detalles?.[0] || selectedOrden.primerDetalle || {};
+  const cantidad = primerDet.cantidad || selectedOrden.cantidad || '—';
 
   return (
     <div className="ru-modal-overlay" onClick={onClose}>
@@ -54,7 +38,7 @@ export default function ModalVerProduccion({
               </div>
               <div>
                 <h3 className="prod-view-title">
-                  {selectedOrden.productos || selectedOrden.producto || 'Orden de Producción'}
+                  {selectedOrden.producto}
                 </h3>
                 {totalCantidad > 0 && (
                   <span className="prod-view-qty-text">
