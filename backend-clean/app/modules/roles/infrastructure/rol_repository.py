@@ -81,9 +81,11 @@ class RolRepository:
                         )
 
                     # Asignar permisos y privilegios atómicamente en la misma transacción.
+                    p_ids = list(dict.fromkeys(permisos_ids or []))
+                    pr_ids = list(dict.fromkeys(privilegios_ids or []))
                     cursor.execute(
-                        "CALL sp_asignarpermisosprivilegiosrol(%s, %s, %s)",
-                        (id_rol, permisos_ids, privilegios_ids),
+                        "CALL sp_asignarpermisosprivilegiosrol(%s, %s::int[], %s::int[])",
+                        (id_rol, p_ids, pr_ids),
                     )
 
                     return {
@@ -91,8 +93,8 @@ class RolRepository:
                         "nombre": nombre,
                         "descripcion": descripcion,
                         "estado": estado,
-                        "permisos_ids": permisos_ids,
-                        "privilegios_ids": privilegios_ids,
+                        "permisos_ids": p_ids,
+                        "privilegios_ids": pr_ids,
                     }
 
         except psycopg.Error as error:
@@ -162,7 +164,7 @@ class RolRepository:
                         permisos_ids = list(dict.fromkeys(permisos_ids))
                         privilegios_ids = list(dict.fromkeys(privilegios_ids))
                         cursor.execute(
-                            "CALL sp_asignarpermisosprivilegiosrol(%s, %s, %s)",
+                            "CALL sp_asignarpermisosprivilegiosrol(%s, %s::int[], %s::int[])",
                             (id_rol, permisos_ids, privilegios_ids),
                         )
 

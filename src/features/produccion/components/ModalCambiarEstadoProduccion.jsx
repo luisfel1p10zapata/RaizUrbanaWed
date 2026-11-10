@@ -8,11 +8,11 @@ const TRANSICIONES_VALIDAS = {
   1: [{ id: 2, nombre: 'En Proceso' }],
   2: [
     { id: 3, nombre: 'Terminado' },
-    { id: 4, nombre: 'Producto no Conforme' },
+    { id: 5, nombre: 'Producto no Conforme' },
   ],
-  3: [{ id: 5, nombre: 'Entregado' }],
-  4: [{ id: 2, nombre: 'En Proceso' }],
-  5: [],
+  3: [{ id: 4, nombre: 'Entregado' }],
+  4: [],
+  5: [{ id: 2, nombre: 'En Proceso' }],
 };
 
 export default function ModalCambiarEstadoProduccion({

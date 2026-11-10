@@ -147,6 +147,7 @@ export default function useProduccion() {
         responsable,
         id_estado_orden: idEstado,
         nombre_estado: nombreEstado,
+        puedeModificar,
         detalles,
         primerDetalle,
       };
@@ -236,16 +237,25 @@ export default function useProduccion() {
     async (formData) => {
       setGuardando(true);
       try {
+        const primerDet = Array.isArray(formData.detalles) && formData.detalles[0] ? formData.detalles[0] : null;
+        const idProductoVari = Number(primerDet?.id_producto_vari ?? formData.id_producto_vari);
+        const cantidad = Number(primerDet?.cantidad ?? formData.cantidad ?? 1);
+
         const payload = {
           id_usuario: Number(formData.id_usuario),
           fecha_estimada: formData.fecha_estimada,
           observaciones: formData.observaciones || null,
-          detalles: [
-            {
-              id_producto_vari: Number(formData.id_producto_vari),
-              cantidad: Number(formData.cantidad),
-            },
-          ],
+          detalles: Array.isArray(formData.detalles) && formData.detalles.length > 0
+            ? formData.detalles.map((d) => ({
+                id_producto_vari: Number(d.id_producto_vari),
+                cantidad: Number(d.cantidad),
+              }))
+            : [
+                {
+                  id_producto_vari: idProductoVari,
+                  cantidad: cantidad,
+                },
+              ],
           id_estado_orden: Number(formData.id_estado_orden || 1),
         };
         await crearProduccion(payload);
@@ -266,16 +276,25 @@ export default function useProduccion() {
     async (id, formData) => {
       setGuardando(true);
       try {
+        const primerDet = Array.isArray(formData.detalles) && formData.detalles[0] ? formData.detalles[0] : null;
+        const idProductoVari = Number(primerDet?.id_producto_vari ?? formData.id_producto_vari);
+        const cantidad = Number(primerDet?.cantidad ?? formData.cantidad ?? 1);
+
         const payload = {
           id_usuario: Number(formData.id_usuario),
           fecha_estimada: formData.fecha_estimada,
           observaciones: formData.observaciones || null,
-          detalles: [
-            {
-              id_producto_vari: Number(formData.id_producto_vari),
-              cantidad: Number(formData.cantidad),
-            },
-          ],
+          detalles: Array.isArray(formData.detalles) && formData.detalles.length > 0
+            ? formData.detalles.map((d) => ({
+                id_producto_vari: Number(d.id_producto_vari),
+                cantidad: Number(d.cantidad),
+              }))
+            : [
+                {
+                  id_producto_vari: idProductoVari,
+                  cantidad: cantidad,
+                },
+              ],
         };
         await editarProduccion(id, payload);
         showAlert('success', 'Orden de producción actualizada exitosamente.');

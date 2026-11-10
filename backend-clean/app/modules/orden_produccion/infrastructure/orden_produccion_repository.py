@@ -106,7 +106,7 @@ class OrdenProduccionRepository:
                 cursor.execute(
                     """
                     CALL sp_insertarordenproduccion(
-                        %s, %s, %s, %s, NULL, NULL
+                        %s, %s, %s, %s::jsonb, NULL, NULL
                     )
                     """,
                     (
@@ -154,7 +154,7 @@ class OrdenProduccionRepository:
                 cursor.execute(
                     """
                     CALL sp_actualizarordenproduccion(
-                        %s, %s, %s, %s, %s
+                        %s, %s, %s, %s, %s::jsonb
                     )
                     """,
                     (

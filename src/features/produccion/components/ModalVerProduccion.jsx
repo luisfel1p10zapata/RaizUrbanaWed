@@ -10,8 +10,30 @@ export default function ModalVerProduccion({
 }) {
   if (!isOpen || !selectedOrden) return null;
 
-  const primerDet = selectedOrden.detalles?.[0] || selectedOrden.primerDetalle || {};
-  const cantidad = primerDet.cantidad || selectedOrden.cantidad || '—';
+  const detalles = Array.isArray(selectedOrden.detalles)
+    ? selectedOrden.detalles
+    : Array.isArray(selectedOrden.detalle)
+    ? selectedOrden.detalle
+    : [];
+
+  const primerDet = detalles[0] || selectedOrden.primerDetalle || {};
+  const totalCantidad =
+    detalles.reduce((acc, d) => acc + Number(d.cantidad || 0), 0) ||
+    Number(selectedOrden.total_unidades || 0);
+
+  const lower = (selectedOrden.nombre_estado || selectedOrden.estado || '').toLowerCase();
+  let badgeVariant = 'pendiente';
+  if (lower.includes('terminado') || lower.includes('entregado')) {
+    badgeVariant = 'activo';
+  } else if (lower.includes('no conforme') || lower.includes('cancelado')) {
+    badgeVariant = 'cancelado';
+  } else if (lower.includes('proceso') || lower.includes('producción') || lower.includes('produccion')) {
+    badgeVariant = 'info';
+  }
+
+  const tieneInsumosInsuficientes = detalles.some((det) =>
+    (det.insumos || []).some((ins) => ins.stock_suficiente === false)
+  );
 
   return (
     <div className="ru-modal-overlay" onClick={onClose}>

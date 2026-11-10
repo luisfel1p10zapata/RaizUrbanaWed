@@ -113,7 +113,7 @@ export default function Produccion() {
             </Badge>
           );
 
-          const esEntregado = Number(row.id_estado_orden) === 5 || lower.includes('entregado');
+          const esEntregado = Number(row.id_estado_orden) === 4 || lower.includes('entregado');
           if (esEntregado) {
             return (
               <span title="La orden ya ha sido entregada (estado final)" style={{ cursor: 'not-allowed', display: 'inline-block' }}>

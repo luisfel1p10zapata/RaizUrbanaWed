@@ -38,7 +38,7 @@ def manejar_error(error: Exception):
                 detail=mensaje,
             ) from error
 
-        if codigo in ("22023", "22007", "22P02", "23514"):
+        if codigo in ("22023", "22007", "22P02", "23514", "55000"):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=mensaje,
