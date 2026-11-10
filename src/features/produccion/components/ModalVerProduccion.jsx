@@ -11,7 +11,13 @@ export default function ModalVerProduccion({
   if (!isOpen || !selectedOrden) return null;
 
   const primerDet = selectedOrden.detalles?.[0] || selectedOrden.primerDetalle || {};
-  const cantidad = primerDet.cantidad || selectedOrden.cantidad || '—';
+  const cantidad = primerDet.cantidad || selectedOrden.cantidad || selectedOrden.total_unidades || '—';
+  const nombreProducto =
+    primerDet.producto ||
+    primerDet.nombre_producto ||
+    selectedOrden.productos ||
+    selectedOrden.producto ||
+    '—';
 
   return (
     <div className="ru-modal-overlay" onClick={onClose}>
@@ -38,7 +44,7 @@ export default function ModalVerProduccion({
               </div>
               <div>
                 <h3 className="prod-view-title">
-                  {selectedOrden.producto}
+                  {nombreProducto}
                 </h3>
                 <span className="prod-view-qty-text">
                   Cantidad: {cantidad} unidades

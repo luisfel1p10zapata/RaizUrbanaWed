@@ -60,7 +60,7 @@ export default function ModalCambiarEstadoProduccion({
                 PRODUCTO
               </span>
               <p className="prod-status-product-name">
-                {selectedOrden.producto}
+                {selectedOrden.detalles?.[0]?.producto || selectedOrden.productos || selectedOrden.producto}
               </p>
               <span className="prod-status-resp">
                 Responsable: {selectedOrden.responsable}
