@@ -25,7 +25,9 @@ class OrdenProduccionRepository:
                 cursor.execute(
                     "SELECT * FROM sp_listarordenesproduccion()"
                 )
-                return self._obtener_registros(cursor)
+                registros = self._obtener_registros(cursor)
+                registros.sort(key=lambda x: x.get("id_orden_produccion", 0))
+                return registros
 
     # --------------------------------------------------
     # BUSCAR ÓRDENES
@@ -104,7 +106,7 @@ class OrdenProduccionRepository:
                 cursor.execute(
                     """
                     CALL sp_insertarordenproduccion(
-                        %s, %s, %s, %s, NULL, %s
+                        %s, %s, %s, %s, NULL, NULL
                     )
                     """,
                     (
@@ -112,7 +114,6 @@ class OrdenProduccionRepository:
                         fecha_estimada,
                         observaciones,
                         Jsonb(detalles),
-                        id_estado_orden,
                     ),
                 )
 
@@ -250,3 +251,18 @@ class OrdenProduccionRepository:
                     "SELECT * FROM sp_listarvariantesproduccion()"
                 )
                 return self._obtener_registros(cursor)
+
+    # --------------------------------------------------
+    # LISTAR ESTADOS DE ORDEN
+    # --------------------------------------------------
+
+    def listar_estados(self):
+        with get_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "SELECT id_estado_orden, nombre FROM tb_estado_orden_produccion ORDER BY id_estado_orden"
+                )
+                return [
+                    {"id_estado_orden": fila[0], "id": fila[0], "nombre": fila[1]}
+                    for fila in cursor.fetchall()
+                ]

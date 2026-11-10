@@ -24,11 +24,17 @@ def manejar_error(error: Exception):
 
     if isinstance(error, psycopg.Error):
         codigo = error.sqlstate
-        mensaje = str(error).split("\n")[0]
+        mensaje = str(error).split("\n")[0].replace("ERROR:", "").strip()
 
         if codigo == "P0002":
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
+                detail=mensaje,
+            ) from error
+
+        if codigo == "P0001":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
                 detail=mensaje,
             ) from error
 
@@ -109,6 +115,19 @@ def filtrar_ordenes(
 def listar_empleados():
     try:
         return OrdenProduccionRepository().listar_empleados()
+    except Exception as error:
+        manejar_error(error)
+
+
+# --------------------------------------------------
+# LISTAR ESTADOS DE ORDEN
+# GET /api/ordenes-produccion/estados
+# --------------------------------------------------
+
+@router.get("/estados")
+def listar_estados():
+    try:
+        return OrdenProduccionRepository().listar_estados()
     except Exception as error:
         manejar_error(error)
 

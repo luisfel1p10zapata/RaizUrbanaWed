@@ -93,23 +93,17 @@ export default function useDevoluciones() {
     };
   }, []);
 
-  // Función para determinar si una devolución está anulada
-  const estaAnulada = useCallback((dev) => {
-    const obs = String(dev?.observaciones || '').toUpperCase();
-    const est = String(dev?.estado || dev?.nombre_estado || '').toLowerCase();
-    return obs.startsWith('[ANULADA]') || est.includes('anulad');
-  }, []);
-
   // Normalización
   const normalizedDevoluciones = useMemo(() => {
     return devoluciones.map((item) => {
       const id = item.id_devoluciones ?? item.id;
-      const anulada = estaAnulada(item);
-      const estado = anulada ? 'Anulada' : 'Vigente';
+      const estado = item.estado || (String(item.observaciones || '').toUpperCase().startsWith('[ANULADA]') ? 'Anulada' : 'Registrada');
+      const anulada = estado.toLowerCase() === 'anulada';
       const producto =
         item.producto || item.nombre_producto || 'Producto no especificado';
       const motivo =
         item.motivo || item.nombre_motivo || item.nombre || 'Motivo no especificado';
+      const reintegra_stock = item.reintegra_stock !== undefined ? Boolean(item.reintegra_stock) : true;
 
       return {
         ...item,
@@ -119,9 +113,10 @@ export default function useDevoluciones() {
         motivo,
         estado,
         anulada,
+        reintegra_stock,
       };
     });
-  }, [devoluciones, estaAnulada]);
+  }, [devoluciones]);
 
   // Filtros
   const filteredDevoluciones = useMemo(() => {
@@ -146,6 +141,8 @@ export default function useDevoluciones() {
 
       const matchesStatus =
         statusFilter === 'Todos los estados' ||
+        (statusFilter === 'Registrada' && !d.anulada) ||
+        (statusFilter === 'Anulada' && d.anulada) ||
         (statusFilter === 'Vigentes' && !d.anulada) ||
         (statusFilter === 'Anuladas' && d.anulada);
 

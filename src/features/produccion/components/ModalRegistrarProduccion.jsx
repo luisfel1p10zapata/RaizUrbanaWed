@@ -12,6 +12,7 @@ export default function ModalRegistrarProduccion({
   guardando,
   empleados = [],
   variantes = [],
+  estados = [],
 }) {
   const [showConfirm, setShowConfirm] = useState(false);
 
@@ -66,7 +67,17 @@ export default function ModalRegistrarProduccion({
     if (!validateAll()) return;
 
     try {
-      await onSubmit(values);
+      await onSubmit({
+        id_usuario: Number(values.id_usuario),
+        fecha_estimada: values.fecha_estimada,
+        observaciones: values.observaciones,
+        detalles: [
+          {
+            id_producto_vari: Number(values.id_producto_vari),
+            cantidad: Number(values.cantidad),
+          },
+        ],
+      });
       cerrarYLimpiar();
     } catch {
       // Manejado en hook
@@ -212,6 +223,7 @@ export default function ModalRegistrarProduccion({
                       id="fecha_estimada"
                       name="fecha_estimada"
                       type="date"
+                      min={new Date().toISOString().split('T')[0]}
                       className={`ru-form-input ${
                         touched.fecha_estimada && errors.fecha_estimada ? 'is-invalid' : ''
                       }`}
@@ -226,6 +238,31 @@ export default function ModalRegistrarProduccion({
                     </p>
                   )}
                 </div>
+              </div>
+
+              {/* Estado (bloqueado en Pendiente para registros) */}
+              <div className="ru-form-field">
+                <label className="ru-form-label" htmlFor="reg-estado">
+                  ESTADO INICIAL
+                </label>
+                <div className="ru-form-input-wrap">
+                  <select
+                    id="reg-estado"
+                    name="reg-estado"
+                    className="ru-form-input"
+                    value={1}
+                    disabled
+                  >
+                    {estados.map((est) => (
+                      <option key={est.id_estado_orden || est.id} value={est.id_estado_orden || est.id}>
+                        {est.nombre}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <p style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+                  Las nuevas órdenes de producción se crean obligatoriamente en estado Pendiente.
+                </p>
               </div>
 
               {/* Observaciones */}

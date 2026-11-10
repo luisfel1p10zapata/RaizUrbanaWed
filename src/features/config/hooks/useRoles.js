@@ -5,6 +5,7 @@ import {
   obtenerPermisos,
   crearRol,
   editarRol,
+  cambiarEstadoRol,
   eliminarRol,
 } from '../services/rolesService';
 
@@ -103,6 +104,12 @@ export default function useRoles() {
         ? r.privilegios.map((p) => (typeof p === 'object' ? p.id_privilegio || p.id : p))
         : [];
 
+      const total_usuarios = Number(r.total_usuarios ?? 0);
+      const puede_eliminar =
+        r.puede_eliminar !== undefined
+          ? Boolean(r.puede_eliminar)
+          : id !== 1 && total_usuarios === 0;
+
       return {
         ...r,
         id,
@@ -110,6 +117,10 @@ export default function useRoles() {
         nombre,
         descripcion,
         estado,
+        total_usuarios,
+        puede_eliminar,
+        permisos: Array.isArray(r.permisos) ? r.permisos : [],
+        privilegios: Array.isArray(r.privilegios) ? r.privilegios : [],
         permisos_ids,
         privilegios_ids,
       };
@@ -154,18 +165,25 @@ export default function useRoles() {
     setModalRegistrarOpen(true);
   }, []);
 
-  const abrirEditar = useCallback(async (role) => {
-    setSelectedRole(role);
-    setModalEditarOpen(true);
-    try {
-      const detalle = await obtenerRolPorId(role.id);
-      if (detalle) {
-        setSelectedRole((prev) => ({ ...prev, ...detalle }));
+  const abrirEditar = useCallback(
+    async (role) => {
+      if (role.id === 1 || (role.nombre || '').toLowerCase() === 'administrador') {
+        showAlert('warning', 'El rol Administrador está protegido contra edición.');
+        return;
       }
-    } catch {
-      // Usar datos locales si falla
-    }
-  }, []);
+      setSelectedRole(role);
+      setModalEditarOpen(true);
+      try {
+        const detalle = await obtenerRolPorId(role.id);
+        if (detalle) {
+          setSelectedRole((prev) => ({ ...prev, ...detalle }));
+        }
+      } catch {
+        // Usar datos locales si falla
+      }
+    },
+    [showAlert]
+  );
 
   const abrirVer = useCallback(async (role) => {
     setSelectedRole(role);
@@ -180,10 +198,25 @@ export default function useRoles() {
     }
   }, []);
 
-  const abrirEliminar = useCallback((role) => {
-    setSelectedRole(role);
-    setModalEliminarOpen(true);
-  }, []);
+  const abrirEliminar = useCallback(
+    (role) => {
+      if (
+        role.puede_eliminar === false ||
+        role.id === 1 ||
+        (role.nombre || '').toLowerCase() === 'administrador'
+      ) {
+        const motivo =
+          role.id === 1 || (role.nombre || '').toLowerCase() === 'administrador'
+            ? 'El rol Administrador está protegido contra eliminación.'
+            : `No se puede eliminar el rol: tiene ${role.total_usuarios || 'usuarios'} asociados.`;
+        showAlert('warning', motivo);
+        return;
+      }
+      setSelectedRole(role);
+      setModalEliminarOpen(true);
+    },
+    [showAlert]
+  );
 
   const cerrarModales = useCallback(() => {
     setModalRegistrarOpen(false);
@@ -194,6 +227,29 @@ export default function useRoles() {
   }, []);
 
   // Operaciones CRUD
+  const handleToggleStatus = useCallback(
+    async (role) => {
+      if (role.id === 1 || (role.nombre || '').toLowerCase() === 'administrador') {
+        showAlert('warning', 'El rol Administrador no se puede desactivar.');
+        return;
+      }
+      setGuardando(true);
+      try {
+        const nuevoEstado = !role.estado;
+        await cambiarEstadoRol(role.id, nuevoEstado);
+        showAlert(
+          'success',
+          `El rol "${role.nombre}" ahora está ${nuevoEstado ? 'Activo' : 'Inactivo'}.`
+        );
+        await recargarDatos();
+      } catch (err) {
+        showAlert('error', err.message || 'No se pudo cambiar el estado del rol.');
+      } finally {
+        setGuardando(false);
+      }
+    },
+    [showAlert, recargarDatos]
+  );
   const handleCreateRole = useCallback(
     async (formData) => {
       setGuardando(true);
@@ -285,6 +341,7 @@ export default function useRoles() {
     cerrarModales,
     handleCreateRole,
     handleUpdateRole,
+    handleToggleStatus,
     handleDeleteRole,
     alert,
     closeAlert,

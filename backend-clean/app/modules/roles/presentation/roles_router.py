@@ -30,11 +30,17 @@ def manejar_error(error: Exception):
 
     if isinstance(error, psycopg.Error):
         codigo = error.sqlstate
-        mensaje = str(error).split("\n")[0]
+        mensaje = str(error).split("\n")[0].replace("ERROR:", "").strip()
 
         if codigo == "P0002":
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
+                detail=mensaje,
+            ) from error
+
+        if codigo == "P0001":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
                 detail=mensaje,
             ) from error
 
@@ -49,6 +55,12 @@ def manejar_error(error: Exception):
                 status_code=status.HTTP_409_CONFLICT,
                 detail=mensaje,
             ) from error
+
+    if isinstance(error, ValueError):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(error),
+        ) from error
 
     raise HTTPException(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -129,6 +141,8 @@ def actualizar_rol(id_rol: int, datos: ActualizarRolRequest):
             nombre=datos.nombre,
             descripcion=datos.descripcion,
             estado=datos.estado,
+            permisos_ids=datos.permisos_ids,
+            privilegios_ids=datos.privilegios_ids,
         )
 
         if resultado is None:

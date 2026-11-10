@@ -1,9 +1,20 @@
-import { useState, useEffect, useCallback } from 'react';
-import { X, CircleCheck } from 'lucide-react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { X, CircleCheck, ChevronDown, ChevronUp } from 'lucide-react';
 import ConfirmCancelModal from '../../../components/ui/ConfirmCancelModal';
 import Button from '../../../components/ui/Button';
 import useRolesForm from '../hooks/useRolesForm';
 import '../Styles/ModalRegistrarRoles.css';
+
+function IndeterminateCheckbox({ checked, indeterminate, onChange, ...rest }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    if (ref.current) {
+      ref.current.indeterminate = Boolean(indeterminate);
+    }
+  }, [indeterminate]);
+
+  return <input type="checkbox" ref={ref} checked={checked} onChange={onChange} {...rest} />;
+}
 
 export default function ModalRegistrarRoles({
   isOpen,
@@ -105,6 +116,34 @@ export default function ModalRegistrarRoles({
     setPermisosExpandidos((prev) =>
       prev.includes(idPermiso) ? prev.filter((id) => id !== idPermiso) : [...prev, idPermiso]
     );
+  };
+
+  // Toggle maestro de un permiso individual
+  const handleTogglePermisoCompleto = (idPermiso, privsPermiso) => {
+    const privIds = privsPermiso.map((pr) => Number(pr.id_privilegio));
+    const currentPrivs = values.privilegios_ids || [];
+    const todosSeleccionados = privIds.length > 0 && privIds.every((id) => currentPrivs.includes(id));
+
+    let updatedPrivs;
+    let updatedPermisos = values.permisos_ids || [];
+
+    if (todosSeleccionados) {
+      // Deseleccionar todos los privilegios del permiso
+      updatedPrivs = currentPrivs.filter((id) => !privIds.includes(id));
+      updatedPermisos = updatedPermisos.filter((pId) => pId !== idPermiso);
+    } else {
+      // Seleccionar todos los privilegios del permiso
+      updatedPrivs = Array.from(new Set([...currentPrivs, ...privIds]));
+      if (!updatedPermisos.includes(idPermiso)) {
+        updatedPermisos = [...updatedPermisos, idPermiso];
+      }
+    }
+
+    setValues((prev) => ({
+      ...prev,
+      permisos_ids: updatedPermisos,
+      privilegios_ids: updatedPrivs,
+    }));
   };
 
   const handlePrivilegioChange = (idPrivilegio, idPermiso) => {
@@ -246,10 +285,14 @@ export default function ModalRegistrarRoles({
 
                 <div className="roles-reg-perms-list">
                   {permisos.map((permiso) => {
-                    const idsPrivilegios = (permiso.privilegios ?? []).map((pr) => Number(pr.id_privilegio));
+                    const nombrePermiso = permiso.permiso || permiso.nombre || `Permiso #${permiso.id_permiso}`;
+                    const privs = permiso.privilegios ?? [];
+                    const idsPrivilegios = privs.map((pr) => Number(pr.id_privilegio));
                     const seleccionados = idsPrivilegios.filter((id) =>
                       (values.privilegios_ids || []).includes(id)
                     ).length;
+                    const todosSeleccionados = idsPrivilegios.length > 0 && seleccionados === idsPrivilegios.length;
+                    const algunSeleccionado = seleccionados > 0 && !todosSeleccionados;
                     const expandido = permisosExpandidos.includes(permiso.id_permiso);
 
                     return (
@@ -258,19 +301,28 @@ export default function ModalRegistrarRoles({
                         className="roles-reg-perm-card"
                       >
                         <div className="roles-reg-perm-row">
-                          <span className="roles-reg-perm-title">{permiso.nombre}</span>
+                          <label className="roles-reg-perm-master-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', margin: 0 }}>
+                            <IndeterminateCheckbox
+                              checked={todosSeleccionados}
+                              indeterminate={algunSeleccionado}
+                              onChange={() => handleTogglePermisoCompleto(permiso.id_permiso, privs)}
+                            />
+                            <span className="roles-reg-perm-title">{nombrePermiso}</span>
+                          </label>
                           <button
                             type="button"
                             className="btn btn-outline btn-sm roles-reg-toggle-btn"
                             onClick={() => togglePermisoExpandido(permiso.id_permiso)}
+                            style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
                           >
-                            {expandido ? 'Ocultar' : `Ver privilegios (${seleccionados}/${idsPrivilegios.length})`}
+                            <span>({seleccionados}/{idsPrivilegios.length})</span>
+                            {expandido ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                           </button>
                         </div>
 
                         {expandido && (
                           <div className="roles-reg-privs-grid">
-                            {(permiso.privilegios ?? []).map((priv) => {
+                            {privs.map((priv) => {
                               const privId = Number(priv.id_privilegio);
                               const checked = (values.privilegios_ids || []).includes(privId);
                               return (

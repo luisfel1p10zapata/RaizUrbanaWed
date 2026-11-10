@@ -20,6 +20,7 @@ class DevolucionService:
         observaciones: str | None,
         fecha_devolucion,
         id_motivo: int,
+        reintegra_stock: bool = True,
     ):
         if id_det_venta <= 0:
             raise ValueError("El detalle de venta no es válido.")
@@ -47,6 +48,7 @@ class DevolucionService:
             observaciones=observaciones,
             fecha_devolucion=fecha_devolucion,
             id_motivo=id_motivo,
+            reintegra_stock=reintegra_stock,
         )
 
     # --------------------------------------------------
@@ -84,6 +86,7 @@ class DevolucionService:
         observaciones: str | None,
         fecha_devolucion,
         id_motivo: int,
+        reintegra_stock: bool | None = None,
     ):
         if id_devoluciones <= 0:
             raise ValueError("El ID de devolución no es válido.")
@@ -111,6 +114,7 @@ class DevolucionService:
             observaciones=observaciones,
             fecha_devolucion=fecha_devolucion,
             id_motivo=id_motivo,
+            reintegra_stock=reintegra_stock,
         )
 
     # --------------------------------------------------
@@ -145,6 +149,7 @@ class DevolucionService:
         fecha_inicio=None,
         fecha_fin=None,
         id_motivo: int | None = None,
+        estado: str | None = None,
     ):
         if (
             fecha_inicio is not None
@@ -157,6 +162,15 @@ class DevolucionService:
 
         if id_motivo is not None and id_motivo <= 0:
             raise ValueError("El motivo seleccionado no es válido.")
+
+        estado = estado.strip() if estado else None
+
+        return self.repositorio.filtrar(
+            fecha_inicio=fecha_inicio,
+            fecha_fin=fecha_fin,
+            id_motivo=id_motivo,
+            estado=estado,
+        )
 
         return self.repositorio.filtrar(
             fecha_inicio=fecha_inicio,

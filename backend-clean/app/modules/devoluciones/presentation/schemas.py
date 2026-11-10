@@ -12,6 +12,7 @@ class RegistrarDevolucionRequest(BaseModel):
     observaciones: str | None = Field(default=None, max_length=255)
     fecha_devolucion: date
     id_motivo: int = Field(gt=0)
+    reintegra_stock: bool = True
 
 
 class ActualizarDevolucionRequest(BaseModel):
@@ -21,6 +22,7 @@ class ActualizarDevolucionRequest(BaseModel):
     observaciones: str | None = Field(default=None, max_length=255)
     fecha_devolucion: date
     id_motivo: int = Field(gt=0)
+    reintegra_stock: bool | None = None
 
 
 class AnularDevolucionRequest(BaseModel):

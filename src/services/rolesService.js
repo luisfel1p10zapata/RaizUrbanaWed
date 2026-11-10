@@ -43,8 +43,18 @@ export const editarRol = async (id, datos) => {
     nombre: datos.nombre.trim(),
     descripcion: datos.descripcion.trim(),
     estado: Boolean(datos.estado),
+    permisos_ids: datos.permisos_ids ?? [],
+    privilegios_ids: datos.privilegios_ids ?? [],
   };
   const { data } = await apiClient.put(`/roles/${id}`, payload);
+  return data;
+};
+
+export const cambiarEstadoRol = async (id, estado) => {
+  const payload = {
+    estado: Boolean(estado),
+  };
+  const { data } = await apiClient.patch(`/roles/${id}/estado`, payload);
   return data;
 };
 
@@ -70,6 +80,7 @@ const rolesService = {
   registrarRol,
   editarRol,
   actualizarRol,
+  cambiarEstadoRol,
   eliminarRol,
 };
 

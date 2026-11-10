@@ -37,6 +37,7 @@ export const filtrarDevoluciones = async (filtros = {}) => {
   if (filtros.fecha_inicio) params.append('fecha_inicio', filtros.fecha_inicio);
   if (filtros.fecha_fin) params.append('fecha_fin', filtros.fecha_fin);
   if (filtros.id_motivo) params.append('id_motivo', filtros.id_motivo);
+  if (filtros.estado) params.append('estado', filtros.estado);
 
   const query = params.toString();
   const { data } = await apiClient.get(`/devoluciones/filtrar${query ? `?${query}` : ''}`);
@@ -50,6 +51,7 @@ export const crearDevolucion = async (datos) => {
     observaciones: datos.observaciones?.trim() || null,
     fecha_devolucion: datos.fecha_devolucion,
     id_motivo: Number(datos.id_motivo),
+    reintegra_stock: datos.reintegra_stock !== undefined ? Boolean(datos.reintegra_stock) : true,
   };
   const { data } = await apiClient.post('/devoluciones', payload);
   return data;
@@ -61,6 +63,7 @@ export const editarDevolucion = async (id, datos) => {
     observaciones: datos.observaciones?.trim() || null,
     fecha_devolucion: datos.fecha_devolucion,
     id_motivo: Number(datos.id_motivo),
+    ...(datos.reintegra_stock !== undefined ? { reintegra_stock: Boolean(datos.reintegra_stock) } : {}),
   };
   const { data } = await apiClient.put(`/devoluciones/${id}`, payload);
   return data;

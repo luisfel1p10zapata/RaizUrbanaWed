@@ -12,6 +12,8 @@ export default function ModalEditarDevoluciones({
   selectedDevolucion,
   motivos = [],
 }) {
+  const maxCantidad = selectedDevolucion?.cantidad_maxima ?? null;
+
   const {
     values,
     errors,
@@ -20,7 +22,7 @@ export default function ModalEditarDevoluciones({
     handleBlur,
     validateAll,
     resetForm,
-  } = useDevolucionesForm(undefined, null, true);
+  } = useDevolucionesForm(undefined, maxCantidad, true);
 
   useEffect(() => {
     if (isOpen && selectedDevolucion) {
@@ -29,18 +31,28 @@ export default function ModalEditarDevoluciones({
         fecha_devolucion: String(selectedDevolucion.fecha_devolucion || '').slice(0, 10),
         id_motivo: String(selectedDevolucion.id_motivo || ''),
         observaciones: String(selectedDevolucion.observaciones || '').replace(/^\[ANULADA\]\s*/i, ''),
+        reintegra_stock: selectedDevolucion.reintegra_stock !== undefined ? Boolean(selectedDevolucion.reintegra_stock) : true,
       });
     }
   }, [isOpen, selectedDevolucion, resetForm]);
 
   if (!isOpen || !selectedDevolucion) return null;
 
+  const esAnulada = (selectedDevolucion.estado || '').toLowerCase() === 'anulada';
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateAll()) return;
+    if (esAnulada) return;
+    if (!validateAll(maxCantidad)) return;
 
     try {
-      await onSubmit(selectedDevolucion.id || selectedDevolucion.id_devoluciones, values);
+      await onSubmit(selectedDevolucion.id || selectedDevolucion.id_devoluciones, {
+        cantidad: Number(values.cantidad),
+        fecha_devolucion: values.fecha_devolucion,
+        id_motivo: Number(values.id_motivo),
+        observaciones: values.observaciones,
+        reintegra_stock: Boolean(values.reintegra_stock),
+      });
       onClose();
     } catch {
       // Manejado en hook
@@ -88,6 +100,11 @@ export default function ModalEditarDevoluciones({
               <div className="ru-form-field">
                 <label className="ru-form-label" htmlFor="edit-dev-cantidad">
                   CANTIDAD <span className="req">*</span>
+                  {maxCantidad && (
+                    <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 400, marginLeft: '6px' }}>
+                      (Máx. disponible: {maxCantidad})
+                    </span>
+                  )}
                 </label>
                 <div className="ru-form-input-wrap">
                   <input
@@ -95,13 +112,14 @@ export default function ModalEditarDevoluciones({
                     name="cantidad"
                     type="number"
                     min="1"
+                    max={maxCantidad || undefined}
                     className={`ru-form-input ${
                       touched.cantidad && errors.cantidad ? 'is-invalid' : ''
                     }`}
                     placeholder="Ej: 1"
                     value={values.cantidad}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
+                    onChange={(e) => handleChange(e, maxCantidad)}
+                    onBlur={(e) => handleBlur(e, maxCantidad)}
                   />
                 </div>
                 {touched.cantidad && errors.cantidad && (
@@ -165,6 +183,20 @@ export default function ModalEditarDevoluciones({
                   {errors.id_motivo}
                 </p>
               )}
+            </div>
+
+            {/* Reintegrar al stock */}
+            <div className="ru-form-field" style={{ marginTop: '8px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13.5px', fontWeight: 500, color: '#1e293b' }}>
+                <input
+                  type="checkbox"
+                  id="edit-reintegra_stock"
+                  name="reintegra_stock"
+                  checked={Boolean(values.reintegra_stock)}
+                  onChange={handleChange}
+                />
+                <span>Reintegrar unidades al inventario (Stock)</span>
+              </label>
             </div>
 
             {/* Observaciones */}

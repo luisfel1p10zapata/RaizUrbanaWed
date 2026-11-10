@@ -78,7 +78,13 @@ export default function ModalRegistrarDevoluciones({
     if (!validateAll(maxCantidad)) return;
 
     try {
-      await onSubmit(values);
+      await onSubmit({
+        ...values,
+        id_det_venta: Number(values.id_det_venta),
+        id_motivo: Number(values.id_motivo),
+        cantidad: Number(values.cantidad),
+        reintegra_stock: Boolean(values.reintegra_stock),
+      });
       cerrarYLimpiar();
     } catch {
       // Manejado en hook
