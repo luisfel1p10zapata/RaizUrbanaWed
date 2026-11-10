@@ -1,234 +1,318 @@
-"""Repositorio temporal en memoria para el módulo de Insumos."""
+"""Acceso a PostgreSQL para el módulo de Insumos."""
 
-from copy import deepcopy
+import logging
 from typing import Any
 
+import psycopg # pyright: ignore[reportMissingImports]
+from psycopg.rows import dict_row # type: ignore
+
+from app.core.database import get_connection
 from app.modules.insumos.domain.exceptions import (
+    InsumoBaseDatosError,
     InsumoDuplicadoError,
+    InsumoInvalidoError,
     InsumoNoEncontradoError,
+    InsumoRelacionadoError,
 )
 
 
-class InsumoInMemoryRepository:
-    """Almacena temporalmente los insumos durante el desarrollo."""
+logger = logging.getLogger(__name__)
 
-    _db: list[dict[str, Any]] = []
 
-    _secuencia_insumo: int = 1
+class InsumoRepository:
+    """Ejecuta las funciones de Insumos en PostgreSQL."""
 
-    _secuencia_detalle: int = 1
+    @staticmethod
+    def _manejar_error(
+        error: psycopg.Error,
+        insumo_id: int | None = None,
+    ) -> None:
+        """Convierte errores conocidos de PostgreSQL."""
 
+        codigo = error.sqlstate
+        mensaje = error.diag.message_primary or ""
+
+        if codigo == "P0002" and insumo_id is not None:
+            raise InsumoNoEncontradoError(insumo_id) from error
+
+        if codigo == "23505":
+            raise InsumoDuplicadoError(
+                mensaje or "Ya existe un registro con esos datos."
+            ) from error
+
+        if codigo == "23503":
+            raise InsumoRelacionadoError(
+                mensaje
+                or (
+                    "El registro tiene datos relacionados "
+                    "o la referencia seleccionada no existe."
+                )
+            ) from error
+
+        if codigo in ("22023", "23514", "23502"):
+            raise InsumoInvalidoError(
+                mensaje or "Los datos enviados no son válidos."
+            ) from error
+
+        logger.exception(
+            "Error de PostgreSQL en el módulo de Insumos."
+        )
+
+        raise InsumoBaseDatosError(
+            "No fue posible procesar la solicitud de insumos."
+        ) from error
+        
+        
     def listar(self) -> list[dict[str, Any]]:
-        """Devuelve todos los insumos registrados."""
+        """Lista los insumos registrados en Supabase."""
 
-        return deepcopy(InsumoInMemoryRepository._db)
+        try:
+            with get_connection() as conn:
+                with conn.cursor(row_factory=dict_row) as cursor:
+                    cursor.execute(
+                        "SELECT * FROM public.sp_insumos_listar()"
+                    )
+                    return cursor.fetchall()
+
+        except psycopg.Error as error:
+            self._manejar_error(error)
 
     def obtener_por_id(
         self,
         insumo_id: int,
     ) -> dict[str, Any] | None:
-        """Busca un insumo por su identificador."""
+        """Consulta un insumo por su ID."""
 
-        insumo = next(
-            (
-                registro
-                for registro in InsumoInMemoryRepository._db
-                if registro["id_insumo"] == insumo_id
-            ),
-            None,
-        )
+        try:
+            with get_connection() as conn:
+                with conn.cursor(row_factory=dict_row) as cursor:
+                    cursor.execute(
+                        """
+                        SELECT *
+                        FROM public.sp_insumos_obtener_por_id(%s)
+                        """,
+                        (insumo_id,),
+                    )
+                    return cursor.fetchone()
 
-        return deepcopy(insumo) if insumo else None
-
-    def obtener_por_nombre(
-        self,
-        nombre: str,
-    ) -> dict[str, Any] | None:
-        """Busca un insumo por nombre sin distinguir mayúsculas."""
-
-        nombre_normalizado = nombre.strip().casefold()
-
-        insumo = next(
-            (
-                registro
-                for registro in InsumoInMemoryRepository._db
-                if registro["nombre"].strip().casefold()
-                == nombre_normalizado
-            ),
-            None,
-        )
-
-        return deepcopy(insumo) if insumo else None
-
-    def _crear_detalle(
-        self,
-        datos: dict[str, Any],
-    ) -> dict[str, Any]:
-        """Asigna un identificador nuevo a un detalle."""
-
-        detalle_id = InsumoInMemoryRepository._secuencia_detalle
-        InsumoInMemoryRepository._secuencia_detalle += 1
-
-        return {
-            "id_det_insumo": detalle_id,
-            "material": datos["material"],
-            "tamano": datos["tamano"],
-            "precio_unitario": datos["precio_unitario"],
-            "stock": datos["stock"],
-            "unidad_medida": datos.get(
-                "unidad_medida",
-                "unidad",
-            ),
-            "foto_insumo": datos.get("foto_insumo"),
-        }
+        except psycopg.Error as error:
+            self._manejar_error(error, insumo_id)
 
     def guardar(
         self,
         datos: dict[str, Any],
     ) -> dict[str, Any]:
-        """Registra un insumo junto con sus detalles."""
+        """Registra un insumo y devuelve el registro creado."""
 
-        nombre = datos["nombre"].strip()
+        try:
+            with get_connection() as conn:
+                with conn.cursor(row_factory=dict_row) as cursor:
+                    cursor.execute(
+                        """
+                        SELECT public.sp_insumos_registrar(
+                            %s, %s, %s, %s, %s,
+                            %s, %s, %s, %s, %s
+                        ) AS id_insumo
+                        """,
+                        (
+                            datos["nombre"],
+                            datos["id_categoria"],
+                            datos["id_tamano"],
+                            datos["id_material"],
+                            datos["precio_unitario"],
+                            datos["stock"],
+                            datos["stock_minimo"],
+                            datos.get("stock_maximo"),
+                            datos.get("foto_insumo"),
+                            None,
+                        ),
+                    )
 
-        if self.obtener_por_nombre(nombre):
-            raise InsumoDuplicadoError(nombre)
+                    resultado = cursor.fetchone()
 
-        insumo_id = InsumoInMemoryRepository._secuencia_insumo
-        InsumoInMemoryRepository._secuencia_insumo += 1
+                    cursor.execute(
+                        """
+                        SELECT *
+                        FROM public.sp_insumos_obtener_por_id(%s)
+                        """,
+                        (resultado["id_insumo"],),
+                    )
+                    creado = cursor.fetchone()
 
-        detalles = [
-            self._crear_detalle(detalle)
-            for detalle in datos["detalles"]
-        ]
+                conn.commit()
+                return creado
 
-        registro = {
-            "id_insumo": insumo_id,
-            "nombre": nombre,
-            "categoria": datos["categoria"].strip(),
-            "estado": datos.get("estado", True),
-            "descripcion": datos.get("descripcion"),
-            "detalles": detalles,
-        }
-
-        InsumoInMemoryRepository._db.append(registro)
-
-        return deepcopy(registro)
+        except psycopg.Error as error:
+            self._manejar_error(error)
 
     def actualizar(
         self,
         insumo_id: int,
         datos: dict[str, Any],
     ) -> dict[str, Any]:
-        """Reemplaza los datos de un insumo y sus detalles."""
+        """Actualiza los datos editables de un insumo."""
 
-        insumo = next(
-            (
-                registro
-                for registro in InsumoInMemoryRepository._db
-                if registro["id_insumo"] == insumo_id
-            ),
-            None,
-        )
+        try:
+            with get_connection() as conn:
+                with conn.cursor(row_factory=dict_row) as cursor:
+                    cursor.execute(
+                        """
+                        SELECT *
+                        FROM public.sp_insumos_actualizar(
+                            %s, %s, %s, %s, %s,
+                            %s, %s, %s, %s
+                        )
+                        """,
+                        (
+                            insumo_id,
+                            datos["nombre"],
+                            datos["id_categoria"],
+                            datos["id_tamano"],
+                            datos["id_material"],
+                            datos["precio_unitario"],
+                            datos["stock_minimo"],
+                            datos.get("stock_maximo"),
+                            datos.get("foto_insumo"),
+                        ),
+                    )
 
-        if insumo is None:
-            raise InsumoNoEncontradoError(insumo_id)
+                    actualizado = cursor.fetchone()
 
-        nombre = datos["nombre"].strip()
-        existente = self.obtener_por_nombre(nombre)
+                conn.commit()
+                return actualizado
 
-        if existente and existente["id_insumo"] != insumo_id:
-            raise InsumoDuplicadoError(nombre)
-
-        # Conserva el ID del detalle cuando se mantiene la misma
-        # combinación de material y tamaño.
-        detalles_anteriores = {
-            (
-                detalle["material"].strip().casefold(),
-                detalle["tamano"].strip().casefold(),
-            ): detalle
-            for detalle in insumo["detalles"]
-        }
-
-        detalles_actualizados = []
-
-        for datos_detalle in datos["detalles"]:
-            clave = (
-                datos_detalle["material"].strip().casefold(),
-                datos_detalle["tamano"].strip().casefold(),
-            )
-
-            anterior = detalles_anteriores.get(clave)
-
-            if anterior:
-                detalle = {
-                    **anterior,
-                    "material": datos_detalle["material"],
-                    "tamano": datos_detalle["tamano"],
-                    "precio_unitario": datos_detalle[
-                        "precio_unitario"
-                    ],
-                    "stock": datos_detalle["stock"],
-                    "unidad_medida": datos_detalle.get(
-                        "unidad_medida",
-                        "unidad",
-                    ),
-                    "foto_insumo": datos_detalle.get(
-                        "foto_insumo"
-                    ),
-                }
-            else:
-                detalle = self._crear_detalle(datos_detalle)
-
-            detalles_actualizados.append(detalle)
-
-        insumo["nombre"] = nombre
-        insumo["categoria"] = datos["categoria"].strip()
-        insumo["estado"] = datos["estado"]
-        insumo["descripcion"] = datos.get("descripcion")
-        insumo["detalles"] = detalles_actualizados
-
-        return deepcopy(insumo)
+        except psycopg.Error as error:
+            self._manejar_error(error, insumo_id)
 
     def cambiar_estado(
         self,
         insumo_id: int,
-        estado: bool,
+        estado: str,
     ) -> dict[str, Any]:
-        """Activa o inactiva un insumo."""
+        """Cambia el estado a Activo o Inactivo."""
 
-        insumo = next(
-            (
-                registro
-                for registro in InsumoInMemoryRepository._db
-                if registro["id_insumo"] == insumo_id
-            ),
-            None,
-        )
+        try:
+            with get_connection() as conn:
+                with conn.cursor(row_factory=dict_row) as cursor:
+                    cursor.execute(
+                        """
+                        SELECT *
+                        FROM public.sp_insumos_cambiar_estado(%s, %s)
+                        """,
+                        (insumo_id, estado),
+                    )
 
-        if insumo is None:
-            raise InsumoNoEncontradoError(insumo_id)
+                    actualizado = cursor.fetchone()
 
-        insumo["estado"] = estado
+                conn.commit()
+                return actualizado
 
-        return deepcopy(insumo)
+        except psycopg.Error as error:
+            self._manejar_error(error, insumo_id)
 
-    def eliminar(self, insumo_id: int) -> None:
-        """Elimina un insumo y sus detalles de la memoria."""
+    def eliminar(
+        self,
+        insumo_id: int,
+    ) -> None:
+        """Elimina un insumo si la base de datos lo permite."""
 
-        insumo = next(
-            (
-                registro
-                for registro in InsumoInMemoryRepository._db
-                if registro["id_insumo"] == insumo_id
-            ),
-            None,
-        )
+        try:
+            with get_connection() as conn:
+                with conn.cursor() as cursor:
+                    cursor.execute(
+                        """
+                        SELECT public.sp_insumos_eliminar(%s)
+                        """,
+                        (insumo_id,),
+                    )
 
-        if insumo is None:
-            raise InsumoNoEncontradoError(insumo_id)
+                conn.commit()
 
-        InsumoInMemoryRepository._db.remove(insumo)
+        except psycopg.Error as error:
+            self._manejar_error(error, insumo_id)
 
+    def listar_materiales(self) -> list[dict[str, Any]]:
+        """Lista los materiales activos."""
 
-# Por ahora el proyecto usará el repositorio en memoria.
-InsumoRepository = InsumoInMemoryRepository
+        try:
+            with get_connection() as conn:
+                with conn.cursor(row_factory=dict_row) as cursor:
+                    cursor.execute(
+                        """
+                        SELECT *
+                        FROM public.sp_insumos_listar_materiales()
+                        """
+                    )
+                    return cursor.fetchall()
+
+        except psycopg.Error as error:
+            self._manejar_error(error)
+
+    def registrar_material(
+        self,
+        nombre: str,
+    ) -> dict[str, Any]:
+        """Crea un material y devuelve sus datos."""
+
+        try:
+            with get_connection() as conn:
+                with conn.cursor(row_factory=dict_row) as cursor:
+                    cursor.execute(
+                        """
+                        SELECT *
+                        FROM public.sp_insumos_registrar_material(%s)
+                        """,
+                        (nombre,),
+                    )
+
+                    creado = cursor.fetchone()
+
+                conn.commit()
+                return creado
+
+        except psycopg.Error as error:
+            self._manejar_error(error)
+
+    def listar_tamanos(self) -> list[dict[str, Any]]:
+        """Lista los tamaños activos."""
+
+        try:
+            with get_connection() as conn:
+                with conn.cursor(row_factory=dict_row) as cursor:
+                    cursor.execute(
+                        """
+                        SELECT *
+                        FROM public.sp_insumos_listar_tamanos()
+                        """
+                    )
+                    return cursor.fetchall()
+
+        except psycopg.Error as error:
+            self._manejar_error(error)
+
+    def registrar_tamano(
+        self,
+        nombre: str,
+    ) -> dict[str, Any]:
+        """Crea un tamaño y devuelve sus datos."""
+
+        try:
+            with get_connection() as conn:
+                with conn.cursor(row_factory=dict_row) as cursor:
+                    cursor.execute(
+                        """
+                        SELECT *
+                        FROM public.sp_insumos_registrar_tamano(%s)
+                        """,
+                        (nombre,),
+                    )
+
+                    creado = cursor.fetchone()
+
+                conn.commit()
+                return creado
+
+        except psycopg.Error as error:
+            self._manejar_error(error)
+            
+            

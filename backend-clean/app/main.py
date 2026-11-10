@@ -1,8 +1,8 @@
 
 """Punto de entrada principal de la API REST - Raíz Urbana."""
 
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI # type: ignore
+from fastapi.middleware.cors import CORSMiddleware # type: ignore
 
 # =========================================================
 # IMPORTACIÓN DE ROUTERS
@@ -88,7 +88,7 @@ app.add_middleware(
 async def soporte_private_network_middleware(request, call_next):
     """Permite llamadas entre localhost y 127.0.0.1 bajo la directiva Private Network Access de Chrome."""
     if request.method == "OPTIONS" and request.headers.get("access-control-request-private-network"):
-        from fastapi.responses import Response
+        from fastapi.responses import Response # type: ignore
         res = Response(status_code=200)
         origin = request.headers.get("origin")
         if origin:

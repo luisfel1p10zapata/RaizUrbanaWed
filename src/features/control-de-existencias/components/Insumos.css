@@ -999,3 +999,275 @@ html[data-theme="dark"] .insumos-page,
     font-size: 13px;
   }
 }
+
+/* Indicadores y alertas propios del módulo de Insumos. */
+
+.insumos-page .ins-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.insumos-page .ins-kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  padding: 20px;
+  color: var(--ins-text);
+  background: var(--ins-panel);
+  border: 1px solid var(--ins-border);
+  border-radius: 14px;
+}
+
+.insumos-page .ins-kpi-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--ins-text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.insumos-page .ins-kpi-icon {
+  display: inline-flex;
+  color: var(--ins-text-secondary);
+}
+
+.insumos-page .ins-kpi strong {
+  color: var(--ins-text);
+  font-size: 28px;
+  line-height: 1.1;
+}
+
+.insumos-page .ins-kpi small {
+  color: var(--ins-muted);
+  font-size: 12px;
+}
+
+.insumos-page .ins-toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: min(390px, calc(100vw - 32px));
+  padding: 15px 18px;
+  color: var(--ins-text);
+  background: var(--ins-panel);
+  border: 1px solid var(--ins-border);
+  border-left: 4px solid var(--ins-green-text);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px var(--ins-shadow);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.insumos-page .ins-toast.error {
+  border-left-color: var(--ins-red-text);
+}
+
+.insumos-page .ins-toast button {
+  display: inline-flex;
+  padding: 4px;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.insumos-page .ins-select-create {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.insumos-page .ins-select-create select,
+.insumos-page .ins-select-create input {
+  flex: 1;
+  min-width: 0;
+}
+
+.insumos-page .ins-add-catalog {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  color: var(--ins-text);
+  background: var(--ins-panel);
+  border: 1px solid var(--ins-border);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.insumos-page .ins-add-catalog:hover {
+  background: var(--ins-hover);
+}
+
+.insumos-page .ins-inline-create {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  background: var(--ins-soft-bg);
+  border: 1px solid var(--ins-border);
+  border-radius: 10px;
+}
+
+.insumos-page .ins-inline-create label {
+  color: var(--ins-text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.insumos-page .ins-inline-create input {
+  padding: 11px 12px;
+  color: var(--ins-text);
+  background: var(--ins-field-bg);
+  border: 1px solid var(--ins-border);
+  border-radius: 10px;
+  font: inherit;
+}
+
+.insumos-page .ins-field-error {
+  color: var(--ins-red-text);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.insumos-page .ins-field-hint {
+  color: var(--ins-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.insumos-page [aria-invalid="true"] {
+  border-color: var(--ins-red-text);
+}
+
+.insumos-page button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+@media (max-width: 980px) {
+  .insumos-page .ins-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .insumos-page .ins-kpis {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Estado inactivo en rojo */
+
+.insumos-page .ins-status-pill.inactive {
+  color: var(--ins-red-text);
+  background-color: var(--ins-red-bg);
+  border-color: var(--ins-red-border);
+}
+
+/* Consulta del insumo */
+
+.insumos-page .ins-view-hero-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px;
+  background-color: var(--ins-soft-bg);
+  border: 1px solid var(--ins-border);
+  border-radius: 12px;
+}
+
+.insumos-page .ins-view-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 62px;
+  height: 62px;
+  overflow: hidden;
+  color: var(--ins-text);
+  background-color: var(--ins-panel);
+  border: 1px solid var(--ins-border);
+  border-radius: 12px;
+}
+
+.insumos-page .ins-view-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.insumos-page .ins-view-hero-details {
+  min-width: 0;
+}
+
+.insumos-page .ins-view-hero-details h3 {
+  margin: 0 0 6px;
+  color: var(--ins-text);
+  font-size: 17px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.insumos-page .ins-view-hero-details p {
+  margin: 0;
+  color: var(--ins-text-secondary);
+  font-size: 13px;
+}
+
+.insumos-page .ins-view-details-table {
+  overflow: hidden;
+  background-color: var(--ins-panel);
+  border: 1px solid var(--ins-border);
+  border-radius: 12px;
+}
+
+.insumos-page .ins-view-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--ins-line);
+  font-size: 13px;
+}
+
+.insumos-page .ins-view-row:last-child {
+  border-bottom: 0;
+}
+
+.insumos-page .ins-view-row .lbl {
+  color: var(--ins-text-secondary);
+  font-weight: 600;
+}
+
+.insumos-page .ins-view-row .val {
+  color: var(--ins-text);
+  font-weight: 600;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.insumos-page .ins-delete-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 14px;
+  color: var(--ins-red-text);
+  background-color: var(--ins-red-bg);
+  border-radius: 50%;
+}
