@@ -66,10 +66,10 @@ const navigationConfig = [
                 path: '/categorias',
                 icon: Tags,
             },
-            {
-                label: 'Subcategoría',
-                path: '/tipo-producto',
-                icon: Layers,
+           {
+                 label: 'Subcategoría',
+                 path: '/subcategorias',
+                 icon: Layers,
             },
             {
                 label: 'Insumos',
@@ -80,11 +80,6 @@ const navigationConfig = [
                 label: 'Productos',
                 path: '/productos',
                 icon: Package,
-            },
-            {
-                label: 'Producto Variante',
-                path: '/productos-variante',
-                icon: Layers,
             },
             {
                 label: 'Bajas Insumos',

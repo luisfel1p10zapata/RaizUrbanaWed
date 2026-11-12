@@ -1,6 +1,6 @@
 
-import React, { useState } from "react";
-import { registrarProveedorApi } from "../services/proveedorService";
+import React, { useEffect, useState } from "react";
+import { registrarProveedorApi, listarProveedoresApi, consultarProveedorApi, actualizarProveedorApi } from "../services/proveedorService";
 import ReactDOM from "react-dom";
 import "./Proveedores.css";
 
@@ -12,7 +12,6 @@ import {
   Plus,
   Eye,
   Pencil,
-  Trash2,
   SlidersHorizontal,
   ChevronsLeft,
   ChevronLeft,
@@ -26,407 +25,123 @@ import {
   MapPin,
 } from "lucide-react";
 
-// =============================================
-// REGISTROS DE EJEMPLO - 25 PROVEEDORES
-// =============================================
+const validarProveedor = ({ nombre, nit, direccion, telefono, email }, proveedores, idActual) => {
+  const errores = {};
+  const razon = nombre.trim();
+  if (!razon) errores.nombre = "La razón social es obligatoria.";
+  else if (razon.length < 2) errores.nombre = "Debe tener al menos 2 caracteres.";
+  else if (razon.length > 150) errores.nombre = "Máximo 150 caracteres.";
+  else if (!/^[\p{L}\p{N} .,&'()/-]+$/u.test(razon)) errores.nombre = "Contiene caracteres no permitidos.";
+  else if (!/[\p{L}]/u.test(razon)) errores.nombre = "Debe incluir letras.";
+  else if (proveedores.some(p => String(p.id) !== String(idActual ?? "") && p.nombre?.trim().toLocaleLowerCase("es") === razon.toLocaleLowerCase("es"))) errores.nombre = "Ya existe un proveedor con este nombre.";
 
-const initialProveedores = [
-  {
-    id: 1,
-    nombre: "Textiles SA",
-    fecha: "2026-01-10",
-    telefono: "+57 300 111 0001",
-    direccion: "Medellín, Antioquia",
-    email: "ventas@textilessa.com",
-    estado: "Activo",
-  },
-  {
-    id: 2,
-    nombre: "Moda Global",
-    fecha: "2026-01-12",
-    telefono: "+57 300 222 0002",
-    direccion: "Bogotá, Cundinamarca",
-    email: "contacto@modaglobal.com",
-    estado: "Activo",
-  },
-  {
-    id: 3,
-    nombre: "FashionPro",
-    fecha: "2026-01-15",
-    telefono: "+57 300 333 0003",
-    direccion: "Cali, Valle del Cauca",
-    email: "info@fashionpro.com",
-    estado: "Activo",
-  },
-  {
-    id: 4,
-    nombre: "Industrias Ropa",
-    fecha: "2026-01-18",
-    telefono: "+57 300 444 0004",
-    direccion: "Barranquilla, Atlántico",
-    email: "pedidos@industriasropa.com",
-    estado: "Activo",
-  },
-  {
-    id: 5,
-    nombre: "Confecciones del Norte",
-    fecha: "2026-02-01",
-    telefono: "+57 300 555 0005",
-    direccion: "Bello, Antioquia",
-    email: "ventas@confeccionesnorte.com",
-    estado: "Activo",
-  },
-  {
-    id: 6,
-    nombre: "Distribuidora Textil Andina",
-    fecha: "2026-02-05",
-    telefono: "+57 300 666 0006",
-    direccion: "Medellín, Antioquia",
-    email: "contacto@textilandina.com",
-    estado: "Activo",
-  },
-  {
-    id: 7,
-    nombre: "Telas Premium Colombia",
-    fecha: "2026-02-10",
-    telefono: "+57 300 777 0007",
-    direccion: "Itagüí, Antioquia",
-    email: "ventas@telaspremium.com",
-    estado: "Activo",
-  },
-  {
-    id: 8,
-    nombre: "Insumos Creativos SAS",
-    fecha: "2026-02-14",
-    telefono: "+57 300 888 0008",
-    direccion: "Envigado, Antioquia",
-    email: "info@insumoscreativos.com",
-    estado: "Inactivo",
-  },
-  {
-    id: 9,
-    nombre: "Algodones de Colombia",
-    fecha: "2026-02-20",
-    telefono: "+57 301 111 0009",
-    direccion: "Pereira, Risaralda",
-    email: "ventas@algodonescolombia.com",
-    estado: "Activo",
-  },
-  {
-    id: 10,
-    nombre: "Distribuciones Urbanas",
-    fecha: "2026-03-01",
-    telefono: "+57 301 222 0010",
-    direccion: "Medellín, Antioquia",
-    email: "contacto@distribucionesurbanas.com",
-    estado: "Activo",
-  },
-  {
-    id: 11,
-    nombre: "Botones y Accesorios SAS",
-    fecha: "2026-03-05",
-    telefono: "+57 301 333 0011",
-    direccion: "Bogotá, Cundinamarca",
-    email: "ventas@botonesyaccesorios.com",
-    estado: "Activo",
-  },
-  {
-    id: 12,
-    nombre: "Hilos del Caribe",
-    fecha: "2026-03-10",
-    telefono: "+57 301 444 0012",
-    direccion: "Cartagena, Bolívar",
-    email: "pedidos@hiloscaribe.com",
-    estado: "Inactivo",
-  },
-  {
-    id: 13,
-    nombre: "Textiles Modernos",
-    fecha: "2026-03-15",
-    telefono: "+57 301 555 0013",
-    direccion: "Bucaramanga, Santander",
-    email: "info@textilesmodernos.com",
-    estado: "Activo",
-  },
-  {
-    id: 14,
-    nombre: "Cuero y Diseño",
-    fecha: "2026-03-20",
-    telefono: "+57 301 666 0014",
-    direccion: "Medellín, Antioquia",
-    email: "ventas@cueroydiseno.com",
-    estado: "Activo",
-  },
-  {
-    id: 15,
-    nombre: "Estampados Express",
-    fecha: "2026-04-01",
-    telefono: "+57 301 777 0015",
-    direccion: "Cali, Valle del Cauca",
-    email: "contacto@estampadosexpress.com",
-    estado: "Activo",
-  },
-  {
-    id: 16,
-    nombre: "Cremalleras Colombia",
-    fecha: "2026-04-05",
-    telefono: "+57 301 888 0016",
-    direccion: "Bogotá, Cundinamarca",
-    email: "ventas@cremallerascolombia.com",
-    estado: "Activo",
-  },
-  {
-    id: 17,
-    nombre: "Fashion Supply SAS",
-    fecha: "2026-04-10",
-    telefono: "+57 302 111 0017",
-    direccion: "Medellín, Antioquia",
-    email: "info@fashionsupply.com",
-    estado: "Inactivo",
-  },
-  {
-    id: 18,
-    nombre: "Tejidos del Valle",
-    fecha: "2026-04-15",
-    telefono: "+57 302 222 0018",
-    direccion: "Palmira, Valle del Cauca",
-    email: "ventas@tejidosvalle.com",
-    estado: "Activo",
-  },
-  {
-    id: 19,
-    nombre: "Insumos Industriales Moda",
-    fecha: "2026-05-01",
-    telefono: "+57 302 333 0019",
-    direccion: "Manizales, Caldas",
-    email: "contacto@insumosmoda.com",
-    estado: "Activo",
-  },
-  {
-    id: 20,
-    nombre: "Confecciones Élite",
-    fecha: "2026-05-05",
-    telefono: "+57 302 444 0020",
-    direccion: "Medellín, Antioquia",
-    email: "ventas@confeccioneselite.com",
-    estado: "Activo",
-  },
-  {
-    id: 21,
-    nombre: "Distribuidora La Costura",
-    fecha: "2026-05-10",
-    telefono: "+57 302 555 0021",
-    direccion: "Armenia, Quindío",
-    email: "info@lacostura.com",
-    estado: "Inactivo",
-  },
-  {
-    id: 22,
-    nombre: "Telas y Tendencias",
-    fecha: "2026-05-15",
-    telefono: "+57 302 666 0022",
-    direccion: "Medellín, Antioquia",
-    email: "ventas@telastendencias.com",
-    estado: "Activo",
-  },
-  {
-    id: 23,
-    nombre: "Accesorios Premium",
-    fecha: "2026-06-01",
-    telefono: "+57 302 777 0023",
-    direccion: "Bogotá, Cundinamarca",
-    email: "contacto@accesoriospremium.com",
-    estado: "Activo",
-  },
-  {
-    id: 24,
-    nombre: "Textiles del Pacífico",
-    fecha: "2026-06-05",
-    telefono: "+57 302 888 0024",
-    direccion: "Buenaventura, Valle del Cauca",
-    email: "ventas@textilespacifico.com",
-    estado: "Inactivo",
-  },
-  {
-    id: 25,
-    nombre: "Moda e Insumos Colombia",
-    fecha: "2026-06-10",
-    telefono: "+57 303 111 0025",
-    direccion: "Medellín, Antioquia",
-    email: "info@modaeinsumos.com",
-    estado: "Activo",
-  },
-];
+  const identificacion = nit.trim();
+  if (identificacion && !/^\d{5,15}(?:-\d)?$/.test(identificacion)) errores.nit = "Usa entre 5 y 15 dígitos; puedes añadir - y el dígito de verificación.";
+  else if (identificacion && proveedores.some(p => String(p.id) !== String(idActual ?? "") && p.nit?.trim() === identificacion)) errores.nit = "Este NIT ya está registrado.";
 
-// =============================================
-// COMPONENTE PRINCIPAL
-// =============================================
+  const domicilio = direccion.trim();
+  if (domicilio && domicilio.length < 5) errores.direccion = "La dirección debe tener al menos 5 caracteres.";
+  else if (domicilio.length > 200) errores.direccion = "Máximo 200 caracteres.";
+
+  const contacto = telefono.trim();
+  if (contacto && !/^\+?[\d ()-]+$/.test(contacto)) errores.telefono = "Solo se permiten números, espacios, +, guiones y paréntesis.";
+  else if (contacto && (contacto.replace(/\D/g, "").length < 7 || contacto.replace(/\D/g, "").length > 15)) errores.telefono = "El teléfono debe contener entre 7 y 15 dígitos.";
+
+  const correo = email.trim();
+  if (correo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) errores.email = "Ingresa un correo electrónico válido.";
+  else if (correo.length > 254) errores.email = "Máximo 254 caracteres.";
+  return errores;
+};
 
 export default function Proveedores() {
-  const [proveedoresList, setProveedoresList] =
-    useState(initialProveedores);
+  const [proveedoresList,setProveedoresList]=useState([]);
+  const [modalMode,setModalMode]=useState(null);
+  const [selectedProveedor,setSelectedProveedor]=useState(null);
+  const [searchTerm,setSearchTerm]=useState("");
+  const [filtroEstado,setFiltroEstado]=useState("");
+  const [currentPage,setCurrentPage]=useState(1);
+  const itemsPerPage=8;
+  const [nombre,setNombre]=useState("");
+  const [telefono,setTelefono]=useState("");
+  const [email,setEmail]=useState("");
+  const [direccion,setDireccion]=useState("");
+  const [modalEstado,setModalEstado]=useState("Activo");
+  const [nit,setNit]=useState("");
+  const [guardando,setGuardando]=useState(false);
+  const [mensajeApi,setMensajeApi]=useState(null);
+  const [cargando,setCargando]=useState(true);
+  const [camposTocados, setCamposTocados] = useState({});
+  const [intentoGuardar, setIntentoGuardar] = useState(false);
+  const erroresCampos = validarProveedor({ nombre, nit, direccion, telefono, email }, proveedoresList, modalMode === "edit" ? selectedProveedor?.id : null);
+  const mostrarError = campo => (camposTocados[campo] || intentoGuardar) && erroresCampos[campo];
+  const tocarCampo = campo => setCamposTocados(prev => ({ ...prev, [campo]: true }));
 
-  const [modalMode, setModalMode] = useState(null);
-  const [selectedProveedor, setSelectedProveedor] =
-    useState(null);
-
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filtroEstado, setFiltroEstado] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-
-  const itemsPerPage = 8;
-
-  // Estados del formulario
-  const [nombre, setNombre] = useState("");
-  const [telefono, setTelefono] = useState("");
-  const [email, setEmail] = useState("");
-  const [direccion, setDireccion] = useState("");
-  const [modalEstado, setModalEstado] = useState("Activo");
-  const [documento, setDocumento] = useState("");
-  const [guardando, setGuardando] = useState(false);
-  const [mensajeApi, setMensajeApi] = useState(null);
-
-  // =============================================
-  // ABRIR MODALES
-  // =============================================
-
-  const handleOpenCreate = () => {
-    setSelectedProveedor(null);
-    setNombre("");
-    setTelefono("");
-    setEmail("");
-    setDireccion("");
-    setModalEstado("Activo");
-    setDocumento("");
-    setMensajeApi(null);
-    setModalMode("create");
+  const refrescar=async()=>{const datos=await listarProveedoresApi();setProveedoresList(Array.isArray(datos)?datos:[]);};
+  useEffect(()=>{let vivo=true;listarProveedoresApi().then(datos=>{if(vivo)setProveedoresList(Array.isArray(datos)?datos:[]);}).catch(e=>{if(vivo)setMensajeApi({tipo:"error",texto:e.message});}).finally(()=>{if(vivo)setCargando(false);});return()=>{vivo=false;};},[]);
+  useEffect(()=>{if(!mensajeApi)return;const timer=setTimeout(()=>setMensajeApi(null),3000);return()=>clearTimeout(timer);},[mensajeApi]);
+  const handleOpenCreate=()=>{setSelectedProveedor(null);setNombre("");setTelefono("");setEmail("");setDireccion("");setModalEstado("Activo");setNit("");setMensajeApi(null);setCamposTocados({});setIntentoGuardar(false);setModalMode("create");};
+  const handleOpenView=async(prov)=>{try{const detalle=await consultarProveedorApi(prov.id);setSelectedProveedor(detalle);setModalMode("view");}catch(e){setMensajeApi({tipo:"error",texto:e.message});}};
+  const handleOpenEdit=(prov)=>{setSelectedProveedor(prov);setNombre(prov.nombre||"");setTelefono(prov.telefono||"");setEmail(prov.email||"");setDireccion(prov.direccion||"");setModalEstado(prov.estado||"Activo");setNit(prov.nit||"");setMensajeApi(null);setCamposTocados({});setIntentoGuardar(false);setModalMode("edit");};
+  const handleCloseModal=()=>{if(guardando)return;setModalMode(null);setSelectedProveedor(null);};
+  const handleSaveProveedor=async(e)=>{e.preventDefault();if(guardando)return;
+    setIntentoGuardar(true);
+    if (Object.keys(erroresCampos).length) return;
+    setGuardando(true);setMensajeApi(null);
+    try{const datos={nombre:nombre.trim(),telefono:telefono.trim()||"N/A",direccion:direccion.trim()||"N/A",email:email.trim()||"N/A",estado:modalEstado,nit:nit.trim()||null};
+      if(modalMode==="edit")await actualizarProveedorApi(selectedProveedor.id,datos);else await registrarProveedorApi(datos);
+      await refrescar();setCurrentPage(1);setModalMode(null);setSelectedProveedor(null);setMensajeApi({tipo:"exito",texto:modalMode==="edit"?"Proveedor actualizado correctamente.":"Proveedor registrado correctamente."});
+    }catch(error){setMensajeApi({tipo:"error",texto:error.message});}finally{setGuardando(false);}
   };
-
-  const handleOpenView = (prov) => {
-    setSelectedProveedor(prov);
-    setModalMode("view");
-  };
-
-  const handleOpenEdit = (prov) => {
-    setSelectedProveedor(prov);
-    setNombre(prov.nombre.replace(/\n/g, " "));
-    setTelefono(prov.telefono.replace(/\n/g, " "));
-    setEmail(prov.email);
-    setDireccion(prov.direccion);
-    setModalEstado(prov.estado);
-    setDocumento(prov.documento || "");
-    setMensajeApi({ tipo: "error", texto: "Editar proveedores todavía no está disponible en FastAPI." });
-    setModalMode(null);
-  };
-
-  const handleOpenDelete = (prov) => {
-    setSelectedProveedor(prov);
-    setMensajeApi({ tipo: "error", texto: "Eliminar proveedores todavía no está disponible en FastAPI." });
-    setModalMode(null);
-  };
-
-  const handleCloseModal = () => {
-    setModalMode(null);
-    setSelectedProveedor(null);
-  };
-
-  // =============================================
-  // REGISTRAR Y EDITAR PROVEEDORES
-  // =============================================
-
-  const handleSaveProveedor = async (e) => {
-    e.preventDefault();
-    if (modalMode !== "create" || guardando) return;
-    if (nombre.trim().length < 2) {
-      setMensajeApi({ tipo: "error", texto: "El nombre debe tener al menos 2 caracteres." });
+  const [cambiandoEstadoId,setCambiandoEstadoId]=useState(null);
+  const handleCambiarEstado=async(prov)=>{
+    if(cambiandoEstadoId!==null)return;
+    const nuevoEstado=prov.estado==="Activo"?"Inactivo":"Activo";
+    if(!prov.nombre||!prov.telefono||!prov.direccion||!prov.email){
+      setMensajeApi({tipo:"error",texto:"Faltan datos del proveedor en la respuesta de FastAPI. Actualiza schemas.py y repository.py antes de cambiar su estado."});
       return;
     }
-    setGuardando(true);
-    setMensajeApi(null);
-    try {
-      const creado = await registrarProveedorApi({
-        nombre: nombre.trim(),
-        telefono: telefono.trim() || "N/A",
-        direccion: direccion.trim() || "N/A",
-        email: email.trim() || "N/A",
-        estado: modalEstado,
-        documento: documento.trim() || null,
+    setCambiandoEstadoId(prov.id);
+    try{
+      await actualizarProveedorApi(prov.id,{
+        nombre:prov.nombre, nit:prov.nit||null, telefono:prov.telefono,
+        direccion:prov.direccion, email:prov.email, estado:nuevoEstado
       });
-      // Los datos de ejemplo pueden compartir IDs con el backend.
-      setProveedoresList((prev) => [{ ...creado, origen: "api" }, ...prev]);
-      setCurrentPage(1);
-      setModalMode(null);
-      setSelectedProveedor(null);
-      setMensajeApi({ tipo: "exito", texto: "Proveedor registrado correctamente en FastAPI." });
-    } catch (error) {
-      setMensajeApi({ tipo: "error", texto: error.message || "No se pudo registrar el proveedor." });
-    } finally {
-      setGuardando(false);
-    }
+      await refrescar();
+      setMensajeApi({tipo:"exito",texto:`Proveedor ${nuevoEstado.toLowerCase()} correctamente.`});
+    }catch(error){setMensajeApi({tipo:"error",texto:error.message});}
+    finally{setCambiandoEstadoId(null);}
   };
+  // Búsqueda global sobre todas las columnas visibles, sin filtros adicionales.
+  const normalizarBusqueda = (valor) => String(valor ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
 
-  // El backend de este sprint no dispone de PUT, PATCH ni DELETE.
-  const handleDeleteProveedor = () => {
-    setModalMode(null);
-    setSelectedProveedor(null);
-    setMensajeApi({ tipo: "error", texto: "Eliminar proveedores todavía no está disponible en FastAPI." });
-  };
-
-  // =============================================
-  // FILTROS
-  // =============================================
-
-  const filteredProveedores = proveedoresList.filter((p) => {
-    const search = searchTerm.toLowerCase().trim();
-
-    const matchesSearch =
-      p.nombre.toLowerCase().includes(search) ||
-      p.email.toLowerCase().includes(search) ||
-      p.telefono.toLowerCase().includes(search) ||
-      p.direccion.toLowerCase().includes(search) ||
-      p.id.toString().includes(search);
-
-    const matchesEstado =
-      filtroEstado === "" ||
-      p.estado === filtroEstado;
-
-    return matchesSearch && matchesEstado;
-  });
-
-  // =============================================
-  // ESTADÍSTICAS
-  // =============================================
-
-  const totalCount = proveedoresList.length;
-
-  const activeCount = proveedoresList.filter(
-    (p) => p.estado === "Activo"
-  ).length;
-
-  const inactiveCount = proveedoresList.filter(
-    (p) => p.estado === "Inactivo"
-  ).length;
-
-  // =============================================
-  // PAGINACIÓN
-  // =============================================
-
-  const totalPages =
-    Math.ceil(filteredProveedores.length / itemsPerPage) || 1;
-
-  const safeCurrentPage = Math.min(
-    currentPage,
-    totalPages
-  );
-
-  const startIndex =
-    (safeCurrentPage - 1) * itemsPerPage;
-
-  const currentProveedores = filteredProveedores.slice(
-    startIndex,
-    startIndex + itemsPerPage
-  );
-
+  const filteredProveedores = [...proveedoresList]
+    .sort((a, b) => Number(a.id) - Number(b.id))
+    .filter((proveedor) => {
+      if (filtroEstado && proveedor.estado !== filtroEstado) return false;
+      const consulta = normalizarBusqueda(searchTerm.trim());
+      if (!consulta) return true;
+      return [
+        proveedor.id,
+        `#${proveedor.id}`,
+        proveedor.nombre,
+        proveedor.nit,
+        proveedor.telefono,
+        proveedor.direccion,
+        proveedor.email,
+        proveedor.estado,
+      ].some((valor) => normalizarBusqueda(valor).includes(consulta));
+    });
+  const totalCount=proveedoresList.length;
+  const activeCount=proveedoresList.filter(p=>p.estado==="Activo").length;
+  const inactiveCount=proveedoresList.filter(p=>p.estado==="Inactivo").length;
+  const totalPages=Math.max(1,Math.ceil(filteredProveedores.length/itemsPerPage));
+  const safeCurrentPage=Math.min(currentPage,totalPages);
+  const startIndex=(safeCurrentPage-1)*itemsPerPage;
+  const currentProveedores=filteredProveedores.slice(startIndex,startIndex+itemsPerPage);
   return (
     <div className="proveedores-page">
 
@@ -555,7 +270,7 @@ export default function Proveedores() {
 
             <input
               type="text"
-              placeholder="Buscar por nombre, email, teléfono o dirección..."
+              placeholder="Buscar por ID, proveedor, NIT, teléfono, dirección, email o estado..."
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value);
@@ -620,6 +335,7 @@ export default function Proveedores() {
               <tr>
                 <th>#</th>
                 <th>PROVEEDOR</th>
+                <th>NIT</th>
                 <th>TELÉFONO</th>
                 <th>DIRECCIÓN</th>
                 <th>EMAIL</th>
@@ -632,11 +348,13 @@ export default function Proveedores() {
 
             <tbody>
 
-              {currentProveedores.length > 0 ? (
+              {cargando ? (
+                <tr><td colSpan={8} className="proveedores-empty">Cargando proveedores...</td></tr>
+              ) : currentProveedores.length > 0 ? (
 
                 currentProveedores.map((prov) => (
 
-                  <tr key={`${prov.origen || "demo"}-${prov.id}`}>
+                  <tr key={prov.id}>
 
                     <td className="proveedores-id">
                       <span>#{prov.id}</span>
@@ -656,11 +374,15 @@ export default function Proveedores() {
                           </span>
 
                           <span className="proveedores-subtext">
-                            {prov.fecha}
+                            {`Proveedor #${prov.id}`}
                           </span>
 
                         </div>
                       </div>
+                    </td>
+
+                    <td className="proveedores-id">
+                      <span>{prov.nit || "Sin NIT"}</span>
                     </td>
 
                     <td>
@@ -697,16 +419,18 @@ export default function Proveedores() {
                     </td>
 
                     <td>
-                      <span
-                        className={`proveedores-status ${
-                          prov.estado === "Inactivo"
-                            ? "inactive"
-                            : ""
-                        }`}
+                      <button
+                        type="button"
+                        className={`proveedores-status ${prov.estado === "Inactivo" ? "inactive" : ""}`}
+                        onClick={() => handleCambiarEstado(prov)}
+                        disabled={cambiandoEstadoId !== null || !["Activo", "Inactivo"].includes(prov.estado)}
+                        title={prov.estado === "Activo" ? "Clic para inactivar" : "Clic para activar"}
+                         aria-label={`Cambiar estado de ${prov.nombre} a ${prov.estado === "Activo" ? "Inactivo" : "Activo"}`}
+                        style={{cursor:"pointer",font:"inherit"}}
                       >
                         <span className="proveedores-status-dot" />
-                        {prov.estado}
-                      </span>
+                        {cambiandoEstadoId === prov.id ? "Guardando..." : (prov.estado || "Sin estado")}
+                      </button>
                     </td>
 
                     <td>
@@ -730,14 +454,7 @@ export default function Proveedores() {
                           <Pencil size={16} />
                         </button>
 
-                        <button
-                          type="button"
-                          className="proveedores-action-button proveedores-action-delete"
-                          title="Eliminar"
-                          onClick={() => handleOpenDelete(prov)}
-                        >
-                          <Trash2 size={16} />
-                        </button>
+
 
                       </div>
                     </td>
@@ -749,7 +466,7 @@ export default function Proveedores() {
 
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={8}
                     className="proveedores-empty"
                   >
                     No se encontraron proveedores.
@@ -893,6 +610,7 @@ export default function Proveedores() {
                   type="button"
                   className="modal-close-btn"
                   onClick={handleCloseModal}
+                  aria-label="Cerrar ventana"
                 >
                   <X size={20} />
                 </button>
@@ -924,21 +642,29 @@ export default function Proveedores() {
                     type="text"
                     placeholder="Ej: Textiles SA"
                     value={nombre}
-                    onChange={(e) =>
-                      setNombre(e.target.value)
-                    }
-                    className="modal-input"
+                    onChange={(e) => { setNombre(e.target.value); tocarCampo("nombre"); }}
+                    className={`modal-input ${mostrarError("nombre") ? "proveedores-input-error" : ""}`}
                     required
                     minLength={2}
                     maxLength={150}
                   />
+                    {mostrarError("nombre") && <span className="proveedores-field-error" role="alert">{erroresCampos.nombre}</span>}
 
                 </div>
 
+
+
                 <div className="form-group">
-                  <label className="form-label">DOCUMENTO / NIT (OPCIONAL)</label>
-                  <input type="text" className="modal-input" placeholder="Ej: 900123456-1"
-                    value={documento} maxLength={30} onChange={(e) => setDocumento(e.target.value)} />
+                  <label className="form-label">NIT DE LA EMPRESA</label>
+                  <input
+                    type="text"
+                    placeholder="Ej: 900123456-7"
+                    value={nit}
+                    onChange={(e) => { setNit(e.target.value); tocarCampo("nit"); }}
+                    className={`modal-input ${mostrarError("nit") ? "proveedores-input-error" : ""}`}
+                    maxLength={30}
+                  />
+                    {mostrarError("nit") && <span className="proveedores-field-error" role="alert">{erroresCampos.nit}</span>}
                 </div>
 
                 <div className="form-group">
@@ -951,11 +677,10 @@ export default function Proveedores() {
                     type="text"
                     placeholder="Ej: Medellín, Antioquia"
                     value={direccion}
-                    onChange={(e) =>
-                      setDireccion(e.target.value)
-                    }
-                    className="modal-input"
+                    onChange={(e) => { setDireccion(e.target.value); tocarCampo("direccion"); }}
+                    className={`modal-input ${mostrarError("direccion") ? "proveedores-input-error" : ""}`}
                   />
+                    {mostrarError("direccion") && <span className="proveedores-field-error" role="alert">{erroresCampos.direccion}</span>}
 
                 </div>
 
@@ -975,11 +700,10 @@ export default function Proveedores() {
                       type="tel"
                       placeholder="+57 300 123 4567"
                       value={telefono}
-                      onChange={(e) =>
-                        setTelefono(e.target.value)
-                      }
-                      className="modal-input"
+                      onChange={(e) => { setTelefono(e.target.value); tocarCampo("telefono"); }}
+                      className={`modal-input ${mostrarError("telefono") ? "proveedores-input-error" : ""}`}
                     />
+                    {mostrarError("telefono") && <span className="proveedores-field-error" role="alert">{erroresCampos.telefono}</span>}
 
                   </div>
 
@@ -993,11 +717,10 @@ export default function Proveedores() {
                       type="email"
                       placeholder="ventas@empresa.com"
                       value={email}
-                      onChange={(e) =>
-                        setEmail(e.target.value)
-                      }
-                      className="modal-input"
+                      onChange={(e) => { setEmail(e.target.value); tocarCampo("email"); }}
+                      className={`modal-input ${mostrarError("email") ? "proveedores-input-error" : ""}`}
                     />
+                    {mostrarError("email") && <span className="proveedores-field-error" role="alert">{erroresCampos.email}</span>}
 
                   </div>
 
@@ -1093,7 +816,7 @@ export default function Proveedores() {
                   className="btn-modal-submit"
                   disabled={guardando}
                 >
-                  {guardando ? "Registrando..." : modalMode === "create"
+                  {guardando ? "Guardando..." : modalMode === "create"
                     ? "Registrar proveedor"
                     : "Guardar cambios"}
                 </button>
@@ -1118,7 +841,7 @@ export default function Proveedores() {
 
           <div className="modal-overlay">
 
-            <div className="modal-container modal-view-container">
+            <div className="modal-container modal-view-container proveedores-detail-modal">
 
               <div className="modal-header">
 
@@ -1136,6 +859,7 @@ export default function Proveedores() {
                   type="button"
                   className="modal-close-btn"
                   onClick={handleCloseModal}
+                  aria-label="Cerrar ventana"
                 >
                   <X size={20} />
                 </button>
@@ -1177,6 +901,15 @@ export default function Proveedores() {
                 </div>
 
                 <div className="view-info-list">
+                  <div className="view-info-row">
+                    <span className="view-label-icon">
+                      <Building2 size={16} />
+                      NIT
+                    </span>
+                    <span className="view-value">
+                      {selectedProveedor.nit || "Sin NIT"}
+                    </span>
+                  </div>
 
                   <div className="view-info-row">
 
@@ -1238,72 +971,6 @@ export default function Proveedores() {
                   }
                 >
                   Editar
-                </button>
-
-              </div>
-            </div>
-          </div>,
-
-          document.body
-        )
-      }
-
-      {/* =====================================
-          MODAL ELIMINAR
-      ===================================== */}
-
-      {modalMode === "delete" &&
-        selectedProveedor &&
-
-        ReactDOM.createPortal(
-
-          <div className="modal-overlay">
-
-            <div className="modal-container modal-delete-container">
-
-              <div className="modal-delete-body">
-
-                <div className="delete-icon-circle">
-                  <Trash2
-                    size={24}
-                    className="delete-icon"
-                  />
-                </div>
-
-                <span className="modal-tag">
-                  ELIMINAR PROVEEDOR
-                </span>
-
-                <h2 className="delete-title">
-                  Confirmar eliminación
-                </h2>
-
-                <p className="delete-text">
-                  ¿Estás seguro de eliminar a{" "}
-                  <strong>
-                    "{selectedProveedor.nombre}"
-                  </strong>
-                  ?
-                </p>
-
-              </div>
-
-              <div className="modal-footer delete-footer">
-
-                <button
-                  type="button"
-                  className="btn-modal-cancel"
-                  onClick={handleCloseModal}
-                >
-                  Cancelar
-                </button>
-
-                <button
-                  type="button"
-                  className="btn-delete-submit"
-                  onClick={handleDeleteProveedor}
-                >
-                  Eliminar
                 </button>
 
               </div>
