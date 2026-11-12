@@ -86,9 +86,11 @@ export default function useRoles() {
     };
   }, []);
 
-  // Normalización de roles para la tabla y lógica
+  // Normalización de roles para la tabla y lógica (orden ascendente por id)
   const normalizedRoles = useMemo(() => {
-    return roles.map((r) => {
+    return [...roles]
+      .sort((a, b) => Number(a.id_rol ?? a.id ?? 0) - Number(b.id_rol ?? b.id ?? 0))
+      .map((r) => {
       const id = r.id_rol ?? r.idRol ?? r.id;
       const nombre = r.nombre ?? r.nombre_rol ?? r.name ?? '';
       const descripcion = r.descripcion ?? r.description ?? '';
@@ -226,40 +228,58 @@ export default function useRoles() {
     setSelectedRole(null);
   }, []);
 
+  // Filtrar 'Acceso Total' del catálogo para no duplicar con el toggle general
+  const permisosValidos = useMemo(() => {
+    return (permisos || []).filter(
+      (p) => (p.permiso || p.nombre || '').trim().toLowerCase() !== 'acceso total'
+    );
+  }, [permisos]);
+
   // Operaciones CRUD
   const handleToggleStatus = useCallback(
     async (role) => {
       if (role.id === 1 || (role.nombre || '').toLowerCase() === 'administrador') {
-        showAlert('warning', 'El rol Administrador no se puede desactivar.');
+        showAlert('error', 'El rol Administrador no se puede desactivar.');
         return;
       }
-      setGuardando(true);
+      const anteriorEstado = role.estado;
+      const nuevoEstado = !anteriorEstado;
+
+      // Actualización visual inmediata (optimista)
+      setRoles((prev) =>
+        prev.map((r) => ((r.id_rol ?? r.id) === role.id ? { ...r, estado: nuevoEstado } : r))
+      );
+
       try {
-        const nuevoEstado = !role.estado;
         await cambiarEstadoRol(role.id, nuevoEstado);
         showAlert(
           'success',
-          `El rol "${role.nombre}" ahora está ${nuevoEstado ? 'Activo' : 'Inactivo'}.`
+          nuevoEstado ? 'Rol activado correctamente' : 'Rol desactivado correctamente'
         );
         await recargarDatos();
       } catch (err) {
-        showAlert('error', err.message || 'No se pudo cambiar el estado del rol.');
-      } finally {
-        setGuardando(false);
+        // Revertir cambio visual
+        setRoles((prev) =>
+          prev.map((r) => ((r.id_rol ?? r.id) === role.id ? { ...r, estado: anteriorEstado } : r))
+        );
+        const msg = err.response?.data?.detail || err.message || 'No se pudo cambiar el estado del rol.';
+        showAlert('error', msg);
       }
     },
     [showAlert, recargarDatos]
   );
+
   const handleCreateRole = useCallback(
     async (formData) => {
       setGuardando(true);
       try {
         await crearRol(formData);
-        showAlert('success', 'Rol registrado exitosamente.');
+        showAlert('success', 'Rol registrado correctamente');
         cerrarModales();
         await recargarDatos();
       } catch (err) {
-        showAlert('error', err.message || 'No se pudo registrar el rol.');
+        const msg = err.response?.data?.detail || err.message || 'No se pudo registrar el rol.';
+        showAlert('error', msg);
         throw err;
       } finally {
         setGuardando(false);
@@ -273,11 +293,12 @@ export default function useRoles() {
       setGuardando(true);
       try {
         await editarRol(id, formData);
-        showAlert('success', 'Rol actualizado exitosamente.');
+        showAlert('success', 'Rol actualizado correctamente');
         cerrarModales();
         await recargarDatos();
       } catch (err) {
-        showAlert('error', err.message || 'No se pudo actualizar el rol.');
+        const msg = err.response?.data?.detail || err.message || 'No se pudo actualizar el rol.';
+        showAlert('error', msg);
         throw err;
       } finally {
         setGuardando(false);
@@ -291,11 +312,12 @@ export default function useRoles() {
       setGuardando(true);
       try {
         await eliminarRol(id);
-        showAlert('success', 'Rol eliminado correctamente.');
+        showAlert('success', 'Rol eliminado correctamente');
         cerrarModales();
         await recargarDatos();
       } catch (err) {
-        showAlert('error', err.message || 'No se pudo eliminar el rol.');
+        const msg = err.response?.data?.detail || err.message || 'No se pudo eliminar el rol.';
+        showAlert('error', msg);
         throw err;
       } finally {
         setGuardando(false);
@@ -308,7 +330,7 @@ export default function useRoles() {
     roles: paginatedRoles,
     allRoles: normalizedRoles,
     filteredRoles,
-    permisos,
+    permisos: permisosValidos,
     loading,
     guardando,
     error,

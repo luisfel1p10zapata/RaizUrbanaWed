@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { X, AlertTriangle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { X, Check } from 'lucide-react';
 import Button from '../../../components/ui/Button';
 import '../styles/devoluciones/ModalCambiarEstadoDevoluciones.css';
 
@@ -9,22 +9,43 @@ export default function ModalCambiarEstadoDevoluciones({
   onSubmit,
   guardando,
   selectedDevolucion,
+  motivos = [],
 }) {
-  const [observacion, setObservacion] = useState('');
+  const [selectedMotivoId, setSelectedMotivoId] = useState('');
+
+  useEffect(() => {
+    if (isOpen && selectedDevolucion) {
+      setSelectedMotivoId(
+        selectedDevolucion.id_motivo !== undefined && selectedDevolucion.id_motivo !== null
+          ? String(selectedDevolucion.id_motivo)
+          : ''
+      );
+    }
+  }, [isOpen, selectedDevolucion]);
 
   if (!isOpen || !selectedDevolucion) return null;
 
+  const currentMotivoId =
+    selectedDevolucion.id_motivo !== undefined && selectedDevolucion.id_motivo !== null
+      ? String(selectedDevolucion.id_motivo)
+      : '';
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!selectedMotivoId || selectedMotivoId === currentMotivoId) {
+      return;
+    }
+    const targetMotivo = motivos.find((m) => String(m.id_motivo) === String(selectedMotivoId));
+    const nombreMotivo = targetMotivo?.nombre || '';
     try {
       await onSubmit(
         selectedDevolucion.id || selectedDevolucion.id_devoluciones,
-        observacion
+        Number(selectedMotivoId),
+        nombreMotivo
       );
-      setObservacion('');
       onClose();
     } catch {
-      // Manejado en hook
+      // Manejado en el hook useDevoluciones
     }
   };
 
@@ -33,8 +54,10 @@ export default function ModalCambiarEstadoDevoluciones({
       <div className="ru-modal dev-status-modal" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="ru-modal-header">
-          <span className="ru-modal-eyebrow">CAMBIO DE ESTADO</span>
-          <h2 className="ru-modal-title">Anular Devolución</h2>
+          <span className="ru-modal-eyebrow">
+            DEVOLUCIÓN #{selectedDevolucion.id || selectedDevolucion.id_devoluciones}
+          </span>
+          <h2 className="ru-modal-title">Cambiar Motivo</h2>
           <button
             type="button"
             className="ru-modal-close"
@@ -48,48 +71,76 @@ export default function ModalCambiarEstadoDevoluciones({
         {/* Formulario */}
         <form onSubmit={handleSubmit}>
           <div className="ru-modal-body">
-            <div className="dev-status-warning-box">
-              <div className="dev-status-icon-circle">
-                <AlertTriangle size={26} />
-              </div>
-              <h3 className="dev-status-question">
-                ¿Deseas anular la devolución #{selectedDevolucion.id}?
-              </h3>
-              <p className="dev-status-help-text">
-                Esta acción registrará la anulación en el historial y restaurará la cantidad disponible en la venta de <strong>{selectedDevolucion.producto}</strong>.
-              </p>
-            </div>
+            <p className="ru-v-hint" style={{ marginBottom: '14px', fontSize: '13.5px', color: 'var(--text-muted, #6F6B7C)' }}>
+              Selecciona el nuevo motivo para la devolución de{' '}
+              <strong>{selectedDevolucion.producto}</strong>:
+            </p>
 
-            <div className="ru-form-field">
-              <label className="ru-form-label" htmlFor="observacion_anulacion">
-                MOTIVO / OBSERVACIÓN DE ANULACIÓN (OPCIONAL)
-              </label>
-              <div className="ru-form-input-wrap">
-                <textarea
-                  id="observacion_anulacion"
-                  name="observacion_anulacion"
-                  rows={3}
-                  maxLength={255}
-                  className="ru-form-input dev-status-textarea"
-                  placeholder="Explica brevemente la razón de la anulación..."
-                  value={observacion}
-                  onChange={(e) => setObservacion(e.target.value)}
-                />
-              </div>
+            <div className="ru-v-status-list">
+              {motivos.map((m) => {
+                const isCurrent = String(m.id_motivo) === currentMotivoId;
+                const isSelected = String(m.id_motivo) === String(selectedMotivoId);
+
+                return (
+                  <div
+                    key={m.id_motivo}
+                    className={`ru-v-status-row ${isSelected ? 'selected' : ''}`}
+                    style={
+                      isCurrent
+                        ? { opacity: 0.6, cursor: 'not-allowed', backgroundColor: 'var(--card-bg, rgba(0,0,0,0.02))' }
+                        : { cursor: 'pointer' }
+                    }
+                    onClick={() => {
+                      if (!isCurrent) {
+                        setSelectedMotivoId(String(m.id_motivo));
+                      }
+                    }}
+                  >
+                    <span className="ru-v-status-main">
+                      <span
+                        className="ru-v-status-dot"
+                        style={{
+                          backgroundColor:
+                            m.id_motivo === 1
+                              ? '#4A90F0'
+                              : m.id_motivo === 2
+                              ? '#F5B800'
+                              : m.id_motivo === 3
+                              ? '#22C55E'
+                              : m.id_motivo === 4
+                              ? '#9B51E0'
+                              : '#6F6B7C',
+                        }}
+                      />
+                      <span className="ru-v-status-name">{m.nombre}</span>
+                      {isCurrent && (
+                        <span className="ru-v-status-desc" style={{ color: 'var(--primary, #22223B)', fontWeight: 500 }}>
+                          (Motivo actual)
+                        </span>
+                      )}
+                    </span>
+                    {isSelected && (
+                      <span className="ru-v-status-check">
+                        <Check size={12} />
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
           {/* Footer */}
           <div className="ru-modal-footer">
             <Button variant="outline" onClick={onClose} disabled={guardando}>
-              Volver
+              Cancelar
             </Button>
             <Button
               type="submit"
-              variant="destructive"
-              disabled={guardando}
+              variant="primary"
+              disabled={guardando || !selectedMotivoId || selectedMotivoId === currentMotivoId}
             >
-              {guardando ? 'Anulando...' : 'Confirmar anulación'}
+              {guardando ? 'Guardando...' : 'Aplicar'}
             </Button>
           </div>
         </form>
@@ -97,3 +148,4 @@ export default function ModalCambiarEstadoDevoluciones({
     </div>
   );
 }
+

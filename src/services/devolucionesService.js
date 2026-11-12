@@ -77,6 +77,14 @@ export const cambiarEstadoDevolucion = async (id, observacionAnulacion = null) =
   return data;
 };
 
+export const cambiarMotivoDevolucion = async (id, idMotivo) => {
+  const payload = {
+    id_motivo: Number(idMotivo),
+  };
+  const { data } = await apiClient.patch(`/devoluciones/${id}/motivo`, payload);
+  return data;
+};
+
 export const crearMotivo = async (nombre) => {
   const payload = {
     nombre: nombre.trim(),
@@ -105,6 +113,7 @@ const devolucionesService = {
   editarDevolucion,
   actualizarDevolucion,
   cambiarEstadoDevolucion,
+  cambiarMotivoDevolucion,
   anularDevolucion,
   crearMotivo,
   registrarMotivo,

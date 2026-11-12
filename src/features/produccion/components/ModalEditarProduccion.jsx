@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { X } from 'lucide-react';
 import Button from '../../../components/ui/Button';
 import useProduccionForm from '../hooks/useProduccionForm';
+import { getFechaLocalHoy } from '../../../utils/dateUtils';
 import '../Styles/ModalEditarProduccion.css';
 
 export default function ModalEditarProduccion({
@@ -197,6 +198,7 @@ export default function ModalEditarProduccion({
                     id="edit-fecha_estimada"
                     name="fecha_estimada"
                     type="date"
+                    min={getFechaLocalHoy()}
                     className={`ru-form-input ${
                       touched.fecha_estimada && errors.fecha_estimada ? 'is-invalid' : ''
                     }`}
@@ -234,7 +236,7 @@ export default function ModalEditarProduccion({
                 </select>
               </div>
               <p style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
-                Solo se pueden editar órdenes en estado Pendiente. Para avanzar la orden, usa el cambio de estado en la tabla.
+                El estado no se cambia desde este formulario: se cambia solo desde el modal de cambio de estado en la tabla.
               </p>
             </div>
 

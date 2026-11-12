@@ -9,6 +9,7 @@ from app.modules.devoluciones.presentation.schemas import (
     RegistrarDevolucionRequest,
     ActualizarDevolucionRequest,
     AnularDevolucionRequest,
+    CambiarMotivoDevolucionRequest,
     RegistrarMotivoRequest,
     ActualizarMotivoRequest,
 )
@@ -42,43 +43,20 @@ def manejar_error(error: Exception):
             ) from error
 
         if codigo == "P0001":
-            mensaje_lower = mensaje.lower()
-
-            if "no existe" in mensaje_lower:
-                codigo_http = status.HTTP_404_NOT_FOUND
-
-            elif "anulad" in mensaje_lower:
-                codigo_http = status.HTTP_409_CONFLICT
-
-            elif "ya existe" in mensaje_lower:
-                codigo_http = status.HTTP_409_CONFLICT
-
-            elif "insuficiente" in mensaje_lower:
-                codigo_http = status.HTTP_409_CONFLICT
-
-            else:
-                codigo_http = status.HTTP_400_BAD_REQUEST
-
-            raise HTTPException(
-                status_code=codigo_http,
-                detail=mensaje,
-            ) from error
-
-        if codigo == "23505":
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="El registro ya existe.",
-            ) from error
-
-        if codigo in ("23503", "23514"):
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail=mensaje,
-            ) from error
-
-        if codigo == "22023":
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
+                detail=mensaje,
+            ) from error
+
+        if codigo in ("22023", "22007", "22P02"):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=mensaje,
+            ) from error
+
+        if codigo in ("23503", "23514", "23505", "55000"):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
                 detail=mensaje,
             ) from error
 
@@ -347,3 +325,69 @@ def anular_devolucion(
 
     except Exception as error:
         manejar_error(error)
+
+
+# --------------------------------------------------
+# CAMBIAR MOTIVO DE DEVOLUCIÓN
+# PATCH /api/devoluciones/{id_devoluciones}/motivo
+# --------------------------------------------------
+
+@router.patch("/{id_devoluciones}/motivo")
+def cambiar_motivo_devolucion(
+    id_devoluciones: int,
+    datos: CambiarMotivoDevolucionRequest,
+):
+    try:
+        resultado = DevolucionService().cambiar_motivo(
+            id_devoluciones=id_devoluciones,
+            id_motivo=datos.id_motivo,
+        )
+
+        if resultado is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No se encontró la devolución.",
+            )
+
+        return resultado
+
+    except HTTPException:
+        raise
+
+    except Exception as error:
+        manejar_error(error)
+
+
+# --------------------------------------------------
+# ELIMINAR/ANULAR DEVOLUCIÓN (DELETE)
+# DELETE /api/devoluciones/{id_devoluciones}
+# --------------------------------------------------
+
+@router.delete("/{id_devoluciones}")
+def eliminar_devolucion(
+    id_devoluciones: int,
+    observacion_anulacion: str | None = None,
+):
+    try:
+        resultado = DevolucionService().anular(
+            id_devoluciones=id_devoluciones,
+            observacion_anulacion=observacion_anulacion,
+        )
+
+        if resultado is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No se encontró la devolución.",
+            )
+
+        return {
+            "mensaje": "Devolución anulada correctamente.",
+            "devolucion": resultado,
+        }
+
+    except HTTPException:
+        raise
+
+    except Exception as error:
+        manejar_error(error)
+

@@ -12,10 +12,46 @@ class RolRepository:
     # --------------------------------------------------
 
     @staticmethod
-    def _obtener_roles(cursor):
+    def _normalizar_rol(fila_dict):
+        id_rol = fila_dict.get("id_rol") or fila_dict.get("id") or 0
+        nombre = fila_dict.get("nombre") or ""
+        descripcion = (
+            fila_dict.get("descripcion")
+            or fila_dict.get("descripción")
+            or fila_dict.get("Descripcion")
+            or ""
+        )
+        estado = bool(fila_dict.get("estado", True))
+        permisos = fila_dict.get("permisos") or []
+        privilegios = fila_dict.get("privilegios") or []
+        total_usuarios = int(fila_dict.get("total_usuarios") or 0)
+        puede_eliminar = (
+            bool(fila_dict["puede_eliminar"])
+            if "puede_eliminar" in fila_dict and fila_dict["puede_eliminar"] is not None
+            else (id_rol != 1 and total_usuarios == 0)
+        )
+
+        res = {
+            "id_rol": id_rol,
+            "nombre": nombre,
+            "descripcion": descripcion,
+            "estado": estado,
+            "permisos": permisos,
+            "privilegios": privilegios,
+            "total_usuarios": total_usuarios,
+            "puede_eliminar": puede_eliminar,
+        }
+        if "permisos_ids" in fila_dict and fila_dict["permisos_ids"] is not None:
+            res["permisos_ids"] = [int(p) for p in fila_dict["permisos_ids"]]
+        if "privilegios_ids" in fila_dict and fila_dict["privilegios_ids"] is not None:
+            res["privilegios_ids"] = [int(p) for p in fila_dict["privilegios_ids"]]
+        return res
+
+    @classmethod
+    def _obtener_roles(cls, cursor):
         columnas = [columna.name for columna in cursor.description]
         return [
-            dict(zip(columnas, fila))
+            cls._normalizar_rol(dict(zip(columnas, fila)))
             for fila in cursor.fetchall()
         ]
 
@@ -88,13 +124,25 @@ class RolRepository:
                         (id_rol, p_ids, pr_ids),
                     )
 
-                    return {
+                    # Confirmar y leer de vuelta el rol con sp_obtenerrolporid
+                    cursor.execute(
+                        "SELECT * FROM sp_obtenerrolporid(%s)",
+                        (id_rol,),
+                    )
+                    roles = self._obtener_roles(cursor)
+                    rol_creado = roles[0] if roles else None
+
+                    conn.commit()
+
+                    return rol_creado or {
                         "id_rol": id_rol,
                         "nombre": nombre,
                         "descripcion": descripcion,
                         "estado": estado,
                         "permisos_ids": p_ids,
                         "privilegios_ids": pr_ids,
+                        "total_usuarios": 0,
+                        "puede_eliminar": True,
                     }
 
         except psycopg.Error as error:
@@ -109,7 +157,9 @@ class RolRepository:
         with get_connection() as conn:
             with conn.cursor() as cursor:
                 cursor.execute("SELECT * FROM sp_listarroles()")
-                return self._obtener_roles(cursor)
+                roles = self._obtener_roles(cursor)
+                roles.sort(key=lambda r: r.get("id_rol", 0))
+                return roles
 
     # --------------------------------------------------
     # BUSCAR ROLES
@@ -122,7 +172,9 @@ class RolRepository:
                     "SELECT * FROM sp_buscarrol(%s)",
                     (filtro.strip(),),
                 )
-                return self._obtener_roles(cursor)
+                roles = self._obtener_roles(cursor)
+                roles.sort(key=lambda r: r.get("id_rol", 0))
+                return roles
 
     # --------------------------------------------------
     # CONSULTAR ROL POR ID
@@ -174,7 +226,9 @@ class RolRepository:
                     )
 
                     roles = self._obtener_roles(cursor)
-                    return roles[0] if roles else None
+                    rol_actualizado = roles[0] if roles else None
+                    conn.commit()
+                    return rol_actualizado
 
         except psycopg.Error as error:
             self._validar_nombre_duplicado(error)
@@ -200,6 +254,7 @@ class RolRepository:
                     "CALL sp_eliminarrol(%s)",
                     (id_rol,),
                 )
+                conn.commit()
 
                 return True
 
@@ -221,7 +276,9 @@ class RolRepository:
                 )
 
                 roles = self._obtener_roles(cursor)
-                return roles[0] if roles else None
+                rol_actualizado = roles[0] if roles else None
+                conn.commit()
+                return rol_actualizado
 
     # --------------------------------------------------
     # ASIGNAR PERMISOS
@@ -248,6 +305,7 @@ class RolRepository:
                     "CALL sp_asignarpermisos(%s, %s)",
                     (id_rol, permisos_ids),
                 )
+                conn.commit()
 
                 return {
                     "id_rol": id_rol,
@@ -279,6 +337,7 @@ class RolRepository:
                     "CALL sp_asignarprivilegiosrol(%s, %s)",
                     (id_rol, privilegios_ids),
                 )
+                conn.commit()
 
                 return {
                     "id_rol": id_rol,
@@ -295,4 +354,10 @@ class RolRepository:
                 cursor.execute(
                     "SELECT id_permiso, permiso, privilegios FROM sp_listarpermisosprivilegios();"
                 )
-                return self._obtener_roles(cursor)
+                columnas = [columna.name for columna in cursor.description]
+                filas = [dict(zip(columnas, fila)) for fila in cursor.fetchall()]
+                # Ocultar 'Acceso Total' del catálogo para no duplicar con el toggle general
+                return [
+                    f for f in filas
+                    if (f.get("permiso") or "").strip().lower() != "acceso total"
+                ]

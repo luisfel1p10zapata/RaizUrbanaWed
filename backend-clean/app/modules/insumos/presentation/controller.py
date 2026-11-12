@@ -1,24 +1,30 @@
 """Rutas HTTP del módulo de Insumos."""
 
-from fastapi import APIRouter, HTTPException, status # type: ignore
+import logging
 
-from app.modules.insumos.application.service import (
-    InsumoService,
-)
+from fastapi import APIRouter, HTTPException, Path, status # type: ignore
 
+from app.modules.insumos.application.service import InsumoService
 from app.modules.insumos.domain.exceptions import (
+    InsumoBaseDatosError,
     InsumoDuplicadoError,
     InsumoInvalidoError,
     InsumoNoEncontradoError,
+    InsumoRelacionadoError,
 )
-
 from app.modules.insumos.domain.schemas import (
     InsumoCreate,
-    InsumoUpdate,
-    InsumoResponse,
     InsumoEstadoUpdate,
+    InsumoResponse,
+    InsumoUpdate,
+    MaterialCreate,
+    MaterialResponse,
+    TamanoCreate,
+    TamanoResponse,
 )
 
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(
     prefix="/insumos",
@@ -27,7 +33,7 @@ router = APIRouter(
 
 
 def manejar_error(error: Exception) -> None:
-    """Convierte los errores conocidos en respuestas HTTP."""
+    """Convierte los errores del módulo en respuestas HTTP."""
 
     if isinstance(error, InsumoNoEncontradoError):
         raise HTTPException(
@@ -35,22 +41,115 @@ def manejar_error(error: Exception) -> None:
             detail=str(error),
         ) from error
 
-    if isinstance(error, InsumoDuplicadoError):
+    if isinstance(
+        error,
+        (InsumoDuplicadoError, InsumoRelacionadoError),
+    ):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=str(error),
         ) from error
 
-    if isinstance(error, (InsumoInvalidoError, ValueError)):
+    if isinstance(error, InsumoInvalidoError):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(error),
         ) from error
 
+    if isinstance(error, InsumoBaseDatosError):
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(error),
+        ) from error
+
+    logger.exception(
+        "Error inesperado en el módulo de Insumos."
+    )
+
     raise HTTPException(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        detail="Error interno al procesar el insumo.",
+        detail="Error interno al procesar la solicitud.",
     ) from error
+
+
+# ------------------------------------------------------------
+# Materiales
+# Estas rutas van antes de /{insumo_id}.
+# ------------------------------------------------------------
+
+@router.get(
+    "/materiales",
+    response_model=list[MaterialResponse],
+)
+def listar_materiales():
+    """Lista los materiales activos."""
+
+    try:
+        return InsumoService().listar_materiales()
+    except Exception as error:
+        manejar_error(error)
+
+
+@router.post(
+    "/materiales",
+    response_model=MaterialResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def registrar_material(datos: MaterialCreate):
+    """Crea un material desde el formulario de Insumos."""
+
+    try:
+        return InsumoService().registrar_material(datos)
+    except Exception as error:
+        manejar_error(error)
+
+
+# ------------------------------------------------------------
+# Tamaños
+# ------------------------------------------------------------
+
+@router.get(
+    "/tamanos",
+    response_model=list[TamanoResponse],
+)
+def listar_tamanos():
+    """Lista los tamaños activos."""
+
+    try:
+        return InsumoService().listar_tamanos()
+    except Exception as error:
+        manejar_error(error)
+
+
+@router.post(
+    "/tamanos",
+    response_model=TamanoResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def registrar_tamano(datos: TamanoCreate):
+    """Crea un tamaño desde el formulario de Insumos."""
+
+    try:
+        return InsumoService().registrar_tamano(datos)
+    except Exception as error:
+        manejar_error(error)
+
+
+# ------------------------------------------------------------
+# Insumos
+# ------------------------------------------------------------
+
+@router.get(
+    "",
+    response_model=list[InsumoResponse],
+)
+def listar_insumos():
+    """Lista los insumos registrados."""
+
+    try:
+        return InsumoService().listar_insumos()
+    except Exception as error:
+        manejar_error(error)
 
 
 @router.post(
@@ -59,7 +158,7 @@ def manejar_error(error: Exception) -> None:
     status_code=status.HTTP_201_CREATED,
 )
 def registrar_insumo(datos: InsumoCreate):
-    """Registra un insumo con uno o más detalles."""
+    """Registra un insumo con su cantidad inicial."""
 
     try:
         return InsumoService().registrar_insumo(datos)
@@ -68,23 +167,12 @@ def registrar_insumo(datos: InsumoCreate):
 
 
 @router.get(
-    "",
-    response_model=list[InsumoResponse],
-)
-def listar_insumos():
-    """Lista todos los insumos registrados en memoria."""
-
-    try:
-        return InsumoService().listar_insumos()
-    except Exception as error:
-        manejar_error(error)
-
-
-@router.get(
     "/{insumo_id}",
     response_model=InsumoResponse,
 )
-def obtener_insumo(insumo_id: int):
+def obtener_insumo(
+    insumo_id: int = Path(..., gt=0),
+):
     """Consulta un insumo por su ID."""
 
     try:
@@ -100,10 +188,10 @@ def obtener_insumo(insumo_id: int):
     response_model=InsumoResponse,
 )
 def actualizar_insumo(
-    insumo_id: int,
     datos: InsumoUpdate,
+    insumo_id: int = Path(..., gt=0),
 ):
-    """Reemplaza los datos del insumo y sus detalles."""
+    """Actualiza los datos editables de un insumo."""
 
     try:
         return InsumoService().actualizar_insumo(
@@ -119,8 +207,8 @@ def actualizar_insumo(
     response_model=InsumoResponse,
 )
 def cambiar_estado(
-    insumo_id: int,
     datos: InsumoEstadoUpdate,
+    insumo_id: int = Path(..., gt=0),
 ):
     """Cambia el estado de un insumo."""
 
@@ -137,8 +225,10 @@ def cambiar_estado(
     "/{insumo_id}",
     status_code=status.HTTP_204_NO_CONTENT,
 )
-def eliminar_insumo(insumo_id: int):
-    """Elimina un insumo y sus detalles de la memoria."""
+def eliminar_insumo(
+    insumo_id: int = Path(..., gt=0),
+):
+    """Elimina un insumo cuando la base de datos lo permite."""
 
     try:
         InsumoService().eliminar_insumo(insumo_id)

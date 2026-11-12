@@ -11,11 +11,36 @@ class DevolucionRepository:
     # --------------------------------------------------
 
     @staticmethod
-    def _obtener_registros(cursor):
+    def _normalizar(item: dict) -> dict:
+        if not item:
+            return item
+
+        obs = str(item.get("observaciones") or "").strip()
+        est = str(item.get("estado") or "").strip()
+        anulada = est.lower() == "anulada" or obs.upper().startswith("[ANULADA]")
+
+        item["anulada"] = anulada
+        if "estado" not in item or not item["estado"]:
+            item["estado"] = "Anulada" if anulada else "Registrada"
+
+        if "reintegra_stock" in item and item["reintegra_stock"] is not None:
+            item["reintegra_stock"] = bool(item["reintegra_stock"])
+        else:
+            item["reintegra_stock"] = False
+
+        if item.get("fecha_devolucion"):
+            item["fecha_devolucion"] = str(item["fecha_devolucion"])[:10]
+        if item.get("fecha_venta"):
+            item["fecha_venta"] = str(item["fecha_venta"])[:10]
+
+        return item
+
+    @classmethod
+    def _obtener_registros(cls, cursor):
         columnas = [columna.name for columna in cursor.description]
 
         return [
-            dict(zip(columnas, fila))
+            cls._normalizar(dict(zip(columnas, fila)))
             for fila in cursor.fetchall()
         ]
 
@@ -71,6 +96,7 @@ class DevolucionRepository:
                 )
 
                 registros = self._obtener_registros(cursor)
+                conn.commit()
 
                 return registros[0] if registros else None
 
@@ -160,6 +186,7 @@ class DevolucionRepository:
                 )
 
                 registros = self._obtener_registros(cursor)
+                conn.commit()
 
                 return registros[0] if registros else None
 
@@ -191,8 +218,61 @@ class DevolucionRepository:
                 )
 
                 registros = self._obtener_registros(cursor)
+                conn.commit()
 
                 return registros[0] if registros else None
+
+    # --------------------------------------------------
+    # CAMBIAR MOTIVO
+    # --------------------------------------------------
+
+    def cambiar_motivo(
+        self,
+        id_devoluciones: int,
+        id_motivo: int,
+    ):
+        with get_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "SELECT * FROM sp_obtenerdevolucionporid(%s)",
+                    (id_devoluciones,),
+                )
+                registros = self._obtener_registros(cursor)
+                if not registros:
+                    return None
+
+                dev = registros[0]
+                if dev.get("anulada"):
+                    raise ValueError("No se puede cambiar el motivo de una devolución anulada.")
+
+                cursor.execute(
+                    """
+                    CALL sp_actualizarddevolucion(
+                        %s,
+                        %s,
+                        %s,
+                        %s,
+                        %s,
+                        NULL
+                    )
+                    """,
+                    (
+                        id_devoluciones,
+                        dev.get("cantidad_devuelta"),
+                        dev.get("observaciones"),
+                        dev.get("fecha_devolucion"),
+                        id_motivo,
+                    ),
+                )
+
+                cursor.execute(
+                    "SELECT * FROM sp_obtenerdevolucionporid(%s)",
+                    (id_devoluciones,),
+                )
+                actualizados = self._obtener_registros(cursor)
+                conn.commit()
+
+                return actualizados[0] if actualizados else None
 
     # --------------------------------------------------
     # FILTRAR DEVOLUCIONES
@@ -322,6 +402,7 @@ class DevolucionRepository:
                 )
 
                 registros = self._obtener_registros(cursor)
+                conn.commit()
 
                 return registros[0] if registros else None
 
@@ -363,5 +444,6 @@ class DevolucionRepository:
                 )
 
                 registros = self._obtener_registros(cursor)
+                conn.commit()
 
                 return registros[0] if registros else None

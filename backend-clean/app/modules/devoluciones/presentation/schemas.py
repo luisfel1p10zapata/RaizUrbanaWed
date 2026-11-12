@@ -34,6 +34,10 @@ class AnularDevolucionRequest(BaseModel):
     )
 
 
+class CambiarMotivoDevolucionRequest(BaseModel):
+    id_motivo: int = Field(gt=0)
+
+
 class RegistrarMotivoRequest(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
 

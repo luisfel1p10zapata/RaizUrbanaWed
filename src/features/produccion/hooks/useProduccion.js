@@ -10,6 +10,7 @@ import {
   cambiarEstadoProduccion,
   eliminarProduccion,
 } from '../services/produccionService';
+import { puedeEditar } from '../validations/produccionValidations';
 
 export const ESTADOS_ORDEN = [
   { id: 1, id_estado_orden: 1, nombre: 'Pendiente' },
@@ -142,7 +143,7 @@ export default function useProduccion() {
 
         const idEstado = Number(item.id_estado_orden ?? 1);
         const nombreEstado = item.estado || item.nombre_estado || 'Pendiente';
-        const puedeModificar = idEstado === 1 || nombreEstado.toLowerCase() === 'pendiente';
+        const puedeModificar = puedeEditar(nombreEstado);
 
         return {
           ...item,
@@ -286,10 +287,6 @@ export default function useProduccion() {
     async (id, formData) => {
       setGuardando(true);
       try {
-        const primerDet = Array.isArray(formData.detalles) && formData.detalles[0] ? formData.detalles[0] : null;
-        const idProductoVari = Number(primerDet?.id_producto_vari ?? formData.id_producto_vari);
-        const cantidad = Number(primerDet?.cantidad ?? formData.cantidad ?? 1);
-
         const payload = {
           id_usuario: Number(formData.id_usuario),
           fecha_estimada: formData.fecha_estimada,
@@ -301,17 +298,18 @@ export default function useProduccion() {
               }))
             : [
                 {
-                  id_producto_vari: idProductoVari,
-                  cantidad: cantidad,
+                  id_producto_vari: Number(formData.id_producto_vari),
+                  cantidad: Number(formData.cantidad || 1),
                 },
               ],
         };
         await editarProduccion(id, payload);
-        showAlert('success', 'Orden de producción actualizada exitosamente.');
+        showAlert('success', 'Orden de producción actualizada correctamente.');
         cerrarModales();
         await recargarDatos();
       } catch (err) {
-        showAlert('error', err.message || 'No se pudo actualizar la orden.');
+        const msg = err.response?.data?.detail || err.message || 'No se pudo actualizar la orden.';
+        showAlert('error', msg);
         throw err;
       } finally {
         setGuardando(false);
@@ -321,21 +319,59 @@ export default function useProduccion() {
   );
 
   const handleChangeStatus = useCallback(
-    async (id, newStatusId) => {
+    async (id, newStatusId, newStatusName) => {
+      // Búsqueda del orden y estado para actualización optimista
+      const ordenPrev = ordenes.find((o) => Number(o.id_orden_produccion ?? o.id) === Number(id));
+      const anteriorEstado = ordenPrev?.nombre_estado || ordenPrev?.estado || 'Pendiente';
+      const anteriorIdEstado = ordenPrev?.id_estado_orden ?? 1;
+
+      const estadoObj = estados.find(
+        (e) => Number(e.id_estado_orden ?? e.id) === Number(newStatusId)
+      );
+      const nombreFinal = newStatusName || estadoObj?.nombre || 'nuevo estado';
+
+      // Actualización visual inmediata (optimista)
+      setOrdenes((prev) =>
+        prev.map((o) =>
+          Number(o.id_orden_produccion ?? o.id) === Number(id)
+            ? {
+                ...o,
+                id_estado_orden: Number(newStatusId),
+                nombre_estado: nombreFinal,
+                estado: nombreFinal,
+              }
+            : o
+        )
+      );
+
       setGuardando(true);
       try {
         await cambiarEstadoProduccion(id, newStatusId);
-        showAlert('success', 'Estado de la orden actualizado exitosamente.');
+        showAlert('success', `Estado cambiado a ${nombreFinal} correctamente.`);
         cerrarModales();
         await recargarDatos();
       } catch (err) {
-        showAlert('error', err.message || 'No se pudo cambiar el estado.');
+        // Revertir cambio visual en caso de error del procedimiento
+        setOrdenes((prev) =>
+          prev.map((o) =>
+            Number(o.id_orden_produccion ?? o.id) === Number(id)
+              ? {
+                  ...o,
+                  id_estado_orden: anteriorIdEstado,
+                  nombre_estado: anteriorEstado,
+                  estado: anteriorEstado,
+                }
+              : o
+          )
+        );
+        const msg = err.response?.data?.detail || err.message || 'No se pudo cambiar el estado.';
+        showAlert('error', msg);
         throw err;
       } finally {
         setGuardando(false);
       }
     },
-    [showAlert, cerrarModales, recargarDatos]
+    [ordenes, estados, showAlert, cerrarModales, recargarDatos]
   );
 
   const handleDeleteProduccion = useCallback(
@@ -343,11 +379,12 @@ export default function useProduccion() {
       setGuardando(true);
       try {
         await eliminarProduccion(id);
-        showAlert('success', 'Orden de producción eliminada exitosamente.');
+        showAlert('success', 'Orden eliminada correctamente.');
         cerrarModales();
         await recargarDatos();
       } catch (err) {
-        showAlert('error', err.message || 'No se pudo eliminar la orden.');
+        const msg = err.response?.data?.detail || err.message || 'No se pudo eliminar la orden.';
+        showAlert('error', msg);
         throw err;
       } finally {
         setGuardando(false);

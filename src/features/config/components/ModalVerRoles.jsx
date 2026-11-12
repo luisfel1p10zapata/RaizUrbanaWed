@@ -20,6 +20,19 @@ export default function ModalVerRoles({
 
   const totalUsuarios = Number(selectedRole.total_usuarios ?? 0);
 
+  // Filtrar 'Acceso Total' del catálogo para no duplicar
+  const permisosValidos = (permisos || []).filter(
+    (p) => (p.permiso || p.nombre || '').trim().toLowerCase() !== 'acceso total'
+  );
+
+  const todosLosPrivilegios = permisosValidos.flatMap((p) =>
+    (p.privilegios ?? []).map((priv) => Number(priv.id_privilegio))
+  );
+
+  const tieneAccesoTotal =
+    todosLosPrivilegios.length > 0 &&
+    todosLosPrivilegios.every((id) => rolePrivIds.includes(id));
+
   const toggleExpand = (idPermiso) => {
     setExpandedPerm(prev => prev === idPermiso ? null : idPermiso);
   };
@@ -66,11 +79,21 @@ export default function ModalVerRoles({
           </div>
 
           <div className="roles-view-perms-section">
-            <span className="ru-form-label roles-view-perms-label">
-              PERMISOS ASIGNADOS
-            </span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+              <span className="ru-form-label roles-view-perms-label" style={{ margin: 0 }}>
+                PERMISOS ASIGNADOS
+              </span>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 500, color: tieneAccesoTotal ? '#16a34a' : '#64748b' }}>
+                {tieneAccesoTotal ? (
+                  <CheckCircle2 size={15} color="#16a34a" />
+                ) : (
+                  <XCircle size={15} color="#94a3b8" />
+                )}
+                <span>Acceso Total {tieneAccesoTotal ? '(Concedido)' : '(No concedido)'}</span>
+              </div>
+            </div>
             <div className="roles-view-perms-list" style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '280px', overflowY: 'auto' }}>
-              {permisos.map((permiso) => {
+              {permisosValidos.map((permiso) => {
                 const nombrePermiso = permiso.permiso || permiso.nombre || `Permiso #${permiso.id_permiso}`;
                 const privs = permiso.privilegios ?? [];
                 const idsPrivilegios = privs.map((pr) => Number(pr.id_privilegio));

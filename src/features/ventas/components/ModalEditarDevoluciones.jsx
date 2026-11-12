@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { X } from 'lucide-react';
 import Button from '../../../components/ui/Button';
 import useDevolucionesForm from '../hooks/useDevolucionesForm';
+import { getFechaLocalHoy } from '../../../utils/dateUtils';
 import '../styles/devoluciones/ModalEditarDevoluciones.css';
 
 export default function ModalEditarDevoluciones({
@@ -138,6 +139,7 @@ export default function ModalEditarDevoluciones({
                     id="edit-dev-fecha"
                     name="fecha_devolucion"
                     type="date"
+                    min={getFechaLocalHoy()}
                     className={`ru-form-input ${
                       touched.fecha_devolucion && errors.fecha_devolucion ? 'is-invalid' : ''
                     }`}
@@ -183,20 +185,6 @@ export default function ModalEditarDevoluciones({
                   {errors.id_motivo}
                 </p>
               )}
-            </div>
-
-            {/* Reintegrar al stock */}
-            <div className="ru-form-field" style={{ marginTop: '8px' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13.5px', fontWeight: 500, color: '#1e293b' }}>
-                <input
-                  type="checkbox"
-                  id="edit-reintegra_stock"
-                  name="reintegra_stock"
-                  checked={Boolean(values.reintegra_stock)}
-                  onChange={handleChange}
-                />
-                <span>Reintegrar unidades al inventario (Stock)</span>
-              </label>
             </div>
 
             {/* Observaciones */}

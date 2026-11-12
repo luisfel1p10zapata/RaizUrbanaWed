@@ -1,8 +1,8 @@
 
 """Punto de entrada principal de la API REST - Raíz Urbana."""
 
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI # type: ignore
+from fastapi.middleware.cors import CORSMiddleware # type: ignore
 
 # =========================================================
 # IMPORTACIÓN DE ROUTERS
@@ -46,6 +46,8 @@ from app.modules.producto_variantes.presentation.router import (
 # Proveedores
 from app.modules.proveedores.presentation.router import router as proveedores_router
 
+#subcategorias
+from app.modules.subcategorias.presentation.router import router as subcategorias_router
 
 # =========================================================
 # CONFIGURACIÓN PRINCIPAL DE FASTAPI
@@ -88,7 +90,7 @@ app.add_middleware(
 async def soporte_private_network_middleware(request, call_next):
     """Permite llamadas entre localhost y 127.0.0.1 bajo la directiva Private Network Access de Chrome."""
     if request.method == "OPTIONS" and request.headers.get("access-control-request-private-network"):
-        from fastapi.responses import Response
+        from fastapi.responses import Response # type: ignore
         res = Response(status_code=200)
         origin = request.headers.get("origin")
         if origin:
@@ -124,7 +126,9 @@ app.include_router(ventas_router, prefix="/api")
 app.include_router(devoluciones_router)
 
 # Categorías y métodos de pago
+# Categorías, subcategorías y métodos de pago
 app.include_router(categorias_router, prefix="/api")
+app.include_router(subcategorias_router, prefix="/api")
 app.include_router(metodos_pago_router, prefix="/api")
 
 # Compras
@@ -144,6 +148,8 @@ app.include_router(producto_variantes_router, prefix="/api")
 
 # Proveedores
 app.include_router(proveedores_router, prefix="/api")
+
+#subcategorias
 
 
 # =========================================================

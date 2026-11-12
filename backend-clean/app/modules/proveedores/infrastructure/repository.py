@@ -1,88 +1,63 @@
-"""Repositorio temporal en memoria para el módulo de Proveedores."""
-from datetime import date
-from copy import deepcopy
-from typing import Any
+from psycopg import errors
+from psycopg.rows import dict_row
+from app.core.database import get_connection
+from app.modules.proveedores.domain.exceptions import ProveedorDuplicadoError,ProveedorNoEncontradoError,ProveedorInvalidoError
 
-from app.modules.proveedores.domain.exceptions import (
-    ProveedorDuplicadoError,
-    ProveedorNoEncontradoError,
-)
+CAMPOS='id_proveedor AS id,nombre,nit,telefono,direccion,email,estado'
 
-
-class ProveedorInMemoryRepository:
-    """Almacenamiento temporal en memoria durante el desarrollo del sistema."""
-
-    _db: list[dict[str, Any]] = [
-        {"id": 1, "nombre": "Textiles SA", "fecha": "2026-01-10", "telefono": "+57 300 111 0001", "direccion": "Medellín, Antioquia", "email": "ventas@textilessa.com", "estado": "Activo", "documento": "900123456-1"},
-        {"id": 2, "nombre": "Moda Global", "fecha": "2026-01-12", "telefono": "+57 300 222 0002", "direccion": "Bogotá, Cundinamarca", "email": "contacto@modaglobal.com", "estado": "Activo", "documento": "900234567-2"},
-        {"id": 3, "nombre": "FashionPro", "fecha": "2026-01-15", "telefono": "+57 300 333 0003", "direccion": "Cali, Valle del Cauca", "email": "info@fashionpro.com", "estado": "Activo", "documento": "900345678-3"},
-        {"id": 4, "nombre": "Industrias Ropa", "fecha": "2026-01-18", "telefono": "+57 300 444 0004", "direccion": "Barranquilla, Atlántico", "email": "pedidos@industriasropa.com", "estado": "Activo", "documento": "900456789-4"},
-        {"id": 5, "nombre": "Confecciones del Norte", "fecha": "2026-02-01", "telefono": "+57 300 555 0005", "direccion": "Bello, Antioquia", "email": "ventas@confeccionesnorte.com", "estado": "Activo", "documento": "900567890-5"},
-    ]
-    _secuencia_id: int = 6
-
-    def obtener_por_id(self, proveedor_id: int) -> dict[str, Any] | None:
-        for prov in self._db:
-            if prov["id"] == proveedor_id:
-                return deepcopy(prov)
-        return None
-
-    def obtener_por_nombre(self, nombre: str) -> dict[str, Any] | None:
-        nombre_normalizado = nombre.strip().casefold()
-        for prov in self._db:
-            if prov["nombre"].strip().casefold() == nombre_normalizado:
-                return deepcopy(prov)
-        return None
-
-    def obtener_por_documento(self, documento: str) -> dict[str, Any] | None:
-        if not documento:
-            return None
-        doc_normalizado = documento.strip().casefold()
-        for prov in self._db:
-            if prov.get("documento") and prov["documento"].strip().casefold() == doc_normalizado:
-                return deepcopy(prov)
-        return None
-
-    def guardar(self, datos: dict[str, Any]) -> dict[str, Any]:
-        nombre = datos["nombre"].strip()
-        if self.obtener_por_nombre(nombre):
-            raise ProveedorDuplicadoError(f"Ya existe un proveedor registrado con el nombre '{nombre}'.")
-
-        documento = datos.get("documento")
-        if documento and self.obtener_por_documento(documento):
-            raise ProveedorDuplicadoError(f"Ya existe un proveedor registrado con el documento '{documento}'.")
-
-        nuevo_id = ProveedorInMemoryRepository._secuencia_id
-        ProveedorInMemoryRepository._secuencia_id += 1
-
-        registro = {
-            "id": nuevo_id,
-            "nombre": nombre,
-            "fecha": datos.get("fecha") or str(date.today()),
-            "telefono": datos.get("telefono") or "N/A",
-            "direccion": datos.get("direccion") or "N/A",
-            "email": datos.get("email") or "N/A",
-            "estado": datos.get("estado") or "Activo",
-            "documento": documento,
-        }
-
-        self._db.append(registro)
-        return deepcopy(registro)
-
-    def listar(self) -> list[dict[str, Any]]:
-        return deepcopy(self._db)
-
+def traducir_error(e):
+    if isinstance(e,errors.UniqueViolation): raise ProveedorDuplicadoError('Ya existe un proveedor con esos datos.') from e
+    if isinstance(e,errors.ForeignKeyViolation): raise ProveedorInvalidoError('El proveedor tiene registros asociados y no puede eliminarse.') from e
+    if isinstance(e,(errors.CheckViolation,errors.NotNullViolation,errors.StringDataRightTruncation)):
+        raise ProveedorInvalidoError('Los datos del proveedor no cumplen las restricciones de PostgreSQL.') from e
+    raise e
 
 class ProveedorPostgresRepository:
-    """Implementación pendiente hasta disponer de PostgreSQL."""
+    def __init__(self): self._get_connection=get_connection
+    @staticmethod
+    def _obtener(cur,id):
+        cur.execute(f'SELECT {CAMPOS} FROM public.tb_proveedores WHERE id_proveedor=%s',(id,))
+        registro=cur.fetchone()
+        if registro is None: raise ProveedorNoEncontradoError(id)
+        return registro
+    def obtener_por_id(self,id):
+        with self._get_connection() as conn,conn.cursor(row_factory=dict_row) as cur:
+            return self._obtener(cur,id)
+    def listar(self, buscar=""):
+        with self._get_connection() as conn,conn.cursor(row_factory=dict_row) as cur:
+            if buscar and buscar.strip():
+                patron = f'%{buscar.strip()}%'
+                cur.execute(f'''SELECT {CAMPOS} FROM public.tb_proveedores
+                    WHERE nombre ILIKE %s OR nit ILIKE %s OR telefono ILIKE %s
+                    OR email ILIKE %s OR direccion ILIKE %s
+                    ORDER BY id_proveedor ASC''', (patron,)*5)
+            else:
+                cur.execute(f'SELECT {CAMPOS} FROM public.tb_proveedores ORDER BY id_proveedor ASC')
+            return cur.fetchall()
+    def guardar(self,d):
+        try:
+            with self._get_connection() as conn,conn.cursor(row_factory=dict_row) as cur:
+                cur.execute('SELECT 1 FROM public.tb_proveedores WHERE lower(nombre)=lower(%s) LIMIT 1',(d['nombre'],))
+                if cur.fetchone(): raise ProveedorDuplicadoError('Ya existe un proveedor con ese nombre.')
+                cur.execute(f'''INSERT INTO public.tb_proveedores(nombre,nit,telefono,direccion,email,estado)
+                VALUES (%s,%s,%s,%s,%s,%s) RETURNING {CAMPOS}''',(d['nombre'],d.get('nit'),d['telefono'],d['direccion'],d['email'],d['estado']))
+                return cur.fetchone()
+        except Exception as e: traducir_error(e)
+    def actualizar(self,id,d):
+        try:
+            with self._get_connection() as conn,conn.cursor(row_factory=dict_row) as cur:
+                self._obtener(cur,id)
+                cur.execute('SELECT 1 FROM public.tb_proveedores WHERE lower(nombre)=lower(%s) AND id_proveedor<>%s LIMIT 1',(d['nombre'],id))
+                if cur.fetchone(): raise ProveedorDuplicadoError('Ya existe otro proveedor con ese nombre.')
+                cur.execute(f'''UPDATE public.tb_proveedores SET nombre=%s,nit=%s,telefono=%s,direccion=%s,email=%s,estado=%s
+                WHERE id_proveedor=%s RETURNING {CAMPOS}''',(d['nombre'],d.get('nit'),d['telefono'],d['direccion'],d['email'],d['estado'],id))
+                return cur.fetchone()
+        except Exception as e: traducir_error(e)
+    def eliminar(self,id):
+        try:
+            with self._get_connection() as conn,conn.cursor(row_factory=dict_row) as cur:
+                self._obtener(cur,id)
+                cur.execute('DELETE FROM public.tb_proveedores WHERE id_proveedor=%s',(id,))
+        except Exception as e: traducir_error(e)
 
-    def __init__(self):
-        from app.core.database import get_connection
-        self._get_connection = get_connection
-
-    def guardar(self, datos: dict[str, Any]) -> dict[str, Any]:
-        raise NotImplementedError("PostgreSQL aún no está configurado.")
-
-
-ProveedorRepository = ProveedorInMemoryRepository
-
+ProveedorRepository=ProveedorPostgresRepository

@@ -90,20 +90,18 @@ export default function Roles() {
             </Badge>
           );
 
-          if (esAdmin) {
-            return (
-              <span title="El rol Administrador no se puede desactivar" style={{ cursor: 'not-allowed', display: 'inline-block' }}>
-                {badge}
-              </span>
-            );
-          }
-
           return (
             <button
               type="button"
               className="ru-v-badge-btn"
               onClick={() => handleToggleStatus(row)}
-              title={row.estado ? 'Haga clic para desactivar rol' : 'Haga clic para activar rol'}
+              title={
+                esAdmin
+                  ? 'El rol Administrador no se puede desactivar'
+                  : row.estado
+                  ? 'Haga clic para desactivar rol'
+                  : 'Haga clic para activar rol'
+              }
             >
               {badge}
             </button>
