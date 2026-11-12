@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 import ConfirmCancelModal from '../../../components/ui/ConfirmCancelModal';
 import Button from '../../../components/ui/Button';
 import useProduccionForm from '../hooks/useProduccionForm';
+import { getFechaLocalHoy } from '../../../utils/dateUtils';
 import '../Styles/ModalRegistrarProduccion.css';
 
 export default function ModalRegistrarProduccion({
@@ -223,7 +224,7 @@ export default function ModalRegistrarProduccion({
                       id="fecha_estimada"
                       name="fecha_estimada"
                       type="date"
-                      min={new Date().toISOString().split('T')[0]}
+                      min={getFechaLocalHoy()}
                       className={`ru-form-input ${
                         touched.fecha_estimada && errors.fecha_estimada ? 'is-invalid' : ''
                       }`}

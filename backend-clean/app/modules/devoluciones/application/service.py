@@ -1,4 +1,6 @@
 
+from datetime import date
+
 from app.modules.devoluciones.infrastructure.repository import (
     DevolucionRepository,
 )
@@ -35,6 +37,14 @@ class DevolucionService:
 
         if fecha_devolucion is None:
             raise ValueError("La fecha de devolución es obligatoria.")
+
+        f_dev = (
+            fecha_devolucion
+            if isinstance(fecha_devolucion, date)
+            else date.fromisoformat(str(fecha_devolucion)[:10])
+        )
+        if f_dev < date.today():
+            raise ValueError("La fecha no puede ser anterior a hoy.")
 
         observaciones = (
             observaciones.strip()
@@ -102,6 +112,32 @@ class DevolucionService:
         if fecha_devolucion is None:
             raise ValueError("La fecha de devolución es obligatoria.")
 
+        f_dev = (
+            fecha_devolucion
+            if isinstance(fecha_devolucion, date)
+            else date.fromisoformat(str(fecha_devolucion)[:10])
+        )
+
+        # Exige la regla solo si la fecha cambió respecto a la guardada
+        actual = self.obtener_por_id(id_devoluciones)
+        if actual:
+            fecha_guardada_raw = actual.get("fecha_devolucion")
+            f_guardada = (
+                fecha_guardada_raw
+                if isinstance(fecha_guardada_raw, date)
+                else (
+                    date.fromisoformat(str(fecha_guardada_raw)[:10])
+                    if fecha_guardada_raw
+                    else None
+                )
+            )
+            if f_guardada and f_dev != f_guardada:
+                if f_dev < date.today():
+                    raise ValueError("La fecha no puede ser anterior a hoy.")
+        else:
+            if f_dev < date.today():
+                raise ValueError("La fecha no puede ser anterior a hoy.")
+
         observaciones = (
             observaciones.strip()
             if observaciones
@@ -139,6 +175,17 @@ class DevolucionService:
             id_devoluciones=id_devoluciones,
             observacion_anulacion=observacion_anulacion,
         )
+
+    # --------------------------------------------------
+    # CAMBIAR MOTIVO
+    # --------------------------------------------------
+
+    def cambiar_motivo(self, id_devoluciones: int, id_motivo: int):
+        if id_devoluciones <= 0:
+            raise ValueError("El ID de devolución no es válido.")
+        if id_motivo <= 0:
+            raise ValueError("El motivo seleccionado no es válido.")
+        return self.repositorio.cambiar_motivo(id_devoluciones, id_motivo)
 
     # --------------------------------------------------
     # FILTRAR DEVOLUCIONES

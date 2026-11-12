@@ -12,6 +12,13 @@ import ModalRegistrarProduccion from './ModalRegistrarProduccion';
 import ModalEditarProduccion from './ModalEditarProduccion';
 import ModalCambiarEstadoProduccion from './ModalCambiarEstadoProduccion';
 import ModalVerProduccion from './ModalVerProduccion';
+import {
+  puedeEditar,
+  puedeEliminar,
+  motivoBloqueoEdicion,
+  motivoBloqueoEliminacion,
+  normalizarEstado,
+} from '../validations/produccionValidations';
 import '../../../styles/components.css';
 import '../Styles/Produccion.css';
 
@@ -68,7 +75,7 @@ export default function Produccion() {
         header: 'Producto',
         accessor: 'productos',
         render: (row) => {
-          const totalUnidades = Number(row.total_unidades || 0);
+          const totalUnidades = Number(row.total_unidades ?? row.primerDetalle?.cantidad ?? row.cantidad ?? 0);
           return (
             <div>
               <strong className="produccion-product-title">
@@ -98,12 +105,12 @@ export default function Produccion() {
         width: '160px',
         render: (row) => {
           let variant = 'pendiente';
-          const lower = (row.nombre_estado || row.estado || '').toLowerCase();
-          if (lower.includes('terminado') || lower.includes('entregado')) {
+          const norm = normalizarEstado(row.nombre_estado || row.estado);
+          if (norm.includes('terminado') || norm.includes('entregado')) {
             variant = 'activo';
-          } else if (lower.includes('no conforme') || lower.includes('cancelado')) {
+          } else if (norm.includes('no conforme') || norm.includes('cancelado')) {
             variant = 'cancelado';
-          } else if (lower.includes('proceso') || lower.includes('producción') || lower.includes('produccion')) {
+          } else if (norm.includes('proceso') || norm.includes('produccion')) {
             variant = 'info';
           }
 
@@ -113,10 +120,10 @@ export default function Produccion() {
             </Badge>
           );
 
-          const esEntregado = Number(row.id_estado_orden) === 5 || lower.includes('entregado');
+          const esEntregado = norm === 'entregado';
           if (esEntregado) {
             return (
-              <span title="La orden ya ha sido entregada (estado final)" style={{ cursor: 'not-allowed', display: 'inline-block' }}>
+              <span title="Una orden Entregada no puede cambiar de estado (estado final)" style={{ cursor: 'not-allowed', display: 'inline-block' }}>
                 {badge}
               </span>
             );
@@ -139,9 +146,11 @@ export default function Produccion() {
         accessor: 'acciones',
         width: '130px',
         render: (row) => {
-          const idEstado = Number(row.id_estado_orden || 1);
-          const estadoNombre = (row.nombre_estado || row.estado || '').toLowerCase();
-          const esPendiente = idEstado === 1 || estadoNombre === 'pendiente';
+          const estadoNombre = row.nombre_estado || row.estado || 'Pendiente';
+          const editable = puedeEditar(estadoNombre);
+          const eliminable = puedeEliminar(estadoNombre);
+          const tooltipEditar = editable ? 'Editar orden' : motivoBloqueoEdicion(estadoNombre);
+          const tooltipEliminar = eliminable ? 'Eliminar orden' : motivoBloqueoEliminacion(estadoNombre);
 
           return (
             <div className="ru-actions">
@@ -155,19 +164,19 @@ export default function Produccion() {
               </button>
               <button
                 type="button"
-                className={`ru-icon-btn edit ${!esPendiente ? 'disabled' : ''}`}
-                title={esPendiente ? 'Editar orden' : 'Solo se pueden editar órdenes en estado Pendiente'}
-                disabled={!esPendiente}
-                onClick={() => esPendiente && abrirEditar(row)}
+                className={`ru-icon-btn edit ${!editable ? 'disabled' : ''}`}
+                title={tooltipEditar}
+                disabled={!editable}
+                onClick={() => editable && abrirEditar(row)}
               >
                 <Icons.Pencil width={16} height={16} />
               </button>
               <button
                 type="button"
-                className={`ru-icon-btn delete ${!esPendiente ? 'disabled' : ''}`}
-                title={esPendiente ? 'Eliminar orden' : 'Solo se pueden eliminar órdenes en estado Pendiente'}
-                disabled={!esPendiente}
-                onClick={() => esPendiente && abrirEliminar(row)}
+                className={`ru-icon-btn delete ${!eliminable ? 'disabled' : ''}`}
+                title={tooltipEliminar}
+                disabled={!eliminable}
+                onClick={() => eliminable && abrirEliminar(row)}
               >
                 <Icons.Trash width={16} height={16} />
               </button>
@@ -274,6 +283,7 @@ export default function Produccion() {
         onSubmit={handleChangeStatus}
         guardando={guardando}
         selectedOrden={selectedOrden}
+        estados={estados}
       />
 
       <ModalVerProduccion

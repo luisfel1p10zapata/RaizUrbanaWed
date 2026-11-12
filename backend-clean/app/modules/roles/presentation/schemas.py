@@ -17,12 +17,12 @@ class ActualizarRolRequest(BaseModel):
     nombre: str = Field(min_length=1, max_length=50)
     descripcion: str = Field(min_length=1, max_length=200)
     estado: bool
-    permisos_ids: list[int] | None = None
-    privilegios_ids: list[int] | None = None
+    permisos_ids: list[int] = Field(default_factory=list)
+    privilegios_ids: list[int] = Field(default_factory=list)
 
 
 class CambiarEstadoRolRequest(BaseModel):
-    estado: bool
+    estado: bool | None = None
 
 
 class AsignarPermisosRequest(BaseModel):

@@ -10,9 +10,12 @@ import AppAlert from '../../../components/ui/AppAlert';
 import ModalRegistrarDevoluciones from './ModalRegistrarDevoluciones';
 import ModalEditarDevoluciones from './ModalEditarDevoluciones';
 import ModalCambiarEstadoDevoluciones from './ModalCambiarEstadoDevoluciones';
+import ModalAnularDevoluciones from './ModalAnularDevoluciones';
 import ModalVerDevoluciones from './ModalVerDevoluciones';
 import '../../../styles/components.css';
 import '../styles/devoluciones/Devoluciones.css';
+
+const MOTIVO_VARIANTS = ['primary', 'info', 'secondary', 'pendiente', 'accent'];
 
 export default function Devoluciones() {
   const {
@@ -32,28 +35,31 @@ export default function Devoluciones() {
     modalRegistrarOpen,
     modalEditarOpen,
     modalCambiarEstadoOpen,
+    modalAnularOpen,
     modalVerOpen,
     selectedDevolucion,
     abrirRegistrar,
     abrirEditar,
     abrirCambiarEstado,
+    abrirAnular,
     abrirVer,
     cerrarModales,
     handleCreateDevolucion,
     handleUpdateDevolucion,
     handleChangeStatus,
+    handleAnularDevolucion,
     handleCreateMotivo,
     alert,
     closeAlert,
   } = useDevoluciones();
 
-  // Columnas exactas solicitadas: ID, Producto, Motivo, Estado, Acciones
+  // Columnas exactas solicitadas: ID, Producto, Estado, Acciones
   const columns = useMemo(
     () => [
       {
         header: 'ID',
         accessor: 'id',
-        width: '90px',
+        width: '70px',
         render: (row) => (
           <span className="devoluciones-id-cell">
             #{row.id}
@@ -79,29 +85,30 @@ export default function Devoluciones() {
         },
       },
       {
-        header: 'Motivo',
-        accessor: 'motivo',
-        render: (row) => (
-          <span className="devoluciones-reason-text">
-            {row.motivo}
-          </span>
-        ),
-      },
-      {
         header: 'Estado',
         accessor: 'estado',
-        width: '130px',
+        width: '240px',
         render: (row) => {
-          const esAnulada = (row.estado || '').toLowerCase() === 'anulada';
+          const esAnulada = Boolean(row.anulada) || (row.estado || '').toLowerCase() === 'anulada';
+          const motivoIdx = (Number(row.id_motivo) || 1) - 1;
+          const variant = esAnulada
+            ? 'cancelado'
+            : MOTIVO_VARIANTS[Math.abs(motivoIdx) % MOTIVO_VARIANTS.length];
+
+          const textoEstado = esAnulada ? 'Anulada' : (row.motivo || row.estado || 'Registrada');
+
           const badge = (
-            <Badge variant={esAnulada ? 'cancelado' : 'activo'} dot>
-              {row.estado || (esAnulada ? 'Anulada' : 'Registrada')}
+            <Badge variant={variant} dot>
+              {textoEstado}
             </Badge>
           );
 
           if (esAnulada) {
             return (
-              <span title="Devolución ya anulada" style={{ cursor: 'not-allowed', display: 'inline-block' }}>
+              <span
+                title="No se puede cambiar el motivo de una devolución anulada"
+                style={{ cursor: 'not-allowed', display: 'inline-block', maxWidth: '100%' }}
+              >
                 {badge}
               </span>
             );
@@ -112,7 +119,8 @@ export default function Devoluciones() {
               type="button"
               className="ru-v-badge-btn"
               onClick={() => abrirCambiarEstado(row)}
-              title="Haga clic para anular devolución"
+              title="Haga clic para cambiar el motivo"
+              style={{ maxWidth: '100%' }}
             >
               {badge}
             </button>
@@ -124,7 +132,7 @@ export default function Devoluciones() {
         accessor: 'acciones',
         width: '130px',
         render: (row) => {
-          const esAnulada = (row.estado || '').toLowerCase() === 'anulada';
+          const esAnulada = Boolean(row.anulada) || (row.estado || '').toLowerCase() === 'anulada';
           return (
             <div className="ru-actions">
               <button
@@ -149,7 +157,7 @@ export default function Devoluciones() {
                 className={`ru-icon-btn delete ${esAnulada ? 'disabled' : ''}`}
                 title={esAnulada ? 'Devolución ya anulada' : 'Anular devolución'}
                 disabled={esAnulada}
-                onClick={() => !esAnulada && abrirCambiarEstado(row)}
+                onClick={() => !esAnulada && abrirAnular(row)}
               >
                 <Icons.Trash width={16} height={16} />
               </button>
@@ -158,7 +166,7 @@ export default function Devoluciones() {
         },
       },
     ],
-    [abrirVer, abrirEditar, abrirCambiarEstado]
+    [abrirVer, abrirEditar, abrirCambiarEstado, abrirAnular]
   );
 
   return (
@@ -249,6 +257,15 @@ export default function Devoluciones() {
         isOpen={modalCambiarEstadoOpen}
         onClose={cerrarModales}
         onSubmit={handleChangeStatus}
+        guardando={guardando}
+        selectedDevolucion={selectedDevolucion}
+        motivos={motivos}
+      />
+
+      <ModalAnularDevoluciones
+        isOpen={modalAnularOpen}
+        onClose={cerrarModales}
+        onSubmit={handleAnularDevolucion}
         guardando={guardando}
         selectedDevolucion={selectedDevolucion}
       />

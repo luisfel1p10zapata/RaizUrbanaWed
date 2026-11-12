@@ -3,6 +3,7 @@ import { X, Plus } from 'lucide-react';
 import ConfirmCancelModal from '../../../components/ui/ConfirmCancelModal';
 import Button from '../../../components/ui/Button';
 import useDevolucionesForm from '../hooks/useDevolucionesForm';
+import { getFechaLocalHoy } from '../../../utils/dateUtils';
 import '../styles/devoluciones/ModalRegistrarDevoluciones.css';
 
 export default function ModalRegistrarDevoluciones({
@@ -31,7 +32,7 @@ export default function ModalRegistrarDevoluciones({
   } = useDevolucionesForm({
     id_det_venta: '',
     cantidad: '1',
-    fecha_devolucion: new Date().toISOString().slice(0, 10),
+    fecha_devolucion: getFechaLocalHoy(),
     id_motivo: '',
     observaciones: '',
   });
@@ -211,6 +212,7 @@ export default function ModalRegistrarDevoluciones({
                       id="fecha_devolucion"
                       name="fecha_devolucion"
                       type="date"
+                      min={getFechaLocalHoy()}
                       className={`ru-form-input ${
                         touched.fecha_devolucion && errors.fecha_devolucion ? 'is-invalid' : ''
                       }`}

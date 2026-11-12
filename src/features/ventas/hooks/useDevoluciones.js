@@ -7,8 +7,9 @@ import {
   crearDevolucion,
   editarDevolucion,
   cambiarEstadoDevolucion,
+  cambiarMotivoDevolucion,
   crearMotivo,
-} from '../services/devolucionesService';
+} from '../../../services/devolucionesService';
 
 export default function useDevoluciones() {
   const [devoluciones, setDevoluciones] = useState([]);
@@ -31,6 +32,7 @@ export default function useDevoluciones() {
   const [modalRegistrarOpen, setModalRegistrarOpen] = useState(false);
   const [modalEditarOpen, setModalEditarOpen] = useState(false);
   const [modalCambiarEstadoOpen, setModalCambiarEstadoOpen] = useState(false);
+  const [modalAnularOpen, setModalAnularOpen] = useState(false);
   const [modalVerOpen, setModalVerOpen] = useState(false);
   const [selectedDevolucion, setSelectedDevolucion] = useState(null);
 
@@ -43,6 +45,14 @@ export default function useDevoluciones() {
 
   const closeAlert = useCallback(() => {
     setAlert(null);
+  }, []);
+
+  // Definición de estaAnulada compatible con ambas versiones de BD
+  const estaAnulada = useCallback((dev) => {
+    if (!dev) return false;
+    const est = String(dev.estado || dev.nombre_estado || '').toLowerCase();
+    const obs = String(dev.observaciones || '').toUpperCase();
+    return est === 'anulada' || obs.startsWith('[ANULADA]');
   }, []);
 
   const recargarDatos = useCallback(async () => {
@@ -58,8 +68,9 @@ export default function useDevoluciones() {
       setDetallesDisponibles(Array.isArray(detData) ? detData : []);
       setMotivos(Array.isArray(motData) ? motData : []);
     } catch (err) {
-      setError(err.message || 'Error al cargar las devoluciones.');
-      showAlert('error', err.message || 'Error al cargar las devoluciones.');
+      const msg = err.response?.data?.detail || err.message || 'Error al cargar las devoluciones.';
+      setError(msg);
+      showAlert('error', msg);
     } finally {
       setLoading(false);
     }
@@ -82,7 +93,8 @@ export default function useDevoluciones() {
         }
       } catch (err) {
         if (!cancel) {
-          setError(err.message || 'Error al cargar las devoluciones.');
+          const msg = err.response?.data?.detail || err.message || 'Error al cargar las devoluciones.';
+          setError(msg);
           setLoading(false);
         }
       }
@@ -97,8 +109,8 @@ export default function useDevoluciones() {
   const normalizedDevoluciones = useMemo(() => {
     return devoluciones.map((item) => {
       const id = item.id_devoluciones ?? item.id;
-      const estado = item.estado || (String(item.observaciones || '').toUpperCase().startsWith('[ANULADA]') ? 'Anulada' : 'Registrada');
-      const anulada = estado.toLowerCase() === 'anulada';
+      const anulada = estaAnulada(item);
+      const estado = anulada ? 'Anulada' : (item.estado || 'Registrada');
       const producto =
         item.producto || item.nombre_producto || 'Producto no especificado';
       const motivo =
@@ -116,7 +128,7 @@ export default function useDevoluciones() {
         reintegra_stock,
       };
     });
-  }, [devoluciones]);
+  }, [devoluciones, estaAnulada]);
 
   // Filtros
   const filteredDevoluciones = useMemo(() => {
@@ -195,6 +207,11 @@ export default function useDevoluciones() {
     setModalCambiarEstadoOpen(true);
   }, []);
 
+  const abrirAnular = useCallback((dev) => {
+    setSelectedDevolucion(dev);
+    setModalAnularOpen(true);
+  }, []);
+
   const abrirVer = useCallback(async (dev) => {
     setSelectedDevolucion(dev);
     setModalVerOpen(true);
@@ -212,6 +229,7 @@ export default function useDevoluciones() {
     setModalRegistrarOpen(false);
     setModalEditarOpen(false);
     setModalCambiarEstadoOpen(false);
+    setModalAnularOpen(false);
     setModalVerOpen(false);
     setSelectedDevolucion(null);
   }, []);
@@ -222,11 +240,12 @@ export default function useDevoluciones() {
       setGuardando(true);
       try {
         await crearDevolucion(formData);
-        showAlert('success', 'Devolución registrada exitosamente.');
+        showAlert('success', 'Devolución registrada correctamente');
         cerrarModales();
         await recargarDatos();
       } catch (err) {
-        showAlert('error', err.message || 'No se pudo registrar la devolución.');
+        const msg = err.response?.data?.detail || err.message || 'No se pudo registrar la devolución.';
+        showAlert('error', msg);
         throw err;
       } finally {
         setGuardando(false);
@@ -240,11 +259,12 @@ export default function useDevoluciones() {
       setGuardando(true);
       try {
         await editarDevolucion(id, formData);
-        showAlert('success', 'Devolución actualizada exitosamente.');
+        showAlert('success', 'Devolución actualizada correctamente');
         cerrarModales();
         await recargarDatos();
       } catch (err) {
-        showAlert('error', err.message || 'No se pudo actualizar la devolución.');
+        const msg = err.response?.data?.detail || err.message || 'No se pudo actualizar la devolución.';
+        showAlert('error', msg);
         throw err;
       } finally {
         setGuardando(false);
@@ -254,15 +274,54 @@ export default function useDevoluciones() {
   );
 
   const handleChangeStatus = useCallback(
+    async (id, nuevoIdMotivo, nombreMotivo) => {
+      setGuardando(true);
+      // Actualización optimista
+      setDevoluciones((prev) =>
+        prev.map((d) => {
+          const did = d.id_devoluciones ?? d.id;
+          if (did === id) {
+            return {
+              ...d,
+              id_motivo: Number(nuevoIdMotivo),
+              motivo: nombreMotivo || d.motivo,
+            };
+          }
+          return d;
+        })
+      );
+
+      try {
+        await cambiarMotivoDevolucion(id, nuevoIdMotivo);
+        showAlert(
+          'success',
+          `Motivo cambiado a ${nombreMotivo || 'nuevo motivo'} correctamente`
+        );
+        cerrarModales();
+        await recargarDatos();
+      } catch (err) {
+        const msg = err.response?.data?.detail || err.message || 'No se pudo cambiar el motivo.';
+        showAlert('error', msg);
+        await recargarDatos(); // Revertir al estado real de BD
+        throw err;
+      } finally {
+        setGuardando(false);
+      }
+    },
+    [showAlert, cerrarModales, recargarDatos]
+  );
+
+  const handleAnularDevolucion = useCallback(
     async (id, observacionAnulacion) => {
       setGuardando(true);
       try {
         await cambiarEstadoDevolucion(id, observacionAnulacion);
-        showAlert('success', 'Devolución anulada exitosamente.');
+        showAlert('success', 'Devolución anulada correctamente');
         cerrarModales();
         await recargarDatos();
       } catch (err) {
-        showAlert('error', err.message || 'No se pudo anular la devolución.');
+        const msg = err.response?.data?.detail || err.message || 'No se pudo anular la devolución.';
+        showAlert('error', msg);
         throw err;
       } finally {
         setGuardando(false);
@@ -280,7 +339,8 @@ export default function useDevoluciones() {
         const motData = await listarMotivos();
         setMotivos(Array.isArray(motData) ? motData : []);
       } catch (err) {
-        showAlert('error', err.message || 'No se pudo agregar el motivo.');
+        const msg = err.response?.data?.detail || err.message || 'No se pudo agregar el motivo.';
+        showAlert('error', msg);
         throw err;
       } finally {
         setGuardando(false);
@@ -337,19 +397,23 @@ export default function useDevoluciones() {
     modalRegistrarOpen,
     modalEditarOpen,
     modalCambiarEstadoOpen,
+    modalAnularOpen,
     modalVerOpen,
     selectedDevolucion,
     abrirRegistrar,
     abrirEditar,
     abrirCambiarEstado,
+    abrirAnular,
     abrirVer,
     cerrarModales,
     handleCreateDevolucion,
     handleUpdateDevolucion,
     handleChangeStatus,
+    handleAnularDevolucion,
     handleCreateMotivo,
     estaAnulada,
     alert,
     closeAlert,
   };
 }
+

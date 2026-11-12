@@ -67,8 +67,7 @@ export default function ModalEditarRoles({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (esAdmin) return;
-    if (!validateAll()) return;
+    if (esAdmin || !formularioValido || !validateAll()) return;
 
     try {
       await onSubmit(selectedRole.id || selectedRole.id_rol, values);
@@ -78,14 +77,32 @@ export default function ModalEditarRoles({
     }
   };
 
+  // Filtrar 'Acceso Total' del catálogo para no duplicar con el toggle general
+  const permisosValidos = useMemo(() => {
+    return (permisos || []).filter(
+      (p) => (p.permiso || p.nombre || '').trim().toLowerCase() !== 'acceso total'
+    );
+  }, [permisos]);
+
   // Manejo de permisos y privilegios
-  const todosLosPrivilegios = permisos.flatMap((p) =>
-    (p.privilegios ?? []).map((priv) => Number(priv.id_privilegio))
-  );
+  const todosLosPrivilegios = useMemo(() => {
+    return permisosValidos.flatMap((p) =>
+      (p.privilegios ?? []).map((priv) => Number(priv.id_privilegio))
+    );
+  }, [permisosValidos]);
 
   const accesoTotal =
     todosLosPrivilegios.length > 0 &&
     todosLosPrivilegios.every((id) => (values.privilegios_ids || []).includes(id));
+
+  const tieneAlgunPrivilegio = (values.privilegios_ids || []).length > 0;
+  const accesoTotalIndeterminado = tieneAlgunPrivilegio && !accesoTotal;
+
+  const tienePermisosYPrivilegios =
+    (values.permisos_ids || []).length > 0 && (values.privilegios_ids || []).length > 0;
+  const nombreValido = (values.nombre || '').trim().length > 0;
+  const descValida = (values.descripcion || '').trim().length > 0;
+  const formularioValido = nombreValido && descValida && tienePermisosYPrivilegios;
 
   const handleTotalAccessToggle = () => {
     if (accesoTotal) {
@@ -95,7 +112,7 @@ export default function ModalEditarRoles({
         privilegios_ids: [],
       }));
     } else {
-      const todosPermisos = permisos.map((p) => Number(p.id_permiso));
+      const todosPermisos = permisosValidos.map((p) => Number(p.id_permiso));
       setValues((prev) => ({
         ...prev,
         permisos_ids: todosPermisos,
@@ -143,7 +160,7 @@ export default function ModalEditarRoles({
       : [...currentPrivs, idPrivilegio];
 
     const currentPermisos = values.permisos_ids || [];
-    const permiso = permisos.find((p) => p.id_permiso === idPermiso);
+    const permiso = permisosValidos.find((p) => p.id_permiso === idPermiso);
     const privsDelPermiso = (permiso?.privilegios || []).map((pr) => Number(pr.id_privilegio));
     const tieneAlguno = privsDelPermiso.some((pId) => updatedPrivs.includes(pId));
 
@@ -265,9 +282,9 @@ export default function ModalEditarRoles({
               <div className="roles-edit-perms-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                 <span className="ru-form-label roles-edit-perms-label">ASIGNACIÓN DE PERMISOS</span>
                 <label className="roles-edit-total-access-label" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', cursor: 'pointer' }}>
-                  <input
-                    type="checkbox"
+                  <IndeterminateCheckbox
                     checked={accesoTotal}
+                    indeterminate={accesoTotalIndeterminado}
                     onChange={handleTotalAccessToggle}
                     disabled={esAdmin}
                   />
@@ -275,8 +292,23 @@ export default function ModalEditarRoles({
                 </label>
               </div>
 
+              {!tienePermisosYPrivilegios && (
+                <p
+                  className="ru-field-error"
+                  style={{
+                    color: '#dc2626',
+                    fontSize: '13px',
+                    fontWeight: 500,
+                    margin: '4px 0 10px 0',
+                  }}
+                  role="alert"
+                >
+                  Selecciona al menos un permiso y un privilegio
+                </p>
+              )}
+
               <div className="roles-edit-perms-list" style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '250px', overflowY: 'auto' }}>
-                {permisos.map((permiso) => {
+                {permisosValidos.map((permiso) => {
                   const nombrePermiso = permiso.permiso || permiso.nombre || `Permiso #${permiso.id_permiso}`;
                   const privs = permiso.privilegios ?? [];
                   const idsPrivilegios = privs.map((pr) => Number(pr.id_privilegio));
@@ -348,7 +380,7 @@ export default function ModalEditarRoles({
             <Button
               type="submit"
               variant="primary"
-              disabled={guardando || esAdmin}
+              disabled={!formularioValido || guardando || esAdmin}
             >
               {guardando ? 'Guardando...' : 'Guardar cambios'}
             </Button>

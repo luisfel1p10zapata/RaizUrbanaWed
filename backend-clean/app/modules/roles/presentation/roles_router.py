@@ -38,21 +38,21 @@ def manejar_error(error: Exception):
                 detail=mensaje,
             ) from error
 
-        if codigo == "P0001":
+        if codigo in ("P0001", "22023"):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=mensaje,
             ) from error
 
-        if codigo == "22023":
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=mensaje,
-            ) from error
-
-        if codigo in ("23505", "23503", "23514"):
+        if codigo in ("23505", "23503"):
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
+                detail=mensaje,
+            ) from error
+
+        if codigo == "23514":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
                 detail=mensaje,
             ) from error
 
@@ -75,6 +75,11 @@ def manejar_error(error: Exception):
 
 @router.post("", status_code=status.HTTP_201_CREATED)
 def registrar_rol(datos: RegistrarRolRequest):
+    if not datos.permisos_ids or not datos.privilegios_ids:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Debe seleccionar al menos un permiso y al menos un privilegio.",
+        )
     try:
         return RegistrarRol().ejecutar(
             nombre=datos.nombre,
@@ -135,6 +140,11 @@ def buscar_roles(
 
 @router.put("/{id_rol}")
 def actualizar_rol(id_rol: int, datos: ActualizarRolRequest):
+    if not datos.permisos_ids or not datos.privilegios_ids:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Debe seleccionar al menos un permiso y al menos un privilegio.",
+        )
     try:
         resultado = RolRepository().actualizar(
             id_rol=id_rol,
@@ -215,12 +225,24 @@ def eliminar_rol(id_rol: int):
 @router.patch("/{id_rol}/estado")
 def cambiar_estado_rol(
     id_rol: int,
-    datos: CambiarEstadoRolRequest,
+    datos: CambiarEstadoRolRequest | None = None,
 ):
     try:
+        nuevo_estado = None
+        if datos is not None and datos.estado is not None:
+            nuevo_estado = datos.estado
+        else:
+            actual = RolRepository().obtener_por_id(id_rol)
+            if actual is None:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="No se encontró el rol.",
+                )
+            nuevo_estado = not actual.get("estado", False)
+
         resultado = RolRepository().cambiar_estado(
             id_rol=id_rol,
-            estado=datos.estado,
+            estado=nuevo_estado,
         )
 
         if resultado is None:

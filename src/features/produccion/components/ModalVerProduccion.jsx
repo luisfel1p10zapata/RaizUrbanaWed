@@ -10,9 +10,16 @@ export default function ModalVerProduccion({
 }) {
   if (!isOpen || !selectedOrden) return null;
 
-  const detalles = Array.isArray(selectedOrden.detalles) ? selectedOrden.detalles : [];
+  const detalles = Array.isArray(selectedOrden.detalles)
+    ? selectedOrden.detalles
+    : Array.isArray(selectedOrden.detalle)
+    ? selectedOrden.detalle
+    : [];
+
   const primerDet = detalles[0] || selectedOrden.primerDetalle || {};
-  const totalCantidad = Number(selectedOrden.total_unidades ?? primerDet.cantidad ?? selectedOrden.cantidad ?? 0);
+  const totalCantidad =
+    detalles.reduce((acc, d) => acc + Number(d.cantidad || 0), 0) ||
+    Number(selectedOrden.total_unidades ?? primerDet.cantidad ?? selectedOrden.cantidad ?? 0);
 
   const lower = (selectedOrden.nombre_estado || selectedOrden.estado || '').toLowerCase();
   let badgeVariant = 'pendiente';
@@ -24,7 +31,6 @@ export default function ModalVerProduccion({
     badgeVariant = 'info';
   }
 
-  // Verificar si hay algún insumo insuficiente
   const tieneInsumosInsuficientes = detalles.some((det) =>
     (det.insumos || []).some((ins) => ins.stock_suficiente === false)
   );
@@ -54,7 +60,7 @@ export default function ModalVerProduccion({
               </div>
               <div>
                 <h3 className="prod-view-title">
-                  {selectedOrden.productos || selectedOrden.producto || 'Orden de Producción'}
+                  {selectedOrden.productos || selectedOrden.producto || primerDet.producto || 'Orden de Producción'}
                 </h3>
                 {totalCantidad > 0 && (
                   <span className="prod-view-qty-text">
