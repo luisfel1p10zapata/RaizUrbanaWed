@@ -8,9 +8,8 @@ import Inicio from '../features/ventas/components/Inicio';
 import Ventas from '../features/ventas/components/Ventas';
 import Carrito from '../features/ventas/components/Carrito';
 import Productos from '../features/control-de-existencias/components/Productos';
-import ProductosVariante from '../features/control-de-existencias/components/ProductosVariante';
 import Categorias from '../features/control-de-existencias/components/Categorias';
-import TipoProducto from '../features/control-de-existencias/components/TipoProducto';
+import Subcategorias from '../features/control-de-existencias/components/Subcategorias';
 import Devoluciones from '../features/ventas/components/Devoluciones';
 
 // Dashboard
@@ -20,6 +19,7 @@ import Dashboard from '../features/dashboard/components/Dashboard';
 import Compras from '../features/compras/components/Compras';
 import ComprasInsumos from '../features/compras/components/ComprasInsumos';
 import Proveedores from '../features/compras/components/Proveedores';
+
 
 // Control de Existencias / Inventario
 import Insumos from '../features/control-de-existencias/components/Insumos';
@@ -113,18 +113,13 @@ const AppRoutes = () => {
           />
 
           <Route
-            path="/productos-variante"
-            element={<ProductosVariante />}
-          />
-
-          <Route
             path="/categorias"
             element={<Categorias />}
           />
 
           <Route
-            path="/tipo-producto"
-            element={<TipoProducto />}
+            path="/subcategorias"
+            element={<Subcategorias />}
           />
 
           {/* Compras */}

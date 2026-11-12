@@ -1,68 +1,33 @@
-"""Rutas HTTP del módulo de Productos."""
-from fastapi import APIRouter, HTTPException, Query, status
-
+import logging
+from fastapi import APIRouter,HTTPException,Query,status
 from app.modules.productos.application.service import ProductoService
-from app.modules.productos.domain.schemas import (
-    ProductoCreateDTO,
-    ProductoResponseDTO,
-)
-from app.modules.productos.domain.exceptions import (
-    ProductoDuplicadoError,
-    ProductoNoEncontradoError,
-    ProductoInvalidoError,
-)
-
-router = APIRouter(prefix="/productos", tags=["Productos"])
-
-
-def manejar_error(error: Exception):
-    if isinstance(error, ProductoNoEncontradoError):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(error),
-        ) from error
-
-    if isinstance(error, ProductoDuplicadoError):
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=str(error),
-        ) from error
-
-    if isinstance(error, (ProductoInvalidoError, ValueError)):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(error),
-        ) from error
-
-    raise HTTPException(
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        detail="Error interno al procesar el producto.",
-    ) from error
-
-
-@router.post(
-    "",
-    response_model=ProductoResponseDTO,
-    status_code=status.HTTP_201_CREATED,
-    summary="Registrar producto",
-)
-def registrar_producto(datos: ProductoCreateDTO):
-    try:
-        return ProductoService().registrar_producto(datos)
-    except Exception as error:
-        manejar_error(error)
-
-
-@router.get(
-    "",
-    response_model=list[ProductoResponseDTO],
-    status_code=status.HTTP_200_OK,
-    summary="Listar productos",
-)
-def listar_productos(
-    orden: str = Query("id", pattern="^(id|nombre)$", description="Campo de ordenación: 'id' o 'nombre'")
-):
-    try:
-        return ProductoService().listar_productos(ordenar_por=orden)
-    except Exception as error:
-        manejar_error(error)
+from app.modules.productos.domain.schemas import ProductoCreateDTO,ProductoUpdateDTO,ProductoResponseDTO
+from app.modules.productos.domain.exceptions import ProductoDuplicadoError,ProductoNoEncontradoError,ProductoInvalidoError
+router=APIRouter(prefix='/productos',tags=['Productos'])
+log=logging.getLogger(__name__)
+def manejar_error(e):
+    if isinstance(e,ProductoNoEncontradoError): raise HTTPException(404,str(e)) from e
+    if isinstance(e,ProductoDuplicadoError): raise HTTPException(409,str(e)) from e
+    if isinstance(e,(ProductoInvalidoError,ValueError)): raise HTTPException(400,str(e)) from e
+    log.exception('Error inesperado en productos',exc_info=e)
+    raise HTTPException(500,'Error interno al procesar el producto.') from e
+@router.post('',response_model=ProductoResponseDTO,status_code=201)
+def registrar_producto(datos:ProductoCreateDTO):
+    try:return ProductoService().registrar_producto(datos)
+    except Exception as e:manejar_error(e)
+@router.get('',response_model=list[ProductoResponseDTO])
+def listar_productos(orden:str=Query('id',pattern='^(id|nombre)$')):
+    try:return ProductoService().listar_productos(orden)
+    except Exception as e:manejar_error(e)
+@router.get('/{producto_id}',response_model=ProductoResponseDTO)
+def obtener_producto(producto_id:int):
+    try:return ProductoService().obtener_producto(producto_id)
+    except Exception as e:manejar_error(e)
+@router.put('/{producto_id}',response_model=ProductoResponseDTO)
+def actualizar_producto(producto_id:int,datos:ProductoUpdateDTO):
+    try:return ProductoService().actualizar_producto(producto_id,datos)
+    except Exception as e:manejar_error(e)
+@router.delete('/{producto_id}',status_code=204)
+def eliminar_producto(producto_id:int):
+    try:ProductoService().eliminar_producto(producto_id)
+    except Exception as e:manejar_error(e)

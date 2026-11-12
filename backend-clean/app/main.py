@@ -46,6 +46,8 @@ from app.modules.producto_variantes.presentation.router import (
 # Proveedores
 from app.modules.proveedores.presentation.router import router as proveedores_router
 
+#subcategorias
+from app.modules.subcategorias.presentation.router import router as subcategorias_router
 
 # =========================================================
 # CONFIGURACIÓN PRINCIPAL DE FASTAPI
@@ -124,7 +126,9 @@ app.include_router(ventas_router, prefix="/api")
 app.include_router(devoluciones_router)
 
 # Categorías y métodos de pago
+# Categorías, subcategorías y métodos de pago
 app.include_router(categorias_router, prefix="/api")
+app.include_router(subcategorias_router, prefix="/api")
 app.include_router(metodos_pago_router, prefix="/api")
 
 # Compras
@@ -144,6 +148,8 @@ app.include_router(producto_variantes_router, prefix="/api")
 
 # Proveedores
 app.include_router(proveedores_router, prefix="/api")
+
+#subcategorias
 
 
 # =========================================================
