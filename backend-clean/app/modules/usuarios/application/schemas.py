@@ -2,7 +2,7 @@
 from datetime import date
 from enum import StrEnum
 
-from pydantic import EmailStr, Field
+from pydantic import EmailStr, Field # type: ignore
 
 from app.shared.schemas import CamelModel, Pagina
 

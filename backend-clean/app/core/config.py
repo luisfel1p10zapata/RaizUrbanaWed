@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from dotenv import load_dotenv
+from dotenv import load_dotenv # type: ignore
 
 # Cargar .env desde la raíz de backend-clean
 _BASE_DIR = Path(__file__).resolve().parent.parent.parent

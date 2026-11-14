@@ -1,4 +1,3 @@
-
 import {
     Home,
     LayoutDashboard,
@@ -7,7 +6,6 @@ import {
     ShoppingBag,
     Truck,
     Warehouse,
-    Ruler,
     Factory,
     CreditCard,
     Users,
@@ -35,7 +33,6 @@ const navigationConfig = [
             },
         ],
     },
-
     {
         title: 'Configuración',
         items: [
@@ -46,7 +43,6 @@ const navigationConfig = [
             },
         ],
     },
-
     {
         title: 'Usuarios',
         items: [
@@ -57,7 +53,6 @@ const navigationConfig = [
             },
         ],
     },
-
     {
         title: 'Control de existencias',
         items: [
@@ -66,10 +61,10 @@ const navigationConfig = [
                 path: '/categorias',
                 icon: Tags,
             },
-           {
-                 label: 'Subcategoría',
-                 path: '/subcategorias',
-                 icon: Layers,
+            {
+                label: 'Subcategoría',
+                path: '/subcategorias',
+                icon: Layers,
             },
             {
                 label: 'Insumos',
@@ -86,19 +81,8 @@ const navigationConfig = [
                 path: '/inventario/bajas-insumos',
                 icon: Archive,
             },
-            {
-                label: 'Tamaños',
-                path: '/inventario/tamanos',
-                icon: Ruler,
-            },
-            {
-                label: 'Materiales',
-                path: '/inventario/materiales',
-                icon: Package,
-            },
         ],
     },
-
     {
         title: 'Compras',
         items: [
@@ -114,7 +98,6 @@ const navigationConfig = [
             },
         ],
     },
-
     {
         title: 'Producción',
         items: [
@@ -125,7 +108,6 @@ const navigationConfig = [
             },
         ],
     },
-
     {
         title: 'Ventas',
         items: [

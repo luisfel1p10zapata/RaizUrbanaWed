@@ -14,8 +14,8 @@ Utiliza los procedimientos almacenados y funciones oficiales desplegados en Supa
 from datetime import date
 import secrets
 from typing import Any
-import psycopg
-from psycopg.rows import dict_row
+import psycopg # type: ignore
+from psycopg.rows import dict_row # type: ignore
 
 from app.core.database import get_connection
 from app.core.email import enviar_correo_activacion

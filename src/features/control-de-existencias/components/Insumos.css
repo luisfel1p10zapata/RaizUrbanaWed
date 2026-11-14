@@ -1271,3 +1271,52 @@ html[data-theme="dark"] .insumos-page,
   background-color: var(--ins-red-bg);
   border-radius: 50%;
 }
+
+
+/* Alertas con el diseño de Bajas de insumos. */
+.insumos-page .ins-toast {
+  position: fixed;
+  z-index: 3000;
+  top: 20px;
+  right: 20px;
+  width: auto;
+  max-width: min(420px, calc(100vw - 40px));
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid #bce3c7;
+  border-radius: 10px;
+  background: #eaf7ed;
+  color: #22683c;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.insumos-page .ins-toast.error {
+  border-color: #f2c5c5;
+  background: #fff0f0;
+  color: #a92f2f;
+}
+
+.insumos-page .ins-toast>svg {
+  flex-shrink: 0;
+}
+
+.insumos-page .ins-toast>span {
+  flex: 1;
+}
+
+.insumos-page .ins-toast button {
+  display: flex;
+  flex-shrink: 0;
+  margin-left: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
