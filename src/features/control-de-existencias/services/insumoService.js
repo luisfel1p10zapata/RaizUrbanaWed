@@ -18,7 +18,8 @@ async function solicitar(ruta = '', opciones = {}) {
     }
 
     if (!respuesta.ok) {
-        let mensaje = `No se pudo completar la operación. Código: ${respuesta.status}.`;
+        let mensaje =
+            `No se pudo completar la operación. Código: ${respuesta.status}.`;
 
         try {
             const error = await respuesta.json();
@@ -31,7 +32,7 @@ async function solicitar(ruta = '', opciones = {}) {
                     .join('. ');
             }
         } catch {
-            // Si la respuesta no tiene JSON, se conserva el mensaje general.
+            // Se conserva el mensaje general.
         }
 
         throw new Error(mensaje);

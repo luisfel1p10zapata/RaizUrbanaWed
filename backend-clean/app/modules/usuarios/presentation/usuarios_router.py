@@ -1,5 +1,5 @@
 """Controlador / Router de presentación para la gestión de usuarios."""
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, status # type: ignore
 
 from app.modules.usuarios.application.actualizar_usuario import ActualizarUsuario
 from app.modules.usuarios.application.activar_usuario import ActivarUsuario

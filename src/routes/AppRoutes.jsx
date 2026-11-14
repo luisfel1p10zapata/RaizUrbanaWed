@@ -1,9 +1,14 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+} from 'react-router-dom';
 
 import MainNavbar from '../components/navegacion/MainNavbar';
 import AdminLayout from '../components/layout/AdminLayout';
 
-// Ventas (Incluye catálogo, carrito y gestión de ventas/productos)
+// Ventas y catálogo
 import Inicio from '../features/ventas/components/Inicio';
 import Ventas from '../features/ventas/components/Ventas';
 import Carrito from '../features/ventas/components/Carrito';
@@ -20,37 +25,33 @@ import Compras from '../features/compras/components/Compras';
 import ComprasInsumos from '../features/compras/components/ComprasInsumos';
 import Proveedores from '../features/compras/components/Proveedores';
 
-
-// Control de Existencias / Inventario
+// Inventario
 import Insumos from '../features/control-de-existencias/components/Insumos';
 import CategoriaInsumos from '../features/control-de-existencias/components/CategoriaInsumos';
-import Materiales from '../features/control-de-existencias/components/Materiales';
-import Tamanos from '../features/control-de-existencias/components/Tamanos';
 import BajasInsumos from '../features/control-de-existencias/components/BajasInsumos';
 
-// Producción y Configuración de Procesos
+// Procesos
 import Produccion from '../features/produccion/components/Produccion';
 import MetodoPago from '../features/ventas/components/MetodoPago';
 
-// Administración (Usuarios y Roles)
+// Administración
 import Usuarios from '../features/usuarios/components/Usuarios';
 import Roles from '../features/config/components/Roles';
 
-// Cuenta y Autenticación
+// Cuenta y autenticación
 import InicioSesion from '../features/usuarios/components/InicioSesion';
 import Registro from '../features/usuarios/components/Registro';
 import RecuperarContrasena from '../features/usuarios/components/RecuperarContrasena';
+import RestablecerContrasena from '../features/usuarios/components/RestablecerContrasena';
 import ActivarCuenta from '../features/usuarios/components/ActivarCuenta';
 import Perfil from '../features/usuarios/components/Perfil';
+import RutaProtegida from '../features/usuarios/components/RutaProtegida';
 
 const AppRoutes = () => {
   return (
     <BrowserRouter>
       <Routes>
-
-        {/* ==================== */}
-        {/* RUTAS PÚBLICAS       */}
-        {/* ==================== */}
+        {/* Rutas públicas */}
 
         <Route
           path="/inicio"
@@ -78,133 +79,155 @@ const AppRoutes = () => {
         />
 
         <Route
+          path="/cuenta/restablecer-contrasena"
+          element={<RestablecerContrasena />}
+        />
+
+        <Route
           path="/activar-cuenta"
           element={<ActivarCuenta />}
         />
 
+        {/* Perfil para personas con sesión activa */}
 
-        {/* ==================== */}
-        {/* RUTAS ADMINISTRATIVAS */}
-        ...
-        {/* ==================== */}
-
-        <Route element={<AdminLayout />}>
-
-          {/* Principal */}
-          <Route
-            path="/dashboard"
-            element={<Dashboard />}
-          />
-
-          {/* Ventas */}
-          <Route
-            path="/ventas"
-            element={<Ventas />}
-          />
-
-          <Route
-            path="/carrito"
-            element={<Carrito />}
-          />
-
-          <Route
-            path="/productos"
-            element={<Productos />}
-          />
-
-          <Route
-            path="/categorias"
-            element={<Categorias />}
-          />
-
-          <Route
-            path="/subcategorias"
-            element={<Subcategorias />}
-          />
-
-          {/* Compras */}
-          <Route
-            path="/compras"
-            element={<Compras />}
-          />
-
-          <Route
-            path="/compras-insumos"
-            element={<ComprasInsumos />}
-          />
-
-          <Route
-            path="/proveedores"
-            element={<Proveedores />}
-          />
-
-          {/* Inventario */}
-          <Route
-            path="/inventario/bajas-insumos"
-            element={<BajasInsumos />}
-          />
-
-          {/* Inventario */}
-          <Route
-            path="/devoluciones"
-            element={<Devoluciones />}
-          />
-
-          {/* Inventario */}
-          <Route
-            path="/inventario/insumos"
-            element={<Insumos />}
-          />
-
-          <Route
-            path="/inventario/categoria-insumos"
-            element={<CategoriaInsumos />}
-          />
-
-          <Route
-            path="/inventario/materiales"
-            element={<Materiales />}
-          />
-
-          <Route
-            path="/inventario/tamanos"
-            element={<Tamanos />}
-          />
-
-          {/* Procesos */}
-          <Route
-            path="/procesos/produccion"
-            element={<Produccion />}
-          />
-
-          <Route
-            path="/procesos/metodo-pago"
-            element={<MetodoPago />}
-          />
-
-          {/* Administración */}
-          <Route
-            path="/administracion/usuarios"
-            element={<Usuarios />}
-          />
-
-          <Route
-            path="/administracion/roles"
-            element={<Roles />}
-          />
-
-          {/* Cuenta */}
+        <Route element={<RutaProtegida />}>
           <Route
             path="/cuenta/perfil"
-            element={<Perfil />}
+            element={
+              <>
+                <MainNavbar />
+                <Perfil />
+              </>
+            }
           />
-
         </Route>
 
+        {/* Área administrativa */}
 
-        {/* ==================== */}
-        {/* REDIRECCIONES        */}
-        {/* ==================== */}
+        <Route element={<RutaProtegida soloAdministrativo />}>
+          <Route element={<AdminLayout />}>
+            <Route element={<RutaProtegida permiso="Dashboard" />}>
+              <Route
+                path="/dashboard"
+                element={<Dashboard />}
+              />
+            </Route>
+
+            <Route element={<RutaProtegida permiso="Ventas" />}>
+              <Route
+                path="/ventas"
+                element={<Ventas />}
+              />
+            </Route>
+
+            <Route element={<RutaProtegida permiso="Carrito" />}>
+              <Route
+                path="/carrito"
+                element={<Carrito />}
+              />
+            </Route>
+
+            <Route element={<RutaProtegida permiso="Productos" />}>
+              <Route
+                path="/productos"
+                element={<Productos />}
+              />
+            </Route>
+
+            <Route element={<RutaProtegida permiso="Categoria" />}>
+              <Route
+                path="/categorias"
+                element={<Categorias />}
+              />
+
+              <Route
+                path="/inventario/categoria-insumos"
+                element={<CategoriaInsumos />}
+              />
+            </Route>
+
+            <Route element={<RutaProtegida permiso="SubCategoria" />}>
+              <Route
+                path="/subcategorias"
+                element={<Subcategorias />}
+              />
+            </Route>
+
+            <Route element={<RutaProtegida permiso="Compras" />}>
+              <Route
+                path="/compras"
+                element={<Compras />}
+              />
+
+              <Route
+                path="/compras-insumos"
+                element={<ComprasInsumos />}
+              />
+            </Route>
+
+            <Route element={<RutaProtegida permiso="Proveedores" />}>
+              <Route
+                path="/proveedores"
+                element={<Proveedores />}
+              />
+            </Route>
+
+            <Route element={<RutaProtegida permiso="Bajas Insumos" />}>
+              <Route
+                path="/inventario/bajas-insumos"
+                element={<BajasInsumos />}
+              />
+            </Route>
+
+            <Route element={<RutaProtegida permiso="Devoluciones" />}>
+              <Route
+                path="/devoluciones"
+                element={<Devoluciones />}
+              />
+            </Route>
+
+            <Route element={<RutaProtegida permiso="Insumos" />}>
+              <Route
+                path="/inventario/insumos"
+                element={<Insumos />}
+              />
+            </Route>
+
+            <Route
+              element={
+                <RutaProtegida permiso="Orden de Produccion" />
+              }
+            >
+              <Route
+                path="/procesos/produccion"
+                element={<Produccion />}
+              />
+            </Route>
+
+            <Route element={<RutaProtegida permiso="Metodo Pago" />}>
+              <Route
+                path="/procesos/metodo-pago"
+                element={<MetodoPago />}
+              />
+            </Route>
+
+            <Route element={<RutaProtegida permiso="Usuarios" />}>
+              <Route
+                path="/administracion/usuarios"
+                element={<Usuarios />}
+              />
+            </Route>
+
+            <Route element={<RutaProtegida permiso="Roles" />}>
+              <Route
+                path="/administracion/roles"
+                element={<Roles />}
+              />
+            </Route>
+          </Route>
+        </Route>
+
+        {/* Redirecciones */}
 
         <Route
           path="/"
@@ -215,7 +238,6 @@ const AppRoutes = () => {
           path="*"
           element={<Navigate to="/inicio" replace />}
         />
-
       </Routes>
     </BrowserRouter>
   );

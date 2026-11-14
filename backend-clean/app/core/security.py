@@ -1,5 +1,5 @@
 """Módulo de seguridad y hashing de contraseñas para Raíz Urbana."""
-import bcrypt
+import bcrypt # type: ignore
 
 
 def hash_password(password: str) -> str:

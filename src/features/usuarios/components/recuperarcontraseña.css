@@ -749,3 +749,23 @@
         transition: none !important;
     }
 }
+
+.ru-recovery__password-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    padding: 8px;
+    color: inherit;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+}
+
+.ru-recovery__field-error {
+    display: block;
+    margin-top: 6px;
+    color: #d8483a;
+    font-size: 12px;
+    line-height: 1.4;
+}

@@ -7,7 +7,7 @@ import threading
 from contextlib import contextmanager
 from queue import Queue, Empty
 from urllib.parse import urlparse, unquote, quote_plus
-import psycopg
+import psycopg # type: ignore
 from app.core.config import settings
 
 

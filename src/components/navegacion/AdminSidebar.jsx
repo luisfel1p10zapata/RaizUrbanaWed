@@ -6,59 +6,97 @@ import {
     User,
     LogOut,
 } from 'lucide-react';
+
 import { NavLink, useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
-import './AdminSidebar.css';
+import { useEffect, useState } from 'react';
+
 import useTheme from '../hooks/useTheme';
+
+import {
+    cerrarSesion,
+    consultarSesion,
+} from '../../features/usuarios/services/authService';
+
 import navigationConfig from './NavigationConfig';
 import SidebarSection from './SidebarSection';
 import SidebarItem from './SidebarItem';
 
+import './AdminSidebar.css';
+
 const AdminSidebar = ({ collapsed, setCollapsed }) => {
     const navigate = useNavigate();
+
     const [openSection, setOpenSection] = useState('Principal');
-    const { theme, toggleTheme } = useTheme();
     const [currentUser, setCurrentUser] = useState(null);
+    const [cargandoSesion, setCargandoSesion] = useState(true);
+    const [cerrando, setCerrando] = useState(false);
+    const [error, setError] = useState('');
 
-    // Leer el usuario autenticado desde el localStorage
+    const { theme, toggleTheme } = useTheme();
+
     useEffect(() => {
-        const checkUserSession = () => {
-            const savedUser = localStorage.getItem('raiz_urbana_user');
-            if (savedUser) {
-                try {
-                    setCurrentUser(JSON.parse(savedUser));
-                    // eslint-disable-next-line no-unused-vars
-                } catch (e) {
-                    setCurrentUser(null);
-                }
-            } else {
-                setCurrentUser(null);
-            }
-        };
+        let activo = true;
 
-        checkUserSession();
-        window.addEventListener('storage', checkUserSession);
-        return () => window.removeEventListener('storage', checkUserSession);
+        consultarSesion()
+            .then((usuario) => {
+                if (activo) {
+                    setCurrentUser(usuario);
+                }
+            })
+            .catch(() => {
+                if (activo) {
+                    setError('No fue posible comprobar la sesión.');
+                }
+            })
+            .finally(() => {
+                if (activo) {
+                    setCargandoSesion(false);
+                }
+            });
+
+        return () => {
+            activo = false;
+        };
     }, []);
 
-    const handleLogout = () => {
-        localStorage.removeItem('raiz_urbana_token');
-        localStorage.removeItem('raiz_urbana_user');
-        setCurrentUser(null);
-        navigate('/cuenta/inicio-sesion');
+    const handleLogout = async () => {
+        if (cerrando) return;
+
+        setCerrando(true);
+        setError('');
+
+        try {
+            await cerrarSesion();
+            setCurrentUser(null);
+
+            navigate('/cuenta/inicio-sesion', {
+                replace: true,
+            });
+        } catch {
+            setCurrentUser(null);
+
+            setError(
+                'Se cerró la sesión en este navegador, pero no se pudo confirmar el cierre en el servidor.'
+            );
+        } finally {
+            setCerrando(false);
+        }
     };
 
     const toggleSidebar = () => {
-        setCollapsed((prev) => !prev);
+        setCollapsed((actual) => !actual);
     };
 
     const handleSectionToggle = (sectionTitle) => {
-        setOpenSection((prev) =>
-            prev === sectionTitle ? null : sectionTitle
+        setOpenSection((actual) =>
+            actual === sectionTitle ? null : sectionTitle
         );
     };
 
-    const userName = currentUser?.nombres || currentUser?.nombre || currentUser?.correo || 'Mi Perfil';
+    const userName =
+        currentUser?.nombres ||
+        currentUser?.correo ||
+        'Mi perfil';
 
     return (
         <aside
@@ -75,10 +113,11 @@ const AdminSidebar = ({ collapsed, setCollapsed }) => {
                         alt="Raíz Urbana"
                     />
                 </div>
+
                 {!collapsed && (
-                    <span className="admin-sidebar-title">
-                    </span>
+                    <span className="admin-sidebar-title" />
                 )}
+
                 <button
                     type="button"
                     className="admin-sidebar-toggle"
@@ -96,6 +135,7 @@ const AdminSidebar = ({ collapsed, setCollapsed }) => {
                     )}
                 </button>
             </div>
+
             {!collapsed && (
                 <nav className="admin-sidebar-nav">
                     {navigationConfig.map((section) => (
@@ -103,7 +143,9 @@ const AdminSidebar = ({ collapsed, setCollapsed }) => {
                             key={section.title}
                             section={section}
                             isOpen={openSection === section.title}
-                            onToggle={() => handleSectionToggle(section.title)}
+                            onToggle={() =>
+                                handleSectionToggle(section.title)
+                            }
                         >
                             {section.items.map((item) => (
                                 <SidebarItem
@@ -115,6 +157,7 @@ const AdminSidebar = ({ collapsed, setCollapsed }) => {
                     ))}
                 </nav>
             )}
+
             {collapsed && (
                 <nav className="admin-sidebar-nav collapsed-nav">
                     {navigationConfig.flatMap((section) =>
@@ -127,6 +170,7 @@ const AdminSidebar = ({ collapsed, setCollapsed }) => {
                     )}
                 </nav>
             )}
+
             <div className="admin-sidebar-bottom">
                 <button
                     type="button"
@@ -143,50 +187,84 @@ const AdminSidebar = ({ collapsed, setCollapsed }) => {
                     ) : (
                         <Moon size={18} />
                     )}
+
                     {!collapsed && (
                         <span>
-                            {theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}
+                            {theme === 'dark'
+                                ? 'Modo claro'
+                                : 'Modo oscuro'}
                         </span>
                     )}
                 </button>
 
-                {currentUser ? (
-                    /* SI HAY SESIÓN ACTIVA EN EL SIDEBAR */
-                    <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+                {cargandoSesion ? (
+                    !collapsed && (
+                        <span className="admin-sidebar-bottom-item">
+                            Cargando cuenta...
+                        </span>
+                    )
+                ) : currentUser ? (
+                    <div
+                        style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            width: '100%',
+                        }}
+                    >
                         <NavLink
                             to="/cuenta/perfil"
                             className="admin-sidebar-bottom-item"
                             title={userName}
                         >
                             <User size={18} />
+
                             {!collapsed && (
-                                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                <span
+                                    style={{
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        whiteSpace: 'nowrap',
+                                    }}
+                                >
                                     {userName}
                                 </span>
                             )}
                         </NavLink>
+
                         <button
                             type="button"
                             className="admin-sidebar-bottom-item"
                             onClick={handleLogout}
+                            disabled={cerrando}
                             style={{ color: '#d8483a' }}
                             title="Cerrar sesión"
                         >
                             <LogOut size={18} />
-                            {!collapsed && <span>Cerrar sesión</span>}
+
+                            {!collapsed && (
+                                <span>
+                                    {cerrando
+                                        ? 'Cerrando sesión...'
+                                        : 'Cerrar sesión'}
+                                </span>
+                            )}
                         </button>
                     </div>
                 ) : (
-                    /* SI NO HAY SESIÓN */
                     <NavLink
                         to="/cuenta/inicio-sesion"
                         className="admin-sidebar-bottom-item"
                     >
                         <User size={18} />
+
                         {!collapsed && (
                             <span>Iniciar sesión</span>
                         )}
                     </NavLink>
+                )}
+
+                {error && !collapsed && (
+                    <p role="alert">{error}</p>
                 )}
             </div>
         </aside>

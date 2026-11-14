@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+
 import {
   Mail,
   Lock,
@@ -12,6 +13,8 @@ import {
 } from 'lucide-react';
 
 import useTheme from '../../../components/hooks/useTheme';
+import { iniciarSesion } from '../services/authService';
+
 import './iniciosesion.css';
 
 export default function InicioSesion() {
@@ -38,49 +41,25 @@ export default function InicioSesion() {
     setLoading(true);
 
     try {
-      const response = await fetch(
-        'http://localhost:8000/api/auth/login',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            correo: email.trim(),
-            password,
-          }),
-        }
-      );
+      const usuario = await iniciarSesion(email, password);
 
-      const data = await response.json().catch(() => null);
+      const esAdministrativo =
+        usuario.rol === 'Administrador' ||
+        usuario.rol === 'Empleado';
 
-      if (!response.ok) {
-        const detail =
-          typeof data?.detail === 'string'
-            ? data.detail
-            : 'No se pudo iniciar sesión. Revisa tu correo y contraseña.';
+      const tieneDashboard =
+        Array.isArray(usuario.permisos) &&
+        usuario.permisos.includes('Dashboard');
 
-        throw new Error(detail);
+      if (esAdministrativo && tieneDashboard) {
+        navigate('/dashboard', { replace: true });
+      } else {
+        navigate('/inicio', { replace: true });
       }
-
-      if (!data?.token || !data?.usuario) {
-        throw new Error(
-          'El servidor no devolvió los datos necesarios para iniciar sesión.'
-        );
-      }
-
-      localStorage.setItem('raiz_urbana_token', data.token);
-      localStorage.setItem(
-        'raiz_urbana_user',
-        JSON.stringify(data.usuario)
-      );
-
-      navigate('/dashboard');
     } catch (err) {
       setError(
-        err instanceof TypeError
-          ? 'No fue posible conectar con el servidor. Inténtalo nuevamente.'
-          : err.message || 'Ocurrió un error al iniciar sesión.'
+        err.message ||
+        'No se pudo iniciar sesión. Inténtalo nuevamente.'
       );
     } finally {
       setLoading(false);
@@ -96,6 +75,7 @@ export default function InicioSesion() {
         <span aria-hidden="true">←</span>
         Volver al inicio
       </Link>
+
       <section
         className="ru-login__shell"
         aria-label="Acceso a Raíz Urbana"
@@ -107,7 +87,7 @@ export default function InicioSesion() {
             </div>
 
             <span className="ru-login__brand-label">
-              SISTEMA ADMINISTRATIVO
+              RAÍZ URBANA
             </span>
           </div>
 
@@ -123,23 +103,26 @@ export default function InicioSesion() {
             </h1>
 
             <p className="ru-login__hero-description">
-              Un espacio para gestionar tu negocio y dar vida
-              a todo lo que imaginas.
+              Un espacio para descubrir nuestros productos
+              y gestionar tu cuenta.
             </p>
 
             <div className="ru-login__modules">
               <span>Catálogo</span>
-              <span>Ventas</span>
-              <span>Producción</span>
+              <span>Cuenta</span>
+              <span>Seguridad</span>
             </div>
           </div>
 
           <div className="ru-login__brand-footer">
             <span>RAÍZ URBANA</span>
-            <span>© {new Date().getFullYear()} · Uso interno</span>
+            <span>© {new Date().getFullYear()}</span>
           </div>
 
-          <div className="ru-login__decoration" aria-hidden="true" />
+          <div
+            className="ru-login__decoration"
+            aria-hidden="true"
+          />
         </aside>
 
         <div className="ru-login__panel">
@@ -156,7 +139,7 @@ export default function InicioSesion() {
               <h2>Iniciar sesión</h2>
 
               <p>
-                Ingresa tus datos para acceder a tu espacio de trabajo.
+                Ingresa tus datos para acceder a tu cuenta.
               </p>
             </header>
 
@@ -175,7 +158,9 @@ export default function InicioSesion() {
               className="ru-login__form"
               onSubmit={handleSubmit}
               aria-busy={loading}
-              aria-describedby={error ? 'ru-login-error' : undefined}
+              aria-describedby={
+                error ? 'ru-login-error' : undefined
+              }
             >
               <div className="ru-login__field">
                 <label htmlFor="ru-login-email">
@@ -198,7 +183,10 @@ export default function InicioSesion() {
                     autoCapitalize="none"
                     spellCheck={false}
                     value={email}
-                    onChange={(event) => setEmail(event.target.value)}
+                    onChange={(event) => {
+                      setEmail(event.target.value);
+                      setError('');
+                    }}
                     required
                   />
                 </div>
@@ -225,9 +213,10 @@ export default function InicioSesion() {
                     placeholder="Ingresa tu contraseña"
                     autoComplete="current-password"
                     value={password}
-                    onChange={(event) =>
-                      setPassword(event.target.value)
-                    }
+                    onChange={(event) => {
+                      setPassword(event.target.value);
+                      setError('');
+                    }}
                     className="ru-login__password-input"
                     required
                   />
@@ -235,7 +224,9 @@ export default function InicioSesion() {
                   <button
                     type="button"
                     className="ru-login__toggle"
-                    onClick={() => setShowPassword((value) => !value)}
+                    onClick={() =>
+                      setShowPassword((value) => !value)
+                    }
                     aria-label={
                       showPassword
                         ? 'Ocultar contraseña'
@@ -265,7 +256,9 @@ export default function InicioSesion() {
                 disabled={loading}
               >
                 <span>
-                  {loading ? 'Iniciando sesión...' : 'Iniciar sesión'}
+                  {loading
+                    ? 'Iniciando sesión...'
+                    : 'Iniciar sesión'}
                 </span>
 
                 {loading ? (
@@ -282,12 +275,14 @@ export default function InicioSesion() {
 
             <p className="ru-login__register">
               ¿Aún no tienes una cuenta?{' '}
-              <Link to="/cuenta/registro">Regístrate</Link>
+              <Link to="/cuenta/registro">
+                Regístrate
+              </Link>
             </p>
 
             <div className="ru-login__access-note">
               <ShieldCheck size={16} aria-hidden="true" />
-              <span>Acceso al sistema administrativo</span>
+              <span>Acceso a tu cuenta de Raíz Urbana</span>
             </div>
           </div>
         </div>

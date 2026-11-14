@@ -839,8 +839,8 @@ export default function Insumos() {
       render: (insumo) => (
         <span
           className={`stock-text ${Number(insumo.stock) <= Number(insumo.stockMinimo)
-              ? 'low'
-              : 'ok'
+            ? 'low'
+            : 'ok'
             }`}
         >
           {insumo.stock}
@@ -867,8 +867,8 @@ export default function Insumos() {
         >
           <span
             className={`ins-status-pill ${insumo.estado === 'Activo'
-                ? 'active'
-                : 'inactive'
+              ? 'active'
+              : 'inactive'
               }`}
           >
             <span className="ins-status-dot" />
@@ -933,6 +933,11 @@ export default function Insumos() {
           className={`ins-toast ${alerta.type}`}
           role={alerta.type === 'error' ? 'alert' : 'status'}
         >
+          {alerta.type === 'error' ? (
+            <AlertTriangle size={19} aria-hidden="true" />
+          ) : (
+            <CheckCircle2 size={19} aria-hidden="true" />
+          )}
           <span>{alerta.message}</span>
 
           <button
@@ -1614,3 +1619,4 @@ export default function Insumos() {
     </div>
   );
 }
+
