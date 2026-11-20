@@ -1,0 +1,268 @@
+/* ==================================================================
+   ModalsVentas.css — estilos de todos los modales de Ventas.
+   Las variables (--primary, --card-bg...) vienen de .ru-root (Ventas.css).
+   ================================================================== */
+
+/* ---------- 1. BASES AGRUPADAS (propiedades que se repetían) ---------- */
+
+/* Caja estándar: borde + radio */
+.ru-form-input, .ru-v-summary-box, .ru-v-readonly, .ru-v-add-box, .ru-v-summary, .ru-v-box-total,
+.ru-v-client-row, .ru-v-payment-card, .ru-v-info-box, .ru-v-warning-box, .ru-v-kv,
+.ru-v-timeline-item, .ru-v-status-row {
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
+}
+
+/* Fondo "background" (base + estados hover/selected) */
+.ru-v-avatar, .ru-v-stepper, .ru-v-readonly, .ru-v-add-box, .ru-v-box-total, .ru-v-info-box,
+.ru-v-product-row.total, .ru-modal-close:hover,
+.ru-v-client-row:hover, .ru-v-client-row.selected, .ru-v-payment-card.selected,
+.ru-v-status-row:hover, .ru-v-status-row.selected {
+  background: var(--background);
+}
+
+/* Elementos con contenido centrado */
+.ru-modal-close, .ru-v-step-circle, .ru-v-timeline-icon, .ru-v-status-check, .ru-v-avatar {
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+
+/* Filas clicables */
+.ru-v-client-row, .ru-v-payment-card, .ru-v-status-row { cursor: pointer; transition: all 0.15s ease; }
+
+/* Filas flex (ícono + texto) */
+.ru-v-summary-box, .ru-v-client-row, .ru-v-timeline-item, .ru-v-product-left { display: flex; align-items: center; gap: 12px; }
+.ru-v-product-row, .ru-v-status-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+
+/* Etiquetas en mayúscula */
+.ru-form-label, .ru-v-field-label, .ru-v-add-title, .ru-v-section, .ru-v-recibo-label {
+  font-weight: 700; text-transform: uppercase; color: var(--label-text);
+}
+
+/* Estado seleccionado con borde marcado */
+.ru-v-payment-card.selected, .ru-v-status-row.selected { border: 1.5px solid var(--sel); }
+.ru-v-client-row:hover, .ru-v-client-row.selected { border-color: var(--sel); }
+
+/* Total en grande */
+.ru-v-product-row.total span:last-child, .ru-v-box-total span:last-child { font-size: 17px; }
+
+/* ---------- 2. UTILIDADES Y TEXTO COMPARTIDO ---------- */
+.ru-v-block { width: 100%; }
+.ru-v-hint { font-size: 13.5px; color: var(--secondary); margin: 0 0 15px; }
+.ru-v-muted { color: var(--muted-text); font-size: 11.5px; }
+.ru-v-client-name { display: block; font-weight: 600; font-size: 14.5px; color: var(--primary); }
+.ru-v-client-email { display: block; font-size: 12.5px; color: var(--muted-text); margin-top: 1px; }
+
+/* ---------- 3. BADGES ---------- */
+.ru-v-badge {
+  display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+  font-size: 13px; font-weight: 600; padding: 5px 13px;
+  border-radius: 999px; border: 1px solid transparent;
+}
+.ru-v-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+.ru-v-badge-green { background: var(--green-bg); color: var(--green-fg); border-color: var(--green-bd); }
+.ru-v-badge-blue  { background: var(--blue-bg);  color: var(--blue-fg);  border-color: var(--blue-bd); }
+.ru-v-badge-amber { background: var(--amber-bg); color: var(--amber-fg); border-color: var(--amber-bd); }
+.ru-v-badge-red   { background: var(--red-bg);   color: var(--red-fg);   border-color: var(--red-bd); }
+.ru-v-badge-gray  { background: var(--gray-bg);  color: var(--gray-fg);  border-color: var(--gray-bd); }
+.ru-v-badge-plain .ru-v-badge-dot { display: none; }
+
+/* Badges en modo oscuro (se conservan: funcionan aunque el tema esté en el propio .ru-root) */
+[data-theme="dark"] .ru-v-badge-green, .dark .ru-v-badge-green, .dark-mode .ru-v-badge-green { background-color: rgba(34, 197, 94, 0.15); color: #4ADE80; border-color: rgba(34, 197, 94, 0.35); }
+[data-theme="dark"] .ru-v-badge-blue, .dark .ru-v-badge-blue, .dark-mode .ru-v-badge-blue { background-color: rgba(59, 130, 246, 0.15); color: #60A5FA; border-color: rgba(59, 130, 246, 0.35); }
+[data-theme="dark"] .ru-v-badge-amber, .dark .ru-v-badge-amber, .dark-mode .ru-v-badge-amber { background-color: rgba(245, 158, 11, 0.15); color: #FBBF24; border-color: rgba(245, 158, 11, 0.35); }
+[data-theme="dark"] .ru-v-badge-red, .dark .ru-v-badge-red, .dark-mode .ru-v-badge-red { background-color: rgba(239, 68, 68, 0.15); color: #F87171; border-color: rgba(239, 68, 68, 0.35); }
+[data-theme="dark"] .ru-v-badge-gray, .dark .ru-v-badge-gray, .dark-mode .ru-v-badge-gray { background-color: rgba(154, 140, 152, 0.15); color: #C9ADA7; border-color: rgba(154, 140, 152, 0.3); }
+
+/* ---------- 4. MARCO DEL MODAL ---------- */
+.ru-modal-overlay {
+  position: fixed; inset: 0; z-index: 100; padding: 24px;
+  background: rgba(18, 15, 24, 0.55); backdrop-filter: blur(3px);
+  display: flex; align-items: center; justify-content: center;
+  animation: ru-fade-in 0.15s ease;
+}
+@keyframes ru-fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+.ru-modal {
+  background: var(--card-bg); border-radius: 20px; width: 100%; max-width: 620px; max-height: 90vh;
+  display: flex; flex-direction: column; overflow: hidden; box-shadow: var(--shadow-modal);
+}
+.ru-modal-header { padding: 24px 30px 18px; border-bottom: 1px solid var(--divider); flex-shrink: 0; position: relative; }
+.ru-modal-eyebrow { font-size: 11px; letter-spacing: 0.1em; color: var(--accent); font-weight: 600; margin-bottom: 6px; }
+.ru-modal-title { font-family: var(--font-logo); font-size: 26px; font-weight: 600; color: var(--primary); margin: 0; }
+.ru-modal-close {
+  position: absolute; top: 22px; right: 24px; width: 32px; height: 32px; border-radius: 50%;
+  border: 1px solid var(--card-border); background: transparent; color: var(--secondary);
+  cursor: pointer; transition: background-color 0.15s ease;
+}
+.ru-modal-body { padding: 24px 30px; overflow-y: auto; flex: 1; }
+.ru-modal-footer { padding: 18px 30px 24px; border-top: 1px solid var(--divider); flex-shrink: 0; display: flex; gap: 12px; }
+.ru-modal-footer .btn { flex: 1; }
+
+/* ---------- 5. FORMULARIOS ---------- */
+.ru-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 18px; }
+.ru-form-field { min-width: 0; }
+.ru-form-field.full { grid-column: 1 / -1; }
+.ru-form-label { display: block; font-size: 10.5px; letter-spacing: 0.07em; margin-bottom: 7px; }
+.ru-form-label .req { color: var(--negative); }
+.ru-form-input-wrap { position: relative; display: flex; align-items: center; }
+.ru-form-input-wrap .leading { position: absolute; left: 14px; color: var(--muted-text); pointer-events: none; display: flex; }
+.ru-form-input {
+  width: 100%; padding: 12px 14px; background: var(--card-bg); outline: none;
+  font-family: var(--font-ui); font-size: 13.5px; color: var(--primary); transition: border-color 0.15s ease;
+}
+.ru-form-input.with-icon { padding-left: 40px; }
+.ru-form-input::placeholder { color: var(--muted-text); }
+.ru-form-input:focus { border-color: var(--secondary); }
+
+select.ru-form-input {
+  appearance: none; -webkit-appearance: none; cursor: pointer; padding-right: 36px;
+  background-image: var(--select-arrow); background-repeat: no-repeat; background-position: right 14px center;
+}
+select.ru-form-input option { background: var(--card-bg); color: var(--primary); }
+input[type="number"].ru-form-input { -moz-appearance: textfield; appearance: textfield; }
+input[type="number"].ru-form-input::-webkit-outer-spin-button,
+input[type="number"].ru-form-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+/* ---------- 6. PIEZAS DE VENTAS ---------- */
+.ru-v-form-top { margin-top: 22px; }
+.ru-v-field-label, .ru-v-add-title { font-size: 11px; letter-spacing: 0.08em; }
+.ru-v-field-label { margin: 4px 0 9px; }
+
+.ru-v-section { gap: 10px; font-size: 11px; letter-spacing: 0.12em; margin: 22px 0 11px; display: flex; align-items: center; }
+.ru-v-section:first-child { margin-top: 0; }
+.ru-v-section::after { content: ""; flex: 1; height: 1px; background: var(--divider); }
+
+.ru-v-avatar { width: 34px; height: 34px; border-radius: 8px; color: var(--muted-text); }
+.ru-v-summary-box { padding: 12px 14px; }
+.ru-v-readonly { padding: 12px 15px; font-size: 14px; color: var(--secondary); word-break: break-word; }
+
+/* Stepper (Registrar Venta) */
+.ru-v-stepper { display: flex; align-items: flex-start; padding: 18px 30px 6px; border-bottom: 1px solid var(--divider); }
+.ru-v-step { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.ru-v-step-circle {
+  width: 28px; height: 28px; border-radius: 50%; font-size: 12px; font-weight: 700;
+  border: 1px solid var(--card-border); color: var(--muted-text); background: var(--card-bg);
+}
+.ru-v-step-circle.done, .ru-v-step-circle.active { background: var(--dark); border-color: var(--dark); color: #FFFFFF; }
+.ru-v-step-label { font-size: 11px; color: var(--muted-text); white-space: nowrap; font-weight: 500; }
+.ru-v-step-label.on { color: var(--primary); font-weight: 600; }
+.ru-v-step-line { flex: 1; height: 1px; background: var(--card-border); margin: 14px 10px 0; min-width: 8px; }
+.ru-v-step-line.filled { background: var(--dark); }
+
+/* Lista de clientes */
+.ru-v-client-list { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; max-height: 250px; overflow-y: auto; }
+.ru-v-client-row { padding: 12px 14px; }
+
+/* Agregar producto y resumen */
+.ru-v-add-box { padding: 18px; }
+.ru-v-add-title { margin-bottom: 14px; }
+.ru-v-add-box .ru-form-grid { margin-bottom: 16px; }
+.ru-v-summary { overflow: hidden; margin: 14px 0 0; background: var(--card-bg); }
+.ru-v-product-row { padding: 12px 14px; border-bottom: 1px solid var(--card-border); font-size: 13.5px; flex-wrap: wrap; }
+.ru-v-product-row:last-child { border-bottom: none; }
+.ru-v-product-row.total { font-weight: 700; }
+.ru-v-product-left { min-width: 0; }
+.ru-v-product-name { display: block; font-weight: 600; word-break: break-word; }
+.ru-v-product-meta { display: block; font-size: 12px; color: var(--muted-text); margin-top: 1px; }
+.ru-v-product-price { font-weight: 700; white-space: nowrap; }
+.ru-v-box-total {
+  display: flex; justify-content: space-between; align-items: center; gap: 6px;
+  padding: 14px 16px; margin-top: 8px; font-size: 13.5px; font-weight: 700;
+}
+
+/* Métodos de pago */
+.ru-v-payment-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+.ru-v-payment-card {
+  display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 0; padding: 14px 6px;
+  background: var(--card-bg); font-family: var(--font-ui); font-size: 13px; font-weight: 600; color: var(--primary);
+}
+
+/* Avisos */
+.ru-v-info-box, .ru-v-warning-box {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 10px;
+  padding: 12px 14px; font-size: 13px; line-height: 1.4;
+}
+.ru-v-info-box { color: var(--secondary); }
+.ru-v-info-box strong { color: var(--primary); margin-left: auto; }
+.ru-v-warning-box { background: var(--amber-bg); border-color: var(--amber-bd); color: var(--amber-fg); }
+.ru-v-info-icon, .ru-v-warning-icon { display: flex; flex-shrink: 0; }
+.ru-v-info-icon { color: var(--green-fg); }
+
+/* Clave-valor */
+.ru-v-kv {
+  display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  padding: 12px 14px; margin-bottom: 8px; font-size: 14px; color: var(--secondary);
+}
+.ru-v-kv strong { color: var(--primary); font-weight: 600; }
+.ru-v-kv.plain { border: none; border-bottom: 1px solid var(--divider); border-radius: 0; padding: 13px 2px; margin: 0; }
+.ru-v-kv.plain:last-of-type { border-bottom: none; }
+
+/* Historial */
+.ru-v-timeline { display: flex; flex-direction: column; gap: 8px; }
+.ru-v-timeline-item { padding: 10px 12px; font-size: 12.5px; }
+.ru-v-timeline-item.green { background: var(--green-bg); border-color: var(--green-bd); }
+.ru-v-timeline-item.blue  { background: var(--blue-bg);  border-color: var(--blue-bd); }
+.ru-v-timeline-icon { width: 26px; height: 26px; border-radius: 6px; background: var(--card-bg); border: 1px solid var(--card-border); }
+.ru-v-timeline-item.green .ru-v-timeline-icon { color: var(--green-fg); }
+.ru-v-timeline-item.blue .ru-v-timeline-icon { color: var(--blue-fg); }
+.ru-v-timeline-item strong { display: block; font-size: 12.5px; }
+.ru-v-timeline-item small { font-size: 11.5px; color: var(--muted-text); }
+
+/* Recibo */
+.ru-v-recibo { border: 1px dashed var(--soft); border-radius: var(--radius-sm); padding: 20px 18px; text-align: center; margin-bottom: 14px; background: var(--card-bg); }
+.ru-v-recibo-title { font-family: var(--font-logo); font-size: 16px; letter-spacing: 0.06em; font-weight: 600; text-transform: uppercase; }
+.ru-v-recibo-sub { font-size: 12px; color: var(--muted-text); margin-top: 2px; }
+.ru-v-recibo-block { text-align: left; margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--card-border); }
+.ru-v-recibo-label { font-size: 10px; letter-spacing: 0.1em; margin-bottom: 6px; }
+.ru-v-recibo-line { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px; font-size: 13px; padding: 3px 0; }
+.ru-v-recibo-total {
+  display: flex; justify-content: space-between; gap: 6px; text-align: left;
+  font-weight: 700; font-size: 14px; margin-top: 12px; padding: 10px 0;
+  border-top: 1px solid var(--primary); border-bottom: 1px solid var(--card-border);
+}
+.ru-v-recibo-meta {
+  display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px; text-align: left;
+  font-size: 11.5px; margin-top: 10px; padding-bottom: 10px; color: var(--muted-text);
+  border-bottom: 1px dashed var(--card-border);
+}
+.ru-v-recibo-meta strong { color: var(--primary); }
+.ru-v-recibo-footer { font-size: 11px; color: var(--muted-text); margin-top: 10px; }
+
+/* Cambiar estado */
+.ru-v-status-list { display: flex; flex-direction: column; gap: 10px; }
+.ru-v-status-row { padding: 14px 17px; }
+.ru-v-status-main { display: grid; grid-template-columns: 10px 1fr; column-gap: 12px; row-gap: 2px; align-items: center; min-width: 0; }
+.ru-v-status-dot { width: 8px; height: 8px; border-radius: 50%; }
+.ru-v-status-dot.amber { background: #F5B800; }
+.ru-v-status-dot.blue  { background: #4A90F0; }
+.ru-v-status-dot.green { background: #22C55E; }
+.ru-v-status-dot.red   { background: #F0616D; }
+.ru-v-status-name { font-weight: 600; font-size: 14.5px; }
+.ru-v-status-desc { grid-column: 2; font-size: 12px; color: var(--muted-text); }
+.ru-v-status-check { width: 18px; height: 18px; border: 1.5px solid var(--sel); border-radius: 50%; }
+
+/* ---------- 7. RESPONSIVE ---------- */
+@media (max-width: 880px) {
+  .ru-form-grid { grid-template-columns: 1fr; }
+  .ru-modal { max-width: 94vw !important; }
+}
+@media (max-width: 780px) {
+  .ru-modal { max-width: 100% !important; max-height: 94vh; border-radius: 20px 20px 0 0; }
+  .ru-modal-overlay { padding: 14px; align-items: flex-end; }
+  .ru-modal-header { padding: 20px 20px 14px; }
+  .ru-modal-body { padding: 18px 20px; }
+  .ru-modal-footer { padding: 14px 20px 20px; }
+  .ru-v-stepper { padding: 16px 20px 4px; }
+  .ru-v-payment-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 640px) {
+  .ru-v-step-label { display: none; }
+  .ru-v-step-label.on { display: block; }
+  .ru-modal-footer { flex-direction: column; }
+  .ru-v-badge { font-size: 12px; padding: 4px 11px; }
+}
+@media (max-width: 480px) {
+  .ru-v-product-row { padding: 11px 12px; font-size: 13px; }
+  .ru-form-input { padding: 11px 13px; font-size: 13px; }
+  .ru-form-input.with-icon { padding-left: 36px; }
+}

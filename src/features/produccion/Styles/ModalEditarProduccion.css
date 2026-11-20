@@ -1,0 +1,39 @@
+/* ==================================================================
+   ModalEditarProduccion.css — Estilos del Modal de Editar Producción
+   ================================================================== */
+
+.prod-edit-modal {
+  max-width: 600px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.prod-edit-modal-body {
+  max-height: calc(85vh - 130px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.prod-edit-field {
+  margin-bottom: 16px;
+}
+
+.prod-edit-grid-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.prod-edit-textarea {
+  resize: vertical;
+}
+
+@media (max-width: 600px) {
+  .prod-edit-grid-2col {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}

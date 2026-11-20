@@ -1,0 +1,39 @@
+/* ==================================================================
+   ModalEditarRoles.css — Estilos del Modal de Editar Rol
+   ================================================================== */
+
+.roles-edit-modal {
+  max-width: 580px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.roles-edit-modal .ru-modal-body {
+  max-height: calc(85vh - 130px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.roles-edit-field {
+  margin-bottom: 16px;
+}
+
+.roles-edit-field-state {
+  margin-bottom: 10px;
+}
+
+.roles-edit-textarea {
+  resize: vertical;
+}
+
+.roles-edit-state-group {
+  display: flex;
+  gap: 10px;
+}
+
+.roles-edit-state-btn {
+  flex: 1;
+  padding: 10px 14px;
+}

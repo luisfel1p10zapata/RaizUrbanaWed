@@ -1,0 +1,240 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Montserrat:wght@400;500;600;700&display=swap');
+
+/* ==================================================================
+   Ventas.css  ->  usado por Ventas.jsx
+   Contiene: tokens de diseño (.ru-root), modo oscuro, estructura de
+   página, encabezado, celdas de tabla y botones de acción.
+   Los modales (ModalsVentas.jsx) viven dentro de .ru-root, por eso
+   heredan estas variables.
+   ================================================================== */
+
+/* ==================================================================
+   1. VARIABLES Y TOKENS DE DISEÑO (PALETA RAÍZ URBANA)
+   ================================================================== */
+.ru-root {
+  --primary: #22223B;
+  --secondary: #4A4E69;
+  --accent: #9A8C98;
+  --soft: #C9ADA7;
+  --background: #F2E9E4;
+  --card-bg: #FFFFFF;
+  --card-border: #EAD9CF;
+  --muted-text: #9691A0;
+  --label-text: #8D8A96;
+  --positive: #2E9E5B;
+  --negative: #D1495B;
+  --divider: #ECE1D8;
+  --info-blue: #4A76A8;
+  --warn-amber: #C9973F;
+  --dark: #4A4E69;
+  --sel: #22223B;
+
+  /* Estados de venta y pago */
+  --green-bg: #E8F8F0; --green-fg: #1F9D55; --green-bd: #A9E3C0;
+  --blue-bg: #E6EFFD;  --blue-fg: #2F6FED;  --blue-bd: #B7CEF8;
+  --amber-bg: #FDF3D3; --amber-fg: #B7790A; --amber-bd: #F2DC95;
+  --red-bg: #FDE6E3;   --red-fg: #D8483A;   --red-bd: #F5B8B1;
+  --gray-bg: #F0EFF1;  --gray-fg: #6B6A72;  --gray-bd: #DCDADF;
+
+  --select-arrow: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%234A4E69' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>");
+
+  --font-logo: 'Playfair Display', Georgia, serif;
+  --font-ui: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+  --radius-lg: 18px;
+  --radius-md: 12px;
+  --radius-sm: 8px;
+  --shadow-modal: 0 30px 60px rgba(20, 16, 30, 0.35);
+
+  font-family: var(--font-ui);
+  color: var(--primary);
+  min-height: 100vh;
+  width: 100%;
+}
+
+.ru-root * {
+  box-sizing: border-box;
+}
+
+/* ==================================================================
+   MODO OSCURO PARA VENTAS (data-theme="dark")
+   ================================================================== */
+:root[data-theme="dark"] .ru-root,
+[data-theme="dark"] .ru-root,
+.dark .ru-root,
+.dark-mode .ru-root {
+  color-scheme: dark;
+  --primary: #F2E9E4;
+  --secondary: #C9ADA7;
+  --accent: #9A8C98;
+  --soft: #4A4E69;
+  --background: #12131C;
+  --card-bg: #1C1E2E;
+  --card-border: #3A3D57;
+  --muted-text: #9A8C98;
+  --label-text: #C9ADA7;
+  --positive: #4ADE80;
+  --negative: #F87171;
+  --divider: #2E3247;
+  --info-blue: #60A5FA;
+  --warn-amber: #FBBF24;
+  --dark: #C9ADA7;
+  --sel: #C9ADA7;
+
+  /* Estados de venta y pago en MODO OSCURO (Badges/Etiquetas) */
+  --green-bg: rgba(34, 197, 94, 0.15);
+  --green-fg: #4ADE80;
+  --green-bd: rgba(34, 197, 94, 0.35);
+
+  --blue-bg: rgba(59, 130, 246, 0.15);
+  --blue-fg: #60A5FA;
+  --blue-bd: rgba(59, 130, 246, 0.35);
+
+  --amber-bg: rgba(245, 158, 11, 0.15);
+  --amber-fg: #FBBF24;
+  --amber-bd: rgba(245, 158, 11, 0.35);
+
+  --red-bg: rgba(239, 68, 68, 0.15);
+  --red-fg: #F87171;
+  --red-bd: rgba(239, 68, 68, 0.35);
+
+  --gray-bg: rgba(154, 140, 152, 0.15);
+  --gray-fg: #C9ADA7;
+  --gray-bd: rgba(154, 140, 152, 0.3);
+
+  --shadow-modal: 0 30px 60px rgba(0, 0, 0, 0.6);
+  --select-arrow: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23C9ADA7' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>");
+}
+
+/* ==================================================================
+   2. ESTRUCTURA DE PÁGINA Y ENCABEZADO
+   ================================================================== */
+.ru-page {
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 48px 10px 90px;
+}
+
+.ru-eyebrow {
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 600;
+  margin-bottom: 9px;
+}
+
+.ru-v-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 34px;
+  gap: 20px;
+}
+
+.ru-v-title {
+  font-family: var(--font-logo);
+  font-weight: 500;
+  font-size: 44px;
+  line-height: 1.15;
+  color: var(--primary);
+  margin: 0 0 9px 0;
+}
+
+.ru-v-subtitle {
+  font-size: 14.5px;
+  color: var(--secondary);
+  margin: 0;
+}
+
+/* ==================================================================
+   3. BOTONES DE ACCIÓN EN LA TABLA
+   ================================================================== */
+.ru-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.ru-icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 6px;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.ru-icon-btn:hover {
+  opacity: 0.7;
+  transform: translateY(-1px);
+}
+
+.ru-icon-btn.view { color: var(--info-blue); }
+.ru-icon-btn.edit { color: var(--warn-amber); }
+.ru-icon-btn.delete { color: var(--negative); }
+
+/* ==================================================================
+   4. CELDAS DE TABLA
+   ================================================================== */
+.ru-v-code-pill {
+  background: var(--background);
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--secondary);
+  white-space: nowrap;
+  font-family: monospace;
+}
+
+.ru-v-cell-total {
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.ru-v-badge-btn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+  transition: transform 0.15s ease;
+}
+
+.ru-v-badge-btn:hover {
+  transform: translateY(-1px);
+}
+
+/* Código en modo oscuro */
+[data-theme="dark"] .ru-v-code-pill,
+.dark .ru-v-code-pill,
+.dark-mode .ru-v-code-pill {
+  background-color: #252839;
+  border-color: #3A3D57;
+  color: #C9ADA7;
+}
+
+/* ==================================================================
+   5. RESPONSIVE (solo página)
+   ================================================================== */
+@media (max-width: 880px) {
+  .ru-page { padding: 28px 16px 60px; }
+  .ru-v-header { flex-direction: column; align-items: flex-start; }
+}
+
+@media (max-width: 780px) {
+  .ru-v-header { gap: 14px; align-items: stretch; }
+  .ru-v-header .btn { width: 100%; justify-content: center; }
+  .ru-v-title { font-size: 34px; }
+}
+
+@media (max-width: 480px) {
+  .ru-page { padding: 20px 12px 50px; }
+  .ru-v-title { font-size: 28px; }
+  .ru-eyebrow { font-size: 11px; }
+}

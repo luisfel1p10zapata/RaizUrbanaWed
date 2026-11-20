@@ -1,0 +1,39 @@
+/* ==================================================================
+   ModalRegistrarProduccion.css — Estilos del Modal de Registro de Producción
+   ================================================================== */
+
+.prod-reg-modal {
+  max-width: 600px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.prod-reg-modal-body {
+  max-height: calc(85vh - 130px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.prod-reg-field {
+  margin-bottom: 16px;
+}
+
+.prod-reg-grid-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.prod-reg-textarea {
+  resize: vertical;
+}
+
+@media (max-width: 600px) {
+  .prod-reg-grid-2col {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}

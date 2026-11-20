@@ -1,0 +1,243 @@
+/* ==========================================================================
+   ESTILOS GLOBALES DE COMPONENTES (Sistema de UI)
+   Soporte completo para Modo Claro y Modo Oscuro (data-theme="dark")
+   ========================================================================== */
+
+@import './confirmmodal.css';
+
+/* ---------- TABLAS GLOBALES ---------- */
+.ru-table-scroll {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.ru-users-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.9rem;
+}
+
+.ru-users-table th {
+  background-color: var(--color-border, #E5E5E5);
+  color: var(--color-primary, #22223B);
+  font-weight: 700;
+  padding: 12px 16px;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+}
+
+.ru-users-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--color-border, #E5E5E5);
+  color: var(--color-text-strong, #111111);
+  background-color: var(--color-surface, #FFFFFF);
+}
+
+[data-theme="dark"] .ru-users-table th {
+  background-color: #252839;
+  color: #F2E9E4;
+}
+
+[data-theme="dark"] .ru-users-table td {
+  background-color: #1C1E2E;
+  border-bottom-color: #3A3D57;
+  color: #F2E9E4;
+}
+
+.ru-users-table tr:hover td {
+  background-color: var(--color-hover, #F3F3F3);
+}
+
+[data-theme="dark"] .ru-users-table tr:hover td {
+  background-color: #252839;
+}
+
+/* ---------- BOTONES DE ACCIÓN EN TABLA ---------- */
+/* ==========================================================================
+   BOTONES DE ACCIÓN EN TABLAS (HEREDADOS DE LA PALETA DE VENTAS)
+   ========================================================================== */
+.ru-actions {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 10px !important;
+}
+
+.ru-icon-btn {
+  background: transparent !important;
+  border: none !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 4px !important;
+  border-radius: 6px !important;
+  transition: opacity 0.15s ease, transform 0.15s ease !important;
+}
+
+.ru-icon-btn:hover:not(:disabled):not(.disabled) {
+  opacity: 0.7 !important;
+  transform: translateY(-1px) !important;
+}
+
+.ru-icon-btn.view { color: #4A76A8 !important; }
+.ru-icon-btn.edit { color: #C9973F !important; }
+.ru-icon-btn.delete { color: #D1495B !important; }
+
+[data-theme="dark"] .ru-icon-btn.view, .dark .ru-icon-btn.view { color: #60A5FA !important; }
+[data-theme="dark"] .ru-icon-btn.edit, .dark .ru-icon-btn.edit { color: #FBBF24 !important; }
+[data-theme="dark"] .ru-icon-btn.delete, .dark .ru-icon-btn.delete { color: #F87171 !important; }
+
+.ru-icon-btn:disabled,
+.ru-icon-btn.disabled {
+  opacity: 0.35 !important;
+  cursor: not-allowed !important;
+  pointer-events: auto !important;
+}
+
+/* Botón interactivo para cambiar estado en el badge */
+.ru-v-badge-btn {
+  border: none !important;
+  background: transparent !important;
+  cursor: pointer !important;
+  padding: 0 !important;
+  font-family: inherit !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  transition: transform 0.15s ease, opacity 0.15s ease !important;
+}
+
+.ru-v-badge-btn:hover:not(:disabled) {
+  transform: scale(1.05) !important;
+  opacity: 0.9 !important;
+}
+
+.ru-v-badge-btn:disabled {
+  cursor: not-allowed !important;
+  opacity: 0.7 !important;
+}
+
+/* ==========================================================================
+   ETIQUETAS, BADGES Y PÍLDORAS GLOBALES
+   ========================================================================== */
+.ru-badge,
+.ru-status-badge,
+.ru-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 4px 11px;
+  border-radius: 999px;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+/* Punto indicador */
+.ru-badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: currentColor;
+  flex-shrink: 0;
+}
+
+/* Modo Claro de Etiquetas */
+.ru-badge-green,
+.ru-badge-success {
+  background-color: #E8F8F0;
+  color: #1F9D55;
+  border: 1px solid #A9E3C0;
+}
+
+.ru-badge-blue,
+.ru-badge-info {
+  background-color: #EFF6FF;
+  color: #1D4ED8;
+  border: 1px solid #BFDBFE;
+}
+
+.ru-badge-amber,
+.ru-badge-warning {
+  background-color: #FEFCE8;
+  color: #A16207;
+  border: 1px solid #FEF08A;
+}
+
+.ru-badge-red,
+.ru-badge-danger,
+.ru-badge-destructive {
+  background-color: #FEF2F2;
+  color: #B91C1C;
+  border: 1px solid #FECACA;
+}
+
+.ru-badge-gray,
+.ru-badge-muted {
+  background-color: #F3F4F6;
+  color: #4B5563;
+  border: 1px solid #E5E7EB;
+}
+
+/* Modo Oscuro de Etiquetas (Dark Mode) */
+[data-theme="dark"] .ru-badge-green,
+[data-theme="dark"] .ru-badge-success,
+.dark .ru-badge-green,
+.dark .ru-badge-success,
+.dark-mode .ru-badge-green,
+.dark-mode .ru-badge-success {
+  background-color: rgba(34, 197, 94, 0.15);
+  color: #4ADE80;
+  border: 1px solid rgba(34, 197, 94, 0.35);
+}
+
+[data-theme="dark"] .ru-badge-blue,
+[data-theme="dark"] .ru-badge-info,
+.dark .ru-badge-blue,
+.dark .ru-badge-info,
+.dark-mode .ru-badge-blue,
+.dark-mode .ru-badge-info {
+  background-color: rgba(59, 130, 246, 0.15);
+  color: #60A5FA;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+}
+
+[data-theme="dark"] .ru-badge-amber,
+[data-theme="dark"] .ru-badge-warning,
+.dark .ru-badge-amber,
+.dark .ru-badge-warning,
+.dark-mode .ru-badge-amber,
+.dark-mode .ru-badge-warning {
+  background-color: rgba(245, 158, 11, 0.15);
+  color: #FBBF24;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+[data-theme="dark"] .ru-badge-red,
+[data-theme="dark"] .ru-badge-danger,
+[data-theme="dark"] .ru-badge-destructive,
+.dark .ru-badge-red,
+.dark .ru-badge-danger,
+.dark .ru-badge-destructive,
+.dark-mode .ru-badge-red,
+.dark-mode .ru-badge-danger,
+.dark-mode .ru-badge-destructive {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #F87171;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+
+[data-theme="dark"] .ru-badge-gray,
+[data-theme="dark"] .ru-badge-muted,
+.dark .ru-badge-gray,
+.dark .ru-badge-muted,
+.dark-mode .ru-badge-gray,
+.dark-mode .ru-badge-muted {
+  background-color: rgba(154, 140, 152, 0.15);
+  color: #C9ADA7;
+  border: 1px solid rgba(154, 140, 152, 0.3);
+}

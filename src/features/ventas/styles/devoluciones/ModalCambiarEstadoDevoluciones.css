@@ -1,0 +1,60 @@
+/* ==================================================================
+   ModalCambiarEstadoDevoluciones.css — Estilos del Modal de Anulación
+   ================================================================== */
+
+.dev-status-modal {
+  max-width: 480px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.dev-status-modal .ru-modal-body {
+  max-height: calc(85vh - 120px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.dev-status-warning-box {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.dev-status-icon-circle {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.1);
+  color: #EF4444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 12px;
+}
+
+[data-theme="dark"] .dev-status-icon-circle {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+.dev-status-question {
+  margin: 0 0 6px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-main, #22223B);
+}
+
+[data-theme="dark"] .dev-status-question {
+  color: #F2E9E4;
+}
+
+.dev-status-help-text {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-muted, #6F6B7C);
+  line-height: 1.5;
+}
+
+.dev-status-textarea {
+  resize: vertical;
+}

@@ -1,0 +1,1322 @@
+/* =========================================================
+   INSUMOS - RAÍZ URBANA
+   Estilos específicos del módulo de Insumos
+   ========================================================= */
+
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap"
+);
+
+/* =========================================================
+   VARIABLES DEL MÓDULO
+   ========================================================= */
+
+.insumos-page {
+  --ins-panel: #ffffff;
+  --ins-border: #c9aea7;
+  --ins-line: #e6dcd8;
+
+  --ins-text: #1c1d36;
+  --ins-text-secondary: #4b4b5a;
+  --ins-muted: #7b7a88;
+
+  --ins-soft-bg: #eceaee;
+  --ins-field-bg: #ffffff;
+  --ins-hover: #f4eeeb;
+
+  --ins-primary: #1f2038;
+  --ins-primary-hover: #2e2f4d;
+
+  --ins-green-bg: #e3f7ea;
+  --ins-green-text: #1f9d55;
+  --ins-green-border: #a9e3c0;
+
+  --ins-red-bg: #fde6e3;
+  --ins-red-text: #d8483a;
+  --ins-red-border: #f5b8b1;
+
+  --ins-gray-bg: #f0eff1;
+  --ins-gray-text: #6b6a72;
+  --ins-gray-border: #dcdadf;
+
+  --ins-blue: #2f6fed;
+  --ins-yellow: #f0a020;
+
+  --ins-overlay: rgba(60, 50, 55, 0.35);
+  --ins-shadow: rgba(20, 16, 10, 0.25);
+
+  --ins-title-font: "Playfair Display", Georgia, serif;
+  --ins-body-font: "Montserrat", Arial, sans-serif;
+
+  width: 100%;
+  min-height: 100vh;
+
+  margin: 0;
+  padding: 48px 10px 90px;
+
+  color: var(--ins-text);
+  font-family: var(--ins-body-font);
+
+  box-sizing: border-box;
+}
+
+.insumos-page *,
+.insumos-page *::before,
+.insumos-page *::after {
+  box-sizing: border-box;
+}
+
+/* =========================================================
+   MODO OSCURO
+   ========================================================= */
+
+html[data-theme="dark"] .insumos-page,
+[data-theme="dark"] .insumos-page,
+.dark .insumos-page,
+.dark-mode .insumos-page {
+  --ins-panel: #1c1e2e;
+  --ins-border: #3a3d57;
+  --ins-line: #2a2c40;
+
+  --ins-text: #f2e9e4;
+  --ins-text-secondary: #c9ada7;
+  --ins-muted: #9a8c98;
+
+  --ins-soft-bg: #252839;
+  --ins-field-bg: #161722;
+  --ins-hover: #252839;
+
+  --ins-primary: #4a4e69;
+  --ins-primary-hover: #5b6082;
+
+  --ins-green-bg: rgba(34, 197, 94, 0.12);
+  --ins-green-text: #4ade80;
+  --ins-green-border: rgba(34, 197, 94, 0.3);
+
+  --ins-red-bg: rgba(239, 68, 68, 0.12);
+  --ins-red-text: #fca5a5;
+  --ins-red-border: rgba(239, 68, 68, 0.3);
+
+  --ins-gray-bg: rgba(154, 140, 152, 0.14);
+  --ins-gray-text: #c9ada7;
+  --ins-gray-border: rgba(154, 140, 152, 0.25);
+
+  --ins-blue: #60a5fa;
+  --ins-yellow: #fbbf24;
+
+  --ins-overlay: rgba(10, 11, 18, 0.75);
+  --ins-shadow: rgba(0, 0, 0, 0.6);
+}
+
+/* =========================================================
+   ENCABEZADO
+   ========================================================= */
+
+.insumos-page .ins-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.insumos-page .ins-module-label {
+  display: block;
+
+  margin-bottom: 9px;
+
+  color: var(--ins-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.insumos-page .ins-page-header h1 {
+  margin: 0;
+
+  color: var(--ins-text);
+  font-family: var(--ins-title-font);
+  font-size: 44px;
+  font-weight: 500;
+  line-height: 1.15;
+}
+
+.insumos-page .ins-page-header p {
+  margin: 5px 0 0;
+
+  color: var(--ins-text-secondary);
+  font-size: 14.5px;
+  line-height: 1.5;
+}
+
+/* =========================================================
+   BOTONES
+   ========================================================= */
+
+.insumos-page .ins-primary-button,
+.insumos-page .ins-secondary-button,
+.insumos-page .ins-danger-button,
+.insumos-page .btn-cancel-custom,
+.insumos-page .btn-submit-custom {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+  padding: 13px 22px;
+
+  border: 1px solid transparent;
+  border-radius: 10px;
+
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.insumos-page .ins-primary-button {
+  padding: 15px 28px;
+
+  color: #ffffff;
+  background-color: var(--ins-primary);
+  border-color: var(--ins-primary);
+
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.insumos-page .ins-primary-button:hover,
+.insumos-page .btn-submit-custom:hover {
+  background-color: var(--ins-primary-hover);
+}
+
+.insumos-page .ins-secondary-button,
+.insumos-page .btn-cancel-custom {
+  color: var(--ins-text);
+  background-color: var(--ins-panel);
+  border-color: var(--ins-border);
+}
+
+.insumos-page .ins-secondary-button:hover,
+.insumos-page .btn-cancel-custom:hover {
+  background-color: var(--ins-hover);
+}
+
+.insumos-page .btn-submit-custom {
+  color: #ffffff;
+  background-color: var(--ins-primary);
+  border-color: var(--ins-primary);
+}
+
+.insumos-page .ins-danger-button {
+  color: #ffffff;
+  background-color: #d8483a;
+  border-color: #d8483a;
+}
+
+.insumos-page .ins-danger-button:hover {
+  opacity: 0.9;
+}
+
+.insumos-page button:focus-visible,
+.insumos-page input:focus-visible,
+.insumos-page select:focus-visible,
+.insumos-page textarea:focus-visible {
+  outline: 2px solid var(--ins-text-secondary);
+  outline-offset: 2px;
+}
+
+/* =========================================================
+   FILTROS Y BÚSQUEDA
+   ========================================================= */
+
+.insumos-page .ins-filters-card {
+  margin-bottom: 22px;
+  overflow: hidden;
+
+  background-color: var(--ins-panel);
+  border: 1px solid var(--ins-border);
+  border-radius: 14px;
+}
+
+.insumos-page .ins-filters-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  margin: 0;
+  padding: 18px 24px;
+
+  color: var(--ins-text);
+  border-bottom: 1px solid var(--ins-border);
+
+  font-size: 14.5px;
+  font-weight: 600;
+}
+
+.insumos-page .ins-filters-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+
+  gap: 12px;
+  padding: 24px 26px;
+}
+
+.insumos-page .ins-search {
+  display: flex;
+  align-items: center;
+  flex: 3 1 220px;
+
+  min-width: 0;
+  padding: 0 15px;
+
+  color: var(--ins-text);
+  background-color: var(--ins-field-bg);
+  border: 1px solid var(--ins-border);
+  border-radius: 10px;
+}
+
+.insumos-page .ins-search input {
+  width: 100%;
+  min-width: 0;
+
+  padding: 12px 0;
+
+  color: var(--ins-text);
+  background: transparent;
+  border: none;
+  outline: none;
+
+  font-family: inherit;
+  font-size: 14.5px;
+}
+
+.insumos-page .ins-search input::placeholder {
+  color: var(--ins-muted);
+  opacity: 1;
+}
+
+.insumos-page .ins-filters-row select {
+  flex: 1 1 150px;
+
+  width: auto;
+  min-width: 150px;
+
+  padding: 12px 15px;
+
+  color: var(--ins-text);
+  background-color: var(--ins-field-bg);
+  border: 1px solid var(--ins-border);
+  border-radius: 10px;
+
+  font-family: inherit;
+  font-size: 14.5px;
+
+  cursor: pointer;
+}
+
+.insumos-page .ins-filters-row select option {
+  color: var(--ins-text);
+  background-color: var(--ins-panel);
+}
+
+/* =========================================================
+   CONTENIDO DE LA TABLA GLOBAL
+   ========================================================= */
+
+.insumos-page .ins-ref-item-cell {
+  display: flex;
+  align-items: center;
+
+  gap: 13px;
+  min-width: 0;
+}
+
+.insumos-page .ins-ref-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  width: 40px;
+  height: 40px;
+  overflow: hidden;
+
+  color: var(--ins-text);
+  background-color: var(--ins-soft-bg);
+  border-radius: 10px;
+}
+
+.insumos-page .ins-ref-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.insumos-page .ins-ref-item-info {
+  display: flex;
+  flex-direction: column;
+
+  gap: 2px;
+  min-width: 0;
+}
+
+.insumos-page .ins-ref-item-info strong {
+  color: var(--ins-text);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.insumos-page .ins-ref-item-info small {
+  color: var(--ins-muted);
+  font-size: 12.5px;
+}
+
+.insumos-page .ins-chip-cat {
+  display: inline-flex;
+
+  padding: 4px 10px;
+
+  color: var(--ins-text-secondary);
+  background-color: var(--ins-soft-bg);
+  border: 1px solid var(--ins-border);
+  border-radius: 6px;
+
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.insumos-page .ins-ref-mat-size {
+  display: flex;
+  flex-direction: column;
+
+  gap: 3px;
+
+  color: var(--ins-text-secondary);
+}
+
+.insumos-page .size-chip {
+  color: var(--ins-muted);
+  font-size: 12.5px;
+}
+
+.insumos-page .stock-text.low {
+  color: var(--ins-red-text);
+  font-weight: 700;
+}
+
+.insumos-page .stock-text.ok {
+  color: var(--ins-text);
+  font-weight: 600;
+}
+
+.insumos-page .price-cell {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+}
+
+.insumos-page .price-cell strong {
+  color: var(--ins-text);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.insumos-page .price-cell small {
+  color: var(--ins-muted);
+  font-size: 12px;
+}
+
+/* =========================================================
+   ESTADO
+   ========================================================= */
+
+.insumos-page .ins-status-toggle {
+  padding: 0;
+
+  background: transparent;
+  border: none;
+
+  cursor: pointer;
+}
+
+.insumos-page .ins-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  padding: 5px 13px;
+
+  border: 1px solid transparent;
+  border-radius: 999px;
+
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.insumos-page .ins-status-dot {
+  flex-shrink: 0;
+
+  width: 6px;
+  height: 6px;
+
+  background-color: currentColor;
+  border-radius: 50%;
+}
+
+.insumos-page .ins-status-pill.active {
+  color: var(--ins-green-text);
+  background-color: var(--ins-green-bg);
+  border-color: var(--ins-green-border);
+}
+
+.insumos-page .ins-status-pill.inactive {
+  color: var(--ins-gray-text);
+  background-color: var(--ins-gray-bg);
+  border-color: var(--ins-gray-border);
+}
+
+/* =========================================================
+   BOTONES DE ACCIONES
+   ========================================================= */
+
+.insumos-page .ins-ref-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: nowrap;
+
+  gap: 4px;
+}
+
+.insumos-page .ins-ref-actions .btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 32px;
+  height: 32px;
+  padding: 0;
+
+  background: transparent;
+  border: none;
+  border-radius: 7px;
+
+  cursor: pointer;
+
+  transition: background-color 0.15s ease;
+}
+
+.insumos-page .ins-ref-actions .btn-icon:hover {
+  background-color: var(--ins-hover);
+}
+
+.insumos-page .ins-ref-actions .btn-icon.view {
+  color: var(--ins-blue);
+}
+
+.insumos-page .ins-ref-actions .btn-icon.edit {
+  color: var(--ins-yellow);
+}
+
+.insumos-page .ins-ref-actions .btn-icon.delete {
+  color: var(--ins-red-text);
+}
+
+/* =========================================================
+   MODALES
+   ========================================================= */
+
+.insumos-page .ins-modal-overlay {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 24px;
+
+  color: var(--ins-text);
+  background-color: var(--ins-overlay);
+
+  backdrop-filter: blur(3px);
+}
+
+.insumos-page .ins-modal {
+  display: flex;
+  flex-direction: column;
+
+  width: 100%;
+  max-width: 720px;
+  max-height: 92vh;
+  max-height: 92dvh;
+
+  overflow: hidden;
+
+  color: var(--ins-text);
+  background-color: var(--ins-panel);
+  border-radius: 22px;
+
+  box-shadow: 0 24px 60px var(--ins-shadow);
+}
+
+.insumos-page .ins-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-shrink: 0;
+
+  gap: 12px;
+  padding: 26px 30px 18px;
+
+  background-color: var(--ins-panel);
+}
+
+.insumos-page .ins-modal-eyebrow {
+  display: block;
+
+  margin-bottom: 7px;
+
+  color: var(--ins-text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.insumos-page .ins-modal-title {
+  margin: 0;
+
+  color: var(--ins-text);
+  font-family: var(--ins-title-font);
+  font-size: 26px;
+  font-weight: 600;
+}
+
+.insumos-page .ins-close-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  width: 32px;
+  height: 32px;
+  padding: 0;
+
+  color: var(--ins-text);
+  background: transparent;
+  border: none;
+  border-radius: 7px;
+
+  cursor: pointer;
+}
+
+.insumos-page .ins-close-button:hover {
+  background-color: var(--ins-hover);
+}
+
+/* El formulario se ajusta al alto disponible y permite scroll. */
+
+.insumos-page .ins-form-modal-custom form {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+
+  min-height: 0;
+  overflow: hidden;
+}
+
+.insumos-page .ins-form-body-custom {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+
+  gap: 13px;
+  min-height: 0;
+
+  padding: 24px 30px 18px;
+  overflow-y: auto;
+
+  border-top: 1px solid var(--ins-border);
+
+  scrollbar-width: thin;
+  scrollbar-color: var(--ins-border) transparent;
+}
+
+.insumos-page .ins-custom-modal-footer {
+  display: flex;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  justify-content: stretch;
+
+  gap: 12px;
+  padding: 18px 30px 26px;
+
+  background-color: var(--ins-panel);
+  border-top: 1px solid var(--ins-border);
+}
+
+.insumos-page .ins-custom-modal-footer>* {
+  flex: 1;
+  min-width: 120px;
+}
+
+/* =========================================================
+   FORMULARIO
+   ========================================================= */
+
+.insumos-page .ins-form-section {
+  display: flex;
+  flex-direction: column;
+
+  gap: 13px;
+  margin: 0;
+}
+
+.insumos-page .ins-section-divider {
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+  margin: 5px 0 0;
+
+  color: var(--ins-text-secondary);
+
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.insumos-page .ins-section-divider::before {
+  content: "";
+
+  width: 14px;
+  height: 1px;
+
+  background-color: var(--ins-border);
+}
+
+.insumos-page .ins-section-divider::after {
+  content: "";
+  flex: 1;
+
+  height: 1px;
+
+  background-color: var(--ins-border);
+}
+
+.insumos-page .ins-form-row-2 {
+  display: flex;
+  gap: 13px;
+}
+
+.insumos-page .ins-form-row-2>* {
+  min-width: 0;
+}
+
+.insumos-page .ins-field-group {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+
+  gap: 7px;
+  min-width: 0;
+}
+
+.insumos-page .ins-field-group.full {
+  width: 100%;
+}
+
+.insumos-page .ins-field-group label {
+  color: var(--ins-text-secondary);
+
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.insumos-page .ins-field-group input,
+.insumos-page .ins-field-group select,
+.insumos-page .ins-field-group textarea {
+  width: 100%;
+  padding: 12px 15px;
+
+  color: var(--ins-text);
+  background-color: var(--ins-field-bg);
+  border: 1px solid var(--ins-border);
+  border-radius: 10px;
+
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.insumos-page .ins-field-group input[type="file"] {
+  padding: 9px;
+  font-size: 12px;
+}
+
+.insumos-page .ins-field-group select option {
+  color: var(--ins-text);
+  background-color: var(--ins-panel);
+}
+
+.insumos-page .ins-field-group textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.insumos-page .ins-field-group input::placeholder,
+.insumos-page .ins-field-group textarea::placeholder {
+  color: var(--ins-muted);
+  opacity: 1;
+}
+
+/* =========================================================
+   DETALLES DEL INSUMO
+   ========================================================= */
+
+.insumos-page .ins-detail-card {
+  padding: 16px;
+  margin: 4px 0;
+
+  background-color: var(--ins-panel);
+  border: 1px solid var(--ins-border);
+  border-radius: 10px;
+}
+
+.insumos-page .ins-detail-card p {
+  margin: 8px 0;
+
+  color: var(--ins-text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.insumos-page .ins-detail-preview {
+  display: block;
+
+  max-width: 120px;
+  max-height: 90px;
+
+  margin-top: 8px;
+
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+.insumos-page .ins-form-error {
+  margin: 12px 0;
+
+  color: var(--ins-red-text);
+
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+/* =========================================================
+   MODAL DE ELIMINACIÓN
+   ========================================================= */
+
+.insumos-page .ins-delete-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  gap: 0;
+  padding: 24px 30px;
+
+  text-align: center;
+  border-top: 1px solid var(--ins-border);
+}
+
+.insumos-page .ins-delete-content h3 {
+  margin: 0 0 8px;
+
+  color: var(--ins-text);
+  font-family: var(--ins-title-font);
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.insumos-page .ins-delete-content p {
+  margin: 0;
+
+  color: var(--ins-text-secondary);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 1180px) {
+  .insumos-page {
+    padding: 40px 24px 80px;
+  }
+}
+
+@media (max-width: 980px) {
+  .insumos-page {
+    padding: 32px 20px 70px;
+  }
+
+  .insumos-page .ins-modal-header,
+  .insumos-page .ins-custom-modal-footer {
+    padding-right: 24px;
+    padding-left: 24px;
+  }
+
+  .insumos-page .ins-form-body-custom,
+  .insumos-page .ins-delete-content {
+    padding-right: 24px;
+    padding-left: 24px;
+  }
+}
+
+@media (max-width: 780px) {
+  .insumos-page {
+    padding: 26px 16px 60px;
+  }
+
+  .insumos-page .ins-page-header {
+    flex-direction: column;
+    align-items: stretch;
+
+    gap: 14px;
+  }
+
+  .insumos-page .ins-page-header h1 {
+    font-size: 34px;
+  }
+
+  .insumos-page .ins-primary-button {
+    width: 100%;
+  }
+
+  .insumos-page .ins-filters-title {
+    padding: 16px 18px;
+  }
+
+  .insumos-page .ins-filters-row {
+    gap: 10px;
+    padding: 18px;
+  }
+
+  .insumos-page .ins-search,
+  .insumos-page .ins-filters-row select {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  .insumos-page .ins-modal-overlay {
+    align-items: flex-end;
+    padding: 14px;
+  }
+
+  .insumos-page .ins-modal {
+    max-width: 100%;
+    max-height: 94vh;
+    max-height: 94dvh;
+
+    border-radius: 22px 22px 0 0;
+  }
+
+  .insumos-page .ins-modal-header {
+    padding: 22px 20px 14px;
+  }
+
+  .insumos-page .ins-form-body-custom,
+  .insumos-page .ins-delete-content {
+    padding-right: 20px;
+    padding-left: 20px;
+  }
+
+  .insumos-page .ins-custom-modal-footer {
+    padding: 14px 20px 20px;
+  }
+
+  .insumos-page .ins-form-row-2 {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 640px) {
+  .insumos-page .ins-custom-modal-footer {
+    flex-direction: column;
+  }
+
+  .insumos-page .ins-custom-modal-footer>* {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .insumos-page {
+    padding: 20px 12px 50px;
+  }
+
+  .insumos-page .ins-page-header h1 {
+    font-size: 28px;
+  }
+
+  .insumos-page .ins-module-label {
+    font-size: 11px;
+  }
+
+  .insumos-page .ins-status-pill {
+    padding: 4px 10px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 380px) {
+  .insumos-page .ins-primary-button {
+    padding: 13px 18px;
+    font-size: 13px;
+  }
+
+  .insumos-page .ins-secondary-button,
+  .insumos-page .ins-danger-button,
+  .insumos-page .btn-cancel-custom,
+  .insumos-page .btn-submit-custom {
+    padding: 12px 16px;
+    font-size: 13px;
+  }
+}
+
+/* Indicadores y alertas propios del módulo de Insumos. */
+
+.insumos-page .ins-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.insumos-page .ins-kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  padding: 20px;
+  color: var(--ins-text);
+  background: var(--ins-panel);
+  border: 1px solid var(--ins-border);
+  border-radius: 14px;
+}
+
+.insumos-page .ins-kpi-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--ins-text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.insumos-page .ins-kpi-icon {
+  display: inline-flex;
+  color: var(--ins-text-secondary);
+}
+
+.insumos-page .ins-kpi strong {
+  color: var(--ins-text);
+  font-size: 28px;
+  line-height: 1.1;
+}
+
+.insumos-page .ins-kpi small {
+  color: var(--ins-muted);
+  font-size: 12px;
+}
+
+.insumos-page .ins-toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: min(390px, calc(100vw - 32px));
+  padding: 15px 18px;
+  color: var(--ins-text);
+  background: var(--ins-panel);
+  border: 1px solid var(--ins-border);
+  border-left: 4px solid var(--ins-green-text);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px var(--ins-shadow);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.insumos-page .ins-toast.error {
+  border-left-color: var(--ins-red-text);
+}
+
+.insumos-page .ins-toast button {
+  display: inline-flex;
+  padding: 4px;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.insumos-page .ins-select-create {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.insumos-page .ins-select-create select,
+.insumos-page .ins-select-create input {
+  flex: 1;
+  min-width: 0;
+}
+
+.insumos-page .ins-add-catalog {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  color: var(--ins-text);
+  background: var(--ins-panel);
+  border: 1px solid var(--ins-border);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.insumos-page .ins-add-catalog:hover {
+  background: var(--ins-hover);
+}
+
+.insumos-page .ins-inline-create {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  background: var(--ins-soft-bg);
+  border: 1px solid var(--ins-border);
+  border-radius: 10px;
+}
+
+.insumos-page .ins-inline-create label {
+  color: var(--ins-text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.insumos-page .ins-inline-create input {
+  padding: 11px 12px;
+  color: var(--ins-text);
+  background: var(--ins-field-bg);
+  border: 1px solid var(--ins-border);
+  border-radius: 10px;
+  font: inherit;
+}
+
+.insumos-page .ins-field-error {
+  color: var(--ins-red-text);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.insumos-page .ins-field-hint {
+  color: var(--ins-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.insumos-page [aria-invalid="true"] {
+  border-color: var(--ins-red-text);
+}
+
+.insumos-page button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+@media (max-width: 980px) {
+  .insumos-page .ins-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .insumos-page .ins-kpis {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Estado inactivo en rojo */
+
+.insumos-page .ins-status-pill.inactive {
+  color: var(--ins-red-text);
+  background-color: var(--ins-red-bg);
+  border-color: var(--ins-red-border);
+}
+
+/* Consulta del insumo */
+
+.insumos-page .ins-view-hero-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px;
+  background-color: var(--ins-soft-bg);
+  border: 1px solid var(--ins-border);
+  border-radius: 12px;
+}
+
+.insumos-page .ins-view-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 62px;
+  height: 62px;
+  overflow: hidden;
+  color: var(--ins-text);
+  background-color: var(--ins-panel);
+  border: 1px solid var(--ins-border);
+  border-radius: 12px;
+}
+
+.insumos-page .ins-view-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.insumos-page .ins-view-hero-details {
+  min-width: 0;
+}
+
+.insumos-page .ins-view-hero-details h3 {
+  margin: 0 0 6px;
+  color: var(--ins-text);
+  font-size: 17px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.insumos-page .ins-view-hero-details p {
+  margin: 0;
+  color: var(--ins-text-secondary);
+  font-size: 13px;
+}
+
+.insumos-page .ins-view-details-table {
+  overflow: hidden;
+  background-color: var(--ins-panel);
+  border: 1px solid var(--ins-border);
+  border-radius: 12px;
+}
+
+.insumos-page .ins-view-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--ins-line);
+  font-size: 13px;
+}
+
+.insumos-page .ins-view-row:last-child {
+  border-bottom: 0;
+}
+
+.insumos-page .ins-view-row .lbl {
+  color: var(--ins-text-secondary);
+  font-weight: 600;
+}
+
+.insumos-page .ins-view-row .val {
+  color: var(--ins-text);
+  font-weight: 600;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.insumos-page .ins-delete-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 14px;
+  color: var(--ins-red-text);
+  background-color: var(--ins-red-bg);
+  border-radius: 50%;
+}
+
+
+/* Alertas con el diseño de Bajas de insumos. */
+.insumos-page .ins-toast {
+  position: fixed;
+  z-index: 3000;
+  top: 20px;
+  right: 20px;
+  width: auto;
+  max-width: min(420px, calc(100vw - 40px));
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid #bce3c7;
+  border-radius: 10px;
+  background: #eaf7ed;
+  color: #22683c;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.insumos-page .ins-toast.error {
+  border-color: #f2c5c5;
+  background: #fff0f0;
+  color: #a92f2f;
+}
+
+.insumos-page .ins-toast>svg {
+  flex-shrink: 0;
+}
+
+.insumos-page .ins-toast>span {
+  flex: 1;
+}
+
+.insumos-page .ins-toast button {
+  display: flex;
+  flex-shrink: 0;
+  margin-left: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
