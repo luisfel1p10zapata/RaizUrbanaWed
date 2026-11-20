@@ -37,6 +37,7 @@ class ClienteResumen(CamelModel):
     id: int = 1
     nombre: str
     email: str
+    rol: str | None = None
 
 
 class ProductoResumen(CamelModel):
@@ -49,6 +50,7 @@ class ProductoResumen(CamelModel):
 # ENTRADA (lo que RECIBE la API)
 # --------------------------------------------------------------------------
 class ItemVentaCreate(CamelModel):
+    id_producto_vari: int | None = None
     producto_id: int | None = None
     producto: ProductoResumen | None = None
     cantidad: int = Field(default=1, ge=1, description="Mínimo 1 unidad")
@@ -60,7 +62,8 @@ class ItemVentaCreate(CamelModel):
 class VentaCreate(CamelModel):
     cliente_id: int | None = None
     cliente: ClienteResumen | None = None
-    metodo_pago: MetodoPago = MetodoPago.EFECTIVO
+    id_metodo_pago: int | None = None
+    metodo_pago: str = "Efectivo"
     estado_venta: EstadoVenta = EstadoVenta.PENDIENTE
     estado_pago: EstadoPago = EstadoPago.PENDIENTE
     items: list[ItemVentaCreate] = Field(min_length=1, description="Al menos un producto")
@@ -94,6 +97,7 @@ class VentaFiltros(CamelModel):
 # SALIDA (lo que DEVUELVE la API)
 # --------------------------------------------------------------------------
 class ItemVentaResponse(CamelModel):
+    id_det_venta: int | None = None
     producto: ProductoResumen
     cantidad: int
     talla: str
@@ -113,10 +117,12 @@ class VentaResponse(CamelModel):
     fecha: date
     estado_venta: EstadoVenta
     estado_pago: EstadoPago
-    metodo_pago: MetodoPago
+    metodo_pago: str
     items: list[ItemVentaResponse]
     total: float
     historial: list[HistorialVenta]
+    rol_usuario: str | None = None
+    creado_por_admin: bool = False
 
 
 class VentasMetricas(CamelModel):
@@ -126,6 +132,39 @@ class VentasMetricas(CamelModel):
     ventas_del_mes: int
     monto_total: float
     ventas_pendientes: int
+
+
+class ClienteAuxiliar(CamelModel):
+    id: int
+    nombre: str
+    email: str
+    documento: str | None = None
+    telefono: str | None = None
+    rol: str | None = None
+
+
+class MetodoPagoAuxiliar(CamelModel):
+    id: int
+    nombre: str
+    nro_cuenta: str | None = None
+    estado: str = "Activo"
+
+
+class ProductoVarianteAuxiliar(CamelModel):
+    id_producto_vari: int
+    id_producto: int
+    nombre: str
+    color: str
+    talla: str
+    precio: float
+    stock: int
+    foto_producto: str | None = None
+
+
+class VentasAuxiliaresResponse(CamelModel):
+    clientes: list[ClienteAuxiliar]
+    metodos_pago: list[MetodoPagoAuxiliar]
+    productos: list[ProductoVarianteAuxiliar]
 
 
 # Listado paginado: GET /ventas  ->  { items, total, page, pageSize, totalPages }

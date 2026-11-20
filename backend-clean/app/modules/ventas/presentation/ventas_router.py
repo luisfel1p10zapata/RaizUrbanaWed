@@ -5,6 +5,7 @@ from app.modules.ventas.application.actualizar_venta import ActualizarVenta
 from app.modules.ventas.application.cambiar_estado_venta import CambiarEstadoVenta
 from app.modules.ventas.application.eliminar_venta import EliminarVenta
 from app.modules.ventas.application.listar_ventas import ListarVentas
+from app.modules.ventas.application.obtener_auxiliares_ventas import ObtenerAuxiliaresVentas
 from app.modules.ventas.application.obtener_metricas_ventas import (
     ObtenerMetricasVentas,
 )
@@ -17,6 +18,7 @@ from app.modules.ventas.application.schemas import (
     VentaFiltros,
     VentaPagina,
     VentaResponse,
+    VentasAuxiliaresResponse,
     VentasMetricas,
     VentaUpdate,
 )
@@ -50,6 +52,13 @@ def listar_ventas(
 def obtener_metricas():
     """Obtiene las 4 métricas KPI para el módulo de ventas."""
     caso_uso = ObtenerMetricasVentas()
+    return caso_uso.ejecutar()
+
+
+@router.get("/auxiliares", response_model=VentasAuxiliaresResponse, status_code=status.HTTP_200_OK)
+def obtener_auxiliares():
+    """Obtiene los datos maestros necesarios para crear y editar ventas (clientes, métodos de pago, productos con variantes)."""
+    caso_uso = ObtenerAuxiliaresVentas()
     return caso_uso.ejecutar()
 
 
@@ -112,7 +121,7 @@ def cambiar_estado(venta_id: int, datos: VentaEstadoUpdate):
 
 @router.delete("/{venta_id}", status_code=status.HTTP_204_NO_CONTENT)
 def eliminar_venta(venta_id: int):
-    """Elimina una venta por su ID."""
+    """Cancela una venta por su ID (solo permitido si fue realizada por Administrador)."""
     caso_uso = EliminarVenta()
     try:
         caso_uso.ejecutar(venta_id)
@@ -120,5 +129,10 @@ def eliminar_venta(venta_id: int):
     except VentaNoEncontradaError as err:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(err)
+        )
+    except ValueError as err:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
             detail=str(err)
         )

@@ -94,6 +94,8 @@ class VentaPostgresRepository:
         id_usuario = v.get("id_usuario") or 1
         nombre_cliente = (v.get("cliente") or "").strip() or "Cliente"
         correo = v.get("correo") or "cliente@empresa.com"
+        rol_usuario = (v.get("rol_usuario") or "Cliente").strip()
+        es_admin = rol_usuario.lower() == "administrador"
 
         estado_nom = v.get("estado") or "Pendiente"
         estado_venta = self._mapear_estado_venta(estado_nom)
@@ -113,6 +115,7 @@ class VentaPostgresRepository:
         items = []
         for d in v.get("detalles", []):
             items.append({
+                "id_det_venta": d.get("id_det_venta"),
                 "producto": {
                     "id": d["id_producto"],
                     "nombre": d["producto"],
@@ -131,7 +134,10 @@ class VentaPostgresRepository:
                 "id": id_usuario,
                 "nombre": nombre_cliente,
                 "email": correo,
+                "rol": rol_usuario,
             },
+            "rol_usuario": rol_usuario,
+            "creado_por_admin": es_admin,
             "fecha": fecha_val,
             "estado_venta": estado_venta,
             "estado_pago": estado_pago,
@@ -239,6 +245,8 @@ class VentaPostgresRepository:
                 id_usuario = None
                 if "cliente_id" in datos and datos["cliente_id"]:
                     id_usuario = datos["cliente_id"]
+                elif "clienteId" in datos and datos["clienteId"]:
+                    id_usuario = datos["clienteId"]
                 elif "cliente" in datos and isinstance(datos["cliente"], dict) and datos["cliente"].get("id"):
                     id_usuario = datos["cliente"]["id"]
                 elif hasattr(datos.get("cliente"), "id"):
@@ -251,8 +259,10 @@ class VentaPostgresRepository:
 
                 # Si es None, sp_registrar_venta buscará automáticamente el cliente general
                 # 2. Resolver id_metodo_pago
-                metodo_val = datos.get("metodo_pago", "Efectivo")
-                id_metodo_pago = self._resolver_id_metodo_pago(cursor, str(metodo_val))
+                id_metodo_pago = datos.get("id_metodo_pago") or datos.get("idMetodoPago")
+                if not id_metodo_pago:
+                    metodo_val = datos.get("metodo_pago", "Efectivo")
+                    id_metodo_pago = self._resolver_id_metodo_pago(cursor, str(metodo_val))
 
                 # 3. Resolver id_estado_comp
                 estado_val = datos.get("estado_venta", "Pendiente")
@@ -264,26 +274,34 @@ class VentaPostgresRepository:
 
                 for item in items_in:
                     cant = int(item.get("cantidad", 1)) if isinstance(item, dict) else getattr(item, "cantidad", 1)
-                    sub = float(item.get("subtotal") or 0.0) if isinstance(item, dict) else float(getattr(item, "subtotal", 0.0))
-                    prod_id = item.get("producto_id") if isinstance(item, dict) else getattr(item, "producto_id", None)
-                    if not prod_id:
-                        prod_dict = item.get("producto") if isinstance(item, dict) else getattr(item, "producto", None)
-                        if prod_dict:
-                            prod_id = prod_dict.get("id") if isinstance(prod_dict, dict) else getattr(prod_dict, "id", None)
+                    
+                    id_vari = item.get("id_producto_vari") if isinstance(item, dict) else getattr(item, "id_producto_vari", None)
+                    if not id_vari and isinstance(item, dict):
+                        id_vari = item.get("idProductoVari")
 
-                    # Buscar variante asociada
-                    cursor.execute("""
-                        SELECT pv.id_producto_vari, pv.precio
-                        FROM tb_producto_variante pv
-                        WHERE pv.id_producto_vari = %s OR pv.id_producto = %s
-                        LIMIT 1;
-                    """, (prod_id or 0, prod_id or 0))
-                    f_vari = cursor.fetchone()
-                    if not f_vari:
-                        cursor.execute("SELECT id_producto_vari, precio FROM tb_producto_variante ORDER BY id_producto_vari ASC LIMIT 1;")
+                    if not id_vari:
+                        prod_id = item.get("producto_id") if isinstance(item, dict) else getattr(item, "producto_id", None)
+                        if not prod_id and isinstance(item, dict):
+                            prod_id = item.get("productoId")
+                        if not prod_id:
+                            prod_dict = item.get("producto") if isinstance(item, dict) else getattr(item, "producto", None)
+                            if prod_dict:
+                                prod_id = prod_dict.get("id") if isinstance(prod_dict, dict) else getattr(prod_dict, "id", None)
+
+                        # Buscar variante asociada
+                        cursor.execute("""
+                            SELECT pv.id_producto_vari, pv.precio
+                            FROM tb_producto_variante pv
+                            WHERE pv.id_producto_vari = %s OR pv.id_producto = %s
+                            LIMIT 1;
+                        """, (prod_id or 0, prod_id or 0))
                         f_vari = cursor.fetchone()
+                        if not f_vari:
+                            cursor.execute("SELECT id_producto_vari, precio FROM tb_producto_variante WHERE estado = true ORDER BY id_producto_vari ASC LIMIT 1;")
+                            f_vari = cursor.fetchone()
 
-                    id_vari = f_vari["id_producto_vari"]
+                        id_vari = f_vari["id_producto_vari"]
+
                     detalles_json_list.append({
                         "id_producto_vari": id_vari,
                         "cantidad": cant,
@@ -352,10 +370,16 @@ class VentaPostgresRepository:
         return self.obtener_por_id(venta_id)
 
     def eliminar(self, venta_id: int) -> bool:
-        """Cancela la venta utilizando sp_actualizar_estado_venta para reintegrar automáticamente el stock."""
+        """Cancela la venta utilizando sp_actualizar_estado_venta para reintegrar automáticamente el stock.
+        Regla de negocio: Solo se puede cancelar si el que hizo la venta fue el admin.
+        """
         venta_actual = self.obtener_por_id(venta_id)
         if not venta_actual:
             raise VentaNoEncontradaError(venta_id)
+
+        # Regla: Solo se puede cancelar si el que hizo la venta fue el admin
+        if not venta_actual.get("creado_por_admin"):
+            raise ValueError("Solo se puede cancelar una venta si el usuario que la realizó es Administrador.")
 
         with self._get_connection() as conn:
             with conn.cursor() as cursor:
@@ -372,6 +396,68 @@ class VentaPostgresRepository:
                     conn.commit()
 
         return True
+
+    def obtener_auxiliares(self) -> dict[str, Any]:
+        """Obtiene las listas maestras de clientes, métodos de pago y variantes de productos."""
+        with self._get_connection() as conn:
+            with conn.cursor(row_factory=dict_row) as cursor:
+                # 1. Clientes activos / pendientes
+                cursor.execute("""
+                    SELECT 
+                        u.id_usuario AS id,
+                        concat_ws(' ', u.nombres, u.apellidos) AS nombre,
+                        u.correo AS email,
+                        u.numerodoc AS documento,
+                        u.telefono,
+                        r.nombre AS rol
+                    FROM tb_usuario u
+                    JOIN tb_roles r ON r.id_rol = u.id_rol
+                    WHERE u.estado IN ('Activo', 'Pendiente')
+                    ORDER BY u.nombres, u.apellidos;
+                """)
+                clientes = cursor.fetchall()
+
+                # 2. Métodos de pago activos
+                cursor.execute("""
+                    SELECT 
+                        id_metodo_pago AS id,
+                        nombre,
+                        nro_cuenta,
+                        estado
+                    FROM tb_metodo_pago
+                    WHERE estado = 'Activo'
+                    ORDER BY id_metodo_pago;
+                """)
+                metodos_pago = cursor.fetchall()
+
+                # 3. Variantes de producto con stock real y precios
+                cursor.execute("""
+                    SELECT 
+                        pv.id_producto_vari,
+                        pv.id_producto,
+                        p.nombre,
+                        c.nombre AS color,
+                        t.nombre AS talla,
+                        pv.precio,
+                        pv.stock,
+                        pv.foto_producto
+                    FROM tb_producto_variante pv
+                    JOIN tb_productos p ON p.id_producto = pv.id_producto
+                    JOIN tb_colores c ON c.id_color = pv.id_color
+                    JOIN tb_tallas t ON t.id_talla = pv.id_talla
+                    WHERE pv.estado = true AND p.estado = true
+                    ORDER BY p.nombre, t.nombre, c.nombre;
+                """)
+                productos = cursor.fetchall()
+
+                for p in productos:
+                    p["precio"] = float(p["precio"])
+
+                return {
+                    "clientes": clientes,
+                    "metodos_pago": metodos_pago,
+                    "productos": productos,
+                }
 
 
 def VentaRepository() -> VentaPostgresRepository:

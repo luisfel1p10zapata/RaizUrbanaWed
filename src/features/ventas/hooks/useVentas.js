@@ -25,7 +25,7 @@ export function useVentas() {
   const [estadoFilter, setEstadoFilter] = useState("Todos los estados");
   const [page, setPage] = useState(1);
   const [modal, setModal] = useState(null); // { type: "create" | "view" | "edit" | "status", ventaId? }
-  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [cancelTarget, setCancelTarget] = useState(null);
   const [alertMessage, setAlertMessage] = useState(null);
 
   // Debounce para optimizar búsqueda en tiempo real
@@ -198,26 +198,34 @@ export function useVentas() {
     }
   }, [cargarDatos]);
 
-  const confirmDelete = useCallback(async () => {
-    if (!deleteTarget) return;
-    const codigo = deleteTarget.codigo;
+  const confirmCancel = useCallback(async () => {
+    if (!cancelTarget) return;
+    const codigo = cancelTarget.codigo;
     try {
-      await eliminarVenta(deleteTarget.id);
-      setDeleteTarget(null);
+      const rol = (cancelTarget.cliente?.rol || cancelTarget.rolUsuario || "").toLowerCase();
+      const esAdmin = Boolean(cancelTarget.creadoPorAdmin || rol === "administrador");
+      if (!esAdmin) {
+        throw new Error(
+          `Solo se puede cancelar una venta si el usuario que la realizó es Administrador. Esta venta fue realizada por un ${cancelTarget.cliente?.rol || "Cliente"}.`
+        );
+      }
+
+      await eliminarVenta(cancelTarget.id);
+      setCancelTarget(null);
       await cargarDatos();
       setAlertMessage({
-        type: "error",
-        title: "Eliminado",
-        message: `La venta "${codigo}" fue eliminada correctamente de la base de datos.`,
+        type: "warning",
+        title: "Venta Cancelada",
+        message: `La venta "${codigo}" fue cancelada exitosamente y sus existencias fueron reintegradas al inventario.`,
       });
     } catch (error) {
       setAlertMessage({
         type: "error",
-        title: "Error al eliminar",
-        message: error.message || "No se pudo eliminar la venta de la base de datos.",
+        title: "No se pudo cancelar",
+        message: error.message || "No se pudo cancelar la venta en la base de datos.",
       });
     }
-  }, [deleteTarget, cargarDatos]);
+  }, [cancelTarget, cargarDatos]);
 
   return {
     ventas,
@@ -234,17 +242,22 @@ export function useVentas() {
     totalRecords,
     modal,
     activeVenta,
-    deleteTarget,
+    cancelTarget,
+    deleteTarget: cancelTarget,
     alertMessage,
+    setAlertMessage,
     closeAlert,
     setSearch: handleSearchChange,
     setEstadoFilter: handleEstadoChange,
     setPage,
     setModal,
-    setDeleteTarget,
+    setCancelTarget,
+    setDeleteTarget: setCancelTarget,
     handleCreate,
     handleSave,
     handleChangeStatus,
-    confirmDelete,
+    confirmCancel,
+    confirmDelete: confirmCancel,
+    cargarDatos,
   };
 }

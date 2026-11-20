@@ -14,6 +14,7 @@ import {
   VerVentaModal,
   EditarVentaModal,
   CambiarEstadoModal,
+  RegistrarDevolucionModal,
 } from "./ModalsVentas";
 import { ESTADO_VENTA_META, ESTADO_PAGO_META, formatoMoneda } from "../../../data/dataVentas";
 
@@ -32,9 +33,10 @@ export default function Ventas() {
     totalRecords,
     modal,
     activeVenta,
-    deleteTarget,
-    setDeleteTarget,
+    cancelTarget,
+    setCancelTarget,
     alertMessage,
+    setAlertMessage,
     closeAlert,
     setSearch,
     setEstadoFilter,
@@ -43,7 +45,8 @@ export default function Ventas() {
     handleCreate,
     handleSave,
     handleChangeStatus,
-    confirmDelete,
+    confirmCancel,
+    cargarDatos,
   } = useVentas();
 
   const kpis = [
@@ -105,35 +108,86 @@ export default function Ventas() {
     },
     {
       header: "Acciones",
-      width: "14%",
-      render: (v) => (
-        <div className="ru-actions">
-          <button
-            type="button"
-            className="ru-icon-btn view"
-            onClick={() => setModal({ type: "view", ventaId: v.id })}
-            title="Ver detalle"
-          >
-            <Icons.Eye width={16} height={16} />
-          </button>
-          <button
-            type="button"
-            className="ru-icon-btn edit"
-            onClick={() => setModal({ type: "edit", ventaId: v.id })}
-            title="Editar venta"
-          >
-            <Icons.Pencil width={16} height={16} />
-          </button>
-          <button
-            type="button"
-            className="ru-icon-btn delete"
-            onClick={() => setDeleteTarget(v)}
-            title="Eliminar venta"
-          >
-            <Icons.Trash width={16} height={16} />
-          </button>
-        </div>
-      ),
+      width: "16%",
+      render: (v) => {
+        const rolUsuario = (v.cliente?.rol || v.rolUsuario || "").toLowerCase();
+        const esAdmin = Boolean(v.creadoPorAdmin || rolUsuario === "administrador");
+        const estaCancelada = v.estadoVenta === "Cancelada";
+        const puedeCancelar = esAdmin && !estaCancelada;
+
+        return (
+          <div className="ru-actions">
+            <button
+              type="button"
+              className="ru-icon-btn view"
+              onClick={() => setModal({ type: "view", ventaId: v.id })}
+              title="Ver detalle de venta"
+            >
+              <Icons.Eye width={16} height={16} />
+            </button>
+            <button
+              type="button"
+              className="ru-icon-btn edit"
+              onClick={() => setModal({ type: "edit", ventaId: v.id })}
+              title="Editar venta"
+            >
+              <Icons.Pencil width={16} height={16} />
+            </button>
+            <button
+              type="button"
+              className="ru-icon-btn devolucion"
+              onClick={() => {
+                if (estaCancelada) {
+                  setAlertMessage({
+                    type: "warning",
+                    title: "No permitido",
+                    message: "No se pueden realizar devoluciones sobre una venta cancelada.",
+                  });
+                  return;
+                }
+                setModal({ type: "devolucion", ventaId: v.id });
+              }}
+              disabled={estaCancelada}
+              title={estaCancelada ? "Venta cancelada (sin devoluciones)" : "Registrar devolución"}
+            >
+              <Icons.Return width={16} height={16} />
+            </button>
+            <button
+              type="button"
+              className={`ru-icon-btn cancel ${!puedeCancelar ? "disabled" : ""}`}
+              onClick={() => {
+                if (estaCancelada) {
+                  setAlertMessage({
+                    type: "info",
+                    title: "Venta ya cancelada",
+                    message: `La venta "${v.codigo}" ya se encuentra en estado Cancelada.`,
+                  });
+                  return;
+                }
+                if (!esAdmin) {
+                  setAlertMessage({
+                    type: "error",
+                    title: "Acción no permitida",
+                    message: `Solo se puede cancelar una venta si el usuario que la realizó es Administrador. Esta venta fue realizada por: ${v.cliente?.nombre || "Usuario"} (${v.cliente?.rol || v.rolUsuario || "Cliente"}).`,
+                  });
+                  return;
+                }
+                setCancelTarget(v);
+              }}
+              disabled={!puedeCancelar}
+              title={
+                estaCancelada
+                  ? "Esta venta ya fue cancelada"
+                  : !esAdmin
+                  ? `Solo se puede cancelar si el que hizo la venta fue el admin (${v.cliente?.rol || v.rolUsuario || "Cliente"})`
+                  : "Cancelar venta"
+              }
+            >
+              <Icons.Ban width={16} height={16} />
+            </button>
+          </div>
+        );
+      },
     },
   ];
 
@@ -159,13 +213,10 @@ export default function Ventas() {
         <KpiGlobal kpis={kpis} />
 
         <FiltrarBuscarGlobal
-          filterTitle="Buscar y filtrar"
-          searchPlaceholder="Buscar por cliente, código o fecha..."
+          filterTitle="Búsqueda en tiempo real"
+          searchPlaceholder="Buscar por cliente, código, fecha, método de pago o estado..."
           searchValue={search}
           onSearchChange={setSearch}
-          filterValue={estadoFilter}
-          onFilterChange={setEstadoFilter}
-          filterOptions={estadoOptions}
         />
 
         <TableGlobal
@@ -198,14 +249,31 @@ export default function Ventas() {
       {modal?.type === "status" && activeVenta && (
         <CambiarEstadoModal venta={activeVenta} onClose={() => setModal(null)} onSave={handleChangeStatus} />
       )}
+      {modal?.type === "devolucion" && activeVenta && (
+        <RegistrarDevolucionModal
+          venta={activeVenta}
+          onClose={() => setModal(null)}
+          onDevolucionExitosa={({ venta, cantidad }) => {
+            setAlertMessage({
+              type: "success",
+              title: "Devolución Exitosa",
+              message: `Se registraron ${cantidad} unidad(es) en devolución para la venta "${venta.codigo}". El inventario fue actualizado.`,
+            });
+            cargarDatos();
+          }}
+        />
+      )}
 
-      {deleteTarget && (
+      {cancelTarget && (
         <ConfirmModal
-          title="¿Eliminar Venta?"
-          message={`Estás a punto de eliminar la venta "${deleteTarget.codigo}" de ${deleteTarget.cliente?.nombre || "este cliente"}. Esta acción no se puede deshacer.`}
-          onClose={() => setDeleteTarget(null)}
-          onConfirm={confirmDelete}
-          confirmText="Sí, eliminar venta"
+          title="¿Cancelar Venta?"
+          message={`Estás a punto de cancelar la venta "${cancelTarget.codigo}" realizada por ${cancelTarget.cliente?.nombre || "este usuario"} (${cancelTarget.cliente?.rol || cancelTarget.rolUsuario || "Administrador"}). Esta acción cambiará su estado a "Cancelada" y reintegrará las existencias al inventario.`}
+          onClose={() => setCancelTarget(null)}
+          onConfirm={confirmCancel}
+          confirmText="Sí, cancelar venta"
+          cancelText="No, conservar"
+          confirmVariant="destructive"
+          icon={<Icons.Ban width={24} height={24} style={{ color: "#D1495B" }} />}
         />
       )}
 

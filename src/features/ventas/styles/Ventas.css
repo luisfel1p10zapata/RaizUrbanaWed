@@ -175,7 +175,18 @@
 
 .ru-icon-btn.view { color: var(--info-blue); }
 .ru-icon-btn.edit { color: var(--warn-amber); }
+.ru-icon-btn.devolucion,
+.ru-icon-btn.return { color: #8B5CF6; }
+.ru-icon-btn.cancel,
 .ru-icon-btn.delete { color: var(--negative); }
+
+.ru-icon-btn:disabled,
+.ru-icon-btn.disabled {
+  opacity: 0.3 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+  pointer-events: auto;
+}
 
 /* ==================================================================
    4. CELDAS DE TABLA
