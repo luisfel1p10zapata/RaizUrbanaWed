@@ -1691,3 +1691,158 @@ textarea.ru-campo-control {
     font-weight: 500;
     line-height: 1.4;
 }
+
+/* ==========================================
+   PRODUCTOS - CORRECCIÓN DE FONDOS
+   Compatible con modo claro y oscuro
+========================================== */
+
+/* Tarjetas principales */
+.ru-productos .ru-card,
+.ru-productos .ru-listado {
+  background-color: var(--ru-panel) !important;
+  border: 1px solid var(--ru-borde);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(34, 34, 59, 0.04);
+}
+
+/* Sección de filtros */
+.ru-productos .ru-card-heading,
+.ru-productos .ru-filtros {
+  background-color: var(--ru-panel) !important;
+}
+
+/* Encabezado del listado */
+.ru-productos .ru-listado-header {
+  background-color: var(--ru-panel) !important;
+  border-bottom: 1px solid var(--ru-linea);
+}
+
+/* Contenedor de tabla */
+.ru-productos .ru-tabla-scroll {
+  background-color: var(--ru-panel) !important;
+}
+
+/* Tabla completa */
+.ru-productos .ru-tabla {
+  background-color: var(--ru-panel) !important;
+}
+
+/* Encabezados de columnas */
+.ru-productos .ru-tabla thead,
+.ru-productos .ru-tabla thead tr,
+.ru-productos .ru-tabla thead th {
+  background-color: var(--ru-alternativo) !important;
+}
+
+/* Filas de productos */
+.ru-productos .ru-tabla tbody,
+.ru-productos .ru-tabla tbody tr,
+.ru-productos .ru-tabla tbody td {
+  background-color: var(--ru-panel) !important;
+}
+
+/* Efecto al pasar el cursor */
+.ru-productos .ru-tabla tbody tr:hover,
+.ru-productos .ru-tabla tbody tr:hover td {
+  background-color: var(--ru-alternativo) !important;
+}
+
+/* Paginación */
+.ru-productos .ru-paginacion {
+  background-color: var(--ru-panel) !important;
+  border-top: 1px solid var(--ru-linea);
+}
+
+/* Campos de búsqueda y filtros */
+.ru-productos .ru-filtros input,
+.ru-productos .ru-filtros select {
+  background-color: var(--ru-input) !important;
+  color: var(--ru-texto);
+  border: 1px solid var(--ru-borde);
+}
+
+/* Mantener las tarjetas separadas */
+.ru-productos .ru-card {
+  margin-bottom: 20px;
+}
+
+/* ==========================================
+   PRODUCTOS - CORRECCIÓN DE MODALES
+   Consultar y Editar producto
+========================================== */
+
+/* Fondo oscuro detrás de los modales */
+.ru-overlay {
+  background: rgba(18, 15, 24, 0.55) !important;
+  backdrop-filter: blur(3px);
+}
+
+/* Contenedor principal del modal */
+.ru-overlay .ru-modal {
+  background-color: var(--ru-panel) !important;
+  color: var(--ru-texto) !important;
+  opacity: 1 !important;
+  border: 1px solid var(--ru-borde);
+  overflow: hidden;
+}
+
+/* Encabezado */
+.ru-overlay .ru-modal-header {
+  background-color: var(--ru-panel) !important;
+  opacity: 1 !important;
+}
+
+/* Cuerpo del modal */
+.ru-overlay .ru-modal-body {
+  background-color: var(--ru-panel) !important;
+  opacity: 1 !important;
+}
+
+/* Pie del modal y botones */
+.ru-overlay .ru-modal-footer {
+  background-color: var(--ru-panel) !important;
+  opacity: 1 !important;
+}
+
+/* Tarjetas de información */
+.ru-overlay .ru-vista-informacion,
+.ru-overlay .ru-vista-datos > div {
+  background-color: var(--ru-panel) !important;
+}
+
+/* Campos de edición */
+.ru-overlay .ru-campo-control,
+.ru-overlay .ru-campos input,
+.ru-overlay .ru-campos select {
+  background-color: var(--ru-input) !important;
+  color: var(--ru-texto) !important;
+}
+
+/* Opciones de estado */
+.ru-overlay .ru-estado-opcion {
+  background-color: var(--ru-panel) !important;
+}
+
+.ru-overlay .ru-estado-opcion.activo {
+  background-color: var(--ru-alternativo) !important;
+}
+
+/* Opciones de tipo de producto */
+.ru-overlay .ru-tipo-btn {
+  background-color: var(--ru-panel) !important;
+}
+
+.ru-overlay .ru-tipo-btn.seleccionado {
+  background-color: var(--ru-alternativo) !important;
+}
+
+/* Compatibilidad con modo oscuro */
+:root[data-theme="dark"] .ru-overlay {
+  --ru-panel: #1C1E2E;
+  --ru-input: #161722;
+  --ru-alternativo: #292B3B;
+  --ru-texto: #F2E9E4;
+  --ru-borde: #3A3D57;
+}
