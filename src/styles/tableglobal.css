@@ -172,6 +172,9 @@
 /* ---------- Botones de acción en tabla (Paleta Ventas) ---------- */
 .produccion-table-card .ru-actions .ru-icon-btn.view { color: #4A76A8 !important; }
 .produccion-table-card .ru-actions .ru-icon-btn.edit { color: #C9973F !important; }
+.produccion-table-card .ru-actions .ru-icon-btn.devolucion,
+.produccion-table-card .ru-actions .ru-icon-btn.return { color: #8B5CF6 !important; }
+.produccion-table-card .ru-actions .ru-icon-btn.cancel,
 .produccion-table-card .ru-actions .ru-icon-btn.delete { color: #D1495B !important; }
 
 [data-theme="dark"] .produccion-table-card .ru-actions .ru-icon-btn.view,
@@ -180,6 +183,13 @@
 [data-theme="dark"] .produccion-table-card .ru-actions .ru-icon-btn.edit,
 .dark .produccion-table-card .ru-actions .ru-icon-btn.edit { color: #FBBF24 !important; }
 
+[data-theme="dark"] .produccion-table-card .ru-actions .ru-icon-btn.devolucion,
+.dark .produccion-table-card .ru-actions .ru-icon-btn.devolucion,
+[data-theme="dark"] .produccion-table-card .ru-actions .ru-icon-btn.return,
+.dark .produccion-table-card .ru-actions .ru-icon-btn.return { color: #A78BFA !important; }
+
+[data-theme="dark"] .produccion-table-card .ru-actions .ru-icon-btn.cancel,
+.dark .produccion-table-card .ru-actions .ru-icon-btn.cancel,
 [data-theme="dark"] .produccion-table-card .ru-actions .ru-icon-btn.delete,
 .dark .produccion-table-card .ru-actions .ru-icon-btn.delete { color: #F87171 !important; }
 

@@ -79,6 +79,13 @@ export async function obtenerMetricasVentas() {
 }
 
 /**
+ * Obtener datos auxiliares maestros (clientes, métodos de pago, productos con stock real).
+ */
+export async function obtenerAuxiliaresVenta() {
+  return solicitar('/auxiliares');
+}
+
+/**
  * Obtener el detalle de una venta por su ID.
  */
 export async function obtenerVentaPorId(id) {
@@ -95,11 +102,14 @@ export async function crearVenta(datos) {
       id: datos.cliente.id || 1,
       nombre: datos.cliente.nombre || 'Cliente General',
       email: datos.cliente.email || 'cliente@empresa.com',
+      rol: datos.cliente.rol || undefined,
     } : undefined,
-    metodoPago: datos.metodoPago || 'Efectivo',
+    idMetodoPago: datos.idMetodoPago || (datos.metodoPago?.id ? datos.metodoPago.id : undefined),
+    metodoPago: typeof datos.metodoPago === 'string' ? datos.metodoPago : (datos.metodoPago?.nombre || 'Efectivo'),
     estadoVenta: datos.estadoVenta || 'Pendiente',
     estadoPago: datos.estadoPago || 'Pendiente',
     items: (datos.items || []).map((it) => ({
+      idProductoVari: it.idProductoVari || it.id_producto_vari || undefined,
       productoId: it.productoId || it.producto?.id || 101,
       producto: it.producto ? {
         id: it.producto.id || 101,

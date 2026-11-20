@@ -1,6 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Icons } from "../../../components/ui/Icons";
 import "../styles/ModalsVentas.css";
+import { listarMotivos, crearDevolucion } from "../../../services/devolucionesService";
+import { obtenerAuxiliaresVenta } from "../services/ventasService";
 import {
   CLIENTES,
   PRODUCTOS,
@@ -70,13 +72,17 @@ const ClienteBox = ({ cliente }) => (
   <div className="ru-v-summary-box">
     <div className="ru-v-avatar"><Icons.User width={16} height={16} /></div>
     <div>
-      <span className="ru-v-client-name">{cliente?.nombre}</span>
-      <span className="ru-v-client-email">{cliente?.email}</span>
+      <span className="ru-v-client-name">
+        {cliente?.nombre} {cliente?.rol ? `(${cliente.rol})` : ""}
+      </span>
+      <span className="ru-v-client-email">
+        {cliente?.email} {cliente?.documento ? `· CC: ${cliente.documento}` : ""}
+      </span>
     </div>
   </div>
 );
 
-const ProductosLista = ({ items = [] }) =>
+const ProductosLista = ({ items = [], onRemove }) =>
   items.map((it, idx) => (
     <div key={idx} className="ru-v-product-row">
       <div className="ru-v-product-left">
@@ -86,41 +92,224 @@ const ProductosLista = ({ items = [] }) =>
           <span className="ru-v-product-meta">Talla {it.talla} · {it.color} · x{it.cantidad}</span>
         </div>
       </div>
-      <span className="ru-v-product-price">{formatoMoneda(it.subtotal)}</span>
+      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+        <span className="ru-v-product-price">{formatoMoneda(it.subtotal)}</span>
+        {onRemove && (
+          <button
+            type="button"
+            className="ru-modal-close"
+            style={{ width: "22px", height: "22px", minWidth: "22px", borderRadius: "50%", padding: 0 }}
+            onClick={() => onRemove(idx)}
+            title="Quitar producto"
+          >
+            <Icons.Close width={12} height={12} />
+          </button>
+        )}
+      </div>
     </div>
   ));
 
 /* ------------------------------------------------------------------ */
-/*  MODAL: REGISTRAR VENTA                                            */
+/*  MODAL: REGISTRAR VENTA (Sincronizado con PostgreSQL / Supabase)   */
 /* ------------------------------------------------------------------ */
 export function RegistrarVentaModal({ onClose, onGuardar }) {
   const [paso, setPaso] = useState(1);
+  const [cargandoAux, setCargandoAux] = useState(false);
+
+  // Auxiliares maestros de base de datos
+  const [listaClientes, setListaClientes] = useState(CLIENTES);
+  const [listaMetodosPago, setListaMetodosPago] = useState(
+    METODOS_PAGO.map((m, i) => ({ id: i + 1, nombre: m }))
+  );
+  const [listaVariantes, setListaVariantes] = useState([]);
+
   const [clienteSel, setClienteSel] = useState(null);
   const [busqueda, setBusqueda] = useState("");
   const [items, setItems] = useState([]);
-  const [metodoPago, setMetodoPago] = useState(METODOS_PAGO[0]);
-  const [prodId, setProdId] = useState(PRODUCTOS[0]?.id || 101);
+  const [metodoPagoSel, setMetodoPagoSel] = useState(METODOS_PAGO[0]);
+  const [prodId, setProdId] = useState("");
   const [cantidad, setCantidad] = useState(1);
-  const [talla, setTalla] = useState(PRODUCTOS[0]?.tallas?.[0] || "M");
-  const [color, setColor] = useState(PRODUCTOS[0]?.colores?.[0] || "Negro");
+  const [talla, setTalla] = useState("M");
+  const [color, setColor] = useState("Negro");
+  const [errorItem, setErrorItem] = useState(null);
 
-  const prodSel = PRODUCTOS.find((p) => p.id === Number(prodId));
+  // Cargar clientes, métodos de pago y variantes directamente desde la BD
+  useEffect(() => {
+    let montado = true;
+    setCargandoAux(true);
+    obtenerAuxiliaresVenta()
+      .then((data) => {
+        if (!montado || !data) return;
+        if (Array.isArray(data.clientes) && data.clientes.length > 0) {
+          setListaClientes(data.clientes);
+        }
+        if (Array.isArray(data.metodosPago) && data.metodosPago.length > 0) {
+          setListaMetodosPago(data.metodosPago);
+          setMetodoPagoSel(data.metodosPago[0]);
+        }
+        if (Array.isArray(data.productos) && data.productos.length > 0) {
+          setListaVariantes(data.productos);
+          const primer = data.productos[0];
+          setProdId(primer.idProducto);
+          setTalla(primer.talla);
+          setColor(primer.color);
+        }
+      })
+      .catch((err) => {
+        console.warn("Usando datos locales de respaldo para RegistrarVentaModal:", err);
+      })
+      .finally(() => {
+        if (montado) setCargandoAux(false);
+      });
+    return () => {
+      montado = false;
+    };
+  }, []);
+
+  // Agrupar catálogo de productos desde las variantes de la BD
+  const productosUnicos = useMemo(() => {
+    if (listaVariantes.length > 0) {
+      const mapa = new Map();
+      for (const v of listaVariantes) {
+        if (!mapa.has(v.idProducto)) {
+          mapa.set(v.idProducto, {
+            id: v.idProducto,
+            nombre: v.nombre,
+            precio: v.precio,
+            variantes: [],
+          });
+        }
+        mapa.get(v.idProducto).variantes.push(v);
+      }
+      return Array.from(mapa.values());
+    }
+    // Si no ha cargado la BD, usar catálogo estático de dataVentas
+    return PRODUCTOS.map((p) => ({
+      id: p.id,
+      nombre: p.nombre,
+      precio: p.precio,
+      variantes: (p.tallas || ["M"]).flatMap((t) =>
+        (p.colores || ["Negro"]).map((c) => ({
+          idProductoVari: p.id,
+          idProducto: p.id,
+          nombre: p.nombre,
+          color: c,
+          talla: t,
+          precio: p.precio,
+          stock: 99,
+        }))
+      ),
+    }));
+  }, [listaVariantes]);
+
+  // Producto seleccionado actualmente
+  const prodSel = useMemo(() => {
+    if (productosUnicos.length === 0) return null;
+    return productosUnicos.find((p) => p.id === Number(prodId)) || productosUnicos[0];
+  }, [productosUnicos, prodId]);
+
+  // Tallas disponibles para el producto seleccionado
+  const tallasDisponibles = useMemo(() => {
+    if (!prodSel) return [];
+    return Array.from(new Set(prodSel.variantes.map((v) => v.talla)));
+  }, [prodSel]);
+
+  // Colores disponibles para la talla seleccionada
+  const coloresDisponibles = useMemo(() => {
+    if (!prodSel) return [];
+    const filtrados = prodSel.variantes.filter((v) => !talla || v.talla === talla);
+    return Array.from(new Set(filtrados.map((v) => v.color)));
+  }, [prodSel, talla]);
+
+  // Variante específica que concuerda con producto, talla y color
+  const varianteSel = useMemo(() => {
+    if (!prodSel) return null;
+    return (
+      prodSel.variantes.find((v) => v.talla === talla && v.color === color) ||
+      prodSel.variantes.find((v) => v.talla === talla) ||
+      prodSel.variantes[0] ||
+      null
+    );
+  }, [prodSel, talla, color]);
+
+  const stockDisponible = varianteSel?.stock ?? 0;
+  const precioUnitario = varianteSel?.precio ?? prodSel?.precio ?? 0;
+
+  const handleCambioProducto = (nuevoId) => {
+    const idNum = Number(nuevoId);
+    setProdId(idNum);
+    setErrorItem(null);
+    const p = productosUnicos.find((x) => x.id === idNum);
+    if (p && p.variantes.length > 0) {
+      const primeraTalla = p.variantes[0].talla;
+      setTalla(primeraTalla);
+      const coloresParaTalla = p.variantes
+        .filter((v) => v.talla === primeraTalla)
+        .map((v) => v.color);
+      setColor(coloresParaTalla[0] || p.variantes[0].color);
+    }
+  };
+
+  const handleCambioTalla = (nuevaTalla) => {
+    setTalla(nuevaTalla);
+    setErrorItem(null);
+    if (prodSel) {
+      const match = prodSel.variantes.find((v) => v.talla === nuevaTalla);
+      if (match) {
+        setColor(match.color);
+      }
+    }
+  };
+
   const total = items.reduce((s, it) => s + (Number(it.subtotal) || 0), 0);
-  const estadoPago = metodoPago === "Efectivo" ? "Pendiente" : "Pagado";
-  const clientes = CLIENTES.filter((cl) =>
-    `${cl.nombre} ${cl.email}`.toLowerCase().includes(busqueda.toLowerCase())
+  const nombreMetodoPago = typeof metodoPagoSel === "string" ? metodoPagoSel : (metodoPagoSel?.nombre || "Efectivo");
+  const estadoPago = nombreMetodoPago === "Efectivo" ? "Pendiente" : "Pagado";
+
+  const clientesFiltrados = listaClientes.filter((cl) =>
+    `${cl.nombre || ""} ${cl.email || ""} ${cl.documento || ""}`.toLowerCase().includes(busqueda.toLowerCase())
   );
 
   const agregar = () => {
-    if (!prodSel || cantidad < 1) return;
+    if (!varianteSel || cantidad < 1) return;
+    if (cantidad > stockDisponible) {
+      setErrorItem(`Stock insuficiente para este producto. Solo hay ${stockDisponible} unidades disponibles.`);
+      return;
+    }
+    setErrorItem(null);
     setItems((prev) => [
       ...prev,
-      { producto: prodSel, cantidad, talla, color, subtotal: prodSel.precio * cantidad },
+      {
+        idProductoVari: varianteSel.idProductoVari,
+        producto: {
+          id: prodSel.id,
+          nombre: prodSel.nombre,
+          precio: precioUnitario,
+        },
+        cantidad,
+        talla: varianteSel.talla,
+        color: varianteSel.color,
+        subtotal: precioUnitario * cantidad,
+      },
     ]);
   };
 
-  const confirmar = () =>
-    onGuardar({ cliente: clienteSel, items, metodoPago, total, estadoVenta: "Pendiente", estadoPago });
+  const quitarItem = (idx) => {
+    setItems((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const confirmar = () => {
+    const idMetodoPago = typeof metodoPagoSel === "object" && metodoPagoSel?.id ? metodoPagoSel.id : undefined;
+    onGuardar({
+      clienteId: clienteSel?.id,
+      cliente: clienteSel,
+      idMetodoPago,
+      metodoPago: nombreMetodoPago,
+      items,
+      total,
+      estadoVenta: "Pendiente",
+      estadoPago,
+    });
+  };
 
   const pasos = ["Cliente", "Productos", "Pago", "Confirmar"];
 
@@ -153,9 +342,13 @@ export function RegistrarVentaModal({ onClose, onGuardar }) {
       footer={
         <>
           {paso > 1 ? (
-            <button type="button" className="btn btn-outline" onClick={() => setPaso(paso - 1)}>Atrás</button>
+            <button type="button" className="btn btn-outline" onClick={() => setPaso(paso - 1)}>
+              Atrás
+            </button>
           ) : (
-            <button type="button" className="btn btn-outline" onClick={onClose}>Cancelar</button>
+            <button type="button" className="btn btn-outline" onClick={onClose}>
+              Cancelar
+            </button>
           )}
           {paso < 4 ? (
             <button
@@ -167,7 +360,9 @@ export function RegistrarVentaModal({ onClose, onGuardar }) {
               Siguiente
             </button>
           ) : (
-            <button type="button" className="btn btn-primary" onClick={confirmar}>Confirmar venta</button>
+            <button type="button" className="btn btn-primary" onClick={confirmar}>
+              Confirmar venta
+            </button>
           )}
         </>
       }
@@ -182,20 +377,29 @@ export function RegistrarVentaModal({ onClose, onGuardar }) {
             onChange={(e) => setBusqueda(e.target.value)}
           />
           <div className="ru-v-client-list">
-            {clientes.map((cl) => (
+            {clientesFiltrados.map((cl) => (
               <div
                 key={cl.id}
                 className={cx("ru-v-client-row", clienteSel?.id === cl.id && "selected")}
                 onClick={() => setClienteSel(cl)}
               >
                 <div className="ru-v-avatar"><Icons.User width={16} height={16} /></div>
-                <div>
-                  <span className="ru-v-client-name">{cl.nombre}</span>
-                  <span className="ru-v-client-email">{cl.email}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span className="ru-v-client-name">{cl.nombre}</span>
+                    {cl.rol && (
+                      <span className="ru-v-badge ru-v-badge-plain" style={{ fontSize: "11px", padding: "1px 6px" }}>
+                        {cl.rol}
+                      </span>
+                    )}
+                  </div>
+                  <span className="ru-v-client-email">
+                    {cl.email} {cl.documento ? `· CC: ${cl.documento}` : ""}
+                  </span>
                 </div>
               </div>
             ))}
-            {clientes.length === 0 && <p className="ru-v-hint">No se encontraron clientes.</p>}
+            {clientesFiltrados.length === 0 && <p className="ru-v-hint">No se encontraron clientes.</p>}
           </div>
         </>
       )}
@@ -209,18 +413,13 @@ export function RegistrarVentaModal({ onClose, onGuardar }) {
               <Field label="PRODUCTO" required>
                 <select
                   className="ru-form-input"
-                  value={prodId}
-                  onChange={(e) => {
-                    setProdId(e.target.value);
-                    const p = PRODUCTOS.find((x) => x.id === Number(e.target.value));
-                    if (p) {
-                      setTalla(p.tallas?.[0] || "");
-                      setColor(p.colores?.[0] || "");
-                    }
-                  }}
+                  value={prodSel?.id || ""}
+                  onChange={(e) => handleCambioProducto(e.target.value)}
                 >
-                  {PRODUCTOS.map((p) => (
-                    <option key={p.id} value={p.id}>{p.nombre} — {formatoMoneda(p.precio)}</option>
+                  {productosUnicos.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.nombre} — {formatoMoneda(p.precio)}
+                    </option>
                   ))}
                 </select>
               </Field>
@@ -229,26 +428,58 @@ export function RegistrarVentaModal({ onClose, onGuardar }) {
                   className="ru-form-input"
                   type="number"
                   min="1"
+                  max={Math.max(1, stockDisponible)}
                   value={cantidad}
-                  onChange={(e) => setCantidad(Math.max(1, Number(e.target.value)))}
+                  onChange={(e) => {
+                    setErrorItem(null);
+                    setCantidad(Math.max(1, Number(e.target.value)));
+                  }}
                 />
               </Field>
               <Field label="TALLA" required>
-                <select className="ru-form-input" value={talla} onChange={(e) => setTalla(e.target.value)}>
-                  {prodSel?.tallas?.map((t) => <option key={t} value={t}>{t}</option>)}
+                <select className="ru-form-input" value={talla} onChange={(e) => handleCambioTalla(e.target.value)}>
+                  {tallasDisponibles.map((t) => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
                 </select>
               </Field>
               <Field label="COLOR" required>
                 <select className="ru-form-input" value={color} onChange={(e) => setColor(e.target.value)}>
-                  {prodSel?.colores?.map((co) => <option key={co} value={co}>{co}</option>)}
+                  {coloresDisponibles.map((co) => (
+                    <option key={co} value={co}>{co}</option>
+                  ))}
                 </select>
               </Field>
             </div>
-            <button type="button" className="btn btn-primary ru-v-block" onClick={agregar}><Icons.Plus width={17} height={17} /><span>Agregar producto</span></button>
+
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px", fontSize: "12px", color: stockDisponible > 0 ? "var(--color-text-muted, #64748b)" : "#ef4444" }}>
+              <span>
+                Stock disponible en BD: <strong>{stockDisponible} unidades</strong>
+              </span>
+              <span>
+                Precio: <strong>{formatoMoneda(precioUnitario)}</strong>
+              </span>
+            </div>
+
+            {errorItem && (
+              <p className="ru-v-hint" style={{ color: "#ef4444", marginBottom: "8px" }}>
+                {errorItem}
+              </p>
+            )}
+
+            <button
+              type="button"
+              className="btn btn-primary ru-v-block"
+              onClick={agregar}
+              disabled={stockDisponible < 1}
+            >
+              <Icons.Plus width={17} height={17} />
+              <span>{stockDisponible < 1 ? "Agotado (Sin Stock)" : "Agregar producto"}</span>
+            </button>
           </div>
           {items.length > 0 && (
             <>
-              <div className="ru-v-summary"><ProductosLista items={items} /></div>
+              <div className="ru-v-summary"><ProductosLista items={items} onRemove={quitarItem} /></div>
               <div className="ru-v-box-total"><span>Total</span><span>{formatoMoneda(total)}</span></div>
             </>
           )}
@@ -260,27 +491,34 @@ export function RegistrarVentaModal({ onClose, onGuardar }) {
           <p className="ru-v-hint">Selecciona el método de pago.</p>
           <div className="ru-v-field-label">MÉTODO DE PAGO *</div>
           <div className="ru-v-payment-grid">
-            {METODOS_PAGO.map((m) => (
-              <button
-                key={m}
-                type="button"
-                className={cx("ru-v-payment-card", metodoPago === m && "selected")}
-                onClick={() => setMetodoPago(m)}
-              >
-                <Icons.Card width={16} height={16} />
-                <span>{m}</span>
-              </button>
-            ))}
+            {listaMetodosPago.map((m) => {
+              const nom = typeof m === "string" ? m : m.nombre;
+              const idMp = typeof m === "string" ? m : m.id;
+              const nroC = typeof m === "object" ? (m.nroCuenta || m.nro_cuenta) : null;
+              const isSel = (typeof metodoPagoSel === "object" && metodoPagoSel?.id ? metodoPagoSel.id === idMp : nombreMetodoPago === nom);
+              return (
+                <button
+                  key={idMp}
+                  type="button"
+                  className={cx("ru-v-payment-card", isSel && "selected")}
+                  onClick={() => setMetodoPagoSel(m)}
+                >
+                  <Icons.Card width={16} height={16} />
+                  <span>{nom}</span>
+                  {nroC && <small style={{ fontSize: "11px", opacity: 0.8, display: "block" }}>{nroC}</small>}
+                </button>
+              );
+            })}
           </div>
           <div className="ru-v-info-box">
             <span className="ru-v-info-icon"><Icons.Check width={16} height={16} /></span>
-            {metodoPago === "Efectivo" ? (
+            {nombreMetodoPago === "Efectivo" ? (
               <>
                 <span>Efectivo no requiere comprobante. Estado de pago:</span>
                 <strong>a confirmar manualmente</strong>
               </>
             ) : (
-              <span>Se solicitará validación para pago con {metodoPago}.</span>
+              <span>Se registrará la orden con {nombreMetodoPago} para su validación contable.</span>
             )}
           </div>
         </>
@@ -295,7 +533,7 @@ export function RegistrarVentaModal({ onClose, onGuardar }) {
           <div className="ru-v-summary"><ProductosLista items={items} /></div>
           <div className="ru-v-box-total"><span>Total</span><span>{formatoMoneda(total)}</span></div>
           <Section>Pago</Section>
-          <div className="ru-v-kv"><span>Método</span><strong>{metodoPago}</strong></div>
+          <div className="ru-v-kv"><span>Método</span><strong>{nombreMetodoPago}</strong></div>
           <div className="ru-v-kv">
             <span>Estado pago</span>
             <Badge color={ESTADO_PAGO_META[estadoPago]}>{estadoPago}</Badge>
@@ -498,6 +736,216 @@ export function CambiarEstadoModal({ venta, onClose, onSave }) {
             {seleccion === key && <span className="ru-v-status-check"><Icons.Check width={10} height={10} /></span>}
           </div>
         ))}
+      </div>
+    </ModalShell>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  MODAL: REGISTRAR DEVOLUCIÓN DE UNA VENTA                          */
+/* ------------------------------------------------------------------ */
+export function RegistrarDevolucionModal({ venta, onClose, onDevolucionExitosa }) {
+  const [motivos, setMotivos] = useState([]);
+  const [selectedItemIdx, setSelectedItemIdx] = useState(0);
+  const [cantidad, setCantidad] = useState(1);
+  const [idMotivo, setIdMotivo] = useState("");
+  const [observaciones, setObservaciones] = useState("");
+  const [reintegraStock, setReintegraStock] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+
+  const items = venta?.items || [];
+  const selectedItem = items[selectedItemIdx] || items[0] || null;
+  const maxCantidad = selectedItem ? Number(selectedItem.cantidad || 1) : 1;
+
+  useEffect(() => {
+    listarMotivos()
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setMotivos(data);
+          setIdMotivo(data[0].id_motivo || data[0].id || "");
+        } else {
+          const fallback = [
+            { id_motivo: 1, nombre: "Talla incorrecta" },
+            { id_motivo: 2, nombre: "Defecto de fábrica" },
+            { id_motivo: 3, nombre: "Cambio de producto" },
+            { id_motivo: 4, nombre: "Insatisfacción con el producto" },
+          ];
+          setMotivos(fallback);
+          setIdMotivo(1);
+        }
+      })
+      .catch(() => {
+        const fallback = [
+          { id_motivo: 1, nombre: "Talla incorrecta" },
+          { id_motivo: 2, nombre: "Defecto de fábrica" },
+          { id_motivo: 3, nombre: "Cambio de producto" },
+          { id_motivo: 4, nombre: "Insatisfacción con el producto" },
+        ];
+        setMotivos(fallback);
+        setIdMotivo(1);
+      });
+  }, []);
+
+  const handleSubmit = async () => {
+    if (!selectedItem) {
+      setErrorMsg("No hay productos disponibles para devolver en esta venta.");
+      return;
+    }
+    if (cantidad < 1 || cantidad > maxCantidad) {
+      setErrorMsg(`La cantidad debe estar entre 1 y ${maxCantidad}.`);
+      return;
+    }
+    if (!idMotivo) {
+      setErrorMsg("Selecciona un motivo de devolución.");
+      return;
+    }
+
+    setSubmitting(true);
+    setErrorMsg("");
+
+    try {
+      const payload = {
+        id_det_venta: selectedItem.id_det_venta || selectedItem.producto?.id || venta.id,
+        cantidad: Number(cantidad),
+        fecha_devolucion: new Date().toISOString().slice(0, 10),
+        id_motivo: Number(idMotivo),
+        observaciones: observaciones?.trim() || null,
+        reintegra_stock: Boolean(reintegraStock),
+      };
+
+      await crearDevolucion(payload);
+      if (onDevolucionExitosa) {
+        onDevolucionExitosa({
+          venta,
+          item: selectedItem,
+          cantidad: Number(cantidad),
+        });
+      }
+      onClose();
+    } catch (err) {
+      setErrorMsg(err.response?.data?.detail || err.message || "Error al procesar la devolución.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <ModalShell
+      eyebrow={`DEVOLUCIÓN · ${venta?.codigo || "VENTA"}`}
+      title="Registrar Devolución"
+      onClose={onClose}
+      maxWidth="580px"
+      footer={
+        <>
+          <button type="button" className="btn btn-outline" onClick={onClose} disabled={submitting}>
+            Cancelar
+          </button>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={handleSubmit}
+            disabled={submitting || !selectedItem}
+          >
+            {submitting ? "Procesando..." : "Confirmar devolución"}
+          </button>
+        </>
+      }
+    >
+      <div style={{ marginBottom: "16px" }}>
+        <p className="ru-v-hint">
+          Registra la devolución de uno de los productos de esta orden de venta. El stock podrá reintegrarse automáticamente al inventario.
+        </p>
+
+        <ClienteBox cliente={venta?.cliente} />
+      </div>
+
+      {errorMsg && (
+        <div style={{
+          padding: "10px 14px",
+          background: "rgba(209, 73, 91, 0.12)",
+          border: "1px solid var(--negative)",
+          borderRadius: "8px",
+          color: "var(--negative)",
+          fontSize: "13px",
+          marginBottom: "16px"
+        }}>
+          {errorMsg}
+        </div>
+      )}
+
+      <div className="ru-form-grid">
+        <Field label="PRODUCTO A DEVOLVER" required full>
+          <select
+            className="ru-form-input"
+            value={selectedItemIdx}
+            onChange={(e) => {
+              const idx = Number(e.target.value);
+              setSelectedItemIdx(idx);
+              const item = items[idx];
+              if (item) {
+                setCantidad(Math.min(cantidad, Number(item.cantidad || 1)));
+              }
+            }}
+          >
+            {items.map((it, idx) => (
+              <option key={idx} value={idx}>
+                {it.producto?.nombre} · Talla {it.talla} · {it.color} (Comprados: {it.cantidad} unid. - {formatoMoneda(it.subtotal)})
+              </option>
+            ))}
+          </select>
+        </Field>
+
+        <Field label="CANTIDAD A DEVOLVER" required>
+          <input
+            className="ru-form-input"
+            type="number"
+            min="1"
+            max={maxCantidad}
+            value={cantidad}
+            onChange={(e) => setCantidad(Math.max(1, Math.min(maxCantidad, Number(e.target.value))))}
+          />
+          <span style={{ fontSize: "11.5px", color: "var(--muted-text)", marginTop: "4px", display: "block" }}>
+            Máximo a devolver: {maxCantidad} unid.
+          </span>
+        </Field>
+
+        <Field label="MOTIVO DE DEVOLUCIÓN" required>
+          <select
+            className="ru-form-input"
+            value={idMotivo}
+            onChange={(e) => setIdMotivo(e.target.value)}
+          >
+            {motivos.map((m) => (
+              <option key={m.id_motivo || m.id} value={m.id_motivo || m.id}>
+                {m.nombre || m.descripcion}
+              </option>
+            ))}
+          </select>
+        </Field>
+
+        <Field label="OBSERVACIONES / JUSTIFICACIÓN" full>
+          <textarea
+            className="ru-form-input"
+            style={{ height: "70px", resize: "vertical" }}
+            placeholder="Describe el motivo detallado de la devolución..."
+            value={observaciones}
+            onChange={(e) => setObservaciones(e.target.value)}
+          />
+        </Field>
+
+        <div style={{ gridColumn: "1 / -1", display: "flex", alignItems: "center", gap: "8px", marginTop: "4px" }}>
+          <input
+            type="checkbox"
+            id="chk-reintegra"
+            checked={reintegraStock}
+            onChange={(e) => setReintegraStock(e.target.checked)}
+            style={{ cursor: "pointer", width: "16px", height: "16px" }}
+          />
+          <label htmlFor="chk-reintegra" style={{ fontSize: "13px", cursor: "pointer", color: "var(--primary)" }}>
+            Reintegrar unidades devueltas automáticamente al inventario
+          </label>
+        </div>
       </div>
     </ModalShell>
   );
