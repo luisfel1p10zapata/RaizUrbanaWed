@@ -282,6 +282,24 @@
 .ru-status-toggle svg.check { color: var(--primary); }
 
 /* ---------- 5. RESPONSIVE (✏️ movido desde Usuarios.css) ---------- */
+@media (max-height: 780px) and (min-width: 781px) {
+  .ru-modal-overlay { padding: 14px; }
+  .ru-modal { max-height: 94vh; border-radius: 16px; }
+  .ru-modal-header { padding: 16px 24px 12px; }
+  .ru-modal-eyebrow { font-size: 10px; margin-bottom: 4px; }
+  .ru-modal-title { font-size: 21px; }
+  .ru-modal-close { top: 14px; right: 18px; }
+  .ru-modal-body { padding: 14px 24px 8px; }
+  .ru-modal-footer { padding: 12px 24px 16px; }
+  .ru-form-grid { gap: 10px 14px; }
+  .ru-form-label { font-size: 10px; margin-bottom: 5px; }
+  .ru-form-input { padding: 9px 12px; font-size: 13px; }
+  .ru-form-input.with-icon { padding-left: 36px; }
+  .ru-view-top { gap: 12px; margin-bottom: 14px; }
+  .ru-section-label { margin: 14px 0 8px; }
+  .ru-info-grid { gap: 10px; }
+}
+
 @media (max-width: 880px) {
   .ru-form-grid { grid-template-columns: 1fr; }
   .ru-modal { max-width: 94vw; }

@@ -1,12 +1,10 @@
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   CalendarDays,
   CheckCircle2,
-  Eye,
   Pencil,
   Plus,
-  ShoppingCart,
   Trash2,
   X,
   Package,
@@ -15,11 +13,11 @@ import {
   CreditCard,
 } from 'lucide-react';
 
+import { Icons } from '../../../components/ui/Icons';
 import AppAlert from '../../../components/ui/AppAlert';
 import KpiGlobal from '../../../components/ui/KpiGlobal';
 import FiltrarBuscarGlobal from '../../../components/ui/FiltrarBuscarGlobal';
 import TableGlobal from '../../../components/ui/TableGlobal';
-import ConfirmModal from '../../../components/ui/ConfirmModal';
 import '../../ventas/styles/Ventas.css';
 import './Compras.css';
 import {
@@ -27,7 +25,6 @@ import {
   registrarCompra,
   actualizarCompra,
   cambiarEstadoCompra,
-  eliminarCompra,
   obtenerCatalogoRecursos,
 } from '../services/compraService';
 import {
@@ -35,26 +32,10 @@ import {
   compraDesdeBackend,
   comprasDesdeBackend,
 } from '../services/compraAdapter';
-
-const STORAGE_KEY = 'raiz-urbana-compras-v2';
-
-const providers = [
-  'Textiles Andinos SAS',
-  'Insumos Creativos Colombia',
-  'Distribuciones El Dorado',
-  'Mercería La Estrella',
-  'Moda Mayorista Nacional',
-];
-
-const paymentMethods = [
-  'Tarjeta Débito',
-  'Tarjeta Crédito',
-  'Nequi',
-  'Bancolombiaa',
-];
+import { obtenerCategorias } from '../../control-de-existencias/services/categoriaService';
+import { apiRequest } from '../../../utils/apiClient';
 
 const statuses = [
-  'Registrada',
   'Pendiente',
   'Procesando',
   'Completada',
@@ -63,8 +44,8 @@ const statuses = [
 
 const TRANSICIONES_PERMITIDAS = {
   Registrada: ['Pendiente', 'Procesando', 'Completada', 'Cancelada'],
-  Pendiente: ['Registrada', 'Procesando', 'Completada', 'Cancelada'],
-  Procesando: ['Pendiente', 'Registrada', 'Completada', 'Cancelada'],
+  Pendiente: ['Procesando', 'Completada', 'Cancelada'],
+  Procesando: ['Pendiente', 'Completada', 'Cancelada'],
   Completada: ['Cancelada'],
   Cancelada: [],
 };
@@ -76,273 +57,10 @@ const esTransicionPermitida = (estadoActual, nuevoEstado) => {
   return permitidas.includes(nuevoEstado);
 };
 
-const productCatalog = [
-  {
-    id: 1,
-    name: 'Camisa urbana de algodón',
-    category: 'Ropa',
-    colors: ['Blanco'],
-    sizes: ['M'],
-  },
-  {
-    id: 2,
-    name: 'Camiseta básica negra',
-    category: 'Ropa',
-    colors: ['Negro'],
-    sizes: ['M'],
-  },
-  {
-    id: 3,
-    name: 'Pulsera tejida artesanal',
-    category: 'Accesorios',
-    colors: ['Rojo'],
-    sizes: ['Única'],
-  },
-  {
-    id: 4,
-    name: 'Cadena urbana de acero',
-    category: 'Accesorios',
-    colors: ['Negro'],
-    sizes: ['Única'],
-  },
-  {
-    id: 5,
-    name: 'Pulsera de hilo encerado',
-    category: 'Accesorios',
-    colors: ['Azul'],
-    sizes: ['Única'],
-  },
-  {
-    id: 6,
-    name: 'Pantalón cargo negro',
-    category: 'Ropa',
-    colors: ['Negro'],
-    sizes: ['L'],
-  },
-  {
-    id: 7,
-    name: 'Collar minimalista plata',
-    category: 'Accesorios',
-    colors: ['Blanco'],
-    sizes: ['Única'],
-  },
-  {
-    id: 8,
-    name: 'Manilla de cuero',
-    category: 'Accesorios',
-    colors: ['Negro'],
-    sizes: ['Única'],
-  },
-  {
-    id: 9,
-    name: 'Camisa oversize blanca',
-    category: 'Ropa',
-    colors: ['Blanco'],
-    sizes: ['M'],
-  },
-  {
-    id: 10,
-    name: 'Pantalón jogger gris',
-    category: 'Ropa',
-    colors: ['Negro'],
-    sizes: ['L'],
-  },
-];
+const normalizarTexto = (valor) => String(valor ?? '').trim().toLowerCase();
 
-const supplyCategories = [
-  'Telas',
-  'Materiales',
-  'Empaque',
-  'Limpieza',
-  'Accesorios',
-  'Herramientas',
-  'Papelería',
-  'Otros',
-];
-
-const supplyColors = [
-  'Blanco',
-  'Negro',
-  'Gris',
-  'Rojo',
-  'Azul',
-  'Verde',
-  'Amarillo',
-  'Naranja',
-  'Morado',
-  'Rosado',
-  'Beige',
-  'Marrón',
-  'Transparente',
-  'Multicolor',
-  'No aplica',
-];
-
-const supplyMaterials = [
-  'Algodón',
-  'Poliéster',
-  'Lana',
-  'Lino',
-  'Cuero',
-  'Plástico',
-  'Metal',
-  'Madera',
-  'Papel',
-  'Cartón',
-  'Silicona',
-  'Vidrio',
-  'Caucho',
-  'Otro',
-];
-
-const supplySizes = [
-  'Muy pequeño',
-  'Pequeño',
-  'Mediano',
-  'Grande',
-  'Muy grande',
-  'Por centímetros',
-  'Por metros',
-  'Por rollo',
-  'Por unidad',
-  'Único',
-  'No aplica',
-];
-
-const initialPurchases = [
-  {
-    number: 1,
-    id: 'COM01',
-    date: '2026-06-01',
-    provider: 'Textiles SA',
-    payment: 'Transferencia',
-    status: 'Completada',
-    products: [
-      {
-        product: 'Camisas',
-        category: 'Ropa',
-        color: 'Azul',
-        size: 'M',
-        quantity: 30,
-        unitPrice: 45,
-      },
-      {
-        product: 'Par de aretes',
-        category: 'Accesorios',
-        color: 'Dorado',
-        size: 'Única',
-        quantity: 10,
-        unitPrice: 63,
-      },
-    ],
-  },
-  {
-    number: 2,
-    id: 'COM02',
-    date: '2026-06-05',
-    provider: 'Moda Global',
-    payment: 'Tarjeta',
-    status: 'Procesando',
-    products: [
-      {
-        product: 'Camisas',
-        category: 'Ropa',
-        color: 'Blanco',
-        size: 'M',
-        quantity: 20,
-        unitPrice: 45,
-      },
-    ],
-  },
-  {
-    number: 3,
-    id: 'COM03',
-    date: '2026-06-08',
-    provider: 'FashionPro',
-    payment: 'Efectivo',
-    status: 'Pendiente',
-    products: [
-      {
-        product: 'Pulseras',
-        category: 'Accesorios',
-        color: 'Beige',
-        size: 'Única',
-        quantity: 30,
-        unitPrice: 23,
-      },
-      {
-        product: 'Collares',
-        category: 'Accesorios',
-        color: 'Dorado',
-        size: 'Única',
-        quantity: 20,
-        unitPrice: 31,
-      },
-    ],
-  },
-  {
-    number: 4,
-    id: 'COM04',
-    date: '2026-06-10',
-    provider: 'Industrias Ropa',
-    payment: 'Transferencia',
-    status: 'Completada',
-    products: [
-      {
-        product: 'Camisas',
-        category: 'Ropa',
-        color: 'Azul',
-        size: 'XL',
-        quantity: 30,
-        unitPrice: 45,
-      },
-      {
-        product: 'Camisas',
-        category: 'Ropa',
-        color: 'Blanco',
-        size: 'M',
-        quantity: 20,
-        unitPrice: 40,
-      },
-    ],
-  },
-  {
-    number: 5,
-    id: 'COM05',
-    date: '2026-06-12',
-    provider: 'Confecciones Norte',
-    payment: 'Cheque',
-    status: 'Cancelada',
-    products: [
-      {
-        product: 'Camisas',
-        category: 'Ropa',
-        color: 'Negro',
-        size: 'L',
-        quantity: 20,
-        unitPrice: 50,
-      },
-    ],
-  },
-  {
-    number: 6,
-    id: 'COM06',
-    date: '2026-06-15',
-    provider: 'Moda Global',
-    payment: 'Transferencia',
-    status: 'Pendiente',
-    products: [
-      {
-        product: 'Camisas',
-        category: 'Ropa',
-        color: 'Azul',
-        size: 'M',
-        quantity: 20,
-        unitPrice: 51,
-      },
-    ],
-  },
-];
+const esEstadoActivo = (estado) =>
+  estado === true || normalizarTexto(estado) === 'activo';
 
 /* =====================================================
    FUNCIONES AUXILIARES
@@ -398,37 +116,6 @@ const totalPurchase = (purchase) => {
   );
 };
 
-function normalizePurchase(purchase) {
-  if (!purchase || typeof purchase !== 'object') {
-    return { products: [] };
-  }
-
-  return {
-    ...purchase,
-    products: Array.isArray(purchase.products)
-      ? purchase.products
-      : [],
-  };
-}
-
-function readPurchases() {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-
-    if (saved) {
-      const parsed = JSON.parse(saved);
-
-      if (Array.isArray(parsed)) {
-        return parsed.map(normalizePurchase);
-      }
-    }
-  } catch (error) {
-    console.error('Error leyendo compras:', error);
-  }
-
-  return initialPurchases.map(normalizePurchase);
-}
-
 function statusClass(status) {
   const classes = {
     Registrada: 'registered',
@@ -474,16 +161,15 @@ function Modal({
   children,
   onClose,
   className = '',
+  disabledClose = false,
 }) {
   return (
     <div
       className="compras-modal-backdrop"
-      onMouseDown={onClose}
+      role="dialog"
+      aria-modal="true"
     >
-      <div
-        className={`compras-modal ${className}`}
-        onMouseDown={(event) => event.stopPropagation()}
-      >
+      <div className={`compras-modal ${className}`}>
         <div className="compras-modal-header">
           <div>
             {eyebrow && (
@@ -498,6 +184,7 @@ function Modal({
           <button
             className="icon-button"
             onClick={onClose}
+            disabled={disabledClose}
             aria-label="Cerrar"
             type="button"
           >
@@ -510,16 +197,6 @@ function Modal({
     </div>
   );
 }
-
-const errorNombreInsumo = (valor) => {
-  const nombre = String(valor ?? '').trim();
-  if (!nombre) return 'Ingresa el nombre del insumo.';
-  if (nombre.length < 2) return 'El nombre debe tener al menos 2 letras.';
-  if (!/^[\p{L}\s]+$/u.test(nombre)) {
-    return 'El nombre solo permite letras y espacios, sin números ni caracteres especiales.';
-  }
-  return '';
-};
 
 const ELEMENTOS_POR_PAGINA = 5;
 
@@ -538,7 +215,7 @@ const MensajeCampo = ({ mensaje }) => mensaje ? (
 ) : null;
 
 /* =====================================================
-   EDITOR DE PRODUCTOS
+   EDITOR DE PRODUCTOS (Categoría Activa -> Producto -> Variante)
 ===================================================== */
 
 function ProductEditor({
@@ -547,15 +224,43 @@ function ProductEditor({
   onAdd,
   editing = false,
   onCancelEdit,
-  catalog = productCatalog,
+  categorias = [],
+  catalog = [],
   variantes = [],
+  loadingCatalogos = false,
 }) {
-  const currentCatalog = Array.isArray(catalog) && catalog.length > 0 ? catalog : productCatalog;
-  const rawVariants = Array.isArray(variantes) && variantes.length > 0 ? variantes : [];
+  const categoriasActivas = useMemo(
+    () => (Array.isArray(categorias) ? categorias : []),
+    [categorias]
+  );
+  const currentCatalog = useMemo(
+    () => (Array.isArray(catalog) ? catalog : []),
+    [catalog]
+  );
+  const rawVariants = useMemo(
+    () => (Array.isArray(variantes) ? variantes : []),
+    [variantes]
+  );
 
-  const selected = currentCatalog.find(
-    (product) => product.name === value.product
-  ) || null;
+  // Productos activos que pertenecen únicamente a la categoría seleccionada
+  const productsInCategory = useMemo(() => {
+    if (!value.category) return [];
+    const catNorm = normalizarTexto(value.category);
+    return currentCatalog.filter((product) => {
+      if (value.categoryId && product.categoryId) {
+        return Number(product.categoryId) === Number(value.categoryId);
+      }
+      return normalizarTexto(product.category) === catNorm;
+    });
+  }, [currentCatalog, value.category, value.categoryId]);
+
+  const selected = useMemo(
+    () =>
+      productsInCategory.find((product) => product.name === value.product) ||
+      currentCatalog.find((product) => product.name === value.product) ||
+      null,
+    [productsInCategory, currentCatalog, value.product]
+  );
 
   // Filtrar variantes reales correspondientes al producto seleccionado
   const productVariants = useMemo(() => {
@@ -613,33 +318,27 @@ function ProductEditor({
     [productVariants]
   );
 
+  const handleCategoryChange = (event) => {
+    const categoryName = event.target.value;
+    const catObj = categoriasActivas.find((c) => c.nombre === categoryName) || null;
+    onChange({
+      ...value,
+      category: categoryName,
+      categoryId: catObj ? (catObj.id ?? catObj.id_categoria ?? null) : null,
+      product: '',
+      color: '',
+      size: '',
+      productId: null,
+      variantId: null,
+      unitPrice: 0,
+    });
+  };
+
   const handleProductChange = (event) => {
     const productName = event.target.value;
-    if (!productName) {
-      onChange({
-        ...value,
-        product: '',
-        category: '',
-        color: '',
-        size: '',
-        productId: null,
-        variantId: null,
-        unitPrice: 0,
-      });
-      return;
-    }
-
-    const prod = currentCatalog.find((item) => item.name === productName);
-    const prodVariants = rawVariants.filter(
-      (v) => v.nombre === productName || (prod && v.id_producto === prod.id)
-    );
-    const prodCategory = prod?.category || prodVariants[0]?.categoria || '';
-
-    // Limpia automáticamente color, talla y variante seleccionados anteriormente
     onChange({
       ...value,
       product: productName,
-      category: prodCategory,
       color: '',
       size: '',
       productId: null,
@@ -676,6 +375,7 @@ function ProductEditor({
   };
 
   const puedeAgregar = Boolean(
+    value.category &&
     value.product &&
     value.color &&
     value.size &&
@@ -688,30 +388,49 @@ function ProductEditor({
     <div className="product-editor">
       <div className="form-grid form-grid-2">
         <label>
-          <span>PRODUCTO</span>
+          <span>CATEGORÍA</span>
 
           <select
-            value={value.product || ''}
-            onChange={handleProductChange}
+            value={value.category || ''}
+            disabled={loadingCatalogos && categoriasActivas.length === 0}
+            onChange={handleCategoryChange}
           >
-            <option value="">Selecciona un producto...</option>
-            {currentCatalog.map((product) => (
-              <option key={product.id || product.name} value={product.name}>
-                {product.name}
+            <option value="">
+              {loadingCatalogos && categoriasActivas.length === 0
+                ? 'Cargando categorías activas...'
+                : categoriasActivas.length === 0
+                  ? 'No hay categorías activas disponibles'
+                  : 'Selecciona una categoría...'}
+            </option>
+            {categoriasActivas.map((cat) => (
+              <option key={cat.id || cat.nombre} value={cat.nombre}>
+                {cat.nombre}
               </option>
             ))}
           </select>
         </label>
 
         <label>
-          <span>CATEGORÍA</span>
+          <span>PRODUCTO</span>
 
-          <input
-            type="text"
-            readOnly
-            value={value.category || selected?.category || ''}
-            placeholder="Categoría del producto"
-          />
+          <select
+            value={value.product || ''}
+            disabled={!value.category || productsInCategory.length === 0}
+            onChange={handleProductChange}
+          >
+            <option value="">
+              {!value.category
+                ? 'Primero selecciona una categoría...'
+                : productsInCategory.length === 0
+                  ? 'No hay productos activos en esta categoría'
+                  : 'Selecciona un producto...'}
+            </option>
+            {productsInCategory.map((product) => (
+              <option key={product.id || product.name} value={product.name}>
+                {product.name}
+              </option>
+            ))}
+          </select>
         </label>
       </div>
 
@@ -797,7 +516,13 @@ function ProductEditor({
               });
             }}
           />
-          <MensajeCampo mensaje={errorPrecioCompra(value.unitPrice)} />
+          <MensajeCampo
+            mensaje={
+              value.variantId || (value.unitPrice !== 0 && value.unitPrice !== '')
+                ? errorPrecioCompra(value.unitPrice)
+                : ''
+            }
+          />
         </label>
 
         <div className="product-editor-buttons">
@@ -822,6 +547,241 @@ function ProductEditor({
 }
 
 /* =====================================================
+   EDITOR DE INSUMOS (Categoría Activa -> Insumo desde BD)
+===================================================== */
+
+function SupplyEditor({
+  value,
+  onChange,
+  onAdd,
+  editing = false,
+  onCancelEdit,
+  categorias = [],
+  insumos = [],
+  loadingCatalogos = false,
+}) {
+  const categoriasActivas = useMemo(
+    () => (Array.isArray(categorias) ? categorias : []),
+    [categorias]
+  );
+  const insumosActivos = useMemo(
+    () => (Array.isArray(insumos) ? insumos : []),
+    [insumos]
+  );
+
+  // Insumos activos pertenecientes únicamente a la categoría seleccionada
+  const insumosInCategory = useMemo(() => {
+    if (!value.category) return [];
+    const catNorm = normalizarTexto(value.category);
+    return insumosActivos.filter((ins) => {
+      if (value.categoryId && ins.id_categoria) {
+        return Number(ins.id_categoria) === Number(value.categoryId);
+      }
+      return normalizarTexto(ins.categoria) === catNorm;
+    });
+  }, [insumosActivos, value.category, value.categoryId]);
+
+  const handleCategoryChange = (event) => {
+    const categoryName = event.target.value;
+    const catObj = categoriasActivas.find((c) => c.nombre === categoryName) || null;
+    onChange({
+      ...value,
+      category: categoryName,
+      categoryId: catObj ? (catObj.id ?? catObj.id_categoria ?? null) : null,
+      product: '',
+      insumoId: null,
+      productId: null,
+      color: 'No aplica',
+      material: '',
+      size: '',
+      unitPrice: 0,
+    });
+  };
+
+  const handleInsumoChange = (event) => {
+    const selectedId = event.target.value;
+    if (!selectedId) {
+      onChange({
+        ...value,
+        product: '',
+        insumoId: null,
+        productId: null,
+        color: 'No aplica',
+        material: '',
+        size: '',
+        unitPrice: 0,
+      });
+      return;
+    }
+
+    const ins =
+      insumosInCategory.find((item) => String(item.id) === selectedId) ||
+      insumosActivos.find((item) => String(item.id) === selectedId) ||
+      null;
+
+    onChange({
+      ...value,
+      product: ins?.nombre || '',
+      insumoId: ins?.id || null,
+      productId: ins?.id || null,
+      color: 'No aplica',
+      material: ins?.material || 'No aplica',
+      size: ins?.tamano || 'No aplica',
+      unitPrice: ins && Number(ins.precio) > 0 ? Number(ins.precio) : '',
+    });
+  };
+
+  const puedeAgregar = Boolean(
+    value.category &&
+    value.product &&
+    (value.insumoId || value.productId) &&
+    !errorCantidadCompra(value.quantity) &&
+    !errorPrecioCompra(value.unitPrice)
+  );
+
+  return (
+    <div className="product-editor">
+      <div className="form-grid form-grid-2">
+        <label>
+          <span>CATEGORÍA</span>
+
+          <select
+            value={value.category || ''}
+            disabled={loadingCatalogos && categoriasActivas.length === 0}
+            onChange={handleCategoryChange}
+          >
+            <option value="">
+              {loadingCatalogos && categoriasActivas.length === 0
+                ? 'Cargando categorías activas...'
+                : categoriasActivas.length === 0
+                  ? 'No hay categorías activas disponibles'
+                  : 'Selecciona una categoría...'}
+            </option>
+            {categoriasActivas.map((cat) => (
+              <option key={cat.id || cat.nombre} value={cat.nombre}>
+                {cat.nombre}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label>
+          <span>INSUMO</span>
+
+          <select
+            value={value.insumoId ? String(value.insumoId) : ''}
+            disabled={!value.category || insumosInCategory.length === 0}
+            onChange={handleInsumoChange}
+          >
+            <option value="">
+              {!value.category
+                ? 'Primero selecciona una categoría...'
+                : insumosInCategory.length === 0
+                  ? 'No hay insumos activos en esta categoría'
+                  : 'Selecciona un insumo...'}
+            </option>
+            {insumosInCategory.map((ins) => (
+              <option key={ins.id} value={String(ins.id)}>
+                {ins.nombre}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      <div className="form-grid form-grid-3">
+        <label>
+          <span>MATERIAL</span>
+
+          <input
+            type="text"
+            readOnly
+            value={value.material || ''}
+            placeholder="Material del insumo"
+          />
+        </label>
+
+        <label>
+          <span>TAMAÑO</span>
+
+          <input
+            type="text"
+            readOnly
+            value={value.size || ''}
+            placeholder="Tamaño del insumo"
+          />
+        </label>
+
+        <label>
+          <span>CANTIDAD</span>
+
+          <input
+            type="number"
+            min="1"
+            step="1"
+            value={value.quantity}
+            onChange={(event) => {
+              const input = event.target.value;
+
+              onChange({
+                ...value,
+                quantity: input === '' ? '' : input,
+              });
+            }}
+          />
+          <MensajeCampo mensaje={errorCantidadCompra(value.quantity)} />
+        </label>
+      </div>
+
+      <div className="form-grid product-price-grid">
+        <label>
+          <span>PRECIO UNITARIO ($)</span>
+
+          <input
+            type="number"
+            min="0.01"
+            step="0.01"
+            value={value.unitPrice}
+            onChange={(event) => {
+              const input = event.target.value;
+
+              onChange({
+                ...value,
+                unitPrice: input === '' ? '' : input,
+              });
+            }}
+          />
+          <MensajeCampo
+            mensaje={
+              value.insumoId || (value.unitPrice !== 0 && value.unitPrice !== '')
+                ? errorPrecioCompra(value.unitPrice)
+                : ''
+            }
+          />
+        </label>
+
+        <div className="product-editor-buttons">
+          <button
+            type="button"
+            className="primary-button add-product-button"
+            onClick={onAdd}
+            disabled={!puedeAgregar}
+          >
+            <Plus size={17} />
+            {editing ? 'Guardar elemento' : 'Agregar insumo'}
+          </button>
+          {editing && (
+            <button type="button" className="secondary-button" onClick={onCancelEdit}>
+              Cancelar edición
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* =====================================================
    FORMULARIO DE COMPRA
 ===================================================== */
 
@@ -832,60 +792,144 @@ function PurchaseForm({
   title,
   eyebrow,
   catalogoRecursos = {},
+  loadingCatalogos = false,
+  saving = false,
 }) {
   const listaProveedores = useMemo(() => {
     const lista = (catalogoRecursos?.proveedores || []).map((p) => p.nombre).filter(Boolean);
     if (initialValue?.provider && !lista.includes(initialValue.provider)) {
       lista.unshift(initialValue.provider);
     }
-    return lista.length > 0 ? lista : providers;
-  }, [catalogoRecursos?.proveedores, initialValue]);
+    return lista;
+  }, [catalogoRecursos, initialValue]);
 
   const listaMetodosPago = useMemo(() => {
     const lista = (catalogoRecursos?.metodos_pago || []).map((m) => m.nombre).filter(Boolean);
     if (initialValue?.payment && !lista.includes(initialValue.payment)) {
       lista.unshift(initialValue.payment);
     }
-    return lista.length > 0 ? lista : paymentMethods;
-  }, [catalogoRecursos?.metodos_pago, initialValue]);
+    return lista;
+  }, [catalogoRecursos, initialValue]);
+
+  const productosVariantes = useMemo(
+    () => (Array.isArray(catalogoRecursos?.productos) ? catalogoRecursos.productos : []),
+    [catalogoRecursos]
+  );
+
+  const catalogoInsumos = useMemo(
+    () => (Array.isArray(catalogoRecursos?.insumos) ? catalogoRecursos.insumos : []),
+    [catalogoRecursos]
+  );
+
+  const categoriasActivas = useMemo(
+    () => (Array.isArray(catalogoRecursos?.categorias) ? catalogoRecursos.categorias : []),
+    [catalogoRecursos]
+  );
+
+  // Categorías activas aplicables a Productos
+  const categoriasProductos = useMemo(() => {
+    if (categoriasActivas.length === 0) return [];
+
+    const catNombresConProductos = new Set(
+      productosVariantes.map((p) => normalizarTexto(p.categoria)).filter(Boolean)
+    );
+
+    const hayTipoDiferenciado = categoriasActivas.some((cat) => {
+      const tipo = normalizarTexto(cat.tipoCategoria ?? cat.tipo_categoria);
+      return tipo.includes('insumo');
+    });
+
+    if (hayTipoDiferenciado) {
+      const filtradas = categoriasActivas.filter((cat) => {
+        const tipo = normalizarTexto(cat.tipoCategoria ?? cat.tipo_categoria);
+        const nombreNorm = normalizarTexto(cat.nombre);
+        return (
+          !tipo ||
+          tipo.includes('prod') ||
+          tipo.includes('ambos') ||
+          tipo.includes('general') ||
+          catNombresConProductos.has(nombreNorm)
+        );
+      });
+      if (filtradas.length > 0) return filtradas;
+    }
+
+    return categoriasActivas;
+  }, [categoriasActivas, productosVariantes]);
+
+  // Categorías activas aplicables a Insumos
+  const categoriasInsumos = useMemo(() => {
+    if (categoriasActivas.length === 0) return [];
+
+    const catIdsConInsumos = new Set(
+      catalogoInsumos
+        .map((ins) => Number(ins.id_categoria))
+        .filter((id) => Number.isFinite(id) && id > 0)
+    );
+    const catNombresConInsumos = new Set(
+      catalogoInsumos.map((ins) => normalizarTexto(ins.categoria)).filter(Boolean)
+    );
+
+    const hayTipoInsumoExplicito = categoriasActivas.some((cat) => {
+      const tipo = normalizarTexto(cat.tipoCategoria ?? cat.tipo_categoria);
+      return tipo.includes('insumo');
+    });
+
+    if (hayTipoInsumoExplicito) {
+      const filtradas = categoriasActivas.filter((cat) => {
+        const tipo = normalizarTexto(cat.tipoCategoria ?? cat.tipo_categoria);
+        const idCat = Number(cat.id ?? cat.id_categoria);
+        const nombreNorm = normalizarTexto(cat.nombre);
+        return (
+          tipo.includes('insumo') ||
+          tipo.includes('ambos') ||
+          tipo.includes('general') ||
+          catIdsConInsumos.has(idCat) ||
+          catNombresConInsumos.has(nombreNorm)
+        );
+      });
+      if (filtradas.length > 0) return filtradas;
+    }
+
+    return categoriasActivas;
+  }, [categoriasActivas, catalogoInsumos]);
 
   const catalogoProductos = useMemo(() => {
-    if (Array.isArray(catalogoRecursos?.productos) && catalogoRecursos.productos.length > 0) {
-      const mapa = new Map();
-      catalogoRecursos.productos.forEach((p) => {
-        if (!mapa.has(p.nombre)) {
-          mapa.set(p.nombre, {
-            id: p.id_producto || p.id,
-            name: p.nombre,
-            category: p.categoria || 'Sin categoría',
-            colors: new Set(),
-            sizes: new Set(),
-          });
-        }
-        const item = mapa.get(p.nombre);
-        if (p.categoria && (!item.category || item.category === 'Sin categoría')) {
-          item.category = p.categoria;
-        }
-        if (p.color && p.color !== 'No aplica') item.colors.add(p.color);
-        if (p.talla && p.talla !== 'No aplica') item.sizes.add(p.talla);
-      });
-      return Array.from(mapa.values()).map((p) => ({
+    const mapa = new Map();
+    productosVariantes.forEach((p) => {
+      if (!p.nombre) return;
+      if (!mapa.has(p.nombre)) {
+        mapa.set(p.nombre, {
+          id: p.id_producto || p.id,
+          name: p.nombre,
+          category: p.categoria || '',
+          categoryId: p.id_categoria || null,
+          colors: new Set(),
+          sizes: new Set(),
+        });
+      }
+      const item = mapa.get(p.nombre);
+      if (p.categoria && !item.category) {
+        item.category = p.categoria;
+      }
+      if (p.id_categoria && !item.categoryId) {
+        item.categoryId = p.id_categoria;
+      }
+      if (p.color && p.color !== 'No aplica') item.colors.add(p.color);
+      if (p.talla && p.talla !== 'No aplica') item.sizes.add(p.talla);
+    });
+    return Array.from(mapa.values())
+      .map((p) => ({
         ...p,
         colors: Array.from(p.colors),
         sizes: Array.from(p.sizes),
-      }));
-    }
-    return productCatalog;
-  }, [catalogoRecursos?.productos]);
-
-  const catalogoInsumos = useMemo(() => {
-    return Array.isArray(catalogoRecursos?.insumos) ? catalogoRecursos.insumos : [];
-  }, [catalogoRecursos?.insumos]);
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name, 'es'));
+  }, [productosVariantes]);
 
   const buscarVariante = useCallback((nombre, color, talla) => {
-    const raw = Array.isArray(catalogoRecursos?.productos) ? catalogoRecursos.productos : [];
-    if (raw.length === 0 || !nombre) return null;
-    return raw.find((item) => {
+    if (productosVariantes.length === 0 || !nombre) return null;
+    return productosVariantes.find((item) => {
       const matchNombre = item.nombre === nombre;
       const itemColor = item.color || 'No aplica';
       const paramColor = color || 'No aplica';
@@ -895,31 +939,67 @@ function PurchaseForm({
       const matchTalla = !talla || itemTalla === paramTalla;
       return matchNombre && matchColor && matchTalla;
     }) || null;
-  }, [catalogoRecursos?.productos]);
+  }, [productosVariantes]);
+
+  const buscarInsumo = useCallback((insumoId, nombre) => {
+    if (catalogoInsumos.length === 0) return null;
+    if (insumoId) {
+      const porId = catalogoInsumos.find((i) => Number(i.id) === Number(insumoId));
+      if (porId) return porId;
+    }
+    if (nombre) {
+      const nombreNorm = normalizarTexto(nombre);
+      return catalogoInsumos.find((i) => normalizarTexto(i.nombre) === nombreNorm) || null;
+    }
+    return null;
+  }, [catalogoInsumos]);
 
   const [form, setForm] = useState(() => ({
     ...(initialValue || {
       date: new Date().toISOString().slice(0, 10),
-      provider: listaProveedores[0] || providers[0],
-      payment: listaMetodosPago[0] || paymentMethods[0],
+      provider: listaProveedores[0] || '',
+      payment: listaMetodosPago[0] || '',
       status: 'Pendiente',
       products: [],
     }),
+    status:
+      initialValue?.status && statuses.includes(initialValue.status)
+        ? initialValue.status
+        : 'Pendiente',
     products: Array.isArray(initialValue?.products)
       ? initialValue.products.map((item) => {
           const esInsumo = item.itemType === 'Insumo';
-          const v = !esInsumo ? buscarVariante(item.product, item.color, item.size) : null;
+          if (esInsumo) {
+            const ins = buscarInsumo(item.insumoId || item.productId, item.product);
+            return {
+              ...item,
+              category: item.category || ins?.categoria || '',
+              categoryId: ins?.id_categoria || null,
+              material: item.material || ins?.material || 'No aplica',
+              size: item.size || ins?.tamano || 'No aplica',
+              color: item.color || 'No aplica',
+              productId: ins?.id || item.insumoId || item.productId,
+              insumoId: ins?.id || item.insumoId || item.productId,
+              quantity: Number(item.quantity) || 1,
+              unitPrice: Number(item.unitPrice) || 0,
+            };
+          }
+          const v = buscarVariante(item.product, item.color, item.size);
           return {
             ...item,
             category: item.category || v?.categoria || '',
+            categoryId: v?.id_categoria || null,
             productId: v?.id_producto_vari || v?.id || item.productId || item.variantId,
-            variantId: !esInsumo ? (v?.id_producto_vari || v?.id || item.productId || item.variantId) : undefined,
+            variantId: v?.id_producto_vari || v?.id || item.productId || item.variantId,
             quantity: Number(item.quantity) || 1,
             unitPrice: Number(item.unitPrice) || 0,
           };
         })
       : [],
   }));
+
+  const providerSeleccionado = form.provider || listaProveedores[0] || '';
+  const paymentSeleccionado = form.payment || listaMetodosPago[0] || '';
 
   const [purchaseType, setPurchaseType] = useState(
     initialValue?.tipoCompra === 'Insumos' || initialValue?.products?.some(
@@ -930,8 +1010,9 @@ function PurchaseForm({
   );
 
   const [draftProduct, setDraftProduct] = useState({
-    product: '',
     category: '',
+    categoryId: null,
+    product: '',
     color: '',
     size: '',
     quantity: 1,
@@ -941,11 +1022,14 @@ function PurchaseForm({
   });
 
   const [draftSupply, setDraftSupply] = useState({
-    category: 'Telas',
+    category: '',
+    categoryId: null,
     product: '',
-    color: 'Blanco',
-    material: 'Algodón',
-    size: 'Mediano',
+    insumoId: null,
+    productId: null,
+    color: 'No aplica',
+    material: '',
+    size: '',
     quantity: 1,
     unitPrice: 0,
   });
@@ -958,15 +1042,19 @@ function PurchaseForm({
     (paginaActualElementos - 1) * ELEMENTOS_POR_PAGINA,
     paginaActualElementos * ELEMENTOS_POR_PAGINA
   );
-  const [insumoTocado, setInsumoTocado] = useState(false);
   const [intentoGuardar, setIntentoGuardar] = useState(false);
   const [alertaFormulario, setAlertaFormulario] = useState(null);
-  const avisarFormulario = (message) => setAlertaFormulario({ message, id: Date.now() });
+  const alertaFormIdRef = useRef(0);
+  const avisarFormulario = useCallback((message) => {
+    alertaFormIdRef.current += 1;
+    setAlertaFormulario({ message, id: alertaFormIdRef.current });
+  }, []);
 
   const resetProductDraft = () => {
     setDraftProduct({
-      product: '',
       category: '',
+      categoryId: null,
+      product: '',
       color: '',
       size: '',
       quantity: 1,
@@ -976,15 +1064,20 @@ function PurchaseForm({
     });
   };
 
-  const resetSupplyDraft = () => setDraftSupply({
-    category: 'Telas',
-    product: '',
-    color: 'Blanco',
-    material: 'Algodón',
-    size: 'Mediano',
-    quantity: 1,
-    unitPrice: 0,
-  });
+  const resetSupplyDraft = () => {
+    setDraftSupply({
+      category: '',
+      categoryId: null,
+      product: '',
+      insumoId: null,
+      productId: null,
+      color: 'No aplica',
+      material: '',
+      size: '',
+      quantity: 1,
+      unitPrice: 0,
+    });
+  };
 
   const cancelItemEdit = () => {
     setEditingIndex(null);
@@ -997,37 +1090,37 @@ function PurchaseForm({
     if (!item) return;
     setEditingIndex(index);
     if (item.itemType === 'Insumo') {
-      setDraftSupply({ ...item });
+      const ins = buscarInsumo(item.insumoId || item.productId, item.product);
+      const catNombre = item.category || ins?.categoria || '';
+      const catMatch = categoriasInsumos.find((c) => normalizarTexto(c.nombre) === normalizarTexto(catNombre));
+      setDraftSupply({
+        ...item,
+        category: catMatch?.nombre || catNombre,
+        categoryId: catMatch?.id || ins?.id_categoria || null,
+        product: ins?.nombre || item.product || '',
+        insumoId: ins?.id || item.insumoId || item.productId || null,
+        productId: ins?.id || item.insumoId || item.productId || null,
+        color: item.color || 'No aplica',
+        material: item.material || ins?.material || 'No aplica',
+        size: item.size || ins?.tamano || 'No aplica',
+      });
     } else {
       const v = buscarVariante(item.product, item.color, item.size);
       const prod = catalogoProductos.find((p) => p.name === item.product);
+      const catNombre = item.category || prod?.category || v?.categoria || '';
+      const catMatch = categoriasProductos.find((c) => normalizarTexto(c.nombre) === normalizarTexto(catNombre));
       setDraftProduct({
         ...item,
-        category: item.category || prod?.category || v?.categoria || '',
+        category: catMatch?.nombre || catNombre,
+        categoryId: catMatch?.id || prod?.categoryId || v?.id_categoria || null,
         productId: v?.id_producto_vari || v?.id || item.productId || item.variantId,
         variantId: v?.id_producto_vari || v?.id || item.productId || item.variantId,
       });
     }
   };
 
-  const updateProduct = (field, value) => {
-    setDraftProduct((current) => ({
-      ...current,
-      [field]: value,
-    }));
-  };
-
-  const updateSupply = (field, value) => {
-    if (field === 'product') setInsumoTocado(true);
-    setDraftSupply((current) => ({
-      ...current,
-      [field]: value,
-    }));
-  };
-
   /* Agregar producto o insumo con validaciones. */
   const addProduct = () => {
-    if (purchaseType === 'Insumos') setInsumoTocado(true);
     const isProduct = purchaseType === 'Productos';
     const draft = isProduct ? draftProduct : draftSupply;
 
@@ -1039,8 +1132,12 @@ function PurchaseForm({
       return;
     }
 
-    let finalProductId = draft.productId || draft.variantId;
+    let finalProductId = draft.productId || draft.variantId || draft.insumoId;
     if (isProduct) {
+      if (!tieneContenido(draft.category)) {
+        avisarFormulario('Selecciona primero una categoría activa.');
+        return;
+      }
       if (!tieneContenido(draft.product)) {
         avisarFormulario('Selecciona un producto del catálogo.');
         return;
@@ -1062,14 +1159,22 @@ function PurchaseForm({
         return;
       }
     } else {
-      if (!tieneContenido(draft.product)) {
-        avisarFormulario('Ingresa el nombre del insumo.');
+      if (!tieneContenido(draft.category)) {
+        avisarFormulario('Selecciona primero una categoría activa.');
         return;
       }
-      const insumo = (catalogoRecursos?.insumos || []).find(
-        (i) => i.nombre.toLowerCase() === (draft.product || '').trim().toLowerCase()
-      );
-      if (insumo) finalProductId = insumo.id;
+      if (!tieneContenido(draft.product)) {
+        avisarFormulario('Selecciona un insumo activo de la categoría.');
+        return;
+      }
+      const insumo = buscarInsumo(draft.insumoId || draft.productId, draft.product);
+      if (insumo) {
+        finalProductId = insumo.id;
+      }
+      if (!finalProductId) {
+        avisarFormulario('No se encontró el insumo seleccionado en la base de datos.');
+        return;
+      }
     }
 
     const item = {
@@ -1148,12 +1253,12 @@ function PurchaseForm({
       return;
     }
 
-    if (!tieneContenido(form.provider)) {
+    if (!tieneContenido(providerSeleccionado)) {
       avisarFormulario('Selecciona un proveedor válido.');
       return;
     }
 
-    if (!tieneContenido(form.payment)) {
+    if (!tieneContenido(paymentSeleccionado)) {
       avisarFormulario('Selecciona un método de pago válido.');
       return;
     }
@@ -1187,16 +1292,16 @@ function PurchaseForm({
 
     onSave({
       ...form,
+      provider: providerSeleccionado,
+      payment: paymentSeleccionado,
       products: form.products.map((item) => {
         const esInsumo = item.itemType === 'Insumo';
-        let resolvedId = item.productId || item.variantId;
+        let resolvedId = item.productId || item.variantId || item.insumoId;
         if (!esInsumo) {
           const v = buscarVariante(item.product, item.color, item.size);
           if (v) resolvedId = v.id_producto_vari || v.id;
         } else {
-          const insumo = (catalogoRecursos?.insumos || []).find(
-            (i) => i.nombre.toLowerCase() === (item.product || '').trim().toLowerCase()
-          );
+          const insumo = buscarInsumo(item.insumoId || item.productId, item.product);
           if (insumo) resolvedId = insumo.id;
         }
         return {
@@ -1232,6 +1337,7 @@ function PurchaseForm({
       title={title}
       eyebrow={eyebrow}
       onClose={onClose}
+      disabledClose={saving}
       className="purchase-form-modal"
     >
       {alertaFormulario && (
@@ -1270,7 +1376,8 @@ function PurchaseForm({
 
               <select
                 required
-                value={form.provider}
+                value={providerSeleccionado}
+                disabled={loadingCatalogos && listaProveedores.length === 0}
                 onChange={(event) =>
                   setForm((current) => ({
                     ...current,
@@ -1278,11 +1385,17 @@ function PurchaseForm({
                   }))
                 }
               >
-                {listaProveedores.map((provider) => (
-                  <option key={provider} value={provider}>
-                    {provider}
+                {listaProveedores.length === 0 ? (
+                  <option value="">
+                    {loadingCatalogos ? 'Cargando proveedores...' : 'No hay proveedores activos'}
                   </option>
-                ))}
+                ) : (
+                  listaProveedores.map((provider) => (
+                    <option key={provider} value={provider}>
+                      {provider}
+                    </option>
+                  ))
+                )}
               </select>
             </label>
 
@@ -1291,7 +1404,8 @@ function PurchaseForm({
 
               <select
                 required
-                value={form.payment}
+                value={paymentSeleccionado}
+                disabled={loadingCatalogos && listaMetodosPago.length === 0}
                 onChange={(event) =>
                   setForm((current) => ({
                     ...current,
@@ -1299,11 +1413,17 @@ function PurchaseForm({
                   }))
                 }
               >
-                {listaMetodosPago.map((payment) => (
-                  <option key={payment} value={payment}>
-                    {payment}
+                {listaMetodosPago.length === 0 ? (
+                  <option value="">
+                    {loadingCatalogos ? 'Cargando métodos de pago...' : 'No hay métodos de pago activos'}
                   </option>
-                ))}
+                ) : (
+                  listaMetodosPago.map((payment) => (
+                    <option key={payment} value={payment}>
+                      {payment}
+                    </option>
+                  ))
+                )}
               </select>
             </label>
 
@@ -1397,7 +1517,12 @@ function PurchaseForm({
                         avisarFormulario('Retira los elementos agregados antes de cambiar el tipo de compra.');
                         return;
                       }
-                      setPurchaseType(option.type);
+                      if (option.type !== purchaseType) {
+                        setPurchaseType(option.type);
+                        setEditingIndex(null);
+                        resetProductDraft();
+                        resetSupplyDraft();
+                      }
                     }}
                     aria-pressed={selected}
                     style={{
@@ -1475,166 +1600,27 @@ function PurchaseForm({
 
           {purchaseType === 'Productos' ? (
             <ProductEditor
+              categorias={categoriasProductos}
               catalog={catalogoProductos}
-              variantes={catalogoRecursos?.productos}
+              variantes={productosVariantes}
               value={draftProduct}
               onChange={setDraftProduct}
               onAdd={addProduct}
               editing={editingIndex !== null}
               onCancelEdit={cancelItemEdit}
+              loadingCatalogos={loadingCatalogos}
             />
           ) : (
-            <div className="product-editor">
-              <div className="form-grid form-grid-2">
-                <label>
-                  <span>CATEGORÍA</span>
-
-                  <select
-                    value={draftSupply.category}
-                    onChange={(event) =>
-                      updateSupply('category', event.target.value)
-                    }
-                  >
-                    {supplyCategories.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-
-                <label>
-                  <span>NOMBRE DEL INSUMO</span>
-
-                  <input
-                    type="text"
-                    required
-                    maxLength={100}
-                    value={draftSupply.product}
-                    placeholder="Ej. Tela, hilo, botones..."
-                    onChange={(event) =>
-                      updateSupply('product', event.target.value)
-                    }
-                  />
-                  {insumoTocado && <MensajeCampo mensaje={errorNombreInsumo(draftSupply.product)} />}
-                </label>
-              </div>
-
-              <div className="form-grid form-grid-3">
-                <label>
-                  <span>COLOR</span>
-
-                  <select
-                    value={draftSupply.color}
-                    onChange={(event) =>
-                      updateSupply('color', event.target.value)
-                    }
-                  >
-                    {supplyColors.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-
-                <label>
-                  <span>MATERIAL</span>
-
-                  <select
-                    value={draftSupply.material}
-                    onChange={(event) =>
-                      updateSupply('material', event.target.value)
-                    }
-                  >
-                    {supplyMaterials.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-
-                <label>
-                  <span>TAMAÑO</span>
-
-                  <select
-                    value={draftSupply.size}
-                    onChange={(event) =>
-                      updateSupply('size', event.target.value)
-                    }
-                  >
-                    {supplySizes.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-
-              <div
-                className="form-grid product-price-grid"
-                style={{ marginTop: 16 }}
-              >
-                <label>
-                  <span>CANTIDAD</span>
-
-                  <input
-                    type="number"
-                    min="1"
-                    step="1"
-                    value={draftSupply.quantity}
-                    onChange={(event) => {
-                      const input = event.target.value;
-
-                      updateSupply(
-                        'quantity',
-                        input === '' ? '' : input
-                      );
-                    }}
-                  />
-                  <MensajeCampo mensaje={errorCantidadCompra(draftSupply.quantity)} />
-                </label>
-
-                <label>
-                  <span>PRECIO UNITARIO ($)</span>
-
-                  <input
-                    type="number"
-                    min="0.01"
-                    step="0.01"
-                    value={draftSupply.unitPrice}
-                    onChange={(event) => {
-                      const input = event.target.value;
-
-                      updateSupply(
-                        'unitPrice',
-                        input === '' ? '' : input
-                      );
-                    }}
-                  />
-                  <MensajeCampo mensaje={errorPrecioCompra(draftSupply.unitPrice)} />
-                </label>
-
-                <div className="product-editor-buttons">
-                  <button
-                    type="button"
-                    className="primary-button add-product-button"
-                    onClick={addProduct}
-                    disabled={Boolean(errorCantidadCompra(draftSupply.quantity) || errorPrecioCompra(draftSupply.unitPrice) || errorNombreInsumo(draftSupply.product))}
-                  >
-                    <Plus size={17} />
-                    {editingIndex !== null ? 'Guardar elemento' : 'Agregar insumo'}
-                  </button>
-                  {editingIndex !== null && (
-                    <button type="button" className="secondary-button" onClick={cancelItemEdit}>
-                      Cancelar edición
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
+            <SupplyEditor
+              categorias={categoriasInsumos}
+              insumos={catalogoInsumos}
+              value={draftSupply}
+              onChange={setDraftSupply}
+              onAdd={addProduct}
+              editing={editingIndex !== null}
+              onCancelEdit={cancelItemEdit}
+              loadingCatalogos={loadingCatalogos}
+            />
           )}
 
           {editingIndex !== null && (
@@ -1776,6 +1762,7 @@ function PurchaseForm({
           className="secondary-button"
           type="button"
           onClick={onClose}
+          disabled={saving}
         >
           Cancelar
         </button>
@@ -1784,8 +1771,11 @@ function PurchaseForm({
           className="primary-button"
           type="button"
           onClick={save}
+          disabled={saving}
         >
-          {initialValue ? 'Guardar cambios' : 'Registrar compra'}
+          {saving
+            ? (initialValue ? 'Guardando...' : 'Registrando...')
+            : (initialValue ? 'Guardar cambios' : 'Registrar compra')}
         </button>
       </div>
     </Modal>
@@ -1796,69 +1786,221 @@ function PurchaseForm({
    MÓDULO PRINCIPAL DE COMPRAS
 ===================================================== */
 
+const MAX_PAGE_SIZE = 9;
+
+const calcularPageSizeInicial = () => {
+  if (typeof window === 'undefined') return MAX_PAGE_SIZE;
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  if (w <= 768) return 6;
+  const rowH = h <= 780 ? 44 : 50;
+  const overhead = h <= 780 ? 316 : 408;
+  return Math.max(4, Math.min(MAX_PAGE_SIZE, Math.floor((h - overhead) / rowH)));
+};
+
 export default function Compras() {
+  const tableSlotRef = useRef(null);
+  const alertaIdRef = useRef(0);
+  const recursosInFlightRef = useRef(null);
+  const [pageSize, setPageSize] = useState(calcularPageSizeInicial);
   const [purchases, setPurchases] = useState([]);
   const [catalogoRecursos, setCatalogoRecursos] = useState({
     proveedores: [],
     metodos_pago: [],
+    categorias: [],
     insumos: [],
     productos: [],
   });
+  const [loadingCatalogos, setLoadingCatalogos] = useState(true);
   const [loadingCompras, setLoadingCompras] = useState(true);
   const [savingCompras, setSavingCompras] = useState(false);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [providerFilter, setProviderFilter] = useState('');
-  const [paymentFilter, setPaymentFilter] = useState('');
-  const [dateFilter, setDateFilter] = useState('');
   const [page, setPage] = useState(1);
   const [modal, setModal] = useState(null);
   const [selectedPurchase, setSelectedPurchase] = useState(null);
   const [pendingStatus, setPendingStatus] = useState('');
   const [alerta, setAlerta] = useState(null);
-  const notificar = (type, message) => setAlerta({ type, message, id: Date.now() });
+  const notificar = useCallback((type, message) => {
+    alertaIdRef.current += 1;
+    setAlerta({ type, message, id: alertaIdRef.current });
+  }, []);
 
-  const cargarRecursos = useCallback(async () => {
-    try {
-      const data = await obtenerCatalogoRecursos();
-      if (data && typeof data === 'object') {
-        setCatalogoRecursos(data);
+  const cargarRecursos = useCallback(async (mostrarCarga = true) => {
+    // Deduplicar peticiones concurrentes (evita doble carga en StrictMode o clics rápidos)
+    if (recursosInFlightRef.current) {
+      return recursosInFlightRef.current;
+    }
+
+    const promesa = (async () => {
+      if (mostrarCarga) setLoadingCatalogos(true);
+      try {
+        const baseResp = await obtenerCatalogoRecursos().catch(() => null);
+        const base = baseResp && typeof baseResp === 'object' ? baseResp : {};
+
+        const tieneCategoriasEnBase = Array.isArray(base.categorias);
+        const tieneInsumosEnriquecidos =
+          Array.isArray(base.insumos) &&
+          (base.insumos.length === 0 || base.insumos.some((i) => i.id_categoria !== undefined));
+
+        let rawCategorias = tieneCategoriasEnBase ? base.categorias : [];
+        let rawInsumosApi = [];
+        let materialesRaw = [];
+        let tamanosRaw = [];
+
+        // Fallback paralelo (Promise.allSettled) únicamente si el backend no entregó catálogos consolidados
+        if (!tieneCategoriasEnBase || !tieneInsumosEnriquecidos) {
+          const [resCategorias, resInsumos, resMateriales, resTamanos] = await Promise.allSettled([
+            tieneCategoriasEnBase ? Promise.resolve(base.categorias) : obtenerCategorias({ estado: true }),
+            tieneInsumosEnriquecidos ? Promise.resolve([]) : apiRequest('insumos'),
+            tieneInsumosEnriquecidos ? Promise.resolve([]) : apiRequest('insumos', '/materiales'),
+            tieneInsumosEnriquecidos ? Promise.resolve([]) : apiRequest('insumos', '/tamanos'),
+          ]);
+
+          if (!tieneCategoriasEnBase && resCategorias.status === 'fulfilled' && Array.isArray(resCategorias.value)) {
+            rawCategorias = resCategorias.value;
+          }
+          if (resInsumos.status === 'fulfilled' && Array.isArray(resInsumos.value)) {
+            rawInsumosApi = resInsumos.value;
+          }
+          if (resMateriales.status === 'fulfilled' && Array.isArray(resMateriales.value)) {
+            materialesRaw = resMateriales.value;
+          }
+          if (resTamanos.status === 'fulfilled' && Array.isArray(resTamanos.value)) {
+            tamanosRaw = resTamanos.value;
+          }
+        }
+
+        const categoriasActivas = rawCategorias
+          .filter((cat) => esEstadoActivo(cat.estado))
+          .map((cat) => ({
+            id: Number(cat.id ?? cat.id_categoria),
+            id_categoria: Number(cat.id ?? cat.id_categoria),
+            nombre: String(cat.nombre || '').trim(),
+            tipoCategoria: cat.tipoCategoria ?? cat.tipo_categoria ?? '',
+            estado: true,
+          }))
+          .filter((cat) => cat.nombre)
+          .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+
+        const catById = new Map(categoriasActivas.map((c) => [c.id, c]));
+        const catByNombre = new Map(categoriasActivas.map((c) => [normalizarTexto(c.nombre), c]));
+
+        // Productos activos (variantes activas vinculadas a categorías activas en BD)
+        const rawProductos = Array.isArray(base.productos) ? base.productos : [];
+        const productosActivos = rawProductos
+          .map((p) => {
+            const catNombre = String(p.categoria || '').trim();
+            const catMatch =
+              (p.id_categoria ? catById.get(Number(p.id_categoria)) : null) ||
+              catByNombre.get(normalizarTexto(catNombre));
+            return {
+              ...p,
+              id_categoria: catMatch?.id ?? null,
+              categoria: catMatch?.nombre || catNombre,
+            };
+          })
+          .filter((p) => categoriasActivas.length === 0 || Boolean(p.id_categoria));
+
+        // Insumos activos (directo del payload consolidado o enriquecidos en fallback)
+        let insumosActivos;
+        if (tieneInsumosEnriquecidos) {
+          insumosActivos = base.insumos
+            .map((ins) => {
+              const idCat = Number(ins.id_categoria);
+              const catObj = catById.get(idCat) || catByNombre.get(normalizarTexto(ins.categoria));
+              return {
+                id: Number(ins.id),
+                nombre: String(ins.nombre || '').trim(),
+                id_categoria: catObj ? catObj.id : null,
+                categoria: catObj ? catObj.nombre : String(ins.categoria || ''),
+                material: ins.material || 'No aplica',
+                tamano: ins.tamano || 'No aplica',
+                stock: Number(ins.stock ?? 0),
+                precio: Number(ins.precio ?? 0),
+              };
+            })
+            .filter((ins) => ins.id > 0 && ins.nombre && (categoriasActivas.length === 0 || Boolean(ins.id_categoria)))
+            .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+        } else {
+          const matById = new Map(
+            materialesRaw.map((m) => [Number(m.idMaterial ?? m.id_material ?? m.id), m.nombre])
+          );
+          const tamById = new Map(
+            tamanosRaw.map((t) => [Number(t.idTamano ?? t.id_tamano ?? t.id), t.nombre])
+          );
+          insumosActivos = rawInsumosApi
+            .filter((ins) => esEstadoActivo(ins.estado))
+            .map((ins) => {
+              const idInsumo = Number(ins.idInsumo ?? ins.id_insumo ?? ins.id);
+              const idCat = Number(ins.idCategoria ?? ins.id_categoria);
+              const catObj = catById.get(idCat);
+              const idMat = Number(ins.idMaterial ?? ins.id_material);
+              const idTam = Number(ins.idTamano ?? ins.id_tamano);
+              return {
+                id: idInsumo,
+                nombre: String(ins.nombre || '').trim(),
+                id_categoria: catObj ? catObj.id : null,
+                categoria: catObj ? catObj.nombre : '',
+                material: matById.get(idMat) || 'No aplica',
+                tamano: tamById.get(idTam) || 'No aplica',
+                stock: Number(ins.stock ?? 0),
+                precio: Number(ins.precioUnitario ?? ins.precio_unitario ?? ins.precio ?? 0),
+              };
+            })
+            .filter((ins) => ins.id > 0 && ins.nombre && (categoriasActivas.length === 0 || Boolean(ins.id_categoria)))
+            .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+        }
+
+        setCatalogoRecursos({
+          proveedores: Array.isArray(base.proveedores) ? base.proveedores : [],
+          metodos_pago: Array.isArray(base.metodos_pago) ? base.metodos_pago : [],
+          categorias: categoriasActivas,
+          productos: productosActivos,
+          insumos:
+            insumosActivos.length > 0 || rawInsumosApi.length > 0 || tieneInsumosEnriquecidos
+              ? insumosActivos
+              : (Array.isArray(base.insumos) ? base.insumos : []),
+        });
+      } catch (err) {
+        console.warn('No se pudieron precargar los catálogos en Compras:', err);
+      } finally {
+        setLoadingCatalogos(false);
+        recursosInFlightRef.current = null;
       }
-    } catch (err) {
-      console.warn('No se pudieron precargar los catálogos en Compras:', err);
-    }
-  }, []);
+    })();
 
-  const cargarCompras = useCallback(async () => {
-    try {
-      setLoadingCompras(true);
-      const datos = await obtenerCompras();
-      setPurchases(comprasDesdeBackend(Array.isArray(datos) ? datos : []));
-    } catch (error) {
-      console.error('Error cargando compras:', error);
-      notificar('error', `No se pudieron cargar las compras: ${error.message}`);
-    } finally {
-      setLoadingCompras(false);
-    }
+    recursosInFlightRef.current = promesa;
+    return promesa;
   }, []);
 
   useEffect(() => {
-    cargarCompras();
-    cargarRecursos();
-  }, [cargarCompras, cargarRecursos]);
-
-  useEffect(() => {
-    setPage(1);
-  }, [
-    search,
-    statusFilter,
-    providerFilter,
-    paymentFilter,
-    dateFilter,
-  ]);
+    let activo = true;
+    const inicializar = async () => {
+      try {
+        const [resCompras] = await Promise.allSettled([
+          obtenerCompras(),
+          cargarRecursos(false),
+        ]);
+        if (!activo) return;
+        if (resCompras.status === 'fulfilled') {
+          setPurchases(comprasDesdeBackend(Array.isArray(resCompras.value) ? resCompras.value : []));
+        } else {
+          console.error('Error cargando compras:', resCompras.reason);
+          notificar('error', `No se pudieron cargar las compras: ${resCompras.reason?.message || 'Error de conexión'}`);
+        }
+      } finally {
+        if (activo) setLoadingCompras(false);
+      }
+    };
+    inicializar();
+    return () => {
+      activo = false;
+    };
+  }, [cargarRecursos, notificar]);
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
+    if (!term) return purchases;
 
     return purchases.filter((purchase) => {
       const number = String(purchase.number ?? '').toLowerCase();
@@ -1867,6 +2009,8 @@ export default function Compras() {
       const payment = String(purchase.payment ?? '').toLowerCase();
       const status = String(purchase.status ?? '').toLowerCase();
       const date = String(purchase.date ?? '').toLowerCase();
+      const totalVal = totalPurchase(purchase);
+      const totalStr = `${totalVal} ${money(totalVal)}`.toLowerCase();
 
       const productNames = purchase.products
         .map((product) =>
@@ -1874,8 +2018,7 @@ export default function Compras() {
         )
         .join(' ');
 
-      const matchesSearch =
-        !term ||
+      return (
         number.includes(term) ||
         `#${number}`.includes(term) ||
         id.includes(term) ||
@@ -1883,54 +2026,122 @@ export default function Compras() {
         payment.includes(term) ||
         status.includes(term) ||
         date.includes(term) ||
-        productNames.includes(term);
-
-      return (
-        matchesSearch &&
-        (!statusFilter || purchase.status === statusFilter) &&
-        (!providerFilter || purchase.provider === providerFilter) &&
-        (!paymentFilter || purchase.payment === paymentFilter) &&
-        (!dateFilter || purchase.date === dateFilter)
+        totalStr.includes(term) ||
+        productNames.includes(term)
       );
     });
-  }, [
-    purchases,
-    search,
-    statusFilter,
-    providerFilter,
-    paymentFilter,
-    dateFilter,
-  ]);
+  }, [purchases, search]);
 
-  const filtrosProveedores = useMemo(() => {
-    const conjunto = new Set([
-      ...(catalogoRecursos?.proveedores || []).map((p) => p.nombre).filter(Boolean),
-      ...purchases.map((p) => p.provider).filter(Boolean),
-      ...providers,
-    ]);
-    return Array.from(conjunto);
-  }, [catalogoRecursos?.proveedores, purchases]);
+  const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const safePage = Math.min(Math.max(1, page), pageCount);
 
-  const filtrosMetodos = useMemo(() => {
-    const conjunto = new Set([
-      ...(catalogoRecursos?.metodos_pago || []).map((m) => m.nombre).filter(Boolean),
-      ...purchases.map((p) => p.payment).filter(Boolean),
-      ...paymentMethods,
-    ]);
-    return Array.from(conjunto);
-  }, [catalogoRecursos?.metodos_pago, purchases]);
-
-  const pageSize = ELEMENTOS_POR_PAGINA;
-
-  const pageCount = Math.max(
-    1,
-    Math.ceil(filtered.length / pageSize)
+  const visible = useMemo(
+    () => filtered.slice((safePage - 1) * pageSize, safePage * pageSize),
+    [filtered, safePage, pageSize]
   );
 
-  const visible = filtered.slice(
-    (page - 1) * pageSize,
-    page * pageSize
-  );
+  // Índices O(1) para enriquecer la vista de detalle sin recorridos lineales
+  const { productosById, productosByNombre, insumosById, insumosByNombre } = useMemo(() => {
+    const pId = new Map();
+    const pNom = new Map();
+    const iId = new Map();
+    const iNom = new Map();
+    (catalogoRecursos?.productos || []).forEach((p) => {
+      if (p.id_producto_vari) pId.set(p.id_producto_vari, p);
+      if (p.id) pId.set(p.id, p);
+      if (p.nombre && !pNom.has(p.nombre)) pNom.set(p.nombre, p);
+    });
+    (catalogoRecursos?.insumos || []).forEach((i) => {
+      if (i.id) iId.set(i.id, i);
+      if (i.nombre && !iNom.has(i.nombre)) iNom.set(i.nombre, i);
+    });
+    return { productosById: pId, productosByNombre: pNom, insumosById: iId, insumosByNombre: iNom };
+  }, [catalogoRecursos]);
+
+  // Adaptar registros por página (máx. 9) y altura uniforme de filas sin scroll ni recortes (idéntico a Ventas)
+  const recalcularFilas = useCallback(() => {
+    const slot = tableSlotRef.current;
+    if (!slot) return;
+
+    if (window.innerWidth <= 768) {
+      slot.style.removeProperty('--ru-row-h');
+      setPageSize((prev) => (prev === 6 ? prev : 6));
+      return;
+    }
+
+    const slotHeight = Math.floor(slot.getBoundingClientRect().height);
+    if (!slotHeight || slotHeight < 180) return;
+
+    const cardEl = slot.querySelector('.produccion-table-card');
+    const listHeadEl = slot.querySelector('.produccion-table-header');
+    const theadEl = slot.querySelector('thead');
+    const paginationEl = slot.querySelector('.produccion-pagination');
+    const wrapperEl = slot.querySelector('.produccion-table-wrapper');
+    const tableEl = slot.querySelector('.produccion-table');
+
+    const cardStyle = cardEl ? window.getComputedStyle(cardEl) : null;
+    const cardBorders = cardStyle
+      ? Math.ceil(parseFloat(cardStyle.borderTopWidth) || 0) + Math.ceil(parseFloat(cardStyle.borderBottomWidth) || 0)
+      : 2;
+    const listHeadH = listHeadEl ? Math.ceil(listHeadEl.getBoundingClientRect().height) : 44;
+    const theadH = theadEl ? Math.ceil(theadEl.getBoundingClientRect().height) : 38;
+    const paginationH = paginationEl ? Math.ceil(paginationEl.getBoundingClientRect().height) : 48;
+
+    const minRowH = window.innerHeight <= 780 ? 44 : 50;
+    const availableBodyH = Math.floor(slotHeight - cardBorders - listHeadH - theadH - paginationH - 2);
+    if (availableBodyH < 160) return;
+
+    const filas = Math.max(4, Math.min(MAX_PAGE_SIZE, Math.floor(availableBodyH / minRowH)));
+    let idealRowH = Math.max(42, Math.min(72, Math.floor(availableBodyH / filas)));
+
+    slot.style.setProperty('--ru-row-h', `${idealRowH}px`);
+
+    if (wrapperEl && tableEl) {
+      let guard = 0;
+      while (guard < 16 && idealRowH > 40 && tableEl.getBoundingClientRect().height > wrapperEl.clientHeight + 0.5) {
+        idealRowH -= 1;
+        slot.style.setProperty('--ru-row-h', `${idealRowH}px`);
+        guard += 1;
+      }
+    }
+
+    setPageSize((prev) => {
+      if (prev === filas) return prev;
+      setPage(1);
+      return filas;
+    });
+  }, []);
+
+  useEffect(() => {
+    const slot = tableSlotRef.current;
+    if (!slot || typeof ResizeObserver === 'undefined') return;
+
+    let timeoutId = null;
+    const schedule = (delay = 80) => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(recalcularFilas, delay);
+    };
+
+    const observer = new ResizeObserver(() => schedule(80));
+    observer.observe(slot);
+    schedule(40);
+
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(() => schedule(30));
+    }
+
+    return () => {
+      clearTimeout(timeoutId);
+      observer.disconnect();
+    };
+  }, [recalcularFilas]);
+
+  useEffect(() => {
+    if (!loadingCompras) {
+      const id = requestAnimationFrame(recalcularFilas);
+      return () => cancelAnimationFrame(id);
+    }
+  }, [loadingCompras, visible.length, recalcularFilas]);
 
   const stats = useMemo(() => ({
     count: purchases.length,
@@ -1969,8 +2180,9 @@ export default function Compras() {
       validarFechaDeRegistro(data);
       const datos = compraParaBackend(data);
       setSavingCompras(true);
-      await registrarCompra(datos);
-      await cargarCompras();
+      const creada = await registrarCompra(datos);
+      const nuevaCompra = compraDesdeBackend(creada);
+      setPurchases((prev) => [nuevaCompra, ...prev.filter((p) => p.backendId !== nuevaCompra.backendId)]);
       setPage(1);
       setModal(null);
       notificar('success', 'Compra registrada correctamente.');
@@ -1991,8 +2203,11 @@ export default function Compras() {
     try {
       const datos = compraParaBackend(data);
       setSavingCompras(true);
-      await actualizarCompra(selectedPurchase.backendId, datos);
-      await cargarCompras();
+      const respuesta = await actualizarCompra(selectedPurchase.backendId, datos);
+      const actualizada = compraDesdeBackend(respuesta);
+      setPurchases((prev) =>
+        prev.map((p) => (p.backendId === actualizada.backendId ? actualizada : p))
+      );
       setSelectedPurchase(null);
       setModal(null);
       notificar('info', 'Compra actualizada correctamente.');
@@ -2040,7 +2255,9 @@ export default function Compras() {
       setSavingCompras(true);
       const respuesta = await cambiarEstadoCompra(selectedPurchase.backendId, pendingStatus);
       const actualizada = compraDesdeBackend(respuesta);
-      await cargarCompras();
+      setPurchases((prev) =>
+        prev.map((p) => (p.backendId === actualizada.backendId ? actualizada : p))
+      );
       setSelectedPurchase(null);
       setPendingStatus('');
       setModal(null);
@@ -2054,154 +2271,183 @@ export default function Compras() {
   };
 
   const cancelStatusChange = () => {
+    if (savingCompras) return;
     setSelectedPurchase(null);
     setPendingStatus('');
     setModal(null);
   };
 
-  const deletePurchase = async () => {
-    if (!selectedPurchase || savingCompras) return;
-    if (selectedPurchase.status === 'Cancelada') {
-      notificar('info', 'La compra ya se encuentra cancelada.');
-      setSelectedPurchase(null);
-      setModal(null);
-      return;
-    }
-    try {
-      setSavingCompras(true);
-      await eliminarCompra(selectedPurchase.backendId);
-      await cargarCompras();
-      setSelectedPurchase(null);
-      setModal(null);
-      notificar('warning', 'La compra fue cancelada en el sistema correctamente.');
-    } catch (error) {
-      console.error('Error eliminando compra:', error);
-      notificar('error', error.message || 'No se pudo eliminar la compra.');
-    } finally {
-      setSavingCompras(false);
-    }
-  };
-
-  const clearFilters = () => {
-    setSearch('');
-    setStatusFilter('');
-    setProviderFilter('');
-    setPaymentFilter('');
-    setDateFilter('');
-  };
-
-  const kpis = [
-    { icon: <ShoppingCart size={20} />, title: 'Total compras', value: stats.count, label: 'registradas' },
-    { icon: <Banknote size={20} />, title: 'Monto total', value: money(stats.total), label: 'acumulado' },
-    { icon: <CalendarDays size={20} />, title: 'Pendientes', value: stats.pending, label: 'por procesar' },
-    { icon: <CheckCircle2 size={20} />, title: 'Completadas', value: stats.received, label: 'confirmadas' },
-  ];
+  const kpis = useMemo(() => [
+    { icon: <Icons.Compras width={18} height={18} />, title: 'Total compras', value: stats.count, label: 'registradas' },
+    { icon: <Icons.Dollar width={18} height={18} />, title: 'Monto total', value: money(stats.total), label: 'acumulado' },
+    { icon: <Icons.Clock width={18} height={18} />, title: 'Pendientes', value: stats.pending, label: 'por procesar' },
+    { icon: <Icons.Check width={18} height={18} />, title: 'Completadas', value: stats.received, label: 'confirmadas' },
+  ], [stats]);
 
   const columns = [
-    { header: 'Foto', width: '7%', render: (purchase) => (
-      <div className={`purchase-photo photo-${(purchase.number % 4) + 1}`}><Package size={19} /></div>
-    ) },
-    { header: 'ID', width: '9%', render: (purchase) => <span className="id-pill">#{purchase.number}</span> },
-    { header: 'Fecha', width: '12%', render: (purchase) => formatDate(purchase.date) },
-    { header: 'Proveedor', width: '21%', render: (purchase) => (
-      <div className="provider-cell"><strong>{purchase.provider}</strong>
-        <span>{purchase.products.length} {purchase.tipoCompra === 'Insumos' ? 'insumo(s)' : 'producto(s)'}</span>
-      </div>
-    ) },
-    { header: 'Método de pago', width: '16%', render: (purchase) => (
-      <span className="payment-cell">{paymentIcon(purchase.payment)}{purchase.payment}</span>
-    ) },
-    { header: 'Estado', width: '12%', render: (purchase) => (
-      <button type="button" className="detail-status-button" title="Cambiar estado" onClick={() => openStatusModal(purchase)}>
-        <StatusBadge status={purchase.status} />
-      </button>
-    ) },
-    { header: 'Total', width: '12%', render: (purchase) => <strong>{money(totalPurchase(purchase))}</strong> },
-    { header: 'Acciones', width: '11%', render: (purchase) => (
-      <div className="ru-actions compras-actions">
-        <button className="ru-icon-btn view" title="Ver detalle" type="button" onClick={() => { setSelectedPurchase(purchase); setModal('detail'); }}><Eye size={17} /></button>
+    {
+      header: 'Foto',
+      className: 'ru-c-col-foto',
+      render: (purchase) => (
+        <div className={`purchase-photo photo-${(purchase.number % 4) + 1}`}>
+          <Package size={17} />
+        </div>
+      ),
+    },
+    {
+      header: 'ID',
+      className: 'ru-c-col-id',
+      render: (purchase) => <span className="ru-c-code-pill">#{purchase.number}</span>,
+    },
+    {
+      header: 'Fecha',
+      className: 'ru-c-col-fecha',
+      render: (purchase) => <span className="ru-c-cell-date">{formatDate(purchase.date)}</span>,
+    },
+    {
+      header: 'Proveedor',
+      className: 'ru-c-col-proveedor',
+      render: (purchase) => (
+        <div className="provider-cell">
+          <strong title={purchase.provider}>{purchase.provider}</strong>
+          <span>
+            <span className="ru-c-inline-meta">#{purchase.number} · {purchase.status} · </span>
+            {purchase.products.length} {purchase.tipoCompra === 'Insumos' ? 'insumo(s)' : 'producto(s)'}
+          </span>
+        </div>
+      ),
+    },
+    {
+      header: 'Método de pago',
+      className: 'ru-c-col-pago',
+      render: (purchase) => (
+        <span className="payment-cell" title={purchase.payment}>
+          {paymentIcon(purchase.payment)}
+          <span className="ru-c-pago-text">{purchase.payment}</span>
+        </span>
+      ),
+    },
+    {
+      header: 'Estado',
+      className: 'ru-c-col-estado',
+      render: (purchase) => (
         <button
-          className={`ru-icon-btn edit ${['Completada', 'Cancelada'].includes(purchase.status) ? 'disabled' : ''}`}
-          title={['Completada', 'Cancelada'].includes(purchase.status) ? `Compra ${purchase.status.toLowerCase()} no editable` : "Editar"}
           type="button"
-          onClick={() => {
-            if (['Completada', 'Cancelada'].includes(purchase.status)) {
-              notificar('warning', `No se pueden modificar compras ${purchase.status.toLowerCase()}s para proteger el inventario.`);
-              return;
-            }
-            setSelectedPurchase(purchase);
-            setModal('edit');
-          }}
-        ><Pencil size={17} /></button>
-        <button
-          className={`ru-icon-btn delete ${purchase.status === 'Cancelada' ? 'disabled' : ''}`}
-          title={purchase.status === 'Cancelada' ? "Compra ya cancelada" : "Cancelar / Eliminar"}
-          type="button"
-          onClick={() => {
-            if (purchase.status === 'Cancelada') {
-              notificar('info', 'La compra ya se encuentra cancelada.');
-              return;
-            }
-            setSelectedPurchase(purchase);
-            setModal('delete');
-          }}
-        ><Trash2 size={17} /></button>
-      </div>
-    ) },
+          className="detail-status-button"
+          title="Cambiar estado"
+          onClick={() => openStatusModal(purchase)}
+        >
+          <StatusBadge status={purchase.status} />
+        </button>
+      ),
+    },
+    {
+      header: 'Total',
+      className: 'ru-c-col-total',
+      render: (purchase) => <span className="ru-c-cell-total">{money(totalPurchase(purchase))}</span>,
+    },
+    {
+      header: 'Acciones',
+      className: 'ru-c-col-acciones',
+      render: (purchase) => {
+        const noEditable = ['Completada', 'Cancelada'].includes(purchase.status);
+        return (
+          <div className="ru-actions">
+            <button
+              className="ru-icon-btn view"
+              title="Ver detalle de compra"
+              type="button"
+              onClick={() => {
+                setSelectedPurchase(purchase);
+                setModal('detail');
+              }}
+            >
+              <Icons.Eye width={15} height={15} />
+            </button>
+            <button
+              className={`ru-icon-btn edit ${noEditable ? 'disabled' : ''}`}
+              title={noEditable ? `Compra ${purchase.status.toLowerCase()} no editable` : 'Editar compra'}
+              type="button"
+              disabled={noEditable}
+              onClick={() => {
+                if (noEditable) {
+                  notificar('warning', `No se pueden modificar compras ${purchase.status.toLowerCase()}s para proteger el inventario.`);
+                  return;
+                }
+                setSelectedPurchase(purchase);
+                setModal('edit');
+                cargarRecursos(catalogoRecursos.categorias.length === 0);
+              }}
+            >
+              <Icons.Pencil width={15} height={15} />
+            </button>
+            <button
+              className="ru-icon-btn cancel disabled"
+              title="No se permite eliminar compras registradas"
+              aria-label="No se permite eliminar compras registradas"
+              type="button"
+              disabled
+            >
+              <Icons.Ban width={15} height={15} />
+            </button>
+          </div>
+        );
+      },
+    },
   ];
 
+  const showingFrom = filtered.length === 0 ? 0 : (safePage - 1) * pageSize + 1;
+  const showingTo = Math.min(safePage * pageSize, filtered.length);
+
   return (
-    <div className="ru-root compras-page" aria-busy={loadingCompras || savingCompras}>
-      <div className="ru-page">
-        {loadingCompras && <div role="status" className="compras-loading">Cargando compras desde el servidor...</div>}
-        <header className="ru-v-header">
-          <div>
+    <div className="ru-root ru-compras-root compras-page" aria-busy={loadingCompras || savingCompras}>
+      <div className="ru-compras-page">
+        <div className="ru-c-header">
+          <div className="ru-c-header-info">
             <div className="ru-eyebrow">MÓDULO</div>
-            <h1 className="ru-v-title">Gestión de Compras</h1>
-            <p className="ru-v-subtitle">Registro y seguimiento de órdenes de compra de productos e insumos</p>
-          </div>
-          <button className="btn btn-primary" onClick={() => setModal('register')} type="button" disabled={savingCompras}>
-            <Plus size={17} /><span>REGISTRAR COMPRA</span>
-          </button>
-        </header>
-
-        <KpiGlobal kpis={kpis} />
-
-        <div className="compras-filter-block">
-          <FiltrarBuscarGlobal
-            filterTitle="Buscar y filtrar"
-            searchPlaceholder="Buscar por ID, proveedor, estado..."
-            searchValue={search}
-            onSearchChange={(value) => { setSearch(value); setPage(1); }}
-            filterValue={statusFilter}
-            onFilterChange={(value) => { setStatusFilter(value); setPage(1); }}
-            filterOptions={[{ value: '', label: 'Todos los estados' }, ...statuses.map((status) => ({ value: status, label: status }))]}
-          />
-          <div className="compras-extra-filters">
-            <select className="ru-select" aria-label="Filtrar por proveedor" value={providerFilter} onChange={(event) => { setProviderFilter(event.target.value); setPage(1); }}>
-              <option value="">Todos los proveedores</option>
-              {filtrosProveedores.map((provider) => <option key={provider} value={provider}>{provider}</option>)}
-            </select>
-            <select className="ru-select" aria-label="Filtrar por método de pago" value={paymentFilter} onChange={(event) => { setPaymentFilter(event.target.value); setPage(1); }}>
-              <option value="">Método de pago</option>
-              {filtrosMetodos.map((payment) => <option key={payment} value={payment}>{payment}</option>)}
-            </select>
-            <label className="compras-date-filter"><CalendarDays size={17} /><input type="date" aria-label="Filtrar por fecha" value={dateFilter} onChange={(event) => { setDateFilter(event.target.value); setPage(1); }} /></label>
-            {(search || statusFilter || providerFilter || paymentFilter || dateFilter) && <button className="compras-clear-filters" type="button" onClick={() => { clearFilters(); setPage(1); }}>Limpiar filtros</button>}
+            <h1 className="ru-c-title">Gestión de Compras</h1>
+            <p className="ru-c-subtitle">Registro y seguimiento de órdenes de compra de productos e insumos</p>
           </div>
         </div>
 
-        <TableGlobal
-          title="Listado de Compras"
-          totalCount={filtered.length}
-          pageInfoTop={`Página ${Math.min(page, pageCount)} de ${pageCount}`}
-          columns={columns}
-          data={visible}
-          paginationText={`Mostrando ${filtered.length ? (page - 1) * pageSize + 1 : 0}–${Math.min(page * pageSize, filtered.length)} de ${filtered.length} registros`}
-          currentPage={Math.min(page, pageCount)}
-          totalPages={pageCount}
-          onPageChange={setPage}
+        <KpiGlobal kpis={kpis} />
+
+        <FiltrarBuscarGlobal
+          searchPlaceholder="Buscar por ID, fecha, proveedor, método de pago, estado, total o producto..."
+          searchValue={search}
+          onSearchChange={(value) => {
+            setSearch(value);
+            setPage(1);
+          }}
+          action={
+            <button
+              className="btn btn-primary"
+              onClick={() => {
+                setModal('register');
+                cargarRecursos(catalogoRecursos.categorias.length === 0);
+              }}
+              type="button"
+              disabled={savingCompras}
+            >
+              <Icons.Plus width={16} height={16} />
+              <span>REGISTRAR COMPRA</span>
+            </button>
+          }
         />
+
+        <div className="ru-c-table-slot" ref={tableSlotRef}>
+          <TableGlobal
+            title="Listado de Compras"
+            totalCount={filtered.length}
+            pageInfoTop={`Página ${safePage} de ${pageCount}`}
+            columns={columns}
+            data={visible}
+            paginationText={`Mostrando ${showingFrom}–${showingTo} de ${filtered.length} registros`}
+            currentPage={safePage}
+            totalPages={pageCount}
+            onPageChange={setPage}
+          />
+        </div>
       </div>
 
       {alerta && (
@@ -2213,7 +2459,9 @@ export default function Compras() {
           title="Registrar Compra"
           eyebrow="NUEVA ORDEN"
           catalogoRecursos={catalogoRecursos}
-          onClose={() => setModal(null)}
+          loadingCatalogos={loadingCatalogos}
+          saving={savingCompras}
+          onClose={() => !savingCompras && setModal(null)}
           onSave={registerPurchase}
         />
       )}
@@ -2224,7 +2472,10 @@ export default function Compras() {
           eyebrow={`EDITANDO COMPRA #${selectedPurchase.number}`}
           initialValue={selectedPurchase}
           catalogoRecursos={catalogoRecursos}
+          loadingCatalogos={loadingCatalogos}
+          saving={savingCompras}
           onClose={() => {
+            if (savingCompras) return;
             setSelectedPurchase(null);
             setModal(null);
           }}
@@ -2302,30 +2553,22 @@ export default function Compras() {
                   let category = product.category || '';
                   let material = product.material || '';
 
-                  // Resolución enriquecida con catalogoRecursos si la API devolvió campos vacíos
-                  if (catalogoRecursos) {
-                    if (product.itemType === 'Insumo' && Array.isArray(catalogoRecursos.insumos)) {
-                      const ins = catalogoRecursos.insumos.find(
-                        (i) => i.id === product.productId || i.nombre === product.product
-                      );
-                      if (ins) {
-                        if (!material && ins.material) material = ins.material;
-                        if (!size && (ins.tamano || ins.medida || ins.unidad_medida)) {
-                          size = ins.tamano || ins.medida || ins.unidad_medida;
-                        }
-                        if (!category && ins.categoria) category = ins.categoria;
+                  // Resolución O(1) enriquecida con índices del catálogo si algún campo faltó
+                  if (product.itemType === 'Insumo') {
+                    const ins = insumosById.get(product.productId) || insumosByNombre.get(product.product);
+                    if (ins) {
+                      if (!material && ins.material) material = ins.material;
+                      if (!size && (ins.tamano || ins.medida || ins.unidad_medida)) {
+                        size = ins.tamano || ins.medida || ins.unidad_medida;
                       }
-                    } else if (Array.isArray(catalogoRecursos.productos)) {
-                      const match = catalogoRecursos.productos.find(
-                        (p) =>
-                          (product.productId && (p.id_producto_vari === product.productId || p.id === product.productId)) ||
-                          (p.nombre === product.product)
-                      );
-                      if (match) {
-                        if (!color && match.color && match.color !== 'No aplica') color = match.color;
-                        if (!size && match.talla && match.talla !== 'No aplica') size = match.talla;
-                        if (!category && match.categoria && match.categoria !== 'Sin categoría') category = match.categoria;
-                      }
+                      if (!category && ins.categoria) category = ins.categoria;
+                    }
+                  } else {
+                    const match = productosById.get(product.productId) || productosByNombre.get(product.product);
+                    if (match) {
+                      if (!color && match.color && match.color !== 'No aplica') color = match.color;
+                      if (!size && match.talla && match.talla !== 'No aplica') size = match.talla;
+                      if (!category && match.categoria && match.categoria !== 'Sin categoría') category = match.categoria;
                     }
                   }
 
@@ -2384,6 +2627,7 @@ export default function Compras() {
           title="Cambiar Estado"
           eyebrow={`Compra #${selectedPurchase.number} · ${selectedPurchase.provider}`}
           onClose={cancelStatusChange}
+          disabledClose={savingCompras}
           className="status-modal"
         >
           {selectedPurchase.status === 'Cancelada' ? (
@@ -2473,6 +2717,7 @@ export default function Compras() {
               className="secondary-button"
               type="button"
               onClick={cancelStatusChange}
+              disabled={savingCompras}
             >
               Cerrar
             </button>
@@ -2489,28 +2734,11 @@ export default function Compras() {
                 }
                 onClick={applyStatus}
               >
-                Aplicar
+                {savingCompras ? 'Aplicando...' : 'Aplicar'}
               </button>
             )}
           </div>
         </Modal>
-      )}
-
-      {modal === 'delete' && selectedPurchase && (
-        <ConfirmModal
-          title={`¿Cancelar Compra #${selectedPurchase.number}?`}
-          message={
-            selectedPurchase.status === 'Completada'
-              ? `La compra #${selectedPurchase.number} de "${selectedPurchase.provider}" se encuentra Completada. Al cancelarla, el inventario ingresado será revertido automáticamente en Supabase y el estado cambiará a Cancelada para preservar el historial.`
-              : `¿Deseas cancelar la compra #${selectedPurchase.number} de "${selectedPurchase.provider}"? El registro se conservará como Cancelada para fines de auditoría y trazabilidad histórica.`
-          }
-          confirmText="Sí, cancelar compra"
-          onConfirm={deletePurchase}
-          onClose={() => {
-            setSelectedPurchase(null);
-            setModal(null);
-          }}
-        />
       )}
     </div>
   );

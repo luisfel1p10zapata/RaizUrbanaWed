@@ -15,10 +15,10 @@ class ActualizarUsuario:
         self.repositorio = repositorio or UsuarioRepository()
 
     def ejecutar(self, usuario_id: int, datos: UsuarioUpdate) -> UsuarioResponse:
-        # Validar rol si se proporciona
+        # Validar rol dinámicamente contra tb_roles en PostgreSQL si se proporciona
         if datos.rol:
             rol_limpio = datos.rol.strip()
-            if not rol_limpio or rol_limpio.lower() not in ROLES_VALIDOS:
+            if not rol_limpio or not self.repositorio.existe_rol(rol_limpio):
                 raise RolInvalidoError(datos.rol)
 
         datos_dict = datos.model_dump(exclude_unset=True)

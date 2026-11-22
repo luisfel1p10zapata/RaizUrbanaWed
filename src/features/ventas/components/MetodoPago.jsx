@@ -1,63 +1,35 @@
 
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { CreditCard, Trash2, X } from 'lucide-react';
 
-import {
-
-  Search,
-
-  Plus,
-
-  Eye,
-
-  Pencil,
-
-  Trash2,
-
-  CreditCard,
-
-  CircleCheck,
-
-  CircleX,
-
-  X,
-
-  Check,
-
-  AlertTriangle,
-
-  ChevronLeft,
-
-  ChevronRight,
-
-  ChevronsLeft,
-
-  ChevronsRight,
-
-  SlidersHorizontal,
-
-} from 'lucide-react';
-
+import { Icons } from '../../../components/ui/Icons';
+import KpiGlobal from '../../../components/ui/KpiGlobal';
+import FiltrarBuscarGlobal from '../../../components/ui/FiltrarBuscarGlobal';
+import TableGlobal from '../../../components/ui/TableGlobal';
+import AppAlert from '../../../components/ui/AppAlert';
+import '../../../styles/confirmmodal.css';
 import './MetodoPago.css';
 
-import AppAlert from '../../../components/ui/AppAlert';
-import ConfirmModal from '../../../components/ui/ConfirmModal';
-
 import {
-
   obtenerMetodosPago,
-
   registrarMetodoPagoApi,
-
   editarMetodoPagoApi,
-
   cambiarEstadoMetodoPagoApi,
-
   eliminarMetodoPagoApi,
-
 } from '../services/metodoPagoService';
 
-const REGISTROS_POR_PAGINA = 5;
+const MAX_PAGE_SIZE = 9;
+
+const calcularPageSizeInicial = () => {
+  if (typeof window === 'undefined') return MAX_PAGE_SIZE;
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  if (w <= 768) return 6;
+  const rowH = h <= 780 ? 44 : 50;
+  const overhead = h <= 780 ? 316 : 408;
+  return Math.max(4, Math.min(MAX_PAGE_SIZE, Math.floor((h - overhead) / rowH)));
+};
 
 const validarCampo = (campo, valor, metodos, idActual, cuentaObligatoria = false) => {
 
@@ -105,62 +77,38 @@ const formatearNumeroCuenta = (numero) => {
 };
 
 const MetodoPago = () => {
-
+  const tableSlotRef = useRef(null);
+  const alertaIdRef = useRef(0);
+  const [pageSize, setPageSize] = useState(calcularPageSizeInicial);
   const [metodos, setMetodos] = useState([]);
-
   const [busqueda, setBusqueda] = useState('');
-
   const [modal, setModal] = useState(null);
-
   const [metodoSeleccionado, setMetodoSeleccionado] = useState(null);
-
-  const [formulario, setFormulario] = useState({
-
-    ...FORMULARIO_INICIAL,
-
-  });
-
+  const [formulario, setFormulario] = useState({ ...FORMULARIO_INICIAL });
   const [camposTocados, setCamposTocados] = useState({});
 
-  const errores = {
-
+  const errores = useMemo(() => ({
     nombre: validarCampo('nombre', formulario.nombre, metodos, metodoSeleccionado?.id),
-
     numeroCuenta: validarCampo('numeroCuenta', formulario.numeroCuenta, metodos, metodoSeleccionado?.id, modal === 'editar'),
-
-  };
-
-  const [estadoTemporal, setEstadoTemporal] = useState('');
-
-  const [filtroEstado, setFiltroEstado] = useState('todos');
+  }), [formulario.nombre, formulario.numeroCuenta, metodos, metodoSeleccionado?.id, modal]);
 
   const [pagina, setPagina] = useState(1);
-
   const [alerta, setAlerta] = useState(null);
-
   const [cargando, setCargando] = useState(true);
-
   const [procesando, setProcesando] = useState(false);
+  const [procesandoEstadoId, setProcesandoEstadoId] = useState(null);
 
   // =====================================================
-
   // NOTIFICACIONES
-
   // =====================================================
-
-  const mostrarAlerta = (mensaje, tipo = 'success') => {
-
+  const mostrarAlerta = useCallback((mensaje, tipo = 'success') => {
+    alertaIdRef.current += 1;
     setAlerta({
-
       mensaje,
-
       tipo,
-
-      id: Date.now(),
-
+      id: alertaIdRef.current,
     });
-
-  };
+  }, []);
 
   // =====================================================
 
@@ -222,214 +170,185 @@ const MetodoPago = () => {
 
   }, []);
 
-  const cargarMetodos = async () => {
-
-    const datos = await obtenerMetodosPago();
-
-    const lista = Array.isArray(datos) ? datos : [];
-
-    setMetodos(lista);
-
-    return lista;
-
-  };
-
   // =====================================================
-
   // BÚSQUEDA Y PAGINACIÓN
-
   // =====================================================
-
-  useEffect(() => {
-
-    setPagina(1);
-
-  }, [busqueda, filtroEstado]);
 
   const metodosFiltrados = useMemo(() => {
-
-    let lista = metodos;
-
-    if (filtroEstado === 'Activo') {
-      lista = lista.filter((m) => m.estado === 'Activo');
-    } else if (filtroEstado === 'Inactivo') {
-      lista = lista.filter((m) => m.estado === 'Inactivo');
-    }
-
     const termino = busqueda.trim().toLowerCase();
 
-    if (!termino) return lista;
+    if (!termino) return metodos;
 
-    return lista.filter((metodo) => {
-
+    return metodos.filter((metodo) => {
       return (
-
-        (metodo.nombre || '')
-
-          .toLowerCase()
-
-          .includes(termino) ||
-
-        (metodo.numeroCuenta || '')
-
-          .toLowerCase()
-
-          .includes(termino) ||
-
-        (metodo.estado || '')
-
-          .toLowerCase()
-
-          .includes(termino) ||
-
-        String(metodo.id || '')
-
-          .toLowerCase()
-
-          .includes(termino)
-
+        (metodo.nombre || '').toLowerCase().includes(termino) ||
+        (metodo.numeroCuenta || '').toLowerCase().includes(termino) ||
+        (metodo.estado || '').toLowerCase().includes(termino) ||
+        String(metodo.id || '').toLowerCase().includes(termino) ||
+        `#${metodo.id}`.toLowerCase().includes(termino)
       );
-
     });
+  }, [metodos, busqueda]);
 
-  }, [metodos, busqueda, filtroEstado]);
+  const { totalMetodos, totalActivos, totalInactivos } = useMemo(() => {
+    let activos = 0;
+    let inactivos = 0;
+    for (let i = 0; i < metodos.length; i += 1) {
+      if (metodos[i].estado === 'Activo') activos += 1;
+      else if (metodos[i].estado === 'Inactivo') inactivos += 1;
+    }
+    return { totalMetodos: metodos.length, totalActivos: activos, totalInactivos: inactivos };
+  }, [metodos]);
 
-  const totalMetodos = metodos.length;
+  const kpis = useMemo(() => [
+    {
+      icon: <Icons.MetodoPago width={18} height={18} />,
+      title: 'Total métodos',
+      value: totalMetodos,
+      label: 'registrados',
+    },
+    {
+      icon: <Icons.Check width={18} height={18} />,
+      title: 'Activos',
+      value: totalActivos,
+      label: 'disponibles',
+    },
+    {
+      icon: <Icons.Ban width={18} height={18} />,
+      title: 'Inactivos',
+      value: totalInactivos,
+      label: 'deshabilitados',
+    },
+  ], [totalMetodos, totalActivos, totalInactivos]);
 
-  const totalActivos = metodos.filter(
-
-    (metodo) => metodo.estado === 'Activo'
-
-  ).length;
-
-  const totalInactivos = metodos.filter(
-
-    (metodo) => metodo.estado === 'Inactivo'
-
-  ).length;
-
-  const totalPaginas = Math.max(
-
-    1,
-
-    Math.ceil(
-
-      metodosFiltrados.length / REGISTROS_POR_PAGINA
-
-    )
-
+  const totalPaginas = Math.max(1, Math.ceil(metodosFiltrados.length / pageSize));
+  const paginaActual = Math.min(Math.max(1, pagina), totalPaginas);
+  const indiceInicial = (paginaActual - 1) * pageSize;
+  const metodosPagina = useMemo(
+    () => metodosFiltrados.slice(indiceInicial, indiceInicial + pageSize),
+    [metodosFiltrados, indiceInicial, pageSize]
   );
 
-  const paginaActual = Math.min(pagina, totalPaginas);
+  // Adaptar registros por página (máx. 9) y altura uniforme de filas sin scroll ni recortes (idéntico a Ventas)
+  const recalcularFilas = useCallback(() => {
+    const slot = tableSlotRef.current;
+    if (!slot) return;
 
-  const indiceInicial =
+    if (window.innerWidth <= 768) {
+      slot.style.removeProperty('--ru-row-h');
+      setPageSize((prev) => (prev === 6 ? prev : 6));
+      return;
+    }
 
-    (paginaActual - 1) * REGISTROS_POR_PAGINA;
+    const slotHeight = Math.floor(slot.getBoundingClientRect().height);
+    if (!slotHeight || slotHeight < 180) return;
 
-  const metodosPagina = metodosFiltrados.slice(
+    const cardEl = slot.querySelector('.produccion-table-card');
+    const listHeadEl = slot.querySelector('.produccion-table-header');
+    const theadEl = slot.querySelector('thead');
+    const paginationEl = slot.querySelector('.produccion-pagination');
+    const wrapperEl = slot.querySelector('.produccion-table-wrapper');
+    const tableEl = slot.querySelector('.produccion-table');
 
-    indiceInicial,
+    const cardStyle = cardEl ? window.getComputedStyle(cardEl) : null;
+    const cardBorders = cardStyle
+      ? Math.ceil(parseFloat(cardStyle.borderTopWidth) || 0) + Math.ceil(parseFloat(cardStyle.borderBottomWidth) || 0)
+      : 2;
+    const listHeadH = listHeadEl ? Math.ceil(listHeadEl.getBoundingClientRect().height) : 44;
+    const theadH = theadEl ? Math.ceil(theadEl.getBoundingClientRect().height) : 38;
+    const paginationH = paginationEl ? Math.ceil(paginationEl.getBoundingClientRect().height) : 48;
 
-    indiceInicial + REGISTROS_POR_PAGINA
+    const minRowH = window.innerHeight <= 780 ? 44 : 50;
+    const availableBodyH = Math.floor(slotHeight - cardBorders - listHeadH - theadH - paginationH - 2);
+    if (availableBodyH < 160) return;
 
-  );
+    const filas = Math.max(4, Math.min(MAX_PAGE_SIZE, Math.floor(availableBodyH / minRowH)));
+    let idealRowH = Math.max(42, Math.min(72, Math.floor(availableBodyH / filas)));
 
-  const irPrimeraPagina = () => setPagina(1);
+    slot.style.setProperty('--ru-row-h', `${idealRowH}px`);
 
-  const irPaginaAnterior = () => {
+    if (wrapperEl && tableEl) {
+      let guard = 0;
+      while (guard < 16 && idealRowH > 40 && tableEl.getBoundingClientRect().height > wrapperEl.clientHeight + 0.5) {
+        idealRowH -= 1;
+        slot.style.setProperty('--ru-row-h', `${idealRowH}px`);
+        guard += 1;
+      }
+    }
 
-    setPagina((prev) => Math.max(1, prev - 1));
+    setPageSize((prev) => {
+      if (prev === filas) return prev;
+      setPagina(1);
+      return filas;
+    });
+  }, []);
 
-  };
+  useEffect(() => {
+    const slot = tableSlotRef.current;
+    if (!slot || typeof ResizeObserver === 'undefined') return;
 
-  const irPaginaSiguiente = () => {
+    let timeoutId = null;
+    const schedule = (delay = 80) => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(recalcularFilas, delay);
+    };
 
-    setPagina((prev) =>
+    const observer = new ResizeObserver(() => schedule(80));
+    observer.observe(slot);
+    schedule(40);
 
-      Math.min(totalPaginas, prev + 1)
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(() => schedule(30));
+    }
 
-    );
+    return () => {
+      clearTimeout(timeoutId);
+      observer.disconnect();
+    };
+  }, [recalcularFilas]);
 
-  };
-
-  const irUltimaPagina = () => {
-
-    setPagina(totalPaginas);
-
-  };
+  useEffect(() => {
+    if (!cargando) {
+      const id = requestAnimationFrame(recalcularFilas);
+      return () => cancelAnimationFrame(id);
+    }
+  }, [cargando, metodosPagina.length, recalcularFilas]);
 
   // =====================================================
-
   // MODALES
-
   // =====================================================
 
   const abrirRegistrar = () => {
-
     setFormulario({ ...FORMULARIO_INICIAL });
-
     setCamposTocados({});
-
     setMetodoSeleccionado(null);
-
     setModal('registrar');
-
   };
 
   const abrirEditar = (metodo) => {
-
     setCamposTocados({});
-
     setMetodoSeleccionado(metodo);
-
     setFormulario({
-
       nombre: metodo.nombre || '',
-
       numeroCuenta: metodo.numeroCuenta || '',
-
     });
-
     setModal('editar');
-
   };
 
   const abrirDetalle = (metodo) => {
-
     setMetodoSeleccionado(metodo);
-
     setModal('detalle');
-
-  };
-
-  const abrirEstado = (metodo) => {
-
-    setMetodoSeleccionado(metodo);
-
-    setEstadoTemporal(metodo.estado);
-
-    setModal('estado');
-
   };
 
   const abrirEliminar = (metodo) => {
-
     setMetodoSeleccionado(metodo);
-
     setModal('eliminar');
-
   };
 
   const cerrarModal = () => {
-
     if (procesando) return;
-
     setModal(null);
-
     setMetodoSeleccionado(null);
-
-    setEstadoTemporal('');
-
   };
 
   // =====================================================
@@ -467,907 +386,313 @@ const MetodoPago = () => {
   };
 
   // =====================================================
-
-  // REGISTRAR
-
+  // REGISTRAR (actualización directa de estado local)
   // =====================================================
 
   const registrarMetodo = async (e) => {
-
     e.preventDefault();
-
     if (procesando || !validarFormulario()) return;
 
     setProcesando(true);
-
     try {
-
       const nuevoMetodo = await registrarMetodoPagoApi({
-
         nombre: formulario.nombre.trim(),
-
         numeroCuenta: formulario.numeroCuenta.trim(),
-
         estado: 'Activo',
-
       });
 
-      const datos = await cargarMetodos();
+      const listaActualizada = [...metodos, nuevoMetodo];
+      setMetodos(listaActualizada);
 
       const termino = busqueda.trim().toLowerCase();
-
       const filtrados = termino
-
-        ? datos.filter(
-
+        ? listaActualizada.filter(
             (metodo) =>
-
-              metodo.nombre.toLowerCase().includes(termino) ||
-
-              (metodo.numeroCuenta || '')
-
-                .toLowerCase()
-
-                .includes(termino)
-
+              (metodo.nombre || '').toLowerCase().includes(termino) ||
+              (metodo.numeroCuenta || '').toLowerCase().includes(termino) ||
+              (metodo.estado || '').toLowerCase().includes(termino) ||
+              String(metodo.id || '').toLowerCase().includes(termino) ||
+              `#${metodo.id}`.toLowerCase().includes(termino)
           )
+        : listaActualizada;
 
-        : datos;
-
-      const indiceNuevo = filtrados.findIndex(
-
-        (metodo) => metodo.id === nuevoMetodo.id
-
-      );
-
+      const indiceNuevo = filtrados.findIndex((metodo) => metodo.id === nuevoMetodo.id);
       if (indiceNuevo >= 0) {
-
-        setPagina(
-
-          Math.floor(indiceNuevo / REGISTROS_POR_PAGINA) + 1
-
-        );
-
+        setPagina(Math.floor(indiceNuevo / pageSize) + 1);
       }
 
       setModal(null);
-
       setMetodoSeleccionado(null);
-
       setFormulario({ ...FORMULARIO_INICIAL });
-
-      mostrarAlerta(
-
-        '¡Método de pago agregado correctamente!',
-
-        'success'
-
-      );
-
+      mostrarAlerta('¡Método de pago agregado correctamente!', 'success');
     } catch (error) {
-
       mostrarAlerta(error.message, 'error');
-
     } finally {
-
       setProcesando(false);
-
     }
-
   };
 
   // =====================================================
-
-  // EDITAR
-
+  // EDITAR (actualización directa de estado local)
   // =====================================================
 
   const guardarCambios = async (e) => {
-
     e.preventDefault();
-
-    if (
-
-      procesando ||
-
-      !metodoSeleccionado ||
-
-      !validarFormulario()
-
-    ) {
-
+    if (procesando || !metodoSeleccionado || !validarFormulario()) {
       return;
-
     }
 
     setProcesando(true);
-
     try {
+      const actualizado = await editarMetodoPagoApi(metodoSeleccionado.id, {
+        nombre: formulario.nombre.trim(),
+        numeroCuenta: formulario.numeroCuenta.trim(),
+      });
 
-      await editarMetodoPagoApi(
-
-        metodoSeleccionado.id,
-
-        {
-
-          nombre: formulario.nombre.trim(),
-
-          numeroCuenta: formulario.numeroCuenta.trim(),
-
-        }
-
+      const registroFinal = actualizado || {
+        ...metodoSeleccionado,
+        nombre: formulario.nombre.trim(),
+        numeroCuenta: formulario.numeroCuenta.trim(),
+      };
+      setMetodos((prev) =>
+        prev.map((m) => (m.id === metodoSeleccionado.id ? { ...m, ...registroFinal } : m))
       );
-
-      await cargarMetodos();
 
       setModal(null);
-
       setMetodoSeleccionado(null);
-
       setFormulario({ ...FORMULARIO_INICIAL });
-
-      mostrarAlerta(
-
-        '¡Método de pago actualizado correctamente!',
-
-        'info'
-
-      );
-
+      mostrarAlerta('¡Método de pago actualizado correctamente!', 'info');
     } catch (error) {
-
       mostrarAlerta(error.message, 'error');
-
     } finally {
-
       setProcesando(false);
-
     }
-
   };
 
   // =====================================================
-
-  // =====================================================
-
-  // CAMBIAR ESTADO DIRECTO
-
+  // CAMBIAR ESTADO DIRECTO (sin recargar toda la tabla)
   // =====================================================
 
   const cambiarEstadoDirecto = async (metodo) => {
-
-    if (procesando || !metodo) return;
+    if (procesandoEstadoId === metodo?.id || !metodo) return;
 
     const nuevoEstado = metodo.estado === 'Activo' ? 'Inactivo' : 'Activo';
-
-    setProcesando(true);
-
+    setProcesandoEstadoId(metodo.id);
     try {
-
-      await cambiarEstadoMetodoPagoApi(metodo.id, nuevoEstado);
-
-      await cargarMetodos();
-
-      if (metodoSeleccionado && metodoSeleccionado.id === metodo.id) {
-
-        setMetodoSeleccionado((prev) => (prev ? { ...prev, estado: nuevoEstado } : null));
-
-      }
-
-      mostrarAlerta(
-
-        'El estado del método de pago se actualizó correctamente.',
-
-        'warning'
-
+      const actualizado = await cambiarEstadoMetodoPagoApi(metodo.id, nuevoEstado);
+      const estadoFinal = actualizado?.estado || nuevoEstado;
+      setMetodos((prev) =>
+        prev.map((m) => (m.id === metodo.id ? { ...m, ...(actualizado || {}), estado: estadoFinal } : m))
       );
-
+      if (metodoSeleccionado && metodoSeleccionado.id === metodo.id) {
+        setMetodoSeleccionado((prev) => (prev ? { ...prev, estado: estadoFinal } : null));
+      }
+      mostrarAlerta('El estado del método de pago se actualizó correctamente.', 'warning');
     } catch (error) {
-
       mostrarAlerta(error.message, 'error');
-
     } finally {
-
-      setProcesando(false);
-
+      setProcesandoEstadoId(null);
     }
-
   };
 
   // =====================================================
-
-  // ELIMINAR
-
+  // ELIMINAR (actualización directa de estado local)
   // =====================================================
 
   const eliminarMetodo = async () => {
-
     if (procesando || !metodoSeleccionado) return;
 
+    const idEliminar = metodoSeleccionado.id;
     setProcesando(true);
-
     try {
+      await eliminarMetodoPagoApi(idEliminar);
 
-      await eliminarMetodoPagoApi(
-
-        metodoSeleccionado.id
-
-      );
-
-      const datos = await cargarMetodos();
+      const restantes = metodos.filter((m) => m.id !== idEliminar);
+      setMetodos(restantes);
 
       const termino = busqueda.trim().toLowerCase();
-
-      const cantidadFiltrada = datos.filter(
-
-        (metodo) =>
-
-          metodo.nombre.toLowerCase().includes(termino) ||
-
-          (metodo.numeroCuenta || '')
-
-            .toLowerCase()
-
-            .includes(termino)
-
-      ).length;
+      const cantidadFiltrada = termino
+        ? restantes.filter(
+            (metodo) =>
+              (metodo.nombre || '').toLowerCase().includes(termino) ||
+              (metodo.numeroCuenta || '').toLowerCase().includes(termino) ||
+              (metodo.estado || '').toLowerCase().includes(termino) ||
+              String(metodo.id || '').toLowerCase().includes(termino) ||
+              `#${metodo.id}`.toLowerCase().includes(termino)
+          ).length
+        : restantes.length;
 
       setPagina((actual) =>
-
-        Math.min(
-
-          actual,
-
-          Math.max(
-
-            1,
-
-            Math.ceil(
-
-              cantidadFiltrada / REGISTROS_POR_PAGINA
-
-            )
-
-          )
-
-        )
-
+        Math.min(actual, Math.max(1, Math.ceil(cantidadFiltrada / pageSize)))
       );
 
       setModal(null);
-
       setMetodoSeleccionado(null);
-
-      mostrarAlerta(
-
-        'El método de pago se eliminó correctamente.',
-
-        'error'
-
-      );
-
+      mostrarAlerta('El método de pago se eliminó correctamente.', 'error');
     } catch (error) {
-
       mostrarAlerta(error.message, 'error');
-
     } finally {
-
       setProcesando(false);
-
     }
-
   };
 
+  const columns = [
+    {
+      header: 'ID',
+      className: 'ru-mp-col-id',
+      render: (metodo) => <span className="ru-mp-code-pill">#{metodo.id}</span>,
+    },
+    {
+      header: 'Nombre',
+      className: 'ru-mp-col-nombre',
+      render: (metodo) => (
+        <div className="metodo-name-cell">
+          <div className="metodo-row-icon">
+            <Icons.MetodoPago width={16} height={16} />
+          </div>
+          <div className="ru-mp-name-wrap">
+            <strong title={metodo.nombre}>{metodo.nombre}</strong>
+            <span className="ru-mp-inline-meta">
+              <span className="ru-mp-inline-id">#{metodo.id}</span>
+              <span className="ru-mp-inline-account"> · {formatearNumeroCuenta(metodo.numeroCuenta)}</span>
+            </span>
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: 'Número de cuenta',
+      className: 'ru-mp-col-cuenta',
+      render: (metodo) => (
+        <span className="ru-mp-code-pill">
+          {formatearNumeroCuenta(metodo.numeroCuenta)}
+        </span>
+      ),
+    },
+    {
+      header: 'Estado',
+      className: 'ru-mp-col-estado',
+      render: (metodo) => (
+        <button
+          type="button"
+          className={`metodo-status ${metodo.estado === 'Activo' ? 'activo' : 'inactivo'}`}
+          onClick={() => cambiarEstadoDirecto(metodo)}
+          disabled={procesandoEstadoId === metodo.id}
+          title={`Cambiar a ${metodo.estado === 'Activo' ? 'Inactivo' : 'Activo'}`}
+        >
+          <span />
+          {metodo.estado}
+        </button>
+      ),
+    },
+    {
+      header: 'Acciones',
+      className: 'ru-mp-col-acciones',
+      render: (metodo) => (
+        <div className="ru-actions">
+          <button
+            type="button"
+            className="ru-icon-btn view"
+            onClick={() => abrirDetalle(metodo)}
+            title="Ver detalle de método de pago"
+          >
+            <Icons.Eye width={15} height={15} />
+          </button>
+          <button
+            type="button"
+            className="ru-icon-btn edit"
+            onClick={() => abrirEditar(metodo)}
+            title="Editar método de pago"
+          >
+            <Icons.Pencil width={15} height={15} />
+          </button>
+          <button
+            type="button"
+            className="ru-icon-btn delete"
+            onClick={() => abrirEliminar(metodo)}
+            title="Eliminar método de pago"
+          >
+            <Icons.Trash width={15} height={15} />
+          </button>
+        </div>
+      ),
+    },
+  ];
+
+  const showingFrom = metodosFiltrados.length === 0 ? 0 : indiceInicial + 1;
+  const showingTo = Math.min(indiceInicial + pageSize, metodosFiltrados.length);
+
   // =====================================================
-
   // INTERFAZ
-
   // =====================================================
 
   return (
+    <div className="ru-root ru-metodos-root metodo-page">
+      <div className="ru-metodos-page">
+        {/* Notificaciones globales del proyecto */}
+        {alerta && (
+          <AppAlert
+            key={alerta.id}
+            type={alerta.tipo}
+            message={alerta.mensaje}
+            onClose={() => setAlerta(null)}
+          />
+        )}
 
-    <div className="metodo-page">
+        {/* ENCABEZADO (idéntico a Ventas) */}
+        <div className="ru-mp-header">
+          <div className="ru-mp-header-info">
+            <div className="ru-eyebrow">MÓDULO</div>
+            <h1 className="ru-mp-title">Métodos de Pago</h1>
+            <p className="ru-mp-subtitle">Administra los métodos de pago disponibles en el sistema</p>
+          </div>
+        </div>
 
-      {/* Notificaciones globales del proyecto */}
+        {/* KPIs compactos informativos (sin interacción ni selección) */}
+        <KpiGlobal kpis={kpis} />
 
-      {alerta && (
-
-        <AppAlert
-
-          key={alerta.id}
-
-          type={alerta.tipo}
-
-          message={alerta.mensaje}
-
-          onClose={() => setAlerta(null)}
-
+        {/* Barra global de búsqueda + botón crear lado a lado (idéntica a Ventas) */}
+        <FiltrarBuscarGlobal
+          searchPlaceholder="Buscar por ID, nombre, número de cuenta o estado..."
+          searchValue={busqueda}
+          onSearchChange={(val) => {
+            setBusqueda(val);
+            setPagina(1);
+          }}
+          action={
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={abrirRegistrar}
+              disabled={procesando}
+            >
+              <Icons.Plus width={16} height={16} />
+              <span>NUEVO MÉTODO</span>
+            </button>
+          }
         />
 
-      )}
-
-      {/* ENCABEZADO */}
-
-      <div className="metodo-header">
-
-        <div className="metodo-header-info">
-
-          <span className="module-label">
-
-            MÓDULO
-
-          </span>
-
-          <h1>Métodos de Pago</h1>
-
-          <p>
-
-            Administra los métodos de pago disponibles
-
-            en el sistema
-
-          </p>
-
+        {/* TABLA Adaptativa uniforme sin scroll (idéntica a Ventas) */}
+        <div className="ru-mp-table-slot" ref={tableSlotRef}>
+          <TableGlobal
+            title="Listado Métodos de Pago"
+            totalCount={metodosFiltrados.length}
+            pageInfoTop={`Página ${paginaActual} de ${totalPaginas}`}
+            columns={columns}
+            data={metodosPagina}
+            paginationText={`Mostrando ${showingFrom}–${showingTo} de ${metodosFiltrados.length} registros`}
+            currentPage={paginaActual}
+            totalPages={totalPaginas}
+            onPageChange={setPagina}
+          />
         </div>
-
-        <button
-
-          type="button"
-
-          className="metodo-btn-primary"
-
-          onClick={abrirRegistrar}
-
-          disabled={procesando}
-
-        >
-
-          <Plus size={17} strokeWidth={2.5} />
-
-          NUEVO MÉTODO
-
-        </button>
-
       </div>
-
-      {/* KPIs */}
-
-      <div className="metodo-kpis">
-
-        <div
-          className={`metodo-kpi-card ${filtroEstado === 'todos' ? 'active' : ''}`}
-          style={{ cursor: 'pointer' }}
-          onClick={() => setFiltroEstado('todos')}
-          title="Mostrar todos los métodos"
-        >
-
-          <div className="metodo-kpi-top">
-
-            <span>Total métodos</span>
-
-            <div className="metodo-kpi-icon">
-
-              <CreditCard size={15} />
-
-            </div>
-
-          </div>
-
-          <strong>{totalMetodos}</strong>
-
-          <div className="metodo-kpi-footer positivo">
-
-            <small>Registradas</small>
-
-          </div>
-
-        </div>
-
-        <div
-          className={`metodo-kpi-card ${filtroEstado === 'Activo' ? 'active' : ''}`}
-          style={{ cursor: 'pointer' }}
-          onClick={() => setFiltroEstado((prev) => (prev === 'Activo' ? 'todos' : 'Activo'))}
-          title="Filtrar sólo métodos activos"
-        >
-
-          <div className="metodo-kpi-top">
-
-            <span>Activos</span>
-
-            <div className="metodo-kpi-icon">
-
-              <CircleCheck size={15} />
-
-            </div>
-
-          </div>
-
-          <strong>{totalActivos}</strong>
-
-          <div className="metodo-kpi-footer positivo">
-
-            <small>Disponibles</small>
-
-          </div>
-
-        </div>
-
-        <div
-          className={`metodo-kpi-card ${filtroEstado === 'Inactivo' ? 'active' : ''}`}
-          style={{ cursor: 'pointer' }}
-          onClick={() => setFiltroEstado((prev) => (prev === 'Inactivo' ? 'todos' : 'Inactivo'))}
-          title="Filtrar sólo métodos inactivos"
-        >
-
-          <div className="metodo-kpi-top">
-
-            <span>Inactivos</span>
-
-            <div className="metodo-kpi-icon">
-
-              <CircleX size={15} />
-
-            </div>
-
-          </div>
-
-          <strong>{totalInactivos}</strong>
-
-          <div className="metodo-kpi-footer positivo">
-
-            <small>Deshabilitada</small>
-
-          </div>
-
-        </div>
-
-      </div>
-
-      {/* BUSCADOR */}
-
-      <section className="metodo-search-card">
-
-        <div className="metodo-search-title">
-
-          <SlidersHorizontal size={14} />
-
-          <span>Buscar método de pago</span>
-
-        </div>
-
-        <div className="metodo-search-content">
-
-          <div className="metodo-search-input">
-
-            <Search size={15} />
-
-            <input
-
-              type="text"
-
-              value={busqueda}
-
-              onChange={(e) =>
-
-                setBusqueda(e.target.value)
-
-              }
-
-              placeholder="Buscar por nombre o número de cuenta..."
-
-            />
-
-            {busqueda && (
-
-              <button
-
-                type="button"
-
-                className="metodo-search-clear"
-
-                onClick={() => setBusqueda('')}
-
-                aria-label="Limpiar búsqueda"
-
-              >
-
-                <X size={14} />
-
-              </button>
-
-            )}
-
-          </div>
-
-        </div>
-
-      </section>
-
-      {/* TABLA */}
-
-      <section className="metodo-table-card">
-
-        <div className="metodo-table-header">
-
-          <div className="metodo-table-title">
-
-            <span>Listado Métodos de Pago</span>
-
-            <span className="metodo-count">
-
-              {metodosFiltrados.length}
-
-            </span>
-
-          </div>
-
-          <span className="metodo-page-info">
-
-            Página {paginaActual} de {totalPaginas}
-
-          </span>
-
-        </div>
-
-        <div className="metodo-table-wrapper">
-
-          <table className="metodo-table">
-
-            <thead>
-
-              <tr>
-
-                <th>ID</th>
-
-                <th>NOMBRE</th>
-
-                <th>NÚMERO DE CUENTA</th>
-
-                <th>ESTADO</th>
-
-                <th>ACCIONES</th>
-
-              </tr>
-
-            </thead>
-
-            <tbody>
-
-              {metodosPagina.length > 0 ? (
-
-                metodosPagina.map((metodo) => (
-
-                  <tr key={metodo.id}>
-
-                    <td>
-
-                      <span className="metodo-id">
-
-                        #{metodo.id}
-
-                      </span>
-
-                    </td>
-
-                    <td>
-
-                      <div className="metodo-name-cell">
-
-                        <div className="metodo-row-icon">
-
-                          <CreditCard size={14} />
-
-                        </div>
-
-                        <strong>
-
-                          {metodo.nombre}
-
-                        </strong>
-
-                      </div>
-
-                    </td>
-
-                    <td>
-
-                      <span className="metodo-account">
-
-                        {formatearNumeroCuenta(
-
-                          metodo.numeroCuenta
-
-                        )}
-
-                      </span>
-
-                    </td>
-
-                    <td>
-
-                      <button
-
-                        type="button"
-
-                        className={`metodo-status ${
-
-                          metodo.estado === 'Activo'
-
-                            ? 'activo'
-
-                            : 'inactivo'
-
-                        }`}
-
-                        onClick={() =>
-
-                          cambiarEstadoDirecto(metodo)
-
-                        }
-
-                        disabled={procesando}
-
-                        title={`Cambiar a ${metodo.estado === 'Activo' ? 'Inactivo' : 'Activo'}`}
-
-                      >
-
-                        <span></span>
-
-                        {metodo.estado}
-
-                      </button>
-
-                    </td>
-
-                    <td>
-
-                      <div className="metodo-actions">
-
-                        <button
-
-                          type="button"
-
-                          className="action-view"
-
-                          onClick={() =>
-
-                            abrirDetalle(metodo)
-
-                          }
-
-                          title="Ver detalle"
-
-                        >
-
-                          <Eye size={15} />
-
-                        </button>
-
-                        <button
-
-                          type="button"
-
-                          className="action-edit"
-
-                          onClick={() =>
-
-                            abrirEditar(metodo)
-
-                          }
-
-                          title="Editar"
-
-                        >
-
-                          <Pencil size={15} />
-
-                        </button>
-
-                        <button
-
-                          type="button"
-
-                          className="action-delete"
-
-                          onClick={() =>
-
-                            abrirEliminar(metodo)
-
-                          }
-
-                          title="Eliminar"
-
-                        >
-
-                          <Trash2 size={15} />
-
-                        </button>
-
-                      </div>
-
-                    </td>
-
-                  </tr>
-
-                ))
-
-              ) : (
-
-                <tr>
-
-                  <td colSpan="5">
-
-                    <div className="metodo-empty">
-
-                      <div className="metodo-empty-icon">
-
-                        <Search size={25} />
-
-                      </div>
-
-                      <strong>
-
-                        {cargando
-
-                          ? 'Cargando métodos de pago...'
-
-                          : 'No se encontraron métodos'}
-
-                      </strong>
-
-                      <span>
-
-                        {cargando
-
-                          ? 'Consultando información del servidor.'
-
-                          : 'Intenta con otro nombre o número de cuenta.'}
-
-                      </span>
-
-                    </div>
-
-                  </td>
-
-                </tr>
-
-              )}
-
-            </tbody>
-
-          </table>
-
-        </div>
-
-        {/* PAGINACIÓN */}
-
-        <div className="metodo-table-footer">
-
-          <span>
-
-            Mostrando{' '}
-
-            {metodosFiltrados.length === 0
-
-              ? 0
-
-              : indiceInicial + 1}
-
-            –
-
-            {Math.min(
-
-              indiceInicial + REGISTROS_POR_PAGINA,
-
-              metodosFiltrados.length
-
-            )}{' '}
-
-            de {metodosFiltrados.length} registros
-
-          </span>
-
-          <div className="metodo-pagination">
-
-            <button
-
-              type="button"
-
-              onClick={irPrimeraPagina}
-
-              disabled={paginaActual === 1}
-
-              title="Primera página"
-
-            >
-
-              <ChevronsLeft size={15} />
-
-            </button>
-
-            <button
-
-              type="button"
-
-              onClick={irPaginaAnterior}
-
-              disabled={paginaActual === 1}
-
-              title="Página anterior"
-
-            >
-
-              <ChevronLeft size={15} />
-
-            </button>
-
-            <span className="metodo-current-page">
-
-              {paginaActual}
-
-            </span>
-
-            <button
-
-              type="button"
-
-              onClick={irPaginaSiguiente}
-
-              disabled={paginaActual === totalPaginas}
-
-              title="Página siguiente"
-
-            >
-
-              <ChevronRight size={15} />
-
-            </button>
-
-            <button
-
-              type="button"
-
-              onClick={irUltimaPagina}
-
-              disabled={paginaActual === totalPaginas}
-
-              title="Última página"
-
-            >
-
-              <ChevronsRight size={15} />
-
-            </button>
-
-          </div>
-
-        </div>
-
-      </section>
 
       {/* MODAL REGISTRAR */}
 
       {modal === 'registrar' && (
-
-        <div
-
-          className="metodo-overlay"
-
-          onMouseDown={cerrarModal}
-
-        >
-
-          <div
-
-            className="metodo-modal metodo-modal-form"
-
-            onMouseDown={(e) =>
-
-              e.stopPropagation()
-
-            }
-
-          >
+        <div className="metodo-overlay" role="dialog" aria-modal="true">
+          <div className="metodo-modal metodo-modal-form">
 
             <div className="metodo-modal-header">
 
@@ -1551,28 +876,9 @@ const MetodoPago = () => {
       {/* MODAL DETALLE */}
 
       {modal === 'detalle' &&
-
         metodoSeleccionado && (
-
-          <div
-
-            className="metodo-overlay"
-
-            onMouseDown={cerrarModal}
-
-          >
-
-            <div
-
-              className="metodo-modal metodo-modal-detail"
-
-              onMouseDown={(e) =>
-
-                e.stopPropagation()
-
-              }
-
-            >
+          <div className="metodo-overlay" role="dialog" aria-modal="true">
+            <div className="metodo-modal metodo-modal-detail">
 
               <div className="metodo-modal-header">
 
@@ -1736,7 +1042,7 @@ const MetodoPago = () => {
 
                     }
 
-                    disabled={procesando}
+                    disabled={procesandoEstadoId === metodoSeleccionado.id}
 
                   >
 
@@ -1777,28 +1083,9 @@ const MetodoPago = () => {
       {/* MODAL EDITAR */}
 
       {modal === 'editar' &&
-
         metodoSeleccionado && (
-
-          <div
-
-            className="metodo-overlay"
-
-            onMouseDown={cerrarModal}
-
-          >
-
-            <div
-
-              className="metodo-modal metodo-modal-form"
-
-              onMouseDown={(e) =>
-
-                e.stopPropagation()
-
-              }
-
-            >
+          <div className="metodo-overlay" role="dialog" aria-modal="true">
+            <div className="metodo-modal metodo-modal-form">
 
               <div className="metodo-modal-header">
 
@@ -1985,15 +1272,39 @@ const MetodoPago = () => {
 
 
 
-      {/* MODAL ELIMINAR ESTÁNDAR RAÍZ URBANA */}
+      {/* MODAL ELIMINAR (sin cierre por clic fuera del cuadro de diálogo) */}
       {modal === 'eliminar' && metodoSeleccionado && (
-        <ConfirmModal
-          title="¿Eliminar Método de Pago?"
-          message={`¿Estás seguro de eliminar el método de pago "${metodoSeleccionado.nombre}"? Si cuenta con transacciones asociadas en compras o ventas, la operación será bloqueada para proteger la integridad contable.`}
-          confirmText="Sí, eliminar"
-          onConfirm={eliminarMetodo}
-          onClose={cerrarModal}
-        />
+        <div className="ru-confirm-modal-overlay" role="dialog" aria-modal="true">
+          <div className="ru-confirm-modal">
+            <div className="ru-confirm-icon-box">
+              <Trash2 size={24} />
+            </div>
+
+            <h2 className="ru-confirm-title">¿Eliminar Método de Pago?</h2>
+            <p className="ru-confirm-message">
+              {`¿Estás seguro de eliminar el método de pago "${metodoSeleccionado.nombre}"? Si cuenta con transacciones asociadas en compras o ventas, la operación será bloqueada para proteger la integridad contable.`}
+            </p>
+
+            <div className="ru-confirm-footer">
+              <button
+                type="button"
+                className="btn btn-outline"
+                onClick={cerrarModal}
+                disabled={procesando}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="btn btn-destructive"
+                onClick={eliminarMetodo}
+                disabled={procesando}
+              >
+                {procesando ? 'Eliminando...' : 'Sí, eliminar'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
     </div>

@@ -73,15 +73,18 @@ class VentaCreate(CamelModel):
 class VentaUpdate(CamelModel):
     """Editar venta: campos que el modal permite cambiar."""
 
-    estado_venta: EstadoVenta | None = None
+    id_estado_comp: int | None = None
+    estado_venta: str | None = None
     estado_pago: EstadoPago | None = None
-    metodo_pago: MetodoPago | None = None
+    id_metodo_pago: int | None = None
+    metodo_pago: str | None = None
 
 
 class VentaEstadoUpdate(CamelModel):
     """Modal 'Cambiar estado'."""
 
-    estado_venta: EstadoVenta
+    id_estado_comp: int | None = None
+    estado_venta: str
 
 
 class VentaFiltros(CamelModel):
@@ -115,8 +118,10 @@ class VentaResponse(CamelModel):
     codigo: str
     cliente: ClienteResumen
     fecha: date
-    estado_venta: EstadoVenta
+    id_estado_comp: int | None = None
+    estado_venta: str
     estado_pago: EstadoPago
+    id_metodo_pago: int | None = None
     metodo_pago: str
     items: list[ItemVentaResponse]
     total: float
@@ -150,6 +155,11 @@ class MetodoPagoAuxiliar(CamelModel):
     estado: str = "Activo"
 
 
+class EstadoVentaAuxiliar(CamelModel):
+    id: int
+    nombre: str
+
+
 class ProductoVarianteAuxiliar(CamelModel):
     id_producto_vari: int
     id_producto: int
@@ -165,6 +175,7 @@ class VentasAuxiliaresResponse(CamelModel):
     clientes: list[ClienteAuxiliar]
     metodos_pago: list[MetodoPagoAuxiliar]
     productos: list[ProductoVarianteAuxiliar]
+    estados: list[EstadoVentaAuxiliar] = Field(default_factory=list)
 
 
 # Listado paginado: GET /ventas  ->  { items, total, page, pageSize, totalPages }

@@ -22,7 +22,8 @@ async function solicitar(ruta = '', opciones = {}) {
     });
   } catch (error) {
     throw new Error(
-      'No se pudo conectar con el servidor backend (FastAPI). Verifica que esté encendido en http://127.0.0.1:8000.'
+      'No se pudo conectar con el servidor backend (FastAPI). Verifica que esté encendido en http://127.0.0.1:8000.',
+      { cause: error }
     );
   }
 
@@ -74,6 +75,13 @@ export async function obtenerUsuarios({
 
   const query = params.toString() ? `?${params.toString()}` : '';
   return solicitar(query);
+}
+
+/**
+ * Obtener catálogos maestros (tb_roles activos y tb_tipodoc) desde PostgreSQL.
+ */
+export async function obtenerAuxiliaresUsuarios() {
+  return solicitar('/auxiliares');
 }
 
 /**

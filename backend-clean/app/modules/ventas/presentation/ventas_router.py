@@ -104,6 +104,11 @@ def actualizar_venta(venta_id: int, datos: VentaUpdate):
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(err)
         )
+    except ValueError as err:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(err)
+        )
 
 
 @router.patch("/{venta_id}/estado", response_model=VentaResponse, status_code=status.HTTP_200_OK)
@@ -115,6 +120,11 @@ def cambiar_estado(venta_id: int, datos: VentaEstadoUpdate):
     except VentaNoEncontradaError as err:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(err)
+        )
+    except ValueError as err:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(err)
         )
 

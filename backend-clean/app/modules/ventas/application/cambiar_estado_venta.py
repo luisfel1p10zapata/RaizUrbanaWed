@@ -12,8 +12,8 @@ class CambiarEstadoVenta:
     def __init__(self, repositorio=None):
         self.repositorio = repositorio or VentaRepository()
 
-    def ejecutar(self, venta_id: int, nuevo_estado: EstadoVenta) -> VentaResponse:
+    def ejecutar(self, venta_id: int, nuevo_estado: str | EstadoVenta) -> VentaResponse:
         venta_actualizada = self.repositorio.actualizar(
-            venta_id, {"estado_venta": nuevo_estado}
+            venta_id, {"estado_venta": str(nuevo_estado)}
         )
         return VentaResponse.model_validate(venta_actualizada)

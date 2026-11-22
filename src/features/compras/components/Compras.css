@@ -1369,68 +1369,602 @@
 
 
 
-/* Estandarización de la pantalla principal con el sistema global de Ventas. */
+/* ==================================================================
+   HOMOLOGACIÓN EXACTA CON VENTAS (100dvh sin scroll, KPIs compactos,
+   toolbar unificado, tabla uniforme --ru-row-h e íconos idénticos)
+   ================================================================== */
 
-.compras-page.ru-root { padding: 0; width: 100%; }
-
-.compras-page .ru-page { padding-top: 0; }
-
-.compras-page .ru-v-header { margin-bottom: 24px; }
-
-.compras-page .ru-v-title { font-family: 'Playfair Display', Georgia, serif !important; }
-
-.compras-page .compras-filter-block { margin-bottom: 22px; }
-
-.compras-page .compras-extra-filters {
-
-  display: flex; align-items: center; flex-wrap: wrap; gap: 12px;
-
-  padding: 0 20px 18px; margin-top: -3px;
-
-  border: 1px solid var(--card-border); border-top: 0;
-
-  background: var(--card-bg); border-radius: 0 0 14px 14px;
-
+.ru-compras-root.compras-page {
+  padding: 0;
+  width: 100%;
+  min-height: 100vh;
 }
 
-.compras-page .ru-filters-card { margin-bottom: 0; border-radius: 14px 14px 0 0; }
+@media (min-width: 769px) and (min-height: 520px) {
+  html:has(.ru-compras-root),
+  body:has(.ru-compras-root),
+  #root:has(.ru-compras-root),
+  .admin-layout:has(.ru-compras-root) {
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden !important;
+  }
 
-.compras-page .compras-extra-filters .ru-select { min-width: 165px; max-width: 240px; }
+  .admin-content:has(.ru-compras-root) {
+    height: 100dvh;
+    max-height: 100dvh;
+    min-height: 0;
+    overflow: hidden !important;
+    display: flex;
+    flex-direction: column;
+    padding: clamp(14px, 2vh, 24px) clamp(16px, 2.2vw, 32px);
+    box-sizing: border-box;
+  }
 
-.compras-page .compras-date-filter {
+  .ru-compras-root.compras-page {
+    height: 100%;
+    max-height: 100%;
+    min-height: 0 !important;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
 
-  display: inline-flex; align-items: center; gap: 8px; min-height: 40px;
-
-  border: 1px solid var(--card-border); background: var(--card-bg);
-
-  border-radius: 8px; padding: 0 12px; color: var(--secondary);
-
+  .ru-compras-root .ru-compras-page {
+    height: 100%;
+    max-height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
 }
 
-.compras-page .compras-date-filter input { background: transparent; border: 0; color: var(--primary); outline: none; }
+.ru-compras-root .ru-compras-page {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+}
 
-.compras-page .compras-clear-filters { background: transparent; border: 0; color: var(--secondary); font-weight: 600; cursor: pointer; }
+/* Encabezado editorial idéntico a Ventas */
+.ru-c-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: clamp(10px, 1.3vh, 14px);
+  gap: 16px;
+  flex-shrink: 0;
+}
 
-.compras-page .compras-loading { padding: 8px 0; font-size: 13px; }
+.ru-c-header-info {
+  min-width: 0;
+}
 
-.compras-page .compras-actions { display: flex; align-items: center; gap: 6px; }
+.ru-compras-root .ru-eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 600;
+  margin-bottom: 3px;
+}
 
-.compras-page .produccion-table-wrapper { overflow-x: auto; }
+.ru-c-title {
+  font-family: var(--font-logo) !important;
+  font-weight: 600;
+  font-size: clamp(23px, 2.2vw, 34px);
+  line-height: 1.12;
+  color: var(--primary);
+  margin: 0 0 4px 0;
+}
 
-.compras-page .produccion-table { min-width: 930px; }
+.ru-c-subtitle {
+  font-size: clamp(12px, 0.95vw, 13.5px);
+  color: var(--secondary);
+  margin: 0;
+  line-height: 1.35;
+}
 
-.compras-page .produccion-table td { vertical-align: middle; }
+/* KPIs compactos idénticos a Ventas (puramente informativos, sin interacción ni selección) */
+.ru-compras-root .ru-kpis-container {
+  gap: clamp(10px, 1.2vw, 14px);
+  margin-bottom: clamp(10px, 1.3vh, 14px);
+  flex-shrink: 0;
+}
 
-.compras-page .produccion-table .provider-cell { display: flex; flex-direction: column; gap: 3px; }
+.ru-compras-root .ru-kpis-container .ru-kpi-card {
+  padding: clamp(11px, 1.3vh, 15px) clamp(14px, 1.4vw, 18px);
+  border-radius: var(--radius-lg);
+  gap: 12px;
+  align-items: center;
+  box-shadow: var(--shadow-card);
+  cursor: default;
+  user-select: none;
+  -webkit-user-select: none;
+  pointer-events: none;
+  transition: none;
+}
 
-.compras-page .produccion-table .payment-cell { display: inline-flex; align-items: center; gap: 6px; }
+.ru-compras-root .ru-kpis-container .ru-kpi-card * {
+  user-select: none;
+  -webkit-user-select: none;
+}
 
-@media (max-width: 700px) {
+.ru-compras-root .ru-kpis-container .ru-kpi-card:hover,
+[data-theme="dark"] .ru-compras-root .ru-kpis-container .ru-kpi-card:hover,
+.dark .ru-compras-root .ru-kpis-container .ru-kpi-card:hover,
+.dark-mode .ru-compras-root .ru-kpis-container .ru-kpi-card:hover {
+  border-color: var(--kpi-border);
+  box-shadow: var(--shadow-card);
+  transform: none;
+}
 
-  .compras-page .compras-extra-filters { padding: 12px; }
+.ru-compras-root .ru-kpi-icon-box {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+}
 
-  .compras-page .compras-extra-filters .ru-select { width: 100%; max-width: none; }
+.ru-compras-root .ru-kpi-title {
+  font-size: 12px;
+  margin-bottom: 2px;
+}
 
+.ru-compras-root .ru-kpi-value-row {
+  flex-direction: row;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.ru-compras-root .ru-kpi-number {
+  font-size: clamp(16px, 1.35vw, 19px);
+}
+
+.ru-compras-root .ru-kpi-label {
+  font-size: 11.5px;
+}
+
+/* Tabla adaptativa uniforme sin scroll (idéntica a Ventas) */
+.ru-c-table-slot {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.ru-compras-root .produccion-table-card {
+  flex: 0 1 auto;
+  max-height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  --tg-radius: 12px;
+  --tg-head-bg: var(--thead-bg);
+  --tg-border: var(--card-border);
+  --tg-line: var(--divider);
+  --tg-bg: var(--card-bg);
+}
+
+.ru-compras-root .produccion-table-card .produccion-table-header {
+  flex-shrink: 0;
+  padding: clamp(10px, 1.2vh, 14px) clamp(16px, 1.6vw, 22px);
+}
+
+.ru-compras-root .produccion-table-card .produccion-table-title {
+  font-size: 14.5px;
+}
+
+.ru-compras-root .produccion-table-card .produccion-table-wrapper {
+  flex: 0 1 auto;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
+}
+
+.ru-compras-root .produccion-table-card .produccion-table {
+  width: 100%;
+  min-width: 0;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.ru-compras-root .produccion-table-card .produccion-table thead th {
+  padding: 11px 10px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+.ru-compras-root .produccion-table-card .produccion-table thead th:first-child { padding-left: 18px; padding-right: 8px; }
+.ru-compras-root .produccion-table-card .produccion-table thead th:last-child  { padding-right: 18px; text-align: center; }
+
+.ru-compras-root .produccion-table-card .produccion-table tbody tr {
+  height: var(--ru-row-h, 54px);
+}
+
+.ru-compras-root .produccion-table-card .produccion-table tbody tr.produccion-empty-tr {
+  height: auto;
+}
+
+.ru-compras-root .produccion-table-card .produccion-table tbody td {
+  padding: 0 10px;
+  height: var(--ru-row-h, 54px);
+  box-sizing: border-box;
+  font-size: 13.5px;
+  vertical-align: middle;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ru-compras-root .produccion-table-card .produccion-table tbody td.ru-c-col-foto,
+.ru-compras-root .produccion-table-card .produccion-table tbody td.ru-c-col-id,
+.ru-compras-root .produccion-table-card .produccion-table tbody td.ru-c-col-fecha,
+.ru-compras-root .produccion-table-card .produccion-table tbody td.ru-c-col-pago,
+.ru-compras-root .produccion-table-card .produccion-table tbody td.ru-c-col-estado,
+.ru-compras-root .produccion-table-card .produccion-table tbody td.ru-c-col-total,
+.ru-compras-root .produccion-table-card .produccion-table tbody td.ru-c-col-acciones {
+  overflow: visible;
+  text-overflow: clip;
+}
+
+.ru-compras-root .produccion-table-card .produccion-table tbody tr:last-child td {
+  border-bottom: 1px solid transparent;
+}
+
+.ru-compras-root .produccion-table-card .produccion-table tbody tr.produccion-empty-tr td {
+  height: auto;
+  padding: 32px 20px;
+}
+
+.ru-compras-root .produccion-table-card .produccion-table tbody td:first-child { padding-left: 18px; padding-right: 8px; overflow: visible; text-overflow: clip; }
+.ru-compras-root .produccion-table-card .produccion-table tbody td:last-child  { padding-right: 18px; text-align: center; overflow: visible; text-overflow: clip; }
+
+.ru-compras-root .produccion-table-card .produccion-pagination {
+  flex-shrink: 0;
+  padding: clamp(9px, 1.1vh, 13px) clamp(16px, 1.6vw, 22px);
+  flex-wrap: nowrap;
+}
+
+.ru-compras-root .produccion-table-card .produccion-pagination-info {
+  font-size: 12.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ru-compras-root .produccion-table-card button.produccion-pagination-button {
+  min-width: 31px;
+  height: 31px;
+  font-size: 13.5px;
+}
+
+/* Proporciones de columnas en escritorio (> 1340px) — textos completos sin truncamiento */
+.ru-compras-root .ru-c-col-foto      { width: 72px; }
+.ru-compras-root .ru-c-col-id        { width: 74px; }
+.ru-compras-root .ru-c-col-fecha     { width: 112px; font-variant-numeric: tabular-nums; }
+.ru-compras-root .ru-c-col-proveedor { width: auto; }
+.ru-compras-root .ru-c-col-pago      { width: 186px; }
+.ru-compras-root .ru-c-col-estado    { width: 146px; }
+.ru-compras-root .ru-c-col-total     { width: 136px; font-variant-numeric: tabular-nums; }
+.ru-compras-root .ru-c-col-acciones  { width: 120px; }
+
+/* Celdas compactas */
+.ru-compras-root .purchase-photo {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+}
+
+.ru-c-code-pill {
+  display: inline-block;
+  background: var(--background);
+  border: 1px solid var(--card-border);
+  border-radius: 7px;
+  padding: 3px 9px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--secondary);
+  white-space: nowrap;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+[data-theme="dark"] .ru-c-code-pill,
+.dark .ru-c-code-pill,
+.dark-mode .ru-c-code-pill {
+  background-color: #252839;
+  border-color: #3A3D57;
+  color: #C9ADA7;
+}
+
+.ru-c-cell-date {
+  color: var(--secondary);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.ru-c-cell-total {
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.ru-compras-root .produccion-table .provider-cell {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.ru-compras-root .produccion-table .provider-cell strong {
+  font-size: 13.5px;
+  line-height: 1.25;
+  color: var(--primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ru-compras-root .produccion-table .provider-cell > span {
+  font-size: 11.5px;
+  line-height: 1.25;
+  color: var(--muted-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ru-c-inline-meta {
+  display: none;
+  font-weight: 600;
+  color: var(--secondary);
+}
+
+.ru-compras-root .produccion-table .payment-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--secondary);
+  white-space: nowrap;
+}
+
+.ru-compras-root .produccion-table .payment-cell svg {
+  flex-shrink: 0;
+}
+
+.ru-compras-root .ru-c-pago-text {
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+.ru-compras-root .status-badge {
+  font-size: 11.5px;
+  padding: 4px 10px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+.ru-compras-root .detail-status-button {
+  display: inline-flex;
+  align-items: center;
+  overflow: visible;
+  transition: transform 0.15s ease;
+}
+
+.ru-compras-root .detail-status-button:hover {
+  transform: translateY(-1px);
+}
+
+/* Acciones idénticas a Ventas */
+.ru-compras-root .ru-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px !important;
+  flex-wrap: nowrap;
+}
+
+.ru-compras-root .ru-icon-btn {
+  background: transparent !important;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px !important;
+  min-width: 28px;
+  min-height: 28px;
+  border-radius: 7px !important;
+  transition: background-color 0.15s ease, opacity 0.15s ease, transform 0.15s ease !important;
+}
+
+.ru-compras-root .ru-icon-btn:hover:not(:disabled):not(.disabled) {
+  opacity: 1 !important;
+  transform: translateY(-1px);
+}
+
+.ru-compras-root .ru-icon-btn.view { color: var(--info-blue); }
+.ru-compras-root .ru-icon-btn.edit { color: var(--warn-amber); }
+.ru-compras-root .ru-icon-btn.cancel,
+.ru-compras-root .ru-icon-btn.delete { color: var(--negative); }
+
+.ru-compras-root .ru-icon-btn.view:hover:not(:disabled)   { background-color: rgba(74, 118, 168, 0.12) !important; }
+.ru-compras-root .ru-icon-btn.edit:hover:not(:disabled)   { background-color: rgba(201, 151, 63, 0.14) !important; }
+.ru-compras-root .ru-icon-btn.cancel:hover:not(:disabled) { background-color: rgba(209, 73, 91, 0.12) !important; }
+
+.ru-compras-root .ru-icon-btn:disabled,
+.ru-compras-root .ru-icon-btn.disabled {
+  opacity: 0.3 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+  pointer-events: auto;
+}
+
+/* Pantallas altas (> 860px) y portátiles compactos (<= 780px alto) */
+@media (min-height: 860px) and (min-width: 769px) {
+  .ru-compras-root .produccion-table .provider-cell strong { font-size: 14px; }
+  .ru-compras-root .produccion-table .provider-cell > span { font-size: 12px; }
+  .ru-compras-root .status-badge { font-size: 12px; padding: 4px 11px; }
+}
+
+@media (max-height: 780px) and (min-width: 769px) {
+  .admin-content:has(.ru-compras-root) { padding: 10px 18px; }
+  .ru-c-header { margin-bottom: 8px; }
+  .ru-compras-root .ru-eyebrow { font-size: 10px; margin-bottom: 1px; }
+  .ru-c-title { font-size: clamp(20px, 1.9vw, 26px); margin-bottom: 2px; }
+  .ru-c-subtitle { font-size: 12px; }
+
+  .ru-compras-root .ru-kpis-container { gap: 10px; margin-bottom: 8px; }
+  .ru-compras-root .ru-kpi-card { padding: 8px 12px; gap: 10px; }
+  .ru-compras-root .ru-kpi-icon-box { width: 32px; height: 32px; }
+  .ru-compras-root .ru-kpi-title { font-size: 11px; }
+  .ru-compras-root .ru-kpi-number { font-size: 15.5px; }
+  .ru-compras-root .ru-kpi-label { font-size: 11px; }
+
+  .ru-compras-root .produccion-table-card .produccion-table-header { padding: 8px 16px; }
+  .ru-compras-root .produccion-table-card .produccion-table-title { font-size: 13.5px; }
+  .ru-compras-root .produccion-table-card .produccion-table thead th { padding: 8px 10px; font-size: 10.5px; }
+  .ru-compras-root .produccion-table-card .produccion-table thead th:first-child,
+  .ru-compras-root .produccion-table-card .produccion-table tbody td:first-child { padding-left: 14px; }
+  .ru-compras-root .produccion-table-card .produccion-table thead th:last-child,
+  .ru-compras-root .produccion-table-card .produccion-table tbody td:last-child { padding-right: 14px; }
+
+  .ru-compras-root .produccion-table-card .produccion-table tbody tr { height: var(--ru-row-h, 46px); }
+  .ru-compras-root .produccion-table-card .produccion-table tbody td {
+    padding: 0 10px;
+    height: var(--ru-row-h, 46px);
+    font-size: 12.5px;
+  }
+
+  .ru-compras-root .purchase-photo { width: 30px; height: 30px; }
+  .ru-compras-root .produccion-table .provider-cell strong { font-size: 12.5px; }
+  .ru-compras-root .produccion-table .provider-cell > span { font-size: 11px; }
+  .ru-c-code-pill { font-size: 11px; padding: 2px 7px; }
+  .ru-compras-root .status-badge { font-size: 11px; padding: 3px 8px; }
+
+  .ru-compras-root .produccion-table-card .produccion-pagination { padding: 7px 16px; }
+  .ru-compras-root .produccion-table-card .produccion-pagination-info { font-size: 12px; }
+  .ru-compras-root .produccion-table-card button.produccion-pagination-button { min-width: 28px; height: 28px; font-size: 12.5px; }
+}
+
+@media (max-height: 519px) {
+  .ru-compras-root .produccion-table-wrapper { overflow-y: auto; }
+}
+
+/* Columnas adaptativas progresivas sin scroll horizontal ni recortes */
+@media (max-width: 1340px) {
+  .ru-compras-root .ru-c-col-foto { display: none !important; }
+  .ru-compras-root .ru-c-col-id { padding-left: 18px !important; width: 78px; }
+  .ru-compras-root .ru-c-col-pago { width: 180px; }
+  .ru-compras-root .ru-c-col-estado { width: 144px; }
+}
+
+@media (max-width: 1180px) {
+  .ru-compras-root .ru-c-col-pago { display: none !important; }
+  .ru-compras-root .ru-c-col-fecha { width: 110px; }
+  .ru-compras-root .ru-c-col-estado { width: 142px; }
+  .ru-compras-root .ru-c-col-total { width: 132px; }
+  .ru-compras-root .ru-c-col-acciones { width: 118px; }
+}
+
+@media (max-width: 1024px) and (min-width: 769px) {
+  .admin-content:has(.ru-compras-root) { margin-left: 226px !important; }
+  .admin-layout.sidebar-collapsed .admin-content:has(.ru-compras-root) { margin-left: 72px !important; }
+}
+
+@media (max-width: 1024px) {
+  .ru-compras-root .ru-c-col-fecha { display: none !important; }
+  .ru-compras-root .ru-c-col-total { width: 128px; }
+  .ru-compras-root .ru-c-col-estado { width: 140px; }
+  .ru-compras-root .ru-c-col-acciones { width: 116px; }
+}
+
+@media (max-width: 780px) {
+  .admin-content:has(.ru-compras-root) {
+    margin-left: 0 !important;
+    padding: 76px 14px 16px !important;
+    min-height: 100dvh;
+    height: auto;
+    overflow-x: hidden;
+  }
+
+  .admin-layout.sidebar-collapsed .admin-content:has(.ru-compras-root) { margin-left: 0 !important; }
+  .ru-compras-root.compras-page { min-height: 0 !important; padding: 0 !important; }
+  .ru-c-title { font-size: 24px; }
+  .ru-c-subtitle { font-size: 12.5px; }
+
+  .ru-compras-root .produccion-table-card .produccion-table-wrapper { padding: 0; overflow: hidden; }
+  .ru-compras-root .produccion-table-card .produccion-table { display: table; min-width: 0; }
+  .ru-compras-root .produccion-table-card .produccion-table thead { display: table-header-group; }
+  .ru-compras-root .produccion-table-card .produccion-table tbody { display: table-row-group; }
+  .ru-compras-root .produccion-table-card .produccion-table tbody tr {
+    display: table-row;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    margin: 0;
+    height: 52px;
+  }
+  .ru-compras-root .produccion-table-card .produccion-table tbody td,
+  .ru-compras-root .produccion-table-card .produccion-table tbody td:first-child,
+  .ru-compras-root .produccion-table-card .produccion-table tbody td:last-child {
+    display: table-cell;
+    height: 52px;
+    padding: 0 8px;
+    border-bottom: 1px solid var(--divider);
+  }
+  .ru-compras-root .produccion-table-card .produccion-table tbody tr:last-child td { border-bottom: 1px solid transparent; }
+  .ru-compras-root .produccion-table-card .produccion-table thead th { padding: 8px 8px; }
+  .ru-compras-root .produccion-table-card .produccion-table thead th:last-child,
+  .ru-compras-root .produccion-table-card .produccion-table tbody td:last-child { padding-right: 12px; text-align: center; }
+  .ru-compras-root .produccion-table-card .produccion-table tbody td::before { display: none !important; }
+}
+
+@media (max-width: 580px) {
+  .admin-content:has(.ru-compras-root) { padding: 74px 10px 14px !important; }
+  .ru-compras-root .ru-kpis-container { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 8px; }
+  .ru-compras-root .ru-kpi-card { padding: 10px 10px; gap: 8px; }
+  .ru-compras-root .ru-kpi-card:last-child:nth-child(odd) { grid-column: auto; }
+  .ru-compras-root .ru-kpi-icon-box { width: 30px; height: 30px; }
+  .ru-compras-root .ru-kpi-title { font-size: 11px; }
+  .ru-compras-root .ru-kpi-number { font-size: 14.5px; }
+  .ru-compras-root .ru-kpi-label { display: none; }
+
+  .ru-compras-root .ru-c-col-id,
+  .ru-compras-root .ru-c-col-estado { display: none !important; }
+  .ru-c-inline-meta { display: inline; }
+  .ru-compras-root .ru-c-col-proveedor { padding-left: 12px !important; }
+  .ru-compras-root .ru-c-col-total { width: 96px; font-size: 12px; }
+  .ru-compras-root .ru-c-col-acciones { width: 100px; }
+
+  .ru-compras-root .ru-actions { gap: 2px !important; }
+  .ru-compras-root .ru-icon-btn { min-width: 24px; min-height: 24px; padding: 3px !important; }
+
+  .ru-compras-root .produccion-pagination {
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+  }
+}
+
+@media (max-width: 380px) {
+  .ru-c-title { font-size: 21px; }
+  .ru-compras-root .ru-c-col-total { width: 84px; }
+  .ru-compras-root .ru-c-col-acciones { width: 92px; }
 }
 
 

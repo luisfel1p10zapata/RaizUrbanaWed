@@ -12,8 +12,10 @@ Utiliza los procedimientos almacenados y funciones oficiales desplegados en Supa
 - sp_listar_usuarios: Listado y búsqueda global con exclusión de cuentas de sistema.
 """
 from datetime import date
+import re
 import secrets
 from typing import Any
+import unicodedata
 import psycopg # type: ignore
 from psycopg.rows import dict_row # type: ignore
 
@@ -148,8 +150,19 @@ class UsuarioPostgresRepository:
                 fila = cursor.fetchone()
                 return self._mapear_fila(fila) if fila else None
 
+    @staticmethod
+    def _normalizar_texto(texto: Any) -> str:
+        raw = str(texto or "").strip().lower()
+        sin_tildes = "".join(
+            ch for ch in unicodedata.normalize("NFD", raw)
+            if unicodedata.category(ch) != "Mn"
+        )
+        return sin_tildes
+
     def listar(self, filtros: UsuarioFiltros) -> tuple[list[dict[str, Any]], int]:
-        """Obtiene la lista paginada y filtrada invocando sp_listar_usuarios de Supabase."""
+        """Obtiene la lista paginada y filtrada invocando sp_listar_usuarios de Supabase.
+        La búsqueda global compara todos los campos visibles en la tabla (sin distinguir tildes ni puntos).
+        """
         with self._get_connection() as conn:
             with conn.cursor(row_factory=dict_row) as cursor:
                 id_rol = None
@@ -167,18 +180,61 @@ class UsuarioPostgresRepository:
 
                 # Invocar función oficial de Supabase
                 cursor.execute(
-                    "SELECT * FROM sp_listar_usuarios(%s, %s, %s, false);",
-                    (id_rol, estado_param, buscar_param)
+                    "SELECT * FROM sp_listar_usuarios(%s, %s, NULL, false);",
+                    (id_rol, estado_param)
                 )
                 todas_filas = cursor.fetchall()
-                total = len(todas_filas)
+                todos_items = [self._mapear_fila(f) for f in todas_filas]
 
-                # Paginación
+                if buscar_param:
+                    q_norm = self._normalizar_texto(buscar_param)
+                    tokens = [t for t in q_norm.split() if t]
+
+                    def _coincide_token(tok: str, texto: str) -> bool:
+                        if tok in ("act", "acti", "activ", "activo"):
+                            return bool(re.search(rf"(?<![a-z0-9]){re.escape(tok)}", texto))
+                        return tok in texto
+
+                    filtrados = []
+                    for idx, item in enumerate(todos_items, start=1):
+                        tipo_val = str(item["tipo_doc"].value if hasattr(item["tipo_doc"], "value") else item["tipo_doc"])
+                        tipo_sigla = tipo_val.replace(".", "")
+                        genero_val = str(item["genero"].value if hasattr(item["genero"], "value") else item["genero"])
+                        estado_val = str(item["estado"].value if hasattr(item["estado"], "value") else item["estado"])
+                        fecha_obj = item.get("fecha_registro")
+                        fecha_val = str(fecha_obj or "")
+                        fecha_dmy = fecha_obj.strftime("%d/%m/%Y") if isinstance(fecha_obj, date) else ""
+
+                        campos = " ".join([
+                            f"#{idx}",
+                            str(idx),
+                            str(item["id"]),
+                            tipo_val,
+                            tipo_sigla,
+                            str(item["numero_doc"] or ""),
+                            f"{tipo_val} {item['numero_doc']}",
+                            f"{tipo_sigla} {item['numero_doc']}",
+                            str(item["nombres"] or ""),
+                            str(item["apellidos"] or ""),
+                            str(item["correo"] or ""),
+                            str(item.get("telefono") or ""),
+                            str(item.get("direccion") or ""),
+                            genero_val,
+                            str(item.get("rol") or ""),
+                            estado_val,
+                            fecha_val,
+                            fecha_dmy,
+                        ])
+                        haystack = self._normalizar_texto(campos)
+
+                        if bool(tokens) and all(_coincide_token(tok, haystack) for tok in tokens):
+                            filtrados.append(item)
+                    todos_items = filtrados
+
+                total = len(todos_items)
                 offset = (filtros.page - 1) * filtros.page_size
-                filas_paginadas = todas_filas[offset:offset + filtros.page_size]
-
-                items = [self._mapear_fila(f) for f in filas_paginadas]
-                return items, total
+                items_paginados = todos_items[offset:offset + filtros.page_size]
+                return items_paginados, total
 
     def crear_token_activacion(self, usuario_id: int) -> tuple[str, str]:
         """Genera un token de activación utilizando el procedimiento sp_crear_token_usuario de Supabase."""
@@ -404,6 +460,52 @@ class UsuarioPostgresRepository:
                         raise UsuarioNoEncontradoError(usuario_id)
                     else:
                         raise UsuarioConDependenciasError(usuario_id)
+
+    def existe_rol(self, rol_nombre: str) -> bool:
+        """Verifica dinámicamente si el rol existe y está activo en tb_roles."""
+        nombre_limpio = (rol_nombre or "").strip()
+        if not nombre_limpio:
+            return False
+        with self._get_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "SELECT 1 FROM tb_roles WHERE LOWER(BTRIM(nombre)) = LOWER(%s) LIMIT 1;",
+                    (nombre_limpio,)
+                )
+                return cursor.fetchone() is not None
+
+    def obtener_auxiliares(self) -> dict[str, Any]:
+        """Obtiene roles activos (tb_roles) y tipos de documento (tb_tipodoc) desde PostgreSQL."""
+        with self._get_connection() as conn:
+            with conn.cursor(row_factory=dict_row) as cursor:
+                cursor.execute("""
+                    SELECT id_rol AS id, nombre, estado
+                    FROM tb_roles
+                    WHERE estado = true
+                    ORDER BY id_rol;
+                """)
+                roles = cursor.fetchall()
+
+                cursor.execute("""
+                    SELECT id_tipodoc AS id, sigla, nombre
+                    FROM tb_tipodoc
+                    ORDER BY id_tipodoc;
+                """)
+                filas_doc = cursor.fetchall()
+                tipos_doc = []
+                for f in filas_doc:
+                    enum_val = self._resolver_tipo_doc_enum(f["sigla"], f["nombre"])
+                    tipos_doc.append({
+                        "id": f["id"],
+                        "sigla": f["sigla"],
+                        "valor": enum_val.value,
+                        "nombre": f["nombre"],
+                    })
+
+                return {
+                    "roles": roles,
+                    "tipos_doc": tipos_doc,
+                }
 
 
 def UsuarioRepository() -> UsuarioPostgresRepository:

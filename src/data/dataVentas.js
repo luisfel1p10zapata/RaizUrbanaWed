@@ -33,5 +33,5 @@ export const ESTADO_PAGO_META = {
 /* ---------------- Utilidades ---------------- */
 export const formatoMoneda = (valor) => `$${Number(valor).toLocaleString("es-CO")}`;
 export const hoyISO = () => new Date().toISOString().slice(0, 10);
-export const codigoVenta = (id) => `VT-${String(id).padStart(3, "0")}`;
+export const codigoVenta = (id) => String(id).padStart(3, "0");
 export const creado = (fecha) => ({ accion: "Creado", fecha, color: "green" });

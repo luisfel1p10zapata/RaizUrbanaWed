@@ -1,19 +1,25 @@
-import { useMemo, useState, useEffect, useCallback } from "react";
+import { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import {
   obtenerUsuarios,
+  obtenerAuxiliaresUsuarios,
   crearUsuario,
   actualizarUsuario,
-  eliminarUsuario,
   validarTokenActivacion,
   activarUsuarioConToken,
 } from "../services/usuariosService";
 import {
-  Search, Filter, Eye, EyeOff, Pencil, Trash2, X, Mail, Phone, IdCard,
+  Eye, EyeOff, Pencil, UserX, X, Mail, Phone, IdCard,
   MapPin, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight,
-  CheckCircle2, AlertCircle, Users, Copy, Check, ShieldCheck, KeyRound, Lock, AlertTriangle
+  CheckCircle2, AlertCircle, Users, UserPlus, Copy, Check, ShieldCheck, KeyRound, Lock, AlertTriangle
 } from "lucide-react";
+import FiltrarBuscarGlobal from "../../../components/ui/FiltrarBuscarGlobal";
 import AppAlert from "../../../components/ui/AppAlert";
 import ConfirmModal from "../../../components/ui/ConfirmModal";
+import {
+  getDocumentoConfig,
+  formatearEntradaDocumento,
+  validarNumeroDocumento,
+} from "../utils/documentoValidation";
 import "../styles/Usuarios.css";
 import "../styles/ModalsUsuarios.css";
 
@@ -25,7 +31,26 @@ const AVATAR_COLORS = [
   "#3E9BC9", "#D1495B", "#5B6FD8", "#8A6FD6", "#3EB08A"
 ];
 
-const PAGE_SIZE = 8;
+const MAX_PAGE_SIZE = 10;
+
+const calcularPageSizeInicial = () => {
+  if (typeof window === "undefined") return MAX_PAGE_SIZE;
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  if (w <= 768) return 6;
+  const rowH = h <= 780 ? 44 : 50;
+  const overhead = h <= 780 ? 258 : 328;
+  return Math.max(4, Math.min(MAX_PAGE_SIZE, Math.floor((h - overhead) / rowH)));
+};
+
+const getVisiblePages = (current, total) => {
+  if (total <= 5) return Array.from({ length: total }, (_, i) => i + 1);
+  let start = Math.max(1, current - 2);
+  let end = Math.min(total, start + 4);
+  if (end - start < 4) start = Math.max(1, end - 4);
+  return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+};
+
 const initials = (nombre) =>
   nombre
     .split(" ")
@@ -38,19 +63,20 @@ const initials = (nombre) =>
 /* ============================================================
    COMPONENTES VISUALES BASE
    ============================================================ */
-function Avatar({ nombre, id, size = 42 }) {
-  const color = AVATAR_COLORS[(id - 1) % AVATAR_COLORS.length];
-  return (
-    <span
-      className="ru-avatar"
-      style={{
+function Avatar({ nombre, id, size }) {
+  const color = AVATAR_COLORS[Math.abs((id || 1) - 1) % AVATAR_COLORS.length];
+  const style = size
+    ? {
         background: color,
         width: size,
         height: size,
         fontSize: size * 0.33,
         borderRadius: size * 0.4,
-      }}
-    >
+      }
+    : { background: color };
+
+  return (
+    <span className="ru-u-avatar" style={style}>
       {initials(nombre)}
     </span>
   );
@@ -215,28 +241,47 @@ function ViewUserModal({ user, index, onClose, onEdit, onActivate }) {
   );
 }
 
+const FALLBACK_ROLES = [
+  { id: 1, nombre: "Administrador" },
+  { id: 2, nombre: "Empleado" },
+  { id: 3, nombre: "Cliente" },
+];
+
+const FALLBACK_TIPOS_DOC = [
+  { id: 1, sigla: "CC", valor: "C.C.", nombre: "Cédula de Ciudadanía" },
+  { id: 2, sigla: "CE", valor: "C.E.", nombre: "Cédula de Extranjería" },
+  { id: 3, sigla: "TI", valor: "T.I.", nombre: "Tarjeta de Identidad" },
+];
+
 /* ============================================================
    MODAL: REGISTRAR USUARIO (SIN CONTRASEÑA - ADMIN FLOW)
    ============================================================ */
-function CreateUserModal({ nextId, onClose, onCreate }) {
+function CreateUserModal({ nextId, onClose, onCreate, rolesDisponibles = FALLBACK_ROLES, tiposDocDisponibles = FALLBACK_TIPOS_DOC }) {
+  const rolesLista = rolesDisponibles.length > 0 ? rolesDisponibles : FALLBACK_ROLES;
+  const tiposDocLista = tiposDocDisponibles.length > 0 ? tiposDocDisponibles : FALLBACK_TIPOS_DOC;
+  const defaultRol = rolesLista.find((r) => r.nombre === "Empleado")?.nombre || rolesLista[0]?.nombre || "Empleado";
+  const defaultTipoDoc = tiposDocLista[0]?.valor || "C.C.";
+
   const [form, setForm] = useState({
     nombres: "",
     apellidos: "",
-    tipoDoc: "C.C.",
+    tipoDoc: defaultTipoDoc,
     numeroDoc: "",
     correo: "",
     telefono: "",
     direccion: "",
     genero: "Masculino",
-    rol: "Empleado",
+    rol: defaultRol,
   });
 
   const [touched, setTouched] = useState({});
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
 
+  const docConfig = getDocumentoConfig(form.tipoDoc);
+
   // Validación de campo individual en tiempo real
-  const validarCampo = (campo, valor) => {
+  const validarCampo = (campo, valor, tipoDocActual = form.tipoDoc) => {
     const val = (valor || "").trim();
 
     switch (campo) {
@@ -257,9 +302,7 @@ function CreateUserModal({ nextId, onClose, onCreate }) {
         return null;
 
       case "numeroDoc":
-        if (!val) return "El número de documento es obligatorio.";
-        if (!/^\d{5,15}$/.test(val)) return "Debe tener entre 5 y 15 dígitos numéricos.";
-        return null;
+        return validarNumeroDocumento(tipoDocActual, val);
 
       case "correo":
         if (!val) return "El correo electrónico es obligatorio.";
@@ -291,14 +334,34 @@ function CreateUserModal({ nextId, onClose, onCreate }) {
 
   const handleBlur = (campo) => {
     setTouched((prev) => ({ ...prev, [campo]: true }));
-    const err = validarCampo(campo, form[campo]);
+    const err = validarCampo(campo, form[campo], form.tipoDoc);
     setErrors((prev) => ({ ...prev, [campo]: err }));
   };
 
   const handleChange = (campo, valor) => {
+    if (campo === "tipoDoc") {
+      const nextNumero = formatearEntradaDocumento(valor, form.numeroDoc);
+      setForm((prev) => ({ ...prev, tipoDoc: valor, numeroDoc: nextNumero }));
+      const errTipo = validarCampo("tipoDoc", valor, valor);
+      const errDoc = nextNumero.trim() ? validarNumeroDocumento(valor, nextNumero) : null;
+      if (nextNumero.trim()) {
+        setTouched((prev) => ({ ...prev, numeroDoc: true }));
+      }
+      setErrors((prev) => ({ ...prev, tipoDoc: errTipo, numeroDoc: errDoc }));
+      return;
+    }
+
+    if (campo === "numeroDoc") {
+      const formatted = formatearEntradaDocumento(form.tipoDoc, valor);
+      setForm((prev) => ({ ...prev, numeroDoc: formatted }));
+      const errDoc = validarNumeroDocumento(form.tipoDoc, formatted);
+      setErrors((prev) => ({ ...prev, numeroDoc: errDoc }));
+      return;
+    }
+
     setForm((prev) => ({ ...prev, [campo]: valor }));
     // Validación inmediata en tiempo real si el campo ya fue tocado o tiene valor
-    const err = validarCampo(campo, valor);
+    const err = validarCampo(campo, valor, form.tipoDoc);
     setErrors((prev) => ({ ...prev, [campo]: err }));
   };
 
@@ -307,7 +370,7 @@ function CreateUserModal({ nextId, onClose, onCreate }) {
     const camposObligatorios = ["nombres", "apellidos", "tipoDoc", "numeroDoc", "correo", "rol", "genero"];
 
     Object.keys(form).forEach((campo) => {
-      const err = validarCampo(campo, form[campo]);
+      const err = validarCampo(campo, form[campo], form.tipoDoc);
       if (err) nuevosErrores[campo] = err;
     });
 
@@ -320,6 +383,7 @@ function CreateUserModal({ nextId, onClose, onCreate }) {
     const camposReq = ["nombres", "apellidos", "tipoDoc", "numeroDoc", "correo", "rol", "genero"];
     const tieneVacios = camposReq.some((c) => !form[c] || !form[c].trim());
     if (tieneVacios) return false;
+    if (validarNumeroDocumento(form.tipoDoc, form.numeroDoc)) return false;
     const tieneErrores = Object.values(errors).some((e) => Boolean(e));
     return !tieneErrores;
   }, [form, errors]);
@@ -419,16 +483,24 @@ function CreateUserModal({ nextId, onClose, onCreate }) {
             onChange={(e) => handleChange("tipoDoc", e.target.value)}
             onBlur={() => handleBlur("tipoDoc")}
           >
-            <option value="C.C.">Cédula de Ciudadanía (C.C.)</option>
-            <option value="C.E.">Cédula de Extranjería (C.E.)</option>
-            <option value="T.I.">Tarjeta de Identidad (T.I.)</option>
-            <option value="Pasaporte">Pasaporte</option>
+            {tiposDocLista.map((td) => (
+              <option key={td.id || td.valor} value={td.valor}>
+                {td.nombre} ({td.sigla || td.valor})
+              </option>
+            ))}
           </select>
         </Field>
 
-        <Field label="NÚMERO DE DOCUMENTO" required error={touched.numeroDoc && errors.numeroDoc}>
+        <Field
+          label="NÚMERO DE DOCUMENTO"
+          required
+          error={touched.numeroDoc && errors.numeroDoc}
+          hint={docConfig.hint}
+        >
           <TextInput
-            placeholder="Ej: 1023456789"
+            placeholder={docConfig.placeholder}
+            maxLength={docConfig.maxLength}
+            inputMode={docConfig.inputMode}
             value={form.numeroDoc}
             error={touched.numeroDoc && errors.numeroDoc}
             onChange={(e) => handleChange("numeroDoc", e.target.value)}
@@ -492,12 +564,11 @@ function CreateUserModal({ nextId, onClose, onCreate }) {
             onChange={(e) => handleChange("rol", e.target.value)}
             onBlur={() => handleBlur("rol")}
           >
-            <option value="Empleado">Empleado</option>
-            <option value="Vendedor">Vendedor</option>
-            <option value="Bodeguero">Bodeguero</option>
-            <option value="Supervisor">Supervisor</option>
-            <option value="Supervisora">Supervisora</option>
-            <option value="Administrador">Administrador</option>
+            {rolesLista.map((r) => (
+              <option key={r.id || r.nombre} value={r.nombre}>
+                {r.nombre}
+              </option>
+            ))}
           </select>
         </Field>
       </div>
@@ -782,11 +853,22 @@ function ActivarCuentaModal({ token, user, onClose, onActivated }) {
 /* ============================================================
    MODAL: EDITAR USUARIO
    ============================================================ */
-function EditUserModal({ user, index, onClose, onSave }) {
+function EditUserModal({ user, index, onClose, onSave, rolesDisponibles = FALLBACK_ROLES }) {
   // Separar nombre en nombres y apellidos si es necesario
   const partes = (user.nombre || "").trim().split(/\s+/);
   const initialNombres = user.nombres || (partes.length > 1 ? partes.slice(0, partes.length - 1).join(" ") : partes[0] || "");
   const initialApellidos = user.apellidos || (partes.length > 1 ? partes[partes.length - 1] : "");
+
+  const rolesLista = useMemo(() => {
+    const base = rolesDisponibles.length > 0 ? rolesDisponibles : FALLBACK_ROLES;
+    const existeActual = base.some((r) => r.nombre.toLowerCase() === (user.rol || "").toLowerCase());
+    if (user.rol && !existeActual) {
+      return [...base, { id: `actual-${user.rol}`, nombre: user.rol }];
+    }
+    return base;
+  }, [rolesDisponibles, user.rol]);
+
+  const isPendingUser = (user.estado || "").toLowerCase() === "pendiente";
 
   const [form, setForm] = useState({
     ...user,
@@ -910,17 +992,25 @@ function EditUserModal({ user, index, onClose, onSave }) {
             value={form.rol}
             onChange={(e) => handleChange("rol", e.target.value)}
           >
-            {["Empleado", "Vendedor", "Bodeguero", "Supervisor", "Supervisora", "Administrador"].map((r) => (
-              <option key={r} value={r}>
-                {r}
+            {rolesLista.map((r) => (
+              <option key={r.id || r.nombre} value={r.nombre}>
+                {r.nombre}
               </option>
             ))}
           </select>
         </Field>
 
-        <Field label="ESTADO DEL USUARIO" full>
+        <Field
+          label="ESTADO DEL USUARIO"
+          full
+          hint={
+            isPendingUser
+              ? "Este usuario aún no ha configurado su contraseña (estado Pendiente). Activa su cuenta con el enlace de activación antes de pasarlo a Activo."
+              : undefined
+          }
+        >
           <div className="ru-status-toggle-row">
-            {["Activo", "Inactivo"].map((s) => {
+            {(isPendingUser ? ["Pendiente", "Inactivo"] : ["Activo", "Inactivo"]).map((s) => {
               const selected = form.estado === s;
               return (
                 <button
@@ -931,7 +1021,13 @@ function EditUserModal({ user, index, onClose, onSave }) {
                 >
                   <span
                     className="dot"
-                    style={selected && s === "Activo" ? { background: "var(--positive)" } : undefined}
+                    style={
+                      selected && s === "Activo"
+                        ? { background: "var(--positive)" }
+                        : selected && s === "Pendiente"
+                        ? { background: "var(--warn-amber)" }
+                        : undefined
+                    }
                   />
                   {s}
                   {selected && <CheckCircle2 size={14} className="check" />}
@@ -949,18 +1045,128 @@ function EditUserModal({ user, index, onClose, onSave }) {
    MÓDULO PRINCIPAL: GESTIÓN DE USUARIOS
    ============================================================ */
 export default function Usuarios() {
+  const tableSlotRef = useRef(null);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [totalRecords, setTotalRecords] = useState(0);
   const [totalPagesBackend, setTotalPagesBackend] = useState(1);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState("Todos los roles");
-  const [statusFilter, setStatusFilter] = useState("Todos los estados");
+  const [pageSize, setPageSize] = useState(calcularPageSizeInicial);
   const [page, setPage] = useState(1);
   const [modal, setModal] = useState(null);
-  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deactivateTarget, setDeactivateTarget] = useState(null);
   const [alertMessage, setAlertMessage] = useState(null);
+  const [rolesDisponibles, setRolesDisponibles] = useState(FALLBACK_ROLES);
+  const [tiposDocDisponibles, setTiposDocDisponibles] = useState(FALLBACK_TIPOS_DOC);
+
+  // Cargar catálogos reales (tb_roles activos y tb_tipodoc) desde PostgreSQL
+  useEffect(() => {
+    let activo = true;
+    obtenerAuxiliaresUsuarios()
+      .then((data) => {
+        if (!activo || !data) return;
+        if (Array.isArray(data.roles) && data.roles.length > 0) {
+          setRolesDisponibles(data.roles);
+        }
+        if (Array.isArray(data.tiposDoc) && data.tiposDoc.length > 0) {
+          setTiposDocDisponibles(data.tiposDoc);
+        }
+      })
+      .catch((err) => {
+        console.warn("Usando catálogos de respaldo para Usuarios:", err.message);
+      });
+    return () => {
+      activo = false;
+    };
+  }, []);
+
+  // Adaptar la cantidad de filas por página y altura idéntica por fila sin scroll ni recortes
+  const recalcularFilas = useCallback(() => {
+    const slot = tableSlotRef.current;
+    if (!slot) return;
+
+    if (window.innerWidth <= 768) {
+      slot.style.removeProperty("--ru-row-h");
+      setPageSize((prev) => (prev === 6 ? prev : 6));
+      return;
+    }
+
+    const slotHeight = Math.floor(slot.getBoundingClientRect().height);
+    if (!slotHeight || slotHeight < 180) return;
+
+    const cardEl = slot.querySelector(".ru-list-card");
+    const listHeadEl = slot.querySelector(".ru-list-head");
+    const theadEl = slot.querySelector("thead");
+    const paginationEl = slot.querySelector(".ru-pagination");
+    const wrapperEl = slot.querySelector(".ru-table-container");
+    const tableEl = slot.querySelector(".ru-u-table");
+
+    const cardStyle = cardEl ? window.getComputedStyle(cardEl) : null;
+    const cardBorders = cardStyle
+      ? Math.ceil(parseFloat(cardStyle.borderTopWidth) || 0) + Math.ceil(parseFloat(cardStyle.borderBottomWidth) || 0)
+      : 2;
+    const listHeadH = listHeadEl ? Math.ceil(listHeadEl.getBoundingClientRect().height) : 44;
+    const theadH = theadEl ? Math.ceil(theadEl.getBoundingClientRect().height) : 38;
+    const paginationH = paginationEl ? Math.ceil(paginationEl.getBoundingClientRect().height) : 50;
+
+    const minRowH = window.innerHeight <= 780 ? 44 : 50;
+    const availableBodyH = Math.floor(slotHeight - cardBorders - listHeadH - theadH - paginationH - 2);
+    if (availableBodyH < 160) return;
+
+    const filas = Math.max(4, Math.min(MAX_PAGE_SIZE, Math.floor(availableBodyH / minRowH)));
+    let idealRowH = Math.max(42, Math.min(72, Math.floor(availableBodyH / filas)));
+
+    slot.style.setProperty("--ru-row-h", `${idealRowH}px`);
+
+    // Verificación directa en DOM: si sub-píxeles o zoom hacen que la tabla exceda el contenedor,
+    // ajustamos 1px a la vez para que TODAS las filas queden exactamente iguales y sin recorte.
+    if (wrapperEl && tableEl) {
+      let guard = 0;
+      while (guard < 16 && idealRowH > 40 && tableEl.getBoundingClientRect().height > wrapperEl.clientHeight + 0.5) {
+        idealRowH -= 1;
+        slot.style.setProperty("--ru-row-h", `${idealRowH}px`);
+        guard += 1;
+      }
+    }
+
+    setPageSize((prev) => {
+      if (prev === filas) return prev;
+      setPage(1);
+      return filas;
+    });
+  }, []);
+
+  useEffect(() => {
+    const slot = tableSlotRef.current;
+    if (!slot || typeof ResizeObserver === "undefined") return;
+
+    let timeoutId = null;
+    const schedule = (delay = 80) => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(recalcularFilas, delay);
+    };
+
+    const observer = new ResizeObserver(() => schedule(80));
+    observer.observe(slot);
+    schedule(40);
+
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(() => schedule(30));
+    }
+
+    return () => {
+      clearTimeout(timeoutId);
+      observer.disconnect();
+    };
+  }, [recalcularFilas]);
+
+  useEffect(() => {
+    if (!loading) {
+      const id = requestAnimationFrame(recalcularFilas);
+      return () => cancelAnimationFrame(id);
+    }
+  }, [loading, users.length, recalcularFilas]);
 
   // Debounce para optimizar la velocidad de búsqueda y no saturar la red
   useEffect(() => {
@@ -995,22 +1201,20 @@ export default function Usuarios() {
     try {
       const resp = await obtenerUsuarios({
         search: debouncedSearch,
-        rol: roleFilter,
-        estado: statusFilter,
         page,
-        pageSize: PAGE_SIZE,
+        pageSize,
       });
 
       if (resp && Array.isArray(resp.items)) {
         const norm = resp.items.map(normalizarUsuario);
         setUsers(norm);
         setTotalRecords(resp.total ?? norm.length);
-        setTotalPagesBackend(resp.totalPages || Math.ceil((resp.total || 1) / PAGE_SIZE));
+        setTotalPagesBackend(resp.totalPages || Math.ceil((resp.total || 1) / pageSize));
       } else if (Array.isArray(resp)) {
         const norm = resp.map(normalizarUsuario);
         setUsers(norm);
         setTotalRecords(norm.length);
-        setTotalPagesBackend(Math.max(1, Math.ceil(norm.length / PAGE_SIZE)));
+        setTotalPagesBackend(Math.max(1, Math.ceil(norm.length / pageSize)));
       }
     } catch (error) {
       console.error("Error al obtener usuarios desde PostgreSQL:", error.message);
@@ -1025,45 +1229,41 @@ export default function Usuarios() {
     } finally {
       setLoading(false);
     }
-  }, [debouncedSearch, roleFilter, statusFilter, page, normalizarUsuario]);
+  }, [debouncedSearch, page, pageSize, normalizarUsuario]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     cargarUsuarios();
   }, [cargarUsuarios]);
 
-  const uniqueRoles = useMemo(() => {
-    const rolesBase = ["Todos los roles", "Administrador", "Supervisor", "Supervisora", "Vendedor", "Empleado", "Bodeguero"];
-    const fromUsers = users.map((u) => u.rol).filter(Boolean);
-    return [...new Set([...rolesBase, ...fromUsers])];
-  }, [users]);
-
   const totalPages = Math.max(1, totalPagesBackend);
   const safePage = Math.min(page, totalPages);
   const pageItems = users;
-  const showingFrom = totalRecords === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1;
-  const showingTo = Math.min(safePage * PAGE_SIZE, totalRecords);
+  const showingFrom = totalRecords === 0 ? 0 : (safePage - 1) * pageSize + 1;
+  const showingTo = Math.min(safePage * pageSize, totalRecords);
+  const visiblePages = useMemo(() => getVisiblePages(safePage, totalPages), [safePage, totalPages]);
 
   const activeUser = modal?.userId ? users.find((u) => u.id === modal.userId) : null;
   const activeIndex = activeUser ? users.findIndex((u) => u.id === activeUser.id) : -1;
 
-  const confirmDelete = async () => {
-    if (!deleteTarget) return;
-    const nombre = deleteTarget.nombre;
+  const confirmDeactivate = async () => {
+    if (!deactivateTarget) return;
+    const nombre = deactivateTarget.nombre;
     try {
-      await eliminarUsuario(deleteTarget.id);
-      setDeleteTarget(null);
+      await actualizarUsuario(deactivateTarget.id, { estado: "Inactivo" });
+      setDeactivateTarget(null);
       await cargarUsuarios();
       setAlertMessage({
-        type: "success",
-        title: "¡Eliminado!",
-        message: `El usuario "${nombre}" fue eliminado correctamente de PostgreSQL.`,
+        type: "warning",
+        title: "Usuario Desactivado",
+        message: `El usuario "${nombre}" fue desactivado correctamente y su estado cambió a Inactivo.`,
       });
     } catch (error) {
+      setDeactivateTarget(null);
       setAlertMessage({
         type: "error",
-        title: "Error al eliminar",
-        message: error.message || "No se pudo eliminar el usuario de la base de datos.",
+        title: "No se pudo desactivar",
+        message: error.message || "No se pudo desactivar el usuario en la base de datos.",
       });
     }
   };
@@ -1132,39 +1332,64 @@ export default function Usuarios() {
   const columns = [
     {
       header: "ID",
-      width: "7%",
+      className: "ru-col-id",
       render: (u) => {
-        const realIndex = (safePage - 1) * PAGE_SIZE + (pageItems.findIndex((item) => item.id === u.id) + 1);
+        const realIndex = (safePage - 1) * pageSize + (pageItems.findIndex((item) => item.id === u.id) + 1);
         return <span className="ru-badge-id">#{realIndex}</span>;
       },
     },
     {
       header: "Documento",
-      width: "14%",
-      render: (u) => <span className="ru-badge-id">{u.tipoDoc ? `${u.tipoDoc} ` : ""}{u.cedula}</span>,
+      className: "ru-col-doc",
+      render: (u) => (
+        <span className="ru-badge-id" title={`${u.tipoDoc ? `${u.tipoDoc} ` : ""}${u.cedula}`}>
+          {u.tipoDoc ? `${u.tipoDoc} ` : ""}{u.cedula}
+        </span>
+      ),
     },
     {
       header: "Usuario",
-      width: "23%",
+      className: "ru-col-user",
       render: (u) => (
         <div className="ru-user-cell">
           <Avatar nombre={u.nombre} id={u.id} />
-          <div>
-            <div className="ru-user-name">{u.nombre}</div>
-            <div className="ru-user-phone">{u.correo}</div>
+          <div className="ru-user-info">
+            <div className="ru-user-name" title={u.nombre}>{u.nombre}</div>
+            <div className="ru-user-phone" title={u.correo}>
+              <span className="ru-inline-rol">{u.rol} · </span>
+              {u.correo}
+            </div>
           </div>
         </div>
       ),
     },
-    { header: "Teléfono", width: "13%", render: (u) => u.telefono || "—" },
-    { header: "Rol", width: "13%", render: (u) => <span className="ru-role-pill">{u.rol}</span> },
-    { header: "Estado", width: "10%", render: (u) => <StatusBadge estado={u.estado} /> },
-    { header: "Fecha Registro", width: "10%", render: (u) => u.fecha },
+    {
+      header: "Teléfono",
+      className: "ru-col-tel",
+      render: (u) => <span className="ru-cell-truncate" title={u.telefono || "—"}>{u.telefono || "—"}</span>,
+    },
+    {
+      header: "Rol",
+      className: "ru-col-rol",
+      render: (u) => <span className="ru-role-pill">{u.rol}</span>,
+    },
+    {
+      header: "Estado",
+      className: "ru-col-estado",
+      render: (u) => <StatusBadge estado={u.estado} />,
+    },
+    {
+      header: "Fecha Registro",
+      className: "ru-col-fecha",
+      render: (u) => <span className="ru-cell-truncate">{u.fecha}</span>,
+    },
     {
       header: "Acciones",
-      width: "10%",
+      className: "ru-col-acciones",
       render: (u) => {
-        const isPending = (u.estado || "").toLowerCase() === "pendiente";
+        const estadoNorm = (u.estado || "").toLowerCase();
+        const isPending = estadoNorm === "pendiente";
+        const isInactive = estadoNorm === "inactivo";
         return (
           <div className="ru-actions">
             {isPending && (
@@ -1178,17 +1403,22 @@ export default function Usuarios() {
                 })}
                 title="Configurar contraseña / Activar"
               >
-                <KeyRound size={16} />
+                <KeyRound size={15} />
               </button>
             )}
             <button className="ru-icon-btn view" onClick={() => setModal({ type: "view", userId: u.id })} title="Ver">
-              <Eye size={16} />
+              <Eye size={15} />
             </button>
             <button className="ru-icon-btn edit" onClick={() => setModal({ type: "edit", userId: u.id })} title="Editar">
-              <Pencil size={16} />
+              <Pencil size={15} />
             </button>
-            <button className="ru-icon-btn delete" onClick={() => setDeleteTarget(u)} title="Eliminar">
-              <Trash2 size={16} />
+            <button
+              className={`ru-icon-btn delete${isInactive ? " disabled" : ""}`}
+              onClick={() => !isInactive && setDeactivateTarget(u)}
+              disabled={isInactive}
+              title={isInactive ? "Usuario ya inactivo" : "Desactivar usuario"}
+            >
+              <UserX size={15} />
             </button>
           </div>
         );
@@ -1197,146 +1427,116 @@ export default function Usuarios() {
   ];
 
   return (
-    <div className="ru-root">
-      <div className="ru-page">
+    <div className="ru-root ru-usuarios-root">
+      <div className="ru-page ru-usuarios-page">
         {/* Encabezado */}
         <div className="ru-u-header">
-          <div>
+          <div className="ru-u-header-info">
             <div className="ru-eyebrow">CU.14 · MÓDULO</div>
             <h1 className="ru-u-title">Gestión de Usuarios</h1>
             <p className="ru-u-subtitle">Administra los usuarios y sus roles con seguridad en PostgreSQL</p>
           </div>
-          <button type="button" className="btn btn-primary" onClick={() => setModal({ type: "create" })}>
-            + REGISTRAR USUARIO
-          </button>
         </div>
 
-        {/* Filtros y Búsqueda */}
-        <div className="ru-card ru-filters-card">
-          <div className="ru-filters-head">
-            <Filter size={15} /> Filtros y búsqueda en tiempo real
-          </div>
-          <div className="ru-filters-row">
-            <div className="ru-input-wrap">
-              <Search size={15} />
-              <input
-                className="ru-input"
-                placeholder="Buscar por nombre, correo o documento..."
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setPage(1);
-                }}
-              />
-            </div>
-            <select
-              className="ru-select"
-              value={roleFilter}
-              onChange={(e) => {
-                setRoleFilter(e.target.value);
-                setPage(1);
-              }}
-            >
-              <option value="Todos los roles">Todos los roles</option>
-              {uniqueRoles.map((r) => (
-                <option key={r} value={r}>
-                  {r}
-                </option>
-              ))}
-            </select>
-            <select
-              className="ru-select"
-              value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value);
-                setPage(1);
-              }}
-            >
-              <option value="Todos los estados">Todos los estados</option>
-              <option value="Activo">Activo</option>
-              <option value="Pendiente">Pendiente</option>
-              <option value="Inactivo">Inactivo</option>
-            </select>
-          </div>
-        </div>
+        {/* Barra global de búsqueda + botón de crear lado a lado */}
+        <FiltrarBuscarGlobal
+          searchPlaceholder="Buscar por ID, documento, nombre, correo, teléfono, rol, estado o fecha..."
+          searchValue={search}
+          onSearchChange={(val) => {
+            setSearch(val);
+            setPage(1);
+          }}
+          action={
+            <button type="button" className="btn btn-primary" onClick={() => setModal({ type: "create" })}>
+              <UserPlus size={15} />
+              <span>REGISTRAR USUARIO</span>
+            </button>
+          }
+        />
 
-        {/* Tabla Global Integrada */}
-        <div className="ru-card ru-list-card">
-          <div className="ru-list-head">
-            <div className="ru-list-title">
-              <Users size={18} />
-              <span>Lista de Usuarios</span>
-              <span className="ru-count-badge">{totalRecords}</span>
+        {/* Tabla Integrada y Adaptativa (máximo 10 registros, sin hueco blanco inferior) */}
+        <div className="ru-table-slot" ref={tableSlotRef}>
+          <div className="ru-card ru-list-card">
+            <div className="ru-list-head">
+              <div className="ru-list-title">
+                <span className="ru-list-icon">
+                  <Users size={15} />
+                </span>
+                <span>Lista de Usuarios</span>
+                <span className="ru-count-badge">{totalRecords}</span>
+              </div>
+              <span className="ru-page-of">
+                Página {safePage} de {totalPages}
+              </span>
             </div>
-            <span className="ru-page-of">
-              Página {safePage} de {totalPages}
-            </span>
-          </div>
 
-          <div className="ru-table-container">
-            <table className="ru-table">
-              <thead>
-                <tr>
-                  {columns.map((col, idx) => (
-                    <th key={idx} style={{ width: col.width }}>
-                      {col.header}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
+            <div className="ru-table-container">
+              <table className="ru-u-table">
+                <thead>
                   <tr>
-                    <td colSpan={columns.length} className="ru-no-data" style={{ padding: 40 }}>
-                      Cargando usuarios desde PostgreSQL...
-                    </td>
+                    {columns.map((col, idx) => (
+                      <th key={idx} className={col.className}>
+                        {col.header}
+                      </th>
+                    ))}
                   </tr>
-                ) : pageItems.length > 0 ? (
-                  pageItems.map((u) => (
-                    <tr key={u.id}>
-                      {columns.map((col, idx) => (
-                        <td key={idx}>{col.render ? col.render(u) : u[col.accessor]}</td>
-                      ))}
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr className="ru-empty-tr">
+                      <td colSpan={columns.length} className="ru-no-data">
+                        Cargando usuarios desde PostgreSQL...
+                      </td>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={columns.length} className="ru-no-data">
-                      No se encontraron registros.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                  ) : pageItems.length > 0 ? (
+                    pageItems.map((u) => (
+                      <tr key={u.id}>
+                        {columns.map((col, idx) => (
+                          <td key={idx} className={col.className}>
+                            {col.render ? col.render(u) : u[col.accessor]}
+                          </td>
+                        ))}
+                      </tr>
+                    ))
+                  ) : (
+                    <tr className="ru-empty-tr">
+                      <td colSpan={columns.length} className="ru-no-data">
+                        No se encontraron registros.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
 
-          {/* Paginación */}
-          <div className="ru-pagination">
-            <span className="ru-pagination-info">
-              Mostrando {showingFrom}–{showingTo} de {totalRecords} registros
-            </span>
-            <div className="ru-pagination-controls">
-              <button className="ru-page-btn" disabled={safePage === 1} onClick={() => setPage(1)}>
-                <ChevronsLeft size={14} />
-              </button>
-              <button className="ru-page-btn" disabled={safePage === 1} onClick={() => setPage(safePage - 1)}>
-                <ChevronLeft size={14} />
-              </button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                <button
-                  key={p}
-                  className={`ru-page-btn${p === safePage ? " active" : ""}`}
-                  onClick={() => setPage(p)}
-                >
-                  {p}
+            {/* Paginación */}
+            <div className="ru-pagination">
+              <span className="ru-pagination-info">
+                Mostrando {showingFrom}–{showingTo} de {totalRecords} registros
+              </span>
+              <div className="ru-pagination-controls">
+                <button className="ru-page-btn" disabled={safePage === 1} onClick={() => setPage(1)} aria-label="Primera página">
+                  <ChevronsLeft size={14} />
                 </button>
-              ))}
-              <button className="ru-page-btn" disabled={safePage === totalPages} onClick={() => setPage(safePage + 1)}>
-                <ChevronRight size={14} />
-              </button>
-              <button className="ru-page-btn" disabled={safePage === totalPages} onClick={() => setPage(totalPages)}>
-                <ChevronsRight size={14} />
-              </button>
+                <button className="ru-page-btn" disabled={safePage === 1} onClick={() => setPage(safePage - 1)} aria-label="Página anterior">
+                  <ChevronLeft size={14} />
+                </button>
+                {visiblePages.map((p) => (
+                  <button
+                    key={p}
+                    className={`ru-page-btn${p === safePage ? " active" : ""}`}
+                    onClick={() => setPage(p)}
+                  >
+                    {p}
+                  </button>
+                ))}
+                <button className="ru-page-btn" disabled={safePage === totalPages} onClick={() => setPage(safePage + 1)} aria-label="Página siguiente">
+                  <ChevronRight size={14} />
+                </button>
+                <button className="ru-page-btn" disabled={safePage === totalPages} onClick={() => setPage(totalPages)} aria-label="Última página">
+                  <ChevronsRight size={14} />
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -1360,6 +1560,8 @@ export default function Usuarios() {
       {modal?.type === "create" && (
         <CreateUserModal
           nextId={Math.max(0, ...users.map((u) => u.id), 0) + 1}
+          rolesDisponibles={rolesDisponibles}
+          tiposDocDisponibles={tiposDocDisponibles}
           onClose={() => setModal(null)}
           onCreate={handleCreate}
         />
@@ -1386,19 +1588,23 @@ export default function Usuarios() {
         <EditUserModal
           user={activeUser}
           index={activeIndex}
+          rolesDisponibles={rolesDisponibles}
           onClose={() => setModal(null)}
           onSave={handleSave}
         />
       )}
 
-      {/* Modal de Confirmación de Eliminación */}
-      {deleteTarget && (
+      {/* Modal de Confirmación de Desactivación */}
+      {deactivateTarget && (
         <ConfirmModal
-          title="¿Eliminar Usuario?"
-          message={`Estás a punto de eliminar al usuario "${deleteTarget.nombre}". Esta acción afectará los registros en PostgreSQL.`}
-          onClose={() => setDeleteTarget(null)}
-          onConfirm={confirmDelete}
-          confirmText="Sí, eliminar usuario"
+          title="¿Desactivar Usuario?"
+          message={`Estás a punto de desactivar a "${deactivateTarget.nombre}" (${deactivateTarget.rol}). Su estado cambiará a "Inactivo" y no podrá acceder al sistema, conservando su historial en PostgreSQL.`}
+          onClose={() => setDeactivateTarget(null)}
+          onConfirm={confirmDeactivate}
+          confirmText="Sí, desactivar usuario"
+          cancelText="Cancelar"
+          confirmVariant="destructive"
+          icon={<UserX size={24} style={{ color: "#D1495B" }} />}
         />
       )}
 

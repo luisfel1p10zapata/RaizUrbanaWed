@@ -22,7 +22,8 @@ async function solicitar(ruta = '', opciones = {}) {
     });
   } catch (error) {
     throw new Error(
-      'No se pudo conectar con el servidor backend (FastAPI). Verifica que esté encendido en http://127.0.0.1:8000.'
+      'No se pudo conectar con el servidor backend (FastAPI). Verifica que esté encendido en http://127.0.0.1:8000.',
+      { cause: error }
     );
   }
 
@@ -135,8 +136,10 @@ export async function crearVenta(datos) {
  */
 export async function actualizarVenta(id, datos) {
   const payload = {
+    ...(datos.idEstadoComp ? { idEstadoComp: Number(datos.idEstadoComp) } : {}),
     ...(datos.estadoVenta ? { estadoVenta: datos.estadoVenta } : {}),
     ...(datos.estadoPago ? { estadoPago: datos.estadoPago } : {}),
+    ...(datos.idMetodoPago ? { idMetodoPago: Number(datos.idMetodoPago) } : {}),
     ...(datos.metodoPago ? { metodoPago: datos.metodoPago } : {}),
   };
 
