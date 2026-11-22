@@ -43,7 +43,13 @@ export default function TableGlobal({
           <thead>
             <tr>
               {columns.map((col, index) => (
-                <th key={index} style={{ width: col.width }}>{col.header}</th>
+                <th
+                  key={index}
+                  className={col.className || undefined}
+                  style={col.width ? { width: col.width } : undefined}
+                >
+                  {col.header}
+                </th>
               ))}
             </tr>
           </thead>
@@ -52,15 +58,15 @@ export default function TableGlobal({
               data.map((row, rowIndex) => (
                 <tr key={row.id || rowIndex}>
                   {columns.map((col, colIndex) => (
-                    <td key={colIndex}>
+                    <td key={colIndex} className={col.className || undefined}>
                       {col.render ? col.render(row) : row[col.accessor]}
                     </td>
                   ))}
                 </tr>
               ))
             ) : (
-              <tr>
-                <td colSpan={columns.length} style={{ textAlign: 'center', padding: '30px', color: '#9691A0' }}>
+              <tr className="produccion-empty-tr">
+                <td colSpan={columns.length} className="produccion-table-empty" style={{ textAlign: 'center', padding: '30px', color: '#9691A0' }}>
                   No hay registros disponibles.
                 </td>
               </tr>

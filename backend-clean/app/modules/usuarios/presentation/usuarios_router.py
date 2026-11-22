@@ -17,9 +17,11 @@ from app.modules.usuarios.application.schemas import (
     UsuarioFiltros,
     UsuarioPagina,
     UsuarioResponse,
+    UsuariosAuxiliaresResponse,
     UsuarioUpdate,
     ValidarTokenResponse,
 )
+from app.modules.usuarios.infrastructure.usuario_repository import UsuarioRepository
 from app.modules.usuarios.domain.exceptions import (
     CorreoDuplicadoError,
     DocumentoDuplicadoError,
@@ -78,6 +80,13 @@ def registrar_usuario(datos: UsuarioCreate):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(err)
         )
+
+
+@router.get("/auxiliares", response_model=UsuariosAuxiliaresResponse, status_code=status.HTTP_200_OK)
+def obtener_auxiliares_usuarios():
+    """Obtiene los catálogos activos desde PostgreSQL (tb_roles y tb_tipodoc) para registrar y editar usuarios."""
+    datos = UsuarioRepository().obtener_auxiliares()
+    return UsuariosAuxiliaresResponse(**datos)
 
 
 @router.get("/activar/{token}", response_model=ValidarTokenResponse, status_code=status.HTTP_200_OK)
@@ -156,6 +165,11 @@ def actualizar_usuario(usuario_id: int, datos: UsuarioUpdate):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(err)
         )
+    except ValueError as err:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(err)
+        )
 
 
 @router.patch("/{usuario_id}/rol", response_model=UsuarioResponse, status_code=status.HTTP_200_OK)
@@ -175,6 +189,11 @@ def asignar_rol(usuario_id: int, datos: AsignarRolRequest):
             detail=str(err)
         )
     except RolInvalidoError as err:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(err)
+        )
+    except ValueError as err:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(err)

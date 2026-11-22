@@ -242,6 +242,23 @@ input[type="number"].ru-form-input::-webkit-inner-spin-button { -webkit-appearan
 .ru-v-status-check { width: 18px; height: 18px; border: 1.5px solid var(--sel); border-radius: 50%; }
 
 /* ---------- 7. RESPONSIVE ---------- */
+@media (max-height: 780px) and (min-width: 781px) {
+  .ru-modal-overlay { padding: 14px; }
+  .ru-modal { max-height: 94vh; border-radius: 16px; }
+  .ru-modal-header { padding: 16px 24px 12px; }
+  .ru-modal-eyebrow { font-size: 10px; margin-bottom: 4px; }
+  .ru-modal-title { font-size: 21px; }
+  .ru-modal-close { top: 14px; right: 18px; }
+  .ru-modal-body { padding: 14px 24px; }
+  .ru-modal-footer { padding: 12px 24px 16px; }
+  .ru-v-stepper { padding: 12px 24px 6px; }
+  .ru-form-grid { gap: 10px 14px; }
+  .ru-form-input { padding: 9px 12px; font-size: 13px; }
+  .ru-form-input.with-icon { padding-left: 36px; }
+  .ru-v-add-box { padding: 12px 14px; }
+  .ru-v-client-list { max-height: 210px; gap: 8px; margin-top: 12px; }
+}
+
 @media (max-width: 880px) {
   .ru-form-grid { grid-template-columns: 1fr; }
   .ru-modal { max-width: 94vw !important; }

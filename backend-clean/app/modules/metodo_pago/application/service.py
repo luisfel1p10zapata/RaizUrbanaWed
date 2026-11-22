@@ -89,10 +89,16 @@ class MetodoPagoService:
         metodo_id: int,
         estado: str,
     ) -> MetodoPagoResponse:
-        actualizado = self.repositorio.actualizar(
-            metodo_id,
-            {"estado": estado},
-        )
+        if hasattr(self.repositorio, "cambiar_estado"):
+            actualizado = self.repositorio.cambiar_estado(
+                metodo_id,
+                estado,
+            )
+        else:
+            actualizado = self.repositorio.actualizar(
+                metodo_id,
+                {"estado": estado},
+            )
 
         return MetodoPagoResponse.model_validate(actualizado)
 

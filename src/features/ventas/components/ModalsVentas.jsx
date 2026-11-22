@@ -114,7 +114,6 @@ const ProductosLista = ({ items = [], onRemove }) =>
 /* ------------------------------------------------------------------ */
 export function RegistrarVentaModal({ onClose, onGuardar }) {
   const [paso, setPaso] = useState(1);
-  const [cargandoAux, setCargandoAux] = useState(false);
 
   // Auxiliares maestros de base de datos
   const [listaClientes, setListaClientes] = useState(CLIENTES);
@@ -136,7 +135,6 @@ export function RegistrarVentaModal({ onClose, onGuardar }) {
   // Cargar clientes, métodos de pago y variantes directamente desde la BD
   useEffect(() => {
     let montado = true;
-    setCargandoAux(true);
     obtenerAuxiliaresVenta()
       .then((data) => {
         if (!montado || !data) return;
@@ -157,9 +155,6 @@ export function RegistrarVentaModal({ onClose, onGuardar }) {
       })
       .catch((err) => {
         console.warn("Usando datos locales de respaldo para RegistrarVentaModal:", err);
-      })
-      .finally(() => {
-        if (montado) setCargandoAux(false);
       });
     return () => {
       montado = false;
@@ -638,12 +633,67 @@ export function VerVentaModal({ venta, onClose, onEdit }) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  MODAL: EDITAR VENTA                                               */
+/*  MODAL: EDITAR VENTA (Sincronizado con tb_metodo_pago y tb_estado_comp) */
 /* ------------------------------------------------------------------ */
 export function EditarVentaModal({ venta, onClose, onSave }) {
   const [estadoVenta, setEstadoVenta] = useState(venta.estadoVenta);
   const [estadoPago, setEstadoPago] = useState(venta.estadoPago);
   const [metodoPago, setMetodoPago] = useState(venta.metodoPago);
+
+  const [listaMetodosPago, setListaMetodosPago] = useState(() =>
+    METODOS_PAGO.map((m, i) => ({ id: i + 1, nombre: m }))
+  );
+  const [listaEstados, setListaEstados] = useState(() =>
+    Object.keys(ESTADO_VENTA_META).map((e, i) => ({ id: i + 1, nombre: e }))
+  );
+
+  // Cargar métodos de pago activos (tb_metodo_pago) y estados (tb_estado_comp) desde PostgreSQL
+  useEffect(() => {
+    let montado = true;
+    obtenerAuxiliaresVenta()
+      .then((data) => {
+        if (!montado || !data) return;
+        if (Array.isArray(data.metodosPago) && data.metodosPago.length > 0) {
+          const existeActual = data.metodosPago.some(
+            (m) => m.nombre.toLowerCase() === (venta.metodoPago || "").toLowerCase()
+          );
+          const metodos =
+            venta.metodoPago && !existeActual
+              ? [
+                  ...data.metodosPago,
+                  {
+                    id: venta.idMetodoPago || `actual-${venta.metodoPago}`,
+                    nombre: venta.metodoPago,
+                    inactivo: true,
+                  },
+                ]
+              : data.metodosPago;
+          setListaMetodosPago(metodos);
+        }
+        if (Array.isArray(data.estados) && data.estados.length > 0) {
+          setListaEstados(data.estados);
+        }
+      })
+      .catch((err) => {
+        console.warn("Usando catálogos de respaldo para EditarVentaModal:", err.message);
+      });
+    return () => {
+      montado = false;
+    };
+  }, [venta.metodoPago, venta.idMetodoPago]);
+
+  const handleGuardar = () => {
+    const mpObj = listaMetodosPago.find((m) => m.nombre === metodoPago);
+    const estObj = listaEstados.find((e) => e.nombre === estadoVenta);
+    onSave({
+      ...venta,
+      idEstadoComp: typeof estObj?.id === "number" ? estObj.id : undefined,
+      estadoVenta,
+      estadoPago,
+      idMetodoPago: typeof mpObj?.id === "number" ? mpObj.id : undefined,
+      metodoPago,
+    });
+  };
 
   return (
     <ModalShell
@@ -657,7 +707,7 @@ export function EditarVentaModal({ venta, onClose, onSave }) {
           <button
             type="button"
             className="btn btn-primary"
-            onClick={() => onSave({ ...venta, estadoVenta, estadoPago, metodoPago })}
+            onClick={handleGuardar}
           >
             Guardar cambios
           </button>
@@ -678,7 +728,9 @@ export function EditarVentaModal({ venta, onClose, onSave }) {
       <div className="ru-form-grid ru-v-form-top">
         <Field label="ESTADO VENTA" required>
           <select className="ru-form-input" value={estadoVenta} onChange={(e) => setEstadoVenta(e.target.value)}>
-            {Object.keys(ESTADO_VENTA_META).map((e) => <option key={e} value={e}>{e}</option>)}
+            {listaEstados.map((e) => (
+              <option key={e.id || e.nombre} value={e.nombre}>{e.nombre}</option>
+            ))}
           </select>
         </Field>
         <Field label="ESTADO PAGO" required>
@@ -688,7 +740,11 @@ export function EditarVentaModal({ venta, onClose, onSave }) {
         </Field>
         <Field label="MÉTODO DE PAGO" required full>
           <select className="ru-form-input" value={metodoPago} onChange={(e) => setMetodoPago(e.target.value)}>
-            {METODOS_PAGO.map((m) => <option key={m} value={m}>{m}</option>)}
+            {listaMetodosPago.map((m) => (
+              <option key={m.id || m.nombre} value={m.nombre}>
+                {m.nombre}{m.nroCuenta ? ` (${m.nroCuenta})` : ""}{m.inactivo ? " — actual" : ""}
+              </option>
+            ))}
           </select>
         </Field>
       </div>
@@ -697,10 +753,28 @@ export function EditarVentaModal({ venta, onClose, onSave }) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  MODAL: CAMBIAR ESTADO                                             */
+/*  MODAL: CAMBIAR ESTADO (Sincronizado con tb_estado_comp)           */
 /* ------------------------------------------------------------------ */
 export function CambiarEstadoModal({ venta, onClose, onSave }) {
   const [seleccion, setSeleccion] = useState(venta.estadoVenta);
+  const [listaEstados, setListaEstados] = useState(() =>
+    Object.keys(ESTADO_VENTA_META).map((e, i) => ({ id: i + 1, nombre: e }))
+  );
+
+  useEffect(() => {
+    let montado = true;
+    obtenerAuxiliaresVenta()
+      .then((data) => {
+        if (!montado || !data) return;
+        if (Array.isArray(data.estados) && data.estados.length > 0) {
+          setListaEstados(data.estados);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      montado = false;
+    };
+  }, []);
 
   return (
     <ModalShell
@@ -722,20 +796,27 @@ export function CambiarEstadoModal({ venta, onClose, onSave }) {
       }
     >
       <div className="ru-v-status-list">
-        {Object.entries(ESTADO_VENTA_META).map(([key, data]) => (
-          <div
-            key={key}
-            className={cx("ru-v-status-row", seleccion === key && "selected")}
-            onClick={() => setSeleccion(key)}
-          >
-            <span className="ru-v-status-main">
-              <span className={cx("ru-v-status-dot", data.color)} />
-              <span className="ru-v-status-name">{key}</span>
-              <span className="ru-v-status-desc">{data.desc}</span>
-            </span>
-            {seleccion === key && <span className="ru-v-status-check"><Icons.Check width={10} height={10} /></span>}
-          </div>
-        ))}
+        {listaEstados.map((est) => {
+          const key = est.nombre;
+          const data = ESTADO_VENTA_META[key] || {
+            color: "blue",
+            desc: `Estado registrado en base de datos (${key})`,
+          };
+          return (
+            <div
+              key={est.id || key}
+              className={cx("ru-v-status-row", seleccion === key && "selected")}
+              onClick={() => setSeleccion(key)}
+            >
+              <span className="ru-v-status-main">
+                <span className={cx("ru-v-status-dot", data.color)} />
+                <span className="ru-v-status-name">{key}</span>
+                <span className="ru-v-status-desc">{data.desc}</span>
+              </span>
+              {seleccion === key && <span className="ru-v-status-check"><Icons.Check width={10} height={10} /></span>}
+            </div>
+          );
+        })}
       </div>
     </ModalShell>
   );

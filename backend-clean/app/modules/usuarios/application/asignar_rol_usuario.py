@@ -13,7 +13,7 @@ class AsignarRolUsuario:
 
     def ejecutar(self, usuario_id: int, nuevo_rol: str) -> UsuarioResponse:
         rol_limpio = nuevo_rol.strip()
-        if not rol_limpio or rol_limpio.lower() not in ROLES_VALIDOS:
+        if not rol_limpio or not self.repositorio.existe_rol(rol_limpio):
             raise RolInvalidoError(nuevo_rol)
 
         usuario_actualizado = self.repositorio.reemplazar_rol(

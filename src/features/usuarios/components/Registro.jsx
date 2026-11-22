@@ -17,11 +17,17 @@ import {
 } from 'lucide-react';
 
 import useTheme from '../../../components/hooks/useTheme';
+import {
+  getDocumentoConfig,
+  formatearEntradaDocumento,
+  validarNumeroDocumento,
+} from '../utils/documentoValidation';
 import './registro.css';
 
 export default function Registro() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [docError, setDocError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -45,8 +51,39 @@ export default function Registro() {
     genero: '',
   });
 
+  const docConfig = getDocumentoConfig(formData.id_TipoDoc);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
+
+    if (name === 'id_TipoDoc') {
+      const nextNumero = formatearEntradaDocumento(value, formData.numeroDoc);
+      setFormData((prev) => ({
+        ...prev,
+        id_TipoDoc: value,
+        numeroDoc: nextNumero,
+      }));
+      if (nextNumero.trim()) {
+        setDocError(validarNumeroDocumento(value, nextNumero) || '');
+      } else {
+        setDocError('');
+      }
+      return;
+    }
+
+    if (name === 'numeroDoc') {
+      const formatted = formatearEntradaDocumento(formData.id_TipoDoc, value);
+      setFormData((prev) => ({
+        ...prev,
+        numeroDoc: formatted,
+      }));
+      if (formData.id_TipoDoc) {
+        setDocError(validarNumeroDocumento(formData.id_TipoDoc, formatted) || '');
+      } else {
+        setDocError('Selecciona primero un tipo de documento.');
+      }
+      return;
+    }
 
     setFormData((prev) => ({
       ...prev,
@@ -54,11 +91,22 @@ export default function Registro() {
     }));
   };
 
-  // Se conserva la lógica original del registro.
+  // Se conserva la lógica original del registro con validación específica por tipo de documento.
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setSuccessMsg('');
+
+    const errorDocumento = validarNumeroDocumento(
+      formData.id_TipoDoc,
+      formData.numeroDoc
+    );
+    if (errorDocumento) {
+      setDocError(errorDocumento);
+      setError(errorDocumento);
+      return;
+    }
+    setDocError('');
     setLoading(true);
 
     try {
@@ -71,7 +119,7 @@ export default function Registro() {
             nombres: formData.nombres,
             apellidos: formData.apellidos,
             id_TipoDoc: formData.id_TipoDoc,
-            numeroDoc: formData.numeroDoc,
+            numeroDoc: formData.numeroDoc.trim(),
             email: formData.email,
             password: formData.password,
             telefono: formData.telefono,
@@ -299,12 +347,26 @@ export default function Registro() {
                           id="numeroDoc"
                           type="text"
                           name="numeroDoc"
-                          placeholder="Ej: 1020304050"
+                          placeholder={docConfig.placeholder}
+                          maxLength={docConfig.maxLength}
+                          inputMode={docConfig.inputMode}
                           value={formData.numeroDoc}
                           onChange={handleChange}
+                          aria-invalid={Boolean(docError)}
                           required
                         />
                       </div>
+                      {docError ? (
+                        <small style={{ display: 'block', marginTop: 4, fontSize: 11.5, color: '#D1495B', fontWeight: 500 }}>
+                          {docError}
+                        </small>
+                      ) : (
+                        formData.id_TipoDoc && (
+                          <small style={{ display: 'block', marginTop: 4, fontSize: 11, opacity: 0.72 }}>
+                            {docConfig.hint}
+                          </small>
+                        )
+                      )}
                     </div>
                   </div>
                 </fieldset>

@@ -1,8 +1,5 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
-import {
-  PAGE_SIZE,
-  formatoMoneda,
-} from "../../../data/dataVentas";
+import { PAGE_SIZE } from "../../../data/dataVentas";
 import {
   obtenerVentas,
   obtenerMetricasVentas,
@@ -12,7 +9,7 @@ import {
   eliminarVenta,
 } from "../services/ventasService";
 
-export function useVentas() {
+export function useVentas(pageSize = PAGE_SIZE) {
   const [ventas, setVentas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [metricasData, setMetricasData] = useState(null);
@@ -49,7 +46,7 @@ export function useVentas() {
           search: debouncedSearch,
           estadoVenta: estadoFilter,
           page,
-          pageSize: PAGE_SIZE,
+          pageSize,
         }),
         obtenerMetricasVentas().catch(() => null),
       ]);
@@ -57,12 +54,12 @@ export function useVentas() {
       if (respuestaVentas && Array.isArray(respuestaVentas.items)) {
         setVentas(respuestaVentas.items);
         setTotalRecords(respuestaVentas.total ?? respuestaVentas.items.length);
-        setTotalPagesBackend(respuestaVentas.totalPages || Math.ceil((respuestaVentas.total || 1) / PAGE_SIZE));
+        setTotalPagesBackend(respuestaVentas.totalPages || Math.ceil((respuestaVentas.total || 1) / pageSize));
         setBackendConectado(true);
       } else if (Array.isArray(respuestaVentas)) {
         setVentas(respuestaVentas);
         setTotalRecords(respuestaVentas.length);
-        setTotalPagesBackend(Math.max(1, Math.ceil(respuestaVentas.length / PAGE_SIZE)));
+        setTotalPagesBackend(Math.max(1, Math.ceil(respuestaVentas.length / pageSize)));
         setBackendConectado(true);
       }
 
@@ -78,9 +75,10 @@ export function useVentas() {
     } finally {
       setLoading(false);
     }
-  }, [debouncedSearch, estadoFilter, page]);
+  }, [debouncedSearch, estadoFilter, page, pageSize]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     cargarDatos();
   }, [cargarDatos]);
 
@@ -120,8 +118,8 @@ export function useVentas() {
   const totalPages = Math.max(1, totalPagesBackend);
   const safePage = Math.min(Math.max(1, page), totalPages);
 
-  const showingFrom = totalRecords === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1;
-  const showingTo = Math.min(safePage * PAGE_SIZE, totalRecords);
+  const showingFrom = totalRecords === 0 ? 0 : (safePage - 1) * pageSize + 1;
+  const showingTo = Math.min(safePage * pageSize, totalRecords);
 
   // Handlers para búsqueda y filtro
   const handleSearchChange = useCallback((value) => {

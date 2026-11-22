@@ -661,6 +661,8 @@ class CompraInMemoryRepository:
 class CompraPostgresRepository:
     """Implementación conectada a PostgreSQL mediante procedimientos almacenados de Supabase."""
 
+    _tiene_sp_actualizar_cache: bool | None = None
+
     def __init__(self):
         self._get_connection = get_connection
 
@@ -927,10 +929,10 @@ class CompraPostgresRepository:
                 "cantidad": int(d["cantidad"]),
                 "precio_unitario": float(d["precio_unitario"]),
                 "subtotal": float(d.get("subtotal") or (d["cantidad"] * d["precio_unitario"])),
-                "color": None,
-                "talla": None,
-                "categoria": None,
-                "material": None,
+                "color": d.get("color"),
+                "talla": d.get("talla"),
+                "categoria": d.get("categoria"),
+                "material": d.get("material"),
             }
             for d in detalles
         ]
@@ -1001,6 +1003,13 @@ class CompraPostgresRepository:
             "El tipo de compra debe ser Insumo(s) o Producto(s)."
         )
 
+    def _obtener_por_id_en_cursor(self, cursor, compra_id: int) -> dict[str, Any] | None:
+        cursor.execute("SELECT sp_obtener_compra(%s);", (compra_id,))
+        row = cursor.fetchone()
+        if not row or not row[0]:
+            return None
+        return self._formatear_compra(row[0])
+
     def guardar_compra_transaccional(
         self,
         cabecera: dict[str, Any],
@@ -1041,9 +1050,9 @@ class CompraPostgresRepository:
                         (id_prov, id_mp, json.dumps(detalles_payload), id_estado),
                     )
                     id_compra = cursor.fetchone()[0]
+                    compra = self._obtener_por_id_en_cursor(cursor, id_compra)
                     conn.commit()
 
-                    compra = self.obtener_por_id(id_compra)
                     if not compra:
                         raise CompraNoEncontradaError(id_compra)
                     return compra
@@ -1061,38 +1070,125 @@ class CompraPostgresRepository:
         limite: int = 500,
         offset: int = 0,
     ) -> list[dict[str, Any]]:
+        """Lista compras en una sola consulta plana con JOINs y agrupación JSON (sin N+1)."""
         id_estado = self._resolver_id_estado(estado) if estado else None
-        p_buscar = buscar.strip() if buscar else None
+        p_buscar = buscar.strip() if buscar and buscar.strip() else None
 
         try:
             with get_connection() as conn:
                 with conn.cursor() as cursor:
-                    cursor.execute(
-                        """
-                        SELECT sp_obtener_compra(c.id_compra)
-                        FROM sp_listar_compras(
-                            p_id_proveedor => %s,
-                            p_id_estado_comp => %s,
-                            p_fecha_desde => %s,
-                            p_fecha_hasta => %s,
-                            p_buscar => %s,
-                            p_limite => %s,
-                            p_offset => %s
-                        ) c
-                        ORDER BY c.id_compra DESC;
-                        """,
-                        (
-                            proveedor_id,
-                            id_estado,
-                            fecha_desde,
-                            fecha_hasta,
-                            p_buscar,
-                            limite,
-                            offset,
-                        ),
-                    )
-                    filas = cursor.fetchall()
-                    return [self._formatear_compra(f[0]) for f in filas if f and f[0]]
+                    try:
+                        cursor.execute(
+                            """
+                            WITH compras_filtradas AS (
+                                SELECT
+                                    c.id_compra,
+                                    c.fecha,
+                                    c.id_proveedor,
+                                    prov.nombre AS proveedor,
+                                    mp.nombre AS metodo_pago,
+                                    ec.nombre AS estado_compra,
+                                    c.total
+                                FROM tb_compras c
+                                JOIN tb_proveedores prov ON c.id_proveedor = prov.id_proveedor
+                                JOIN tb_metodo_pago mp ON c.id_metodo_pago = mp.id_metodo_pago
+                                JOIN tb_estado_comp ec ON c.id_estado_comp = ec.id_estado_comp
+                                WHERE
+                                    (%s::int IS NULL OR c.id_proveedor = %s::int)
+                                    AND (%s::int IS NULL OR c.id_estado_comp = %s::int)
+                                    AND (%s::date IS NULL OR c.fecha >= %s::date)
+                                    AND (%s::date IS NULL OR c.fecha <= %s::date)
+                                    AND (
+                                        %s::text IS NULL
+                                        OR c.id_compra::text ILIKE '%%' || %s::text || '%%'
+                                        OR prov.nombre ILIKE '%%' || %s::text || '%%'
+                                        OR ec.nombre ILIKE '%%' || %s::text || '%%'
+                                    )
+                                ORDER BY c.id_compra DESC
+                                LIMIT %s OFFSET %s
+                            ),
+                            detalles_agrupados AS (
+                                SELECT
+                                    dc.id_compra,
+                                    json_agg(
+                                        json_build_object(
+                                            'id_det_compra', dc.id_det_compra,
+                                            'tipo_compra', dc.tipo_compra,
+                                            'id_insumo', dc.id_insumo,
+                                            'id_producto_vari', dc.id_producto_vari,
+                                            'nombre_item', COALESCE(ins.nombre, prod.nombre, ''),
+                                            'cantidad', dc.cantidad,
+                                            'precio_unitario', dc.precio_unitario,
+                                            'subtotal', dc.cantidad * dc.precio_unitario,
+                                            'color', col.nombre,
+                                            'talla', tal.nombre,
+                                            'categoria', COALESCE(cat_prod.nombre, cat_ins.nombre)
+                                        ) ORDER BY dc.id_det_compra ASC
+                                    ) AS detalles
+                                FROM tb_det_compras dc
+                                JOIN compras_filtradas cf_ids ON cf_ids.id_compra = dc.id_compra
+                                LEFT JOIN tb_insumos ins ON dc.id_insumo = ins.id_insumo
+                                LEFT JOIN tb_categorias cat_ins ON ins.id_categoria = cat_ins.id_categoria
+                                LEFT JOIN tb_producto_variante pv ON dc.id_producto_vari = pv.id_producto_vari
+                                LEFT JOIN tb_productos prod ON pv.id_producto = prod.id_producto
+                                LEFT JOIN tb_categorias cat_prod ON prod.id_categoria = cat_prod.id_categoria
+                                LEFT JOIN tb_colores col ON pv.id_color = col.id_color
+                                LEFT JOIN tb_tallas tal ON pv.id_talla = tal.id_talla
+                                GROUP BY dc.id_compra
+                            )
+                            SELECT json_build_object(
+                                'id_compra', cf.id_compra,
+                                'fecha', cf.fecha,
+                                'id_proveedor', cf.id_proveedor,
+                                'proveedor', cf.proveedor,
+                                'metodo_pago', cf.metodo_pago,
+                                'estado_compra', cf.estado_compra,
+                                'total', cf.total,
+                                'detalles', COALESCE(da.detalles, '[]'::json)
+                            )
+                            FROM compras_filtradas cf
+                            LEFT JOIN detalles_agrupados da ON da.id_compra = cf.id_compra
+                            ORDER BY cf.id_compra DESC;
+                            """,
+                            (
+                                proveedor_id, proveedor_id,
+                                id_estado, id_estado,
+                                fecha_desde, fecha_desde,
+                                fecha_hasta, fecha_hasta,
+                                p_buscar, p_buscar, p_buscar, p_buscar,
+                                limite, offset,
+                            ),
+                        )
+                        filas = cursor.fetchall()
+                        return [self._formatear_compra(f[0]) for f in filas if f and f[0]]
+                    except psycopg.Error:
+                        conn.rollback()
+                        cursor.execute(
+                            """
+                            SELECT sp_obtener_compra(c.id_compra)
+                            FROM sp_listar_compras(
+                                p_id_proveedor => %s,
+                                p_id_estado_comp => %s,
+                                p_fecha_desde => %s,
+                                p_fecha_hasta => %s,
+                                p_buscar => %s,
+                                p_limite => %s,
+                                p_offset => %s
+                            ) c
+                            ORDER BY c.id_compra DESC;
+                            """,
+                            (
+                                proveedor_id,
+                                id_estado,
+                                fecha_desde,
+                                fecha_hasta,
+                                p_buscar,
+                                limite,
+                                offset,
+                            ),
+                        )
+                        filas = cursor.fetchall()
+                        return [self._formatear_compra(f[0]) for f in filas if f and f[0]]
         except psycopg.Error as error:
             self._mapear_error(error)
             raise
@@ -1150,32 +1246,43 @@ class CompraPostgresRepository:
         cabecera: dict[str, Any],
         detalles_data: list[dict[str, Any]],
     ) -> dict[str, Any]:
-        compra_actual = self.obtener_por_id(compra_id)
-        if not compra_actual:
-            raise CompraNoEncontradaError(compra_id)
-
-        estado_actual = compra_actual.get("estado")
-        if estado_actual == "Cancelada":
-            raise CompraInvalidaError("No se puede editar una compra cancelada.")
-
-        if estado_actual == "Completada":
-            if cabecera.get("estado") == "Cancelada":
-                return self.cambiar_estado(compra_id, "Cancelada")
-            raise CompraInvalidaError(
-                "No se pueden modificar los ítems ni valores de una compra completada. Si requiere anularla, cámbiela a Cancelada para revertir el inventario."
-            )
-
         tipo_normalizado = self._normalizar_tipo_compra(cabecera.get("tipo_compra"))
 
         try:
             with get_connection() as conn:
                 with conn.cursor() as cursor:
-                    # 1. Comprobar si el procedimiento almacenado sp_actualizar_compra está disponible en Supabase
-                    cursor.execute(
-                        "SELECT 1 FROM pg_proc p JOIN pg_namespace n ON p.pronamespace = n.oid "
-                        "WHERE n.nspname = 'public' AND p.proname = 'sp_actualizar_compra' LIMIT 1;"
-                    )
-                    tiene_sp_actualizar = cursor.fetchone() is not None
+                    compra_actual = self._obtener_por_id_en_cursor(cursor, compra_id)
+                    if not compra_actual:
+                        raise CompraNoEncontradaError(compra_id)
+
+                    estado_actual = compra_actual.get("estado")
+                    if estado_actual == "Cancelada":
+                        raise CompraInvalidaError("No se puede editar una compra cancelada.")
+
+                    if estado_actual == "Completada":
+                        if cabecera.get("estado") == "Cancelada":
+                            nuevo_estado_id = self._resolver_id_estado("Cancelada")
+                            cursor.execute(
+                                "SELECT sp_actualizar_estado_compra(p_id_compra => %s, p_nuevo_estado_comp => %s);",
+                                (compra_id, nuevo_estado_id),
+                            )
+                            actualizado = self._obtener_por_id_en_cursor(cursor, compra_id)
+                            conn.commit()
+                            if not actualizado:
+                                raise CompraNoEncontradaError(compra_id)
+                            return actualizado
+                        raise CompraInvalidaError(
+                            "No se pueden modificar los ítems ni valores de una compra completada. Si requiere anularla, cámbiela a Cancelada para revertir el inventario."
+                        )
+
+                    # 1. Comprobar (con caché en memoria) si sp_actualizar_compra está disponible en Supabase
+                    if CompraPostgresRepository._tiene_sp_actualizar_cache is None:
+                        cursor.execute(
+                            "SELECT 1 FROM pg_proc p JOIN pg_namespace n ON p.pronamespace = n.oid "
+                            "WHERE n.nspname = 'public' AND p.proname = 'sp_actualizar_compra' LIMIT 1;"
+                        )
+                        CompraPostgresRepository._tiene_sp_actualizar_cache = cursor.fetchone() is not None
+                    tiene_sp_actualizar = CompraPostgresRepository._tiene_sp_actualizar_cache
 
                     # 2. Resolver llaves foráneas opcionales
                     id_prov = (
@@ -1243,15 +1350,13 @@ class CompraPostgresRepository:
                                 None,
                             ),
                         )
+                        actualizado = self._obtener_por_id_en_cursor(cursor, compra_id)
                         conn.commit()
-                        actualizado = self.obtener_por_id(compra_id)
                         if not actualizado:
                             raise CompraNoEncontradaError(compra_id)
                         return actualizado
 
                     # 3. Mantenimiento del mecanismo transaccional actual con psycopg (Fallback probado y activo)
-
-                    # 2. Si se recibieron detalles, procesarlos y calcular nuevo total
                     if detalles_data:
                         total_calculado = 0.0
                         items_a_insertar = []
@@ -1275,7 +1380,6 @@ class CompraPostgresRepository:
                                 (compra_id, tipo_normalizado, id_insumo, id_prod, cant, pu)
                             )
 
-                        # Actualizar cabecera en tb_compras
                         cursor.execute(
                             """
                             UPDATE tb_compras
@@ -1287,7 +1391,6 @@ class CompraPostgresRepository:
                             (id_prov, id_mp, total_calculado, compra_id),
                         )
 
-                        # Reemplazar detalles en tb_det_compras
                         cursor.execute("DELETE FROM tb_det_compras WHERE id_compra = %s;", (compra_id,))
                         for row in items_a_insertar:
                             cursor.execute(
@@ -1308,22 +1411,20 @@ class CompraPostgresRepository:
                             (id_prov, id_mp, compra_id),
                         )
 
-                    # 3. Si cambió el estado y es válido, actualizarlo
                     if nuevo_estado and nuevo_estado != estado_actual:
                         cursor.execute(
                             "SELECT sp_actualizar_estado_compra(p_id_compra => %s, p_nuevo_estado_comp => %s);",
                             (compra_id, id_nuevo_estado),
                         )
 
+                    compra_actualizada = self._obtener_por_id_en_cursor(cursor, compra_id)
                     conn.commit()
+                    if not compra_actualizada:
+                        raise CompraNoEncontradaError(compra_id)
+                    return compra_actualizada
         except psycopg.Error as error:
             self._mapear_error(error, id_compra=compra_id)
             raise
-
-        compra_actualizada = self.obtener_por_id(compra_id)
-        if not compra_actualizada:
-            raise CompraNoEncontradaError(compra_id)
-        return compra_actualizada
 
     def cambiar_estado(self, compra_id: int, estado: str) -> dict[str, Any]:
         nuevo_estado_id = self._resolver_id_estado(estado)
@@ -1334,8 +1435,8 @@ class CompraPostgresRepository:
                         "SELECT sp_actualizar_estado_compra(p_id_compra => %s, p_nuevo_estado_comp => %s);",
                         (compra_id, nuevo_estado_id),
                     )
+                    compra = self._obtener_por_id_en_cursor(cursor, compra_id)
                     conn.commit()
-                    compra = self.obtener_por_id(compra_id)
                     if not compra:
                         raise CompraNoEncontradaError(compra_id)
                     return compra
@@ -1357,61 +1458,187 @@ class CompraPostgresRepository:
             raise
 
     def obtener_catalogo_recursos(self) -> dict[str, Any]:
+        """Obtiene proveedores, métodos de pago, categorías activas, insumos y productos activos en un solo viaje SQL."""
         try:
             with get_connection() as conn:
                 with conn.cursor() as cur:
-                    cur.execute("SELECT id_proveedor, nombre FROM tb_proveedores WHERE estado = 'Activo' ORDER BY nombre;")
-                    proveedores = [{"id": r[0], "nombre": r[1]} for r in cur.fetchall()]
-
-                    cur.execute("SELECT id_metodo_pago, nombre FROM tb_metodo_pago WHERE estado = 'Activo' ORDER BY id_metodo_pago;")
-                    metodos_pago = [{"id": r[0], "nombre": r[1]} for r in cur.fetchall()]
-
-                    cur.execute("SELECT id_insumo, nombre, stock, COALESCE(precio_unitario, 0) FROM tb_insumos WHERE estado = 'Activo' ORDER BY nombre;")
-                    insumos = [{"id": r[0], "nombre": r[1], "stock": r[2], "precio": float(r[3])} for r in cur.fetchall()]
-
-                    cur.execute("""
-                        SELECT 
-                            pv.id_producto_vari,
-                            p.nombre,
-                            COALESCE(c.nombre, 'No aplica'),
-                            COALESCE(t.nombre, 'No aplica'),
-                            pv.stock,
-                            COALESCE(pv.precio, 0),
-                            p.id_producto,
-                            COALESCE(cat.nombre, 'Sin categoría')
-                        FROM tb_producto_variante pv
-                        JOIN tb_productos p ON pv.id_producto = p.id_producto
-                        LEFT JOIN tb_categorias cat ON p.id_categoria = cat.id_categoria
-                        LEFT JOIN tb_colores c ON pv.id_color = c.id_color
-                        LEFT JOIN tb_tallas t ON pv.id_talla = t.id_talla
-                        WHERE pv.estado = true AND p.estado = true
-                        ORDER BY p.nombre, c.nombre, t.nombre;
-                    """)
-                    productos = [
-                        {
-                            "id": r[0],
-                            "id_producto_vari": r[0],
-                            "id_producto": r[6],
-                            "nombre": r[1],
-                            "categoria": r[7],
-                            "color": r[2],
-                            "talla": r[3],
-                            "stock": r[4],
-                            "precio": float(r[5]),
-                        }
-                        for r in cur.fetchall()
-                    ]
+                    try:
+                        cur.execute(
+                            """
+                            SELECT json_build_object(
+                                'proveedores', COALESCE((
+                                    SELECT json_agg(
+                                        json_build_object('id', p.id_proveedor, 'nombre', p.nombre)
+                                        ORDER BY p.nombre
+                                    )
+                                    FROM tb_proveedores p
+                                    WHERE p.estado = 'Activo'
+                                ), '[]'::json),
+                                'metodos_pago', COALESCE((
+                                    SELECT json_agg(
+                                        json_build_object('id', m.id_metodo_pago, 'nombre', m.nombre)
+                                        ORDER BY m.id_metodo_pago
+                                    )
+                                    FROM tb_metodo_pago m
+                                    WHERE m.estado = 'Activo'
+                                ), '[]'::json),
+                                'categorias', COALESCE((
+                                    SELECT json_agg(
+                                        json_build_object(
+                                            'id', c.id_categoria,
+                                            'id_categoria', c.id_categoria,
+                                            'nombre', c.nombre,
+                                            'tipo_categoria', COALESCE(c.tipo_categoria, 'Producto'),
+                                            'estado', true
+                                        )
+                                        ORDER BY c.nombre
+                                    )
+                                    FROM tb_categorias c
+                                    WHERE LOWER(c.estado::text) IN ('activo', 'true', '1')
+                                ), '[]'::json),
+                                'insumos', COALESCE((
+                                    SELECT json_agg(
+                                        json_build_object(
+                                            'id', i.id_insumo,
+                                            'nombre', i.nombre,
+                                            'id_categoria', cat.id_categoria,
+                                            'categoria', COALESCE(cat.nombre, ''),
+                                            'material', COALESCE(mat.nombre, 'No aplica'),
+                                            'tamano', COALESCE(tam.nombre, 'No aplica'),
+                                            'stock', i.stock,
+                                            'precio', COALESCE(i.precio_unitario, 0)::float8
+                                        )
+                                        ORDER BY i.nombre
+                                    )
+                                    FROM tb_insumos i
+                                    JOIN tb_categorias cat
+                                        ON cat.id_categoria = i.id_categoria
+                                       AND LOWER(cat.estado::text) IN ('activo', 'true', '1')
+                                    LEFT JOIN public.sp_insumos_listar_materiales() mat
+                                        ON mat.id_material = i.id_material
+                                    LEFT JOIN public.sp_insumos_listar_tamanos() tam
+                                        ON tam.id_tamano = i.id_tamano
+                                    WHERE i.estado = 'Activo'
+                                ), '[]'::json),
+                                'productos', COALESCE((
+                                    SELECT json_agg(
+                                        json_build_object(
+                                            'id', pv.id_producto_vari,
+                                            'id_producto_vari', pv.id_producto_vari,
+                                            'id_producto', p.id_producto,
+                                            'nombre', p.nombre,
+                                            'id_categoria', cat.id_categoria,
+                                            'categoria', COALESCE(cat.nombre, 'Sin categoría'),
+                                            'color', COALESCE(col.nombre, 'No aplica'),
+                                            'talla', COALESCE(tal.nombre, 'No aplica'),
+                                            'stock', pv.stock,
+                                            'precio', COALESCE(pv.precio, 0)::float8
+                                        )
+                                        ORDER BY p.nombre, col.nombre, tal.nombre
+                                    )
+                                    FROM tb_producto_variante pv
+                                    JOIN tb_productos p ON pv.id_producto = p.id_producto
+                                    JOIN tb_categorias cat
+                                        ON p.id_categoria = cat.id_categoria
+                                       AND LOWER(cat.estado::text) IN ('activo', 'true', '1')
+                                    LEFT JOIN tb_colores col ON pv.id_color = col.id_color
+                                    LEFT JOIN tb_tallas tal ON pv.id_talla = tal.id_talla
+                                    WHERE pv.estado = true AND p.estado = true
+                                ), '[]'::json)
+                            );
+                            """
+                        )
+                        row = cur.fetchone()
+                        if row and isinstance(row[0], dict):
+                            return row[0]
+                    except psycopg.Error:
+                        conn.rollback()
+                        cur.execute(
+                            """
+                            SELECT json_build_object(
+                                'proveedores', COALESCE((
+                                    SELECT json_agg(json_build_object('id', p.id_proveedor, 'nombre', p.nombre) ORDER BY p.nombre)
+                                    FROM tb_proveedores p WHERE p.estado = 'Activo'
+                                ), '[]'::json),
+                                'metodos_pago', COALESCE((
+                                    SELECT json_agg(json_build_object('id', m.id_metodo_pago, 'nombre', m.nombre) ORDER BY m.id_metodo_pago)
+                                    FROM tb_metodo_pago m WHERE m.estado = 'Activo'
+                                ), '[]'::json),
+                                'categorias', COALESCE((
+                                    SELECT json_agg(
+                                        json_build_object(
+                                            'id', c.id_categoria,
+                                            'id_categoria', c.id_categoria,
+                                            'nombre', c.nombre,
+                                            'tipo_categoria', COALESCE(c.tipo_categoria, 'Producto'),
+                                            'estado', true
+                                        ) ORDER BY c.nombre
+                                    )
+                                    FROM tb_categorias c
+                                    WHERE LOWER(c.estado::text) IN ('activo', 'true', '1')
+                                ), '[]'::json),
+                                'insumos', COALESCE((
+                                    SELECT json_agg(
+                                        json_build_object(
+                                            'id', i.id_insumo,
+                                            'nombre', i.nombre,
+                                            'id_categoria', cat.id_categoria,
+                                            'categoria', COALESCE(cat.nombre, ''),
+                                            'material', 'No aplica',
+                                            'tamano', 'No aplica',
+                                            'stock', i.stock,
+                                            'precio', COALESCE(i.precio_unitario, 0)::float8
+                                        ) ORDER BY i.nombre
+                                    )
+                                    FROM tb_insumos i
+                                    JOIN tb_categorias cat
+                                        ON cat.id_categoria = i.id_categoria
+                                       AND LOWER(cat.estado::text) IN ('activo', 'true', '1')
+                                    WHERE i.estado = 'Activo'
+                                ), '[]'::json),
+                                'productos', COALESCE((
+                                    SELECT json_agg(
+                                        json_build_object(
+                                            'id', pv.id_producto_vari,
+                                            'id_producto_vari', pv.id_producto_vari,
+                                            'id_producto', p.id_producto,
+                                            'nombre', p.nombre,
+                                            'id_categoria', cat.id_categoria,
+                                            'categoria', COALESCE(cat.nombre, 'Sin categoría'),
+                                            'color', COALESCE(col.nombre, 'No aplica'),
+                                            'talla', COALESCE(tal.nombre, 'No aplica'),
+                                            'stock', pv.stock,
+                                            'precio', COALESCE(pv.precio, 0)::float8
+                                        ) ORDER BY p.nombre, col.nombre, tal.nombre
+                                    )
+                                    FROM tb_producto_variante pv
+                                    JOIN tb_productos p ON pv.id_producto = p.id_producto
+                                    JOIN tb_categorias cat
+                                        ON p.id_categoria = cat.id_categoria
+                                       AND LOWER(cat.estado::text) IN ('activo', 'true', '1')
+                                    LEFT JOIN tb_colores col ON pv.id_color = col.id_color
+                                    LEFT JOIN tb_tallas tal ON pv.id_talla = tal.id_talla
+                                    WHERE pv.estado = true AND p.estado = true
+                                ), '[]'::json)
+                            );
+                            """
+                        )
+                        row = cur.fetchone()
+                        if row and isinstance(row[0], dict):
+                            return row[0]
 
                     return {
-                        "proveedores": proveedores,
-                        "metodos_pago": metodos_pago,
-                        "insumos": insumos,
-                        "productos": productos,
+                        "proveedores": [],
+                        "metodos_pago": [],
+                        "categorias": [],
+                        "insumos": [],
+                        "productos": [],
                     }
         except Exception:
             return {
                 "proveedores": [],
                 "metodos_pago": [],
+                "categorias": [],
                 "insumos": [],
                 "productos": [],
             }

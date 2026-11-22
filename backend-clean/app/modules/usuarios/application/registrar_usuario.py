@@ -26,9 +26,9 @@ class RegistrarUsuario:
         self.repositorio = repositorio or UsuarioRepository()
 
     def ejecutar(self, datos: UsuarioCreate) -> UsuarioResponse:
-        # Validar el rol
+        # Validar el rol dinámicamente contra tb_roles en PostgreSQL
         rol_limpio = datos.rol.strip()
-        if not rol_limpio or rol_limpio.lower() not in ROLES_VALIDOS:
+        if not rol_limpio or not self.repositorio.existe_rol(rol_limpio):
             raise RolInvalidoError(datos.rol)
 
         # Hashear la contraseña con bcrypt sólo si viene proporcionada

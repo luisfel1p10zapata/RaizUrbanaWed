@@ -12,6 +12,7 @@ from datetime import date
 from decimal import Decimal
 import json
 from typing import Any
+import unicodedata
 import psycopg
 from psycopg.rows import dict_row
 
@@ -73,18 +74,30 @@ class VentaPostgresRepository:
         return MetodoPago.EFECTIVO
 
     def _resolver_id_metodo_pago(self, cursor, metodo_val: str) -> int:
-        m = str(metodo_val or "").strip().lower()
-        if "tarjeta" in m:
+        m = str(metodo_val or "").strip()
+        if m:
+            cursor.execute(
+                "SELECT id_metodo_pago FROM tb_metodo_pago WHERE LOWER(BTRIM(nombre)) = LOWER(%s) LIMIT 1;",
+                (m,)
+            )
+            row = cursor.fetchone()
+            if row:
+                return row["id_metodo_pago"] if isinstance(row, dict) else row[0]
+
+        m_low = m.lower()
+        if "tarjeta" in m_low:
             cursor.execute("SELECT id_metodo_pago FROM tb_metodo_pago WHERE LOWER(nombre) LIKE '%tarjeta%' LIMIT 1;")
-        elif "transfer" in m or "nequi" in m or "banco" in m:
-            cursor.execute("SELECT id_metodo_pago FROM tb_metodo_pago WHERE LOWER(nombre) LIKE '%transfer%' OR LOWER(nombre) LIKE '%nequi%' LIMIT 1;")
+        elif "nequi" in m_low:
+            cursor.execute("SELECT id_metodo_pago FROM tb_metodo_pago WHERE LOWER(nombre) LIKE '%nequi%' LIMIT 1;")
+        elif "transfer" in m_low or "banco" in m_low:
+            cursor.execute("SELECT id_metodo_pago FROM tb_metodo_pago WHERE LOWER(nombre) LIKE '%transfer%' OR LOWER(nombre) LIKE '%banco%' LIMIT 1;")
         else:
             cursor.execute("SELECT id_metodo_pago FROM tb_metodo_pago WHERE LOWER(nombre) LIKE '%efectivo%' LIMIT 1;")
 
         row = cursor.fetchone()
         if row:
             return row["id_metodo_pago"] if isinstance(row, dict) else row[0]
-        cursor.execute("SELECT id_metodo_pago FROM tb_metodo_pago ORDER BY id_metodo_pago ASC LIMIT 1;")
+        cursor.execute("SELECT id_metodo_pago FROM tb_metodo_pago WHERE estado = 'Activo' ORDER BY id_metodo_pago ASC LIMIT 1;")
         row = cursor.fetchone()
         return (row["id_metodo_pago"] if isinstance(row, dict) else row[0]) if row else 1
 
@@ -97,10 +110,10 @@ class VentaPostgresRepository:
         rol_usuario = (v.get("rol_usuario") or "Cliente").strip()
         es_admin = rol_usuario.lower() == "administrador"
 
-        estado_nom = v.get("estado") or "Pendiente"
-        estado_venta = self._mapear_estado_venta(estado_nom)
+        estado_nom = (v.get("estado") or "Pendiente").strip()
+        estado_venta = estado_nom
         estado_pago = self._mapear_estado_pago(estado_nom)
-        metodo_pago = self._mapear_metodo_pago(v.get("metodo_pago") or "Efectivo")
+        metodo_pago = (v.get("metodo_pago") or "Efectivo").strip()
 
         costo_total = float(v.get("costo_total") or 0.0)
 
@@ -129,7 +142,7 @@ class VentaPostgresRepository:
 
         return {
             "id": id_venta,
-            "codigo": f"VT-{id_venta:03d}",
+            "codigo": f"{id_venta:03d}",
             "cliente": {
                 "id": id_usuario,
                 "nombre": nombre_cliente,
@@ -139,8 +152,10 @@ class VentaPostgresRepository:
             "rol_usuario": rol_usuario,
             "creado_por_admin": es_admin,
             "fecha": fecha_val,
+            "id_estado_comp": v.get("id_estado_comp"),
             "estado_venta": estado_venta,
             "estado_pago": estado_pago,
+            "id_metodo_pago": v.get("id_metodo_pago"),
             "metodo_pago": metodo_pago,
             "items": items,
             "total": costo_total,
@@ -164,8 +179,19 @@ class VentaPostgresRepository:
 
                 return self._mapear_json_a_venta(v_json)
 
+    @staticmethod
+    def _normalizar_texto(texto: Any) -> str:
+        raw = str(texto or "").strip().lower()
+        return "".join(
+            ch for ch in unicodedata.normalize("NFD", raw)
+            if unicodedata.category(ch) != "Mn"
+        )
+
     def listar(self, filtros: VentaFiltros) -> tuple[list[dict[str, Any]], int]:
-        """Obtiene la lista de ventas invocando sp_listar_ventas y sp_obtener_venta de Supabase."""
+        """Obtiene la lista de ventas en orden ascendente (1..N) invocando sp_listar_ventas y sp_obtener_venta.
+        La búsqueda global compara todos los datos de la tabla (código, cliente, correo, fecha, total,
+        estado venta, estado pago, método de pago y productos).
+        """
         with self._get_connection() as conn:
             with conn.cursor(row_factory=dict_row) as cursor:
                 id_estado_comp = None
@@ -176,10 +202,84 @@ class VentaPostgresRepository:
 
                 # Invocar función oficial de Supabase
                 cursor.execute(
-                    "SELECT * FROM sp_listar_ventas(NULL, %s, NULL, NULL, NULL, %s);",
-                    (id_estado_comp, buscar_param)
+                    "SELECT * FROM sp_listar_ventas(NULL, %s, NULL, NULL, NULL, NULL);",
+                    (id_estado_comp,)
                 )
                 todas_filas = cursor.fetchall()
+                # Orden ascendente de 1 hasta N por ID de venta
+                todas_filas.sort(key=lambda r: r["id_venta"])
+
+                if buscar_param:
+                    # Enriquecer en una sola consulta con correo del cliente y nombres de productos para búsqueda total
+                    cursor.execute("""
+                        SELECT
+                            v.id_venta,
+                            u.correo,
+                            r.nombre AS rol_usuario,
+                            COALESCE(STRING_AGG(DISTINCT p.nombre, ' '), '') AS productos_txt
+                        FROM tb_ventas v
+                        JOIN tb_usuario u ON u.id_usuario = v.id_usuario
+                        JOIN tb_roles r ON r.id_rol = u.id_rol
+                        LEFT JOIN tb_det_ventas dv ON dv.id_ventas = v.id_venta
+                        LEFT JOIN tb_producto_variante pv ON pv.id_producto_vari = dv.id_producto_vari
+                        LEFT JOIN tb_productos p ON p.id_producto = pv.id_producto
+                        GROUP BY v.id_venta, u.correo, r.nombre;
+                    """)
+                    extras = {row["id_venta"]: row for row in cursor.fetchall()}
+
+                    q_norm = self._normalizar_texto(buscar_param)
+                    q_num = q_norm.replace("$", "").replace(".", "").replace(",", "").replace(" ", "")
+                    tokens = [t for t in q_norm.split() if t]
+
+                    filtradas = []
+                    for row in todas_filas:
+                        vid = row["id_venta"]
+                        ext = extras.get(vid, {})
+                        codigo = f"{vid:03d}"
+                        total_num = int(round(float(row.get("costo_total") or 0)))
+                        total_fmt = f"{total_num:,}".replace(",", ".")
+                        estado_nom = str(row.get("estado") or "")
+                        estado_pago_val = str(self._mapear_estado_pago(estado_nom).value)
+
+                        fecha_obj = row.get("fecha")
+                        fecha_str = str(fecha_obj or "")
+                        fecha_dmy = fecha_obj.strftime("%d/%m/%Y") if isinstance(fecha_obj, date) else ""
+
+                        campos = " ".join([
+                            codigo,
+                            str(vid),
+                            f"vt-{codigo}",
+                            str(row.get("cliente") or ""),
+                            str(ext.get("correo") or ""),
+                            str(ext.get("rol_usuario") or ""),
+                            fecha_str,
+                            fecha_dmy,
+                            str(total_num),
+                            total_fmt,
+                            f"${total_fmt}",
+                            estado_nom,
+                            estado_pago_val,
+                            str(row.get("metodo_pago") or ""),
+                            str(ext.get("productos_txt") or ""),
+                        ])
+                        haystack = self._normalizar_texto(campos)
+                        haystack_num = haystack.replace("$", "").replace(".", "").replace(",", "")
+
+                        def _match_token(tok: str) -> bool:
+                            if tok in haystack:
+                                return True
+                            tok_num = tok.replace("$", "").replace(".", "").replace(",", "")
+                            return tok_num.isdigit() and tok_num in haystack_num
+
+                        if (
+                            q_norm in haystack
+                            or (q_num.isdigit() and q_num in haystack_num)
+                            or (bool(tokens) and all(_match_token(tok) for tok in tokens))
+                        ):
+                            filtradas.append(row)
+
+                    todas_filas = filtradas
+
                 total = len(todas_filas)
 
                 # Paginación
@@ -196,7 +296,7 @@ class VentaPostgresRepository:
                         # Respaldo con los datos devueltos por sp_listar_ventas
                         items.append({
                             "id": p["id_venta"],
-                            "codigo": f"VT-{p['id_venta']:03d}",
+                            "codigo": f"{p['id_venta']:03d}",
                             "cliente": {
                                 "id": p["id_usuario"],
                                 "nombre": p["cliente"],
@@ -339,28 +439,37 @@ class VentaPostgresRepository:
 
         with self._get_connection() as conn:
             with conn.cursor(row_factory=dict_row) as cursor:
-                if "estado_venta" in datos and datos["estado_venta"] is not None:
-                    id_estado = self._resolver_estado_comp(str(datos["estado_venta"]))
-                    try:
-                        cursor.execute("SELECT sp_actualizar_estado_venta(%s, %s);", (venta_id, id_estado))
-                    except psycopg.errors.RaiseException as e:
-                        conn.rollback()
-                        raise ValueError(str(e).split("\n")[0])
-                elif "estado_pago" in datos and datos["estado_pago"] is not None:
-                    if str(datos["estado_pago"]).lower() == "pagado":
-                        try:
-                            cursor.execute("SELECT sp_actualizar_estado_venta(%s, %s);", (venta_id, 4))
-                        except psycopg.errors.RaiseException as e:
-                            conn.rollback()
-                            raise ValueError(str(e).split("\n")[0])
-
-                if "metodo_pago" in datos and datos["metodo_pago"] is not None:
+                # 1. Actualizar método de pago primero (si cambia, antes de posibles cierres de estado)
+                id_mp = datos.get("id_metodo_pago") or datos.get("idMetodoPago")
+                if not id_mp and "metodo_pago" in datos and datos["metodo_pago"] is not None:
                     id_mp = self._resolver_id_metodo_pago(cursor, str(datos["metodo_pago"]))
+
+                if id_mp and int(id_mp) != venta_actual.get("id_metodo_pago"):
                     try:
                         cursor.execute(
                             "SELECT sp_actualizar_venta(%s, %s, NULL, NULL, NULL);",
-                            (venta_id, id_mp)
+                            (venta_id, int(id_mp))
                         )
+                    except psycopg.errors.RaiseException as e:
+                        conn.rollback()
+                        raise ValueError(str(e).split("\n")[0])
+
+                # 2. Actualizar estado de la venta si cambió
+                id_estado = datos.get("id_estado_comp") or datos.get("idEstadoComp")
+                if not id_estado and "estado_venta" in datos and datos["estado_venta"] is not None:
+                    cursor.execute(
+                        "SELECT id_estado_comp FROM tb_estado_comp WHERE LOWER(BTRIM(nombre)) = LOWER(%s) LIMIT 1;",
+                        (str(datos["estado_venta"]).strip(),)
+                    )
+                    row_est = cursor.fetchone()
+                    id_estado = row_est["id_estado_comp"] if row_est else self._resolver_estado_comp(str(datos["estado_venta"]))
+                elif not id_estado and "estado_pago" in datos and datos["estado_pago"] is not None:
+                    if str(datos["estado_pago"]).lower() == "pagado":
+                        id_estado = 4
+
+                if id_estado and int(id_estado) != venta_actual.get("id_estado_comp"):
+                    try:
+                        cursor.execute("SELECT sp_actualizar_estado_venta(%s, %s);", (venta_id, int(id_estado)))
                     except psycopg.errors.RaiseException as e:
                         conn.rollback()
                         raise ValueError(str(e).split("\n")[0])
@@ -453,10 +562,21 @@ class VentaPostgresRepository:
                 for p in productos:
                     p["precio"] = float(p["precio"])
 
+                # 4. Estados de comprobante / venta desde tb_estado_comp
+                cursor.execute("""
+                    SELECT
+                        id_estado_comp AS id,
+                        nombre
+                    FROM tb_estado_comp
+                    ORDER BY id_estado_comp;
+                """)
+                estados = cursor.fetchall()
+
                 return {
                     "clientes": clientes,
                     "metodos_pago": metodos_pago,
                     "productos": productos,
+                    "estados": estados,
                 }
 
 

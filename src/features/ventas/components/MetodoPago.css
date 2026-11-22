@@ -2841,3 +2841,560 @@ html body .metodo-delete-content p strong {
       14px;
   }
 }
+
+/* ================================================================
+   HOMOLOGACIÓN EXACTA CON VENTAS (100dvh sin scroll, KPIs compactos,
+   toolbar unificado, tabla uniforme --ru-row-h e íconos idénticos)
+   ================================================================ */
+
+html body .ru-metodos-root.metodo-page {
+  --primary: #22223B;
+  --secondary: #4A4E69;
+  --accent: #9A8C98;
+  --soft: #C9ADA7;
+  --background: #F2E9E4;
+  --card-bg: #FFFFFF;
+  --card-border: #EAD9CF;
+  --thead-bg: #F7F3F1;
+  --muted-text: #8F8A9B;
+  --label-text: #7D788A;
+  --divider: #EFE5DF;
+  --info-blue: #4A76A8;
+  --warn-amber: #C9973F;
+  --negative: #D1495B;
+  --font-logo: 'Playfair Display', Georgia, serif;
+  --font-ui: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+  --radius-lg: 12px;
+  --shadow-card: 0 2px 8px rgba(34, 34, 59, 0.045);
+
+  font-family: var(--font-ui);
+  color: var(--primary);
+  padding: 0;
+  width: 100%;
+  min-height: 100vh;
+}
+
+:root[data-theme="dark"] .ru-metodos-root.metodo-page,
+[data-theme="dark"] .ru-metodos-root.metodo-page,
+.dark .ru-metodos-root.metodo-page,
+.dark-mode .ru-metodos-root.metodo-page {
+  color-scheme: dark;
+  --primary: #F2E9E4;
+  --secondary: #C9ADA7;
+  --accent: #9A8C98;
+  --soft: #4A4E69;
+  --background: #12131C;
+  --card-bg: #1C1E2E;
+  --card-border: #3A3D57;
+  --thead-bg: #232638;
+  --muted-text: #9A8C98;
+  --label-text: #C9ADA7;
+  --divider: #2A2E42;
+  --info-blue: #60A5FA;
+  --warn-amber: #FBBF24;
+  --negative: #F87171;
+  --shadow-card: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+@media (min-width: 769px) and (min-height: 520px) {
+  html:has(.ru-metodos-root),
+  body:has(.ru-metodos-root),
+  #root:has(.ru-metodos-root),
+  .admin-layout:has(.ru-metodos-root) {
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden !important;
+  }
+
+  .admin-content:has(.ru-metodos-root) {
+    height: 100dvh;
+    max-height: 100dvh;
+    min-height: 0;
+    overflow: hidden !important;
+    display: flex;
+    flex-direction: column;
+    padding: clamp(14px, 2vh, 24px) clamp(16px, 2.2vw, 32px);
+    box-sizing: border-box;
+  }
+
+  html body .ru-metodos-root.metodo-page {
+    height: 100%;
+    max-height: 100%;
+    min-height: 0 !important;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .ru-metodos-root .ru-metodos-page {
+    height: 100%;
+    max-height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+}
+
+.ru-metodos-root .ru-metodos-page {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* Encabezado editorial idéntico a Ventas */
+.ru-mp-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: clamp(10px, 1.3vh, 14px);
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.ru-mp-header-info {
+  min-width: 0;
+}
+
+.ru-metodos-root .ru-eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 600;
+  margin-bottom: 3px;
+}
+
+.ru-mp-title {
+  font-family: var(--font-logo) !important;
+  font-weight: 600;
+  font-size: clamp(23px, 2.2vw, 34px);
+  line-height: 1.12;
+  color: var(--primary);
+  margin: 0 0 4px 0;
+}
+
+.ru-mp-subtitle {
+  font-size: clamp(12px, 0.95vw, 13.5px);
+  color: var(--secondary);
+  margin: 0;
+  line-height: 1.35;
+}
+
+/* KPIs compactos idénticos a Ventas (puramente informativos, sin interacción ni selección) */
+.ru-metodos-root .ru-kpis-container {
+  gap: clamp(10px, 1.2vw, 14px);
+  margin-bottom: clamp(10px, 1.3vh, 14px);
+  flex-shrink: 0;
+}
+
+.ru-metodos-root .ru-kpis-container .ru-kpi-card {
+  padding: clamp(11px, 1.3vh, 15px) clamp(14px, 1.4vw, 18px);
+  border-radius: var(--radius-lg);
+  gap: 12px;
+  align-items: center;
+  box-shadow: var(--shadow-card);
+  cursor: default;
+  user-select: none;
+  -webkit-user-select: none;
+  pointer-events: none;
+  transition: none;
+}
+
+.ru-metodos-root .ru-kpis-container .ru-kpi-card * {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.ru-metodos-root .ru-kpis-container .ru-kpi-card:hover,
+[data-theme="dark"] .ru-metodos-root .ru-kpis-container .ru-kpi-card:hover,
+.dark .ru-metodos-root .ru-kpis-container .ru-kpi-card:hover,
+.dark-mode .ru-metodos-root .ru-kpis-container .ru-kpi-card:hover {
+  border-color: var(--kpi-border);
+  box-shadow: var(--shadow-card);
+  transform: none;
+}
+
+.ru-metodos-root .ru-kpi-icon-box {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+}
+
+.ru-metodos-root .ru-kpi-title {
+  font-size: 12px;
+  margin-bottom: 2px;
+}
+
+.ru-metodos-root .ru-kpi-value-row {
+  flex-direction: row;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.ru-metodos-root .ru-kpi-number {
+  font-size: clamp(16px, 1.35vw, 19px);
+}
+
+.ru-metodos-root .ru-kpi-label {
+  font-size: 11.5px;
+}
+
+/* Tabla adaptativa uniforme sin scroll (idéntica a Ventas) */
+.ru-mp-table-slot {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.ru-metodos-root .produccion-table-card {
+  flex: 0 1 auto;
+  max-height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  --tg-radius: 12px;
+  --tg-head-bg: var(--thead-bg);
+  --tg-border: var(--card-border);
+  --tg-line: var(--divider);
+  --tg-bg: var(--card-bg);
+}
+
+.ru-metodos-root .produccion-table-card .produccion-table-header {
+  flex-shrink: 0;
+  padding: clamp(10px, 1.2vh, 14px) clamp(16px, 1.6vw, 22px);
+}
+
+.ru-metodos-root .produccion-table-card .produccion-table-title {
+  font-size: 14.5px;
+}
+
+.ru-metodos-root .produccion-table-card .produccion-table-wrapper {
+  flex: 0 1 auto;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
+}
+
+.ru-metodos-root .produccion-table-card .produccion-table {
+  width: 100%;
+  min-width: 0;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.ru-metodos-root .produccion-table-card .produccion-table thead th {
+  padding: 11px 14px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ru-metodos-root .produccion-table-card .produccion-table thead th:first-child { padding-left: 20px; padding-right: 10px; }
+.ru-metodos-root .produccion-table-card .produccion-table thead th:last-child  { padding-right: 20px; text-align: center; }
+
+.ru-metodos-root .produccion-table-card .produccion-table tbody tr {
+  height: var(--ru-row-h, 54px);
+}
+
+.ru-metodos-root .produccion-table-card .produccion-table tbody tr.produccion-empty-tr {
+  height: auto;
+}
+
+.ru-metodos-root .produccion-table-card .produccion-table tbody td {
+  padding: 0 14px;
+  height: var(--ru-row-h, 54px);
+  box-sizing: border-box;
+  font-size: 13.5px;
+  vertical-align: middle;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ru-metodos-root .produccion-table-card .produccion-table tbody tr:last-child td {
+  border-bottom: 1px solid transparent;
+}
+
+.ru-metodos-root .produccion-table-card .produccion-table tbody tr.produccion-empty-tr td {
+  height: auto;
+  padding: 32px 20px;
+}
+
+.ru-metodos-root .produccion-table-card .produccion-table tbody td:first-child { padding-left: 20px; padding-right: 10px; overflow: visible; }
+.ru-metodos-root .produccion-table-card .produccion-table tbody td:last-child  { padding-right: 20px; text-align: center; overflow: visible; }
+
+.ru-metodos-root .produccion-table-card .produccion-pagination {
+  flex-shrink: 0;
+  padding: clamp(9px, 1.1vh, 13px) clamp(16px, 1.6vw, 22px);
+  flex-wrap: nowrap;
+}
+
+.ru-metodos-root .produccion-table-card .produccion-pagination-info {
+  font-size: 12.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ru-metodos-root .produccion-table-card button.produccion-pagination-button {
+  min-width: 31px;
+  height: 31px;
+  font-size: 13.5px;
+}
+
+/* Columnas de Métodos de Pago */
+.ru-metodos-root .ru-mp-col-id       { width: 100px; }
+.ru-metodos-root .ru-mp-col-nombre   { width: auto; }
+.ru-metodos-root .ru-mp-col-cuenta   { width: 210px; font-variant-numeric: tabular-nums; }
+.ru-metodos-root .ru-mp-col-estado   { width: 148px; }
+.ru-metodos-root .ru-mp-col-acciones { width: 136px; }
+
+/* Celdas */
+.ru-mp-code-pill {
+  display: inline-block;
+  background: var(--background);
+  border: 1px solid var(--card-border);
+  border-radius: 7px;
+  padding: 3px 9px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--secondary);
+  white-space: nowrap;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+[data-theme="dark"] .ru-mp-code-pill,
+.dark .ru-mp-code-pill,
+.dark-mode .ru-mp-code-pill {
+  background-color: #252839;
+  border-color: #3A3D57;
+  color: #C9ADA7;
+}
+
+html body .ru-metodos-root .metodo-row-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+}
+
+.ru-mp-name-wrap {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+html body .ru-metodos-root .metodo-name-cell strong {
+  font-size: 13.5px;
+  line-height: 1.25;
+  color: var(--primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ru-mp-inline-meta {
+  display: none;
+  font-size: 11px;
+  color: var(--muted-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ru-mp-inline-account {
+  display: none;
+}
+
+html body .ru-metodos-root .metodo-status {
+  font-size: 11.5px;
+  padding: 4px 10px;
+  transition: transform 0.15s ease;
+}
+
+html body .ru-metodos-root .metodo-status:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+/* Acciones idénticas a Ventas */
+.ru-metodos-root .ru-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px !important;
+  flex-wrap: nowrap;
+}
+
+.ru-metodos-root .ru-icon-btn {
+  background: transparent !important;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px !important;
+  min-width: 28px;
+  min-height: 28px;
+  border-radius: 7px !important;
+  transition: background-color 0.15s ease, opacity 0.15s ease, transform 0.15s ease !important;
+}
+
+.ru-metodos-root .ru-icon-btn:hover:not(:disabled):not(.disabled) {
+  opacity: 1 !important;
+  transform: translateY(-1px);
+}
+
+.ru-metodos-root .ru-icon-btn.view   { color: var(--info-blue); }
+.ru-metodos-root .ru-icon-btn.edit   { color: var(--warn-amber); }
+.ru-metodos-root .ru-icon-btn.delete { color: var(--negative); }
+
+.ru-metodos-root .ru-icon-btn.view:hover:not(:disabled)   { background-color: rgba(74, 118, 168, 0.12) !important; }
+.ru-metodos-root .ru-icon-btn.edit:hover:not(:disabled)   { background-color: rgba(201, 151, 63, 0.14) !important; }
+.ru-metodos-root .ru-icon-btn.delete:hover:not(:disabled) { background-color: rgba(209, 73, 91, 0.12) !important; }
+
+/* Pantallas altas (> 860px) y portátiles compactos (<= 780px alto) */
+@media (min-height: 860px) and (min-width: 769px) {
+  html body .ru-metodos-root .metodo-name-cell strong { font-size: 14px; }
+  html body .ru-metodos-root .metodo-status { font-size: 12px; padding: 4px 11px; }
+}
+
+@media (max-height: 780px) and (min-width: 769px) {
+  .admin-content:has(.ru-metodos-root) { padding: 10px 18px; }
+  .ru-mp-header { margin-bottom: 8px; }
+  .ru-metodos-root .ru-eyebrow { font-size: 10px; margin-bottom: 1px; }
+  .ru-mp-title { font-size: clamp(20px, 1.9vw, 26px); margin-bottom: 2px; }
+  .ru-mp-subtitle { font-size: 12px; }
+
+  .ru-metodos-root .ru-kpis-container { gap: 10px; margin-bottom: 8px; }
+  .ru-metodos-root .ru-kpi-card { padding: 8px 12px; gap: 10px; }
+  .ru-metodos-root .ru-kpi-icon-box { width: 32px; height: 32px; }
+  .ru-metodos-root .ru-kpi-title { font-size: 11px; }
+  .ru-metodos-root .ru-kpi-number { font-size: 15.5px; }
+  .ru-metodos-root .ru-kpi-label { font-size: 11px; }
+
+  .ru-metodos-root .produccion-table-card .produccion-table-header { padding: 8px 16px; }
+  .ru-metodos-root .produccion-table-card .produccion-table-title { font-size: 13.5px; }
+  .ru-metodos-root .produccion-table-card .produccion-table thead th { padding: 8px 10px; font-size: 10.5px; }
+  .ru-metodos-root .produccion-table-card .produccion-table thead th:first-child,
+  .ru-metodos-root .produccion-table-card .produccion-table tbody td:first-child { padding-left: 14px; }
+  .ru-metodos-root .produccion-table-card .produccion-table thead th:last-child,
+  .ru-metodos-root .produccion-table-card .produccion-table tbody td:last-child { padding-right: 14px; }
+
+  .ru-metodos-root .produccion-table-card .produccion-table tbody tr { height: var(--ru-row-h, 46px); }
+  .ru-metodos-root .produccion-table-card .produccion-table tbody td {
+    padding: 0 10px;
+    height: var(--ru-row-h, 46px);
+    font-size: 12.5px;
+  }
+
+  html body .ru-metodos-root .metodo-row-icon { width: 28px; height: 28px; }
+  html body .ru-metodos-root .metodo-name-cell strong { font-size: 12.5px; }
+  .ru-mp-code-pill { font-size: 11px; padding: 2px 7px; }
+  html body .ru-metodos-root .metodo-status { font-size: 11px; padding: 3px 8px; }
+
+  .ru-metodos-root .produccion-table-card .produccion-pagination { padding: 7px 16px; }
+  .ru-metodos-root .produccion-table-card .produccion-pagination-info { font-size: 12px; }
+  .ru-metodos-root .produccion-table-card button.produccion-pagination-button { min-width: 28px; height: 28px; font-size: 12.5px; }
+}
+
+@media (max-height: 519px) {
+  .ru-metodos-root .produccion-table-wrapper { overflow-y: auto; }
+}
+
+@media (max-width: 1024px) and (min-width: 769px) {
+  .admin-content:has(.ru-metodos-root) { margin-left: 226px !important; }
+  .admin-layout.sidebar-collapsed .admin-content:has(.ru-metodos-root) { margin-left: 72px !important; }
+}
+
+@media (max-width: 900px) {
+  .ru-metodos-root .ru-mp-col-id { display: none !important; }
+  .ru-mp-inline-meta { display: inline; }
+  .ru-metodos-root .ru-mp-col-nombre { padding-left: 16px !important; }
+  .ru-metodos-root .ru-mp-col-cuenta { width: 170px; }
+}
+
+@media (max-width: 780px) {
+  .admin-content:has(.ru-metodos-root) {
+    margin-left: 0 !important;
+    padding: 76px 14px 16px !important;
+    min-height: 100dvh;
+    height: auto;
+    overflow-x: hidden;
+  }
+
+  .admin-layout.sidebar-collapsed .admin-content:has(.ru-metodos-root) { margin-left: 0 !important; }
+  html body .ru-metodos-root.metodo-page { min-height: 0 !important; padding: 0 !important; }
+  .ru-mp-title { font-size: 24px; }
+  .ru-mp-subtitle { font-size: 12.5px; }
+
+  .ru-metodos-root .produccion-table-card .produccion-table-wrapper { padding: 0; overflow: hidden; }
+  .ru-metodos-root .produccion-table-card .produccion-table { display: table; min-width: 0; }
+  .ru-metodos-root .produccion-table-card .produccion-table thead { display: table-header-group; }
+  .ru-metodos-root .produccion-table-card .produccion-table tbody { display: table-row-group; }
+  .ru-metodos-root .produccion-table-card .produccion-table tbody tr {
+    display: table-row;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    margin: 0;
+    height: 52px;
+  }
+  .ru-metodos-root .produccion-table-card .produccion-table tbody td,
+  .ru-metodos-root .produccion-table-card .produccion-table tbody td:first-child,
+  .ru-metodos-root .produccion-table-card .produccion-table tbody td:last-child {
+    display: table-cell;
+    height: 52px;
+    padding: 0 8px;
+    border-bottom: 1px solid var(--divider);
+  }
+  .ru-metodos-root .produccion-table-card .produccion-table tbody tr:last-child td { border-bottom: 1px solid transparent; }
+  .ru-metodos-root .produccion-table-card .produccion-table thead th { padding: 8px 8px; }
+  .ru-metodos-root .produccion-table-card .produccion-table thead th:last-child,
+  .ru-metodos-root .produccion-table-card .produccion-table tbody td:last-child { padding-right: 12px; text-align: center; }
+  .ru-metodos-root .produccion-table-card .produccion-table tbody td::before { display: none !important; }
+}
+
+@media (max-width: 580px) {
+  .admin-content:has(.ru-metodos-root) { padding: 74px 10px 14px !important; }
+  .ru-metodos-root .ru-kpis-container { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 8px; }
+  .ru-metodos-root .ru-kpi-card { padding: 10px 10px; gap: 8px; }
+  .ru-metodos-root .ru-kpi-icon-box { width: 30px; height: 30px; }
+  .ru-metodos-root .ru-kpi-title { font-size: 11px; }
+  .ru-metodos-root .ru-kpi-number { font-size: 14.5px; }
+  .ru-metodos-root .ru-kpi-label { display: none; }
+
+  .ru-metodos-root .ru-mp-col-cuenta { display: none !important; }
+  .ru-mp-inline-account { display: inline; }
+  .ru-metodos-root .ru-mp-col-nombre { padding-left: 12px !important; }
+  .ru-metodos-root .ru-mp-col-estado { width: 96px; }
+  .ru-metodos-root .ru-mp-col-acciones { width: 102px; }
+
+  html body .ru-metodos-root .metodo-row-icon { width: 28px; height: 28px; }
+  .ru-metodos-root .ru-actions { gap: 2px !important; }
+  .ru-metodos-root .ru-icon-btn { min-width: 24px; min-height: 24px; padding: 3px !important; }
+
+  .ru-metodos-root .produccion-pagination {
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+  }
+}
+
+@media (max-width: 380px) {
+  .ru-mp-title { font-size: 21px; }
+  html body .ru-metodos-root .metodo-row-icon { display: none; }
+  .ru-metodos-root .ru-mp-col-estado { width: 88px; }
+  .ru-metodos-root .ru-mp-col-acciones { width: 94px; }
+}

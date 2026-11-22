@@ -286,30 +286,53 @@ class MetodoPagoPostgresRepository:
             self._mapear_error(error, nombre=nombre)
             raise
 
+    @staticmethod
+    def _leer_por_id_en_cursor(cursor, metodo_id: int) -> dict[str, Any] | None:
+        cursor.execute(
+            "SELECT id_metodo_pago, nombre, COALESCE(nro_cuenta, ''), estado "
+            "FROM tb_metodo_pago WHERE id_metodo_pago = %s LIMIT 1;",
+            (metodo_id,),
+        )
+        row = cursor.fetchone()
+        if not row:
+            return None
+        return {
+            "id": row[0],
+            "nombre": row[1],
+            "numero_cuenta": row[2] or "",
+            "estado": row[3] or "Activo",
+        }
+
     def actualizar(self, metodo_id: int, datos: dict[str, Any]) -> dict[str, Any]:
-        actual = self.obtener_por_id(metodo_id)
-        if not actual:
-            raise MetodoPagoNoEncontradoError(metodo_id)
-
-        nombre = datos.get("nombre") or actual["nombre"]
-        cuenta = datos.get("numero_cuenta") if ("numero_cuenta" in datos and datos["numero_cuenta"] is not None) else actual.get("numero_cuenta")
-        estado = datos.get("estado") or actual.get("estado")
-
         try:
             with get_connection() as conn:
                 with conn.cursor() as cursor:
+                    actual = self._leer_por_id_en_cursor(cursor, metodo_id)
+                    if not actual:
+                        raise MetodoPagoNoEncontradoError(metodo_id)
+
+                    nombre = datos.get("nombre") or actual["nombre"]
+                    cuenta = (
+                        datos.get("numero_cuenta")
+                        if ("numero_cuenta" in datos and datos["numero_cuenta"] is not None)
+                        else actual.get("numero_cuenta")
+                    )
+                    estado = datos.get("estado") or actual.get("estado")
+
                     cursor.execute(
                         "SELECT sp_actualizar_metodo_pago("
                         "p_id_metodo_pago => %s, p_nombre => %s, p_nro_cuenta => %s, p_estado => %s);",
                         (metodo_id, nombre, cuenta, estado),
                     )
                     conn.commit()
-                    actualizado = self.obtener_por_id(metodo_id)
-                    if not actualizado:
-                        raise MetodoPagoNoEncontradoError(metodo_id)
-                    return actualizado
+                    return {
+                        "id": metodo_id,
+                        "nombre": nombre.strip(),
+                        "numero_cuenta": cuenta or "",
+                        "estado": estado or "Activo",
+                    }
         except psycopg.Error as error:
-            self._mapear_error(error, nombre=nombre, id_metodo=metodo_id)
+            self._mapear_error(error, nombre=datos.get("nombre"), id_metodo=metodo_id)
             raise
 
     def cambiar_estado(self, metodo_id: int, estado: str) -> dict[str, Any]:
@@ -320,8 +343,8 @@ class MetodoPagoPostgresRepository:
                         "SELECT sp_cambiar_estado_metodo_pago(p_id_metodo_pago => %s, p_estado => %s);",
                         (metodo_id, estado),
                     )
+                    actualizado = self._leer_por_id_en_cursor(cursor, metodo_id)
                     conn.commit()
-                    actualizado = self.obtener_por_id(metodo_id)
                     if not actualizado:
                         raise MetodoPagoNoEncontradoError(metodo_id)
                     return actualizado

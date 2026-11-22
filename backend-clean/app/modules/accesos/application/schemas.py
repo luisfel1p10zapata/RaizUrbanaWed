@@ -1,6 +1,7 @@
 """Esquemas de entrada para el módulo de Gestión de acceso."""
 
-from pydantic import BaseModel, EmailStr, Field, field_validator # type: ignore
+from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator # type: ignore
+from app.modules.usuarios.application.schemas import validar_documento_colombia
 
 
 class LoginSchema(BaseModel):
@@ -68,6 +69,11 @@ class RegisterSchema(BaseModel):
             )
 
         return valor
+
+    @model_validator(mode="after")
+    def validar_tipo_y_numero_doc(self) -> "RegisterSchema":
+        self.numeroDoc = validar_documento_colombia(self.id_TipoDoc, self.numeroDoc)
+        return self
 
 
 class RecoverPasswordSchema(BaseModel):

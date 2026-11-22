@@ -182,30 +182,64 @@ class CategoriaPostgresRepository:
             self._mapear_error(error, nombre=nombre)
             raise
 
+    @staticmethod
+    def _leer_por_id_en_cursor(cursor, categoria_id: int) -> dict[str, Any] | None:
+        cursor.execute(
+            "SELECT id_categoria, nombre, estado, COALESCE(tipo_categoria, 'Producto'), COALESCE(foto_categoria, '') "
+            "FROM tb_categorias WHERE id_categoria = %s LIMIT 1;",
+            (categoria_id,),
+        )
+        row = cursor.fetchone()
+        if not row:
+            return None
+        return {
+            "id": row[0],
+            "nombre": row[1],
+            "estado": str(row[2]).lower() in ("activo", "true", "1"),
+            "tipo_categoria": row[3] or "Producto",
+            "foto_categoria": row[4] or "",
+        }
+
     def listar(
         self,
         buscar: str | None = None,
         estado: bool | None = None,
         tipo_categoria: str | None = None,
     ) -> list[dict[str, Any]]:
-        estado_filtro = None
-        if estado is not None:
-            estado_filtro = "Activo" if estado else "Inactivo"
+        """Lista categorías consultando únicamente las columnas necesarias (sin subconsultas COUNT N+1)."""
+        condiciones: list[str] = []
+        parametros: list[Any] = []
+
+        if estado is True:
+            condiciones.append("LOWER(estado::text) IN ('activo', 'true', '1')")
+        elif estado is False:
+            condiciones.append("LOWER(estado::text) NOT IN ('activo', 'true', '1')")
+
+        if tipo_categoria and tipo_categoria.strip():
+            condiciones.append("LOWER(COALESCE(tipo_categoria, 'Producto')) = LOWER(%s)")
+            parametros.append(tipo_categoria.strip())
+
+        if buscar and buscar.strip():
+            termino = f"%{buscar.strip()}%"
+            condiciones.append("(id_categoria::text ILIKE %s OR nombre ILIKE %s)")
+            parametros.extend([termino, termino])
+
+        where_sql = f"WHERE {' AND '.join(condiciones)}" if condiciones else ""
 
         try:
             with get_connection() as conn:
                 with conn.cursor() as cursor:
                     cursor.execute(
-                        "SELECT id_categoria, nombre, estado, tipo_categoria, foto_categoria "
-                        "FROM sp_listar_categorias(p_buscar => %s, p_estado => %s, p_tipo_categoria => %s, p_limite => 500);",
-                        (buscar.strip() if buscar else None, estado_filtro, tipo_categoria.strip() if tipo_categoria else None),
+                        f"SELECT id_categoria, nombre, estado, COALESCE(tipo_categoria, 'Producto'), COALESCE(foto_categoria, '') "
+                        f"FROM tb_categorias {where_sql} ORDER BY id_categoria ASC LIMIT 500;",
+                        tuple(parametros),
                     )
                     filas = cursor.fetchall()
                     return [
                         {
                             "id": f[0],
                             "nombre": f[1],
-                            "estado": True if str(f[2]).lower() in ("activo", "true", "1") else False,
+                            "estado": str(f[2]).lower() in ("activo", "true", "1"),
                             "tipo_categoria": f[3] or "Producto",
                             "foto_categoria": f[4] or "",
                         }
@@ -265,34 +299,33 @@ class CategoriaPostgresRepository:
         categoria_id: int,
         datos: dict[str, Any],
     ) -> dict[str, Any]:
-        actual = self.obtener_por_id(categoria_id)
-        if not actual:
-            raise CategoriaNoEncontradaError(categoria_id)
-
-        nombre = datos.get("nombre") or actual["nombre"]
-        estado_str = None
-        if "estado" in datos and datos["estado"] is not None:
-            estado_str = "Activo" if datos["estado"] else "Inactivo"
-        elif "estado" in actual:
-            estado_str = "Activo" if actual["estado"] else "Inactivo"
-
-        tipo_cat = datos.get("tipo_categoria") or actual.get("tipo_categoria")
-        foto_cat = datos.get("foto_categoria") or actual.get("foto_categoria")
-
         try:
             with get_connection() as conn:
                 with conn.cursor() as cursor:
+                    actual = self._leer_por_id_en_cursor(cursor, categoria_id)
+                    if not actual:
+                        raise CategoriaNoEncontradaError(categoria_id)
+
+                    nombre = (datos.get("nombre") or actual["nombre"]).strip()
+                    estado_bool = datos["estado"] if ("estado" in datos and datos["estado"] is not None) else actual["estado"]
+                    estado_str = "Activo" if estado_bool else "Inactivo"
+                    tipo_cat = datos.get("tipo_categoria") or actual.get("tipo_categoria") or "Producto"
+                    foto_cat = datos.get("foto_categoria") if "foto_categoria" in datos else actual.get("foto_categoria")
+
                     cursor.execute(
                         "SELECT sp_actualizar_categoria(p_id_categoria => %s, p_nombre => %s, p_tipo_categoria => %s, p_estado => %s, p_foto_categoria => %s);",
-                        (categoria_id, nombre, tipo_cat, estado_str, foto_cat),
+                        (categoria_id, nombre, tipo_cat, estado_str, foto_cat or None),
                     )
                     conn.commit()
-                    actualizado = self.obtener_por_id(categoria_id)
-                    if not actualizado:
-                        raise CategoriaNoEncontradaError(categoria_id)
-                    return actualizado
+                    return {
+                        "id": categoria_id,
+                        "nombre": nombre,
+                        "estado": bool(estado_bool),
+                        "tipo_categoria": tipo_cat,
+                        "foto_categoria": foto_cat or "",
+                    }
         except psycopg.Error as error:
-            self._mapear_error(error, nombre=nombre, id_cat=categoria_id)
+            self._mapear_error(error, nombre=datos.get("nombre"), id_cat=categoria_id)
             raise
 
     def cambiar_estado(self, categoria_id: int, estado: bool) -> dict[str, Any]:
@@ -304,8 +337,8 @@ class CategoriaPostgresRepository:
                         "SELECT sp_cambiar_estado_categoria(p_id_categoria => %s, p_estado => %s);",
                         (categoria_id, estado_str),
                     )
+                    actualizado = self._leer_por_id_en_cursor(cursor, categoria_id)
                     conn.commit()
-                    actualizado = self.obtener_por_id(categoria_id)
                     if not actualizado:
                         raise CategoriaNoEncontradaError(categoria_id)
                     return actualizado
