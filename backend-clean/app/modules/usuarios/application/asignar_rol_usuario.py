@@ -1,6 +1,5 @@
 """Caso de uso: Asignar o reemplazar el rol de un usuario."""
 from app.modules.usuarios.application.schemas import UsuarioResponse
-from app.modules.usuarios.application.registrar_usuario import ROLES_VALIDOS
 from app.modules.usuarios.domain.exceptions import RolInvalidoError
 from app.modules.usuarios.infrastructure.usuario_repository import (
     UsuarioRepository,

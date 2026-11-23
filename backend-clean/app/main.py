@@ -78,6 +78,26 @@ from app.modules.subcategorias.presentation.router import (
     router as subcategorias_router,
 )
 
+# Notificaciones
+from app.modules.notificaciones.router import (
+    router as notificaciones_router,
+)
+
+# Dashboard
+from app.modules.dashboard.router import (
+    router as dashboard_router,
+)
+
+# Carrito de compras
+from app.modules.carrito.router import (
+    router as carrito_router,
+)
+
+# Subida de imágenes (Supabase Storage)
+from app.modules.uploads.router import (
+    router as uploads_router,
+)
+
 
 # =========================================================
 # CONFIGURACIÓN PRINCIPAL DE FASTAPI
@@ -194,6 +214,18 @@ app.include_router(producto_variantes_router, prefix="/api")
 
 # Proveedores
 app.include_router(proveedores_router, prefix="/api")
+
+# Notificaciones
+app.include_router(notificaciones_router, prefix="/api")
+
+# Dashboard
+app.include_router(dashboard_router, prefix="/api")
+
+# Carrito de compras
+app.include_router(carrito_router, prefix="/api")
+
+# Subida de imágenes (Supabase Storage)
+app.include_router(uploads_router, prefix="/api")
 
 
 # =========================================================

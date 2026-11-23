@@ -64,8 +64,11 @@ class VentaCreate(CamelModel):
     cliente: ClienteResumen | None = None
     id_metodo_pago: int | None = None
     metodo_pago: str = "Efectivo"
-    estado_venta: EstadoVenta = EstadoVenta.PENDIENTE
+    id_estado_comp: int | None = None
+    estado_venta: str = EstadoVenta.PENDIENTE.value
     estado_pago: EstadoPago = EstadoPago.PENDIENTE
+    foto_comprobante: str | None = Field(default=None, max_length=255)
+    fecha_entrega: date | None = None
     items: list[ItemVentaCreate] = Field(min_length=1, description="Al menos un producto")
     total: float | None = None
 
@@ -78,6 +81,8 @@ class VentaUpdate(CamelModel):
     estado_pago: EstadoPago | None = None
     id_metodo_pago: int | None = None
     metodo_pago: str | None = None
+    foto_comprobante: str | None = Field(default=None, max_length=255)
+    fecha_entrega: date | None = None
 
 
 class VentaEstadoUpdate(CamelModel):
@@ -91,7 +96,7 @@ class VentaFiltros(CamelModel):
     """Parámetros de listado (búsqueda, filtro y paginación)."""
 
     search: str | None = None
-    estado_venta: EstadoVenta | None = None   # None = "Todos los estados"
+    estado_venta: str | None = None   # None = "Todos los estados"
     page: int = Field(default=1, ge=1)
     page_size: int = Field(default=8, ge=1, le=100)
 
@@ -101,6 +106,7 @@ class VentaFiltros(CamelModel):
 # --------------------------------------------------------------------------
 class ItemVentaResponse(CamelModel):
     id_det_venta: int | None = None
+    id_producto_vari: int | None = None
     producto: ProductoResumen
     cantidad: int
     talla: str
@@ -118,6 +124,8 @@ class VentaResponse(CamelModel):
     codigo: str
     cliente: ClienteResumen
     fecha: date
+    fecha_entrega: date | None = None
+    foto_comprobante: str | None = None
     id_estado_comp: int | None = None
     estado_venta: str
     estado_pago: EstadoPago

@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { PAGE_SIZE } from "../../../data/dataVentas";
 import {
   obtenerVentas,
@@ -25,11 +25,13 @@ export function useVentas(pageSize = PAGE_SIZE) {
   const [cancelTarget, setCancelTarget] = useState(null);
   const [alertMessage, setAlertMessage] = useState(null);
 
+  const requestSeqRef = useRef(0);
+
   // Debounce para optimizar búsqueda en tiempo real
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearch(search);
-    }, 300);
+    }, 200);
     return () => clearTimeout(handler);
   }, [search]);
 
@@ -38,6 +40,7 @@ export function useVentas(pageSize = PAGE_SIZE) {
 
   /* ---------------- Cargar datos del Backend ---------------- */
   const cargarDatos = useCallback(async () => {
+    const seq = ++requestSeqRef.current;
     setLoading(true);
     try {
       // Cargar lista de ventas y métricas en paralelo (Promise.all)
@@ -50,6 +53,8 @@ export function useVentas(pageSize = PAGE_SIZE) {
         }),
         obtenerMetricasVentas().catch(() => null),
       ]);
+
+      if (seq !== requestSeqRef.current) return;
 
       if (respuestaVentas && Array.isArray(respuestaVentas.items)) {
         setVentas(respuestaVentas.items);
@@ -67,13 +72,16 @@ export function useVentas(pageSize = PAGE_SIZE) {
         setMetricasData(respuestaMetricas);
       }
     } catch (error) {
+      if (seq !== requestSeqRef.current) return;
       console.error("Error al conectar con la base de datos de ventas:", error.message);
       setBackendConectado(false);
       setVentas([]);
       setTotalRecords(0);
       setTotalPagesBackend(1);
     } finally {
-      setLoading(false);
+      if (seq === requestSeqRef.current) {
+        setLoading(false);
+      }
     }
   }, [debouncedSearch, estadoFilter, page, pageSize]);
 
@@ -179,7 +187,7 @@ export function useVentas(pageSize = PAGE_SIZE) {
 
   const handleChangeStatus = useCallback(async (updated) => {
     try {
-      await cambiarEstadoVenta(updated.id, updated.estadoVenta);
+      await cambiarEstadoVenta(updated.id, updated.estadoVenta, updated.idEstadoComp);
       setModal(null);
       await cargarDatos();
       setAlertMessage({

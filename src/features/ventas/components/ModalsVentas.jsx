@@ -1,18 +1,20 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Icons } from "../../../components/ui/Icons";
 import "../styles/ModalsVentas.css";
 import { listarMotivos, crearDevolucion } from "../../../services/devolucionesService";
+import { subirImagen, CARPETAS_UPLOAD } from "../../../services/uploadService";
 import { obtenerAuxiliaresVenta } from "../services/ventasService";
 import {
-  CLIENTES,
-  PRODUCTOS,
-  METODOS_PAGO,
   ESTADO_VENTA_META,
   ESTADO_PAGO_META,
   formatoMoneda,
 } from "../../../data/dataVentas";
 
 const cx = (...args) => args.flat().filter(Boolean).join(" ");
+const esMetodoDigital = (nombre = "") => {
+  const n = String(nombre || "").trim().toLowerCase();
+  return Boolean(n) && !n.includes("efectivo");
+};
 
 /* ------------------------------------------------------------------ */
 /*  PIEZAS COMPARTIDAS                                                */
@@ -115,86 +117,79 @@ const ProductosLista = ({ items = [], onRemove }) =>
 export function RegistrarVentaModal({ onClose, onGuardar }) {
   const [paso, setPaso] = useState(1);
 
-  // Auxiliares maestros de base de datos
-  const [listaClientes, setListaClientes] = useState(CLIENTES);
-  const [listaMetodosPago, setListaMetodosPago] = useState(
-    METODOS_PAGO.map((m, i) => ({ id: i + 1, nombre: m }))
-  );
+  // Auxiliares maestros 100% reales desde PostgreSQL / Supabase (sin datos mock)
+  const [listaClientes, setListaClientes] = useState([]);
+  const [listaMetodosPago, setListaMetodosPago] = useState([]);
   const [listaVariantes, setListaVariantes] = useState([]);
+  const [listaEstados, setListaEstados] = useState([]);
+  const [cargandoAux, setCargandoAux] = useState(true);
+  const [errorAux, setErrorAux] = useState("");
 
   const [clienteSel, setClienteSel] = useState(null);
   const [busqueda, setBusqueda] = useState("");
   const [items, setItems] = useState([]);
-  const [metodoPagoSel, setMetodoPagoSel] = useState(METODOS_PAGO[0]);
+  const [metodoPagoSel, setMetodoPagoSel] = useState(null);
+  const [fotoComprobante, setFotoComprobante] = useState("");
+  const [subiendoComprobante, setSubiendoComprobante] = useState(false);
+  const [errorComprobante, setErrorComprobante] = useState("");
+  const archivoComprobanteRef = useRef(null);
   const [prodId, setProdId] = useState("");
   const [cantidad, setCantidad] = useState(1);
-  const [talla, setTalla] = useState("M");
-  const [color, setColor] = useState("Negro");
+  const [talla, setTalla] = useState("");
+  const [color, setColor] = useState("");
   const [errorItem, setErrorItem] = useState(null);
 
-  // Cargar clientes, métodos de pago y variantes directamente desde la BD
+  // Cargar clientes, métodos de pago, estados y variantes directamente desde la BD
   useEffect(() => {
     let montado = true;
     obtenerAuxiliaresVenta()
       .then((data) => {
         if (!montado || !data) return;
-        if (Array.isArray(data.clientes) && data.clientes.length > 0) {
-          setListaClientes(data.clientes);
+        setListaClientes(Array.isArray(data.clientes) ? data.clientes : []);
+        const mps = Array.isArray(data.metodosPago) ? data.metodosPago : [];
+        setListaMetodosPago(mps);
+        if (mps.length > 0) {
+          setMetodoPagoSel(mps[0]);
         }
-        if (Array.isArray(data.metodosPago) && data.metodosPago.length > 0) {
-          setListaMetodosPago(data.metodosPago);
-          setMetodoPagoSel(data.metodosPago[0]);
-        }
-        if (Array.isArray(data.productos) && data.productos.length > 0) {
-          setListaVariantes(data.productos);
-          const primer = data.productos[0];
+        const prods = Array.isArray(data.productos) ? data.productos : [];
+        setListaVariantes(prods);
+        if (prods.length > 0) {
+          const primer = prods[0];
           setProdId(primer.idProducto);
           setTalla(primer.talla);
           setColor(primer.color);
         }
+        setListaEstados(Array.isArray(data.estados) ? data.estados : []);
+        setErrorAux("");
       })
       .catch((err) => {
-        console.warn("Usando datos locales de respaldo para RegistrarVentaModal:", err);
+        if (montado) {
+          setErrorAux(err.message || "No se pudieron cargar los catálogos desde PostgreSQL.");
+        }
+      })
+      .finally(() => {
+        if (montado) setCargandoAux(false);
       });
     return () => {
       montado = false;
     };
   }, []);
 
-  // Agrupar catálogo de productos desde las variantes de la BD
+  // Agrupar catálogo real de productos desde las variantes de la BD
   const productosUnicos = useMemo(() => {
-    if (listaVariantes.length > 0) {
-      const mapa = new Map();
-      for (const v of listaVariantes) {
-        if (!mapa.has(v.idProducto)) {
-          mapa.set(v.idProducto, {
-            id: v.idProducto,
-            nombre: v.nombre,
-            precio: v.precio,
-            variantes: [],
-          });
-        }
-        mapa.get(v.idProducto).variantes.push(v);
+    const mapa = new Map();
+    for (const v of listaVariantes) {
+      if (!mapa.has(v.idProducto)) {
+        mapa.set(v.idProducto, {
+          id: v.idProducto,
+          nombre: v.nombre,
+          precio: v.precio,
+          variantes: [],
+        });
       }
-      return Array.from(mapa.values());
+      mapa.get(v.idProducto).variantes.push(v);
     }
-    // Si no ha cargado la BD, usar catálogo estático de dataVentas
-    return PRODUCTOS.map((p) => ({
-      id: p.id,
-      nombre: p.nombre,
-      precio: p.precio,
-      variantes: (p.tallas || ["M"]).flatMap((t) =>
-        (p.colores || ["Negro"]).map((c) => ({
-          idProductoVari: p.id,
-          idProducto: p.id,
-          nombre: p.nombre,
-          color: c,
-          talla: t,
-          precio: p.precio,
-          stock: 99,
-        }))
-      ),
-    }));
+    return Array.from(mapa.values());
   }, [listaVariantes]);
 
   // Producto seleccionado actualmente
@@ -228,6 +223,13 @@ export function RegistrarVentaModal({ onClose, onGuardar }) {
   }, [prodSel, talla, color]);
 
   const stockDisponible = varianteSel?.stock ?? 0;
+  const cantidadYaAgregada = useMemo(() => {
+    if (!varianteSel) return 0;
+    return items
+      .filter((it) => it.idProductoVari === varianteSel.idProductoVari)
+      .reduce((acc, it) => acc + Number(it.cantidad || 0), 0);
+  }, [items, varianteSel]);
+  const stockRestante = Math.max(0, stockDisponible - cantidadYaAgregada);
   const precioUnitario = varianteSel?.precio ?? prodSel?.precio ?? 0;
 
   const handleCambioProducto = (nuevoId) => {
@@ -257,8 +259,8 @@ export function RegistrarVentaModal({ onClose, onGuardar }) {
   };
 
   const total = items.reduce((s, it) => s + (Number(it.subtotal) || 0), 0);
-  const nombreMetodoPago = typeof metodoPagoSel === "string" ? metodoPagoSel : (metodoPagoSel?.nombre || "Efectivo");
-  const estadoPago = nombreMetodoPago === "Efectivo" ? "Pendiente" : "Pagado";
+  const nombreMetodoPago = typeof metodoPagoSel === "string" ? metodoPagoSel : (metodoPagoSel?.nombre || "");
+  const estadoPago = nombreMetodoPago.toLowerCase().includes("efectivo") ? "Pendiente" : "Pagado";
 
   const clientesFiltrados = listaClientes.filter((cl) =>
     `${cl.nombre || ""} ${cl.email || ""} ${cl.documento || ""}`.toLowerCase().includes(busqueda.toLowerCase())
@@ -266,43 +268,85 @@ export function RegistrarVentaModal({ onClose, onGuardar }) {
 
   const agregar = () => {
     if (!varianteSel || cantidad < 1) return;
-    if (cantidad > stockDisponible) {
-      setErrorItem(`Stock insuficiente para este producto. Solo hay ${stockDisponible} unidades disponibles.`);
+    if (cantidad > stockRestante) {
+      setErrorItem(
+        stockRestante <= 0
+          ? "Ya agregaste todo el stock disponible para esta variante."
+          : `Stock insuficiente para esta variante. Quedan ${stockRestante} unidades disponibles.`
+      );
       return;
     }
     setErrorItem(null);
-    setItems((prev) => [
-      ...prev,
-      {
-        idProductoVari: varianteSel.idProductoVari,
-        producto: {
-          id: prodSel.id,
-          nombre: prodSel.nombre,
-          precio: precioUnitario,
+    setItems((prev) => {
+      const idxExistente = prev.findIndex((it) => it.idProductoVari === varianteSel.idProductoVari);
+      if (idxExistente >= 0) {
+        return prev.map((it, idx) => {
+          if (idx !== idxExistente) return it;
+          const nuevaCant = it.cantidad + cantidad;
+          return {
+            ...it,
+            cantidad: nuevaCant,
+            subtotal: precioUnitario * nuevaCant,
+          };
+        });
+      }
+      return [
+        ...prev,
+        {
+          idProductoVari: varianteSel.idProductoVari,
+          producto: {
+            id: prodSel.id,
+            nombre: prodSel.nombre,
+            precio: precioUnitario,
+          },
+          cantidad,
+          talla: varianteSel.talla,
+          color: varianteSel.color,
+          subtotal: precioUnitario * cantidad,
         },
-        cantidad,
-        talla: varianteSel.talla,
-        color: varianteSel.color,
-        subtotal: precioUnitario * cantidad,
-      },
-    ]);
+      ];
+    });
+    setCantidad(1);
   };
 
   const quitarItem = (idx) => {
     setItems((prev) => prev.filter((_, i) => i !== idx));
   };
 
+  const manejarSubidaComprobante = async (e) => {
+    const archivo = e.target.files?.[0];
+    e.target.value = "";
+    if (!archivo) return;
+    try {
+      setSubiendoComprobante(true);
+      setErrorComprobante("");
+      const res = await subirImagen(archivo, CARPETAS_UPLOAD.COMPROBANTES);
+      setFotoComprobante(res.url);
+    } catch (err) {
+      setErrorComprobante(err.message || "No se pudo subir el comprobante de pago.");
+    } finally {
+      setSubiendoComprobante(false);
+    }
+  };
+
   const confirmar = () => {
     const idMetodoPago = typeof metodoPagoSel === "object" && metodoPagoSel?.id ? metodoPagoSel.id : undefined;
+    const estPendiente = listaEstados.find(
+      (e) => String(e.nombre || "").trim().toLowerCase() === "pendiente"
+    );
     onGuardar({
       clienteId: clienteSel?.id,
       cliente: clienteSel,
       idMetodoPago,
       metodoPago: nombreMetodoPago,
+      idEstadoComp: estPendiente?.id,
+      estadoVenta: estPendiente?.nombre || "Pendiente",
+      estadoPago,
+      ...(esMetodoDigital(nombreMetodoPago) && fotoComprobante
+        ? { fotoComprobante }
+        : {}),
       items,
       total,
-      estadoVenta: "Pendiente",
-      estadoPago,
     });
   };
 
@@ -337,11 +381,11 @@ export function RegistrarVentaModal({ onClose, onGuardar }) {
       footer={
         <>
           {paso > 1 ? (
-            <button type="button" className="btn btn-outline" onClick={() => setPaso(paso - 1)}>
+            <button type="button" className="btn btn-outline" disabled={subiendoComprobante} onClick={() => setPaso(paso - 1)}>
               Atrás
             </button>
           ) : (
-            <button type="button" className="btn btn-outline" onClick={onClose}>
+            <button type="button" className="btn btn-outline" disabled={subiendoComprobante} onClick={onClose}>
               Cancelar
             </button>
           )}
@@ -349,10 +393,10 @@ export function RegistrarVentaModal({ onClose, onGuardar }) {
             <button
               type="button"
               className="btn btn-primary"
-              disabled={(paso === 1 && !clienteSel) || (paso === 2 && items.length === 0)}
+              disabled={(paso === 1 && !clienteSel) || (paso === 2 && items.length === 0) || (paso === 3 && !metodoPagoSel) || subiendoComprobante}
               onClick={() => setPaso(paso + 1)}
             >
-              Siguiente
+              {subiendoComprobante ? "Subiendo..." : "Siguiente"}
             </button>
           ) : (
             <button type="button" className="btn btn-primary" onClick={confirmar}>
@@ -394,7 +438,9 @@ export function RegistrarVentaModal({ onClose, onGuardar }) {
                 </div>
               </div>
             ))}
-            {clientesFiltrados.length === 0 && <p className="ru-v-hint">No se encontraron clientes.</p>}
+            {cargandoAux && <p className="ru-v-hint">Cargando clientes desde PostgreSQL...</p>}
+            {!cargandoAux && errorAux && <p className="ru-v-hint" style={{ color: "#ef4444" }}>{errorAux}</p>}
+            {!cargandoAux && !errorAux && clientesFiltrados.length === 0 && <p className="ru-v-hint">No se encontraron clientes.</p>}
           </div>
         </>
       )}
@@ -410,7 +456,11 @@ export function RegistrarVentaModal({ onClose, onGuardar }) {
                   className="ru-form-input"
                   value={prodSel?.id || ""}
                   onChange={(e) => handleCambioProducto(e.target.value)}
+                  disabled={cargandoAux || productosUnicos.length === 0}
                 >
+                  {productosUnicos.length === 0 && (
+                    <option value="">{cargandoAux ? "Cargando productos..." : "Sin productos disponibles"}</option>
+                  )}
                   {productosUnicos.map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.nombre} — {formatoMoneda(p.precio)}
@@ -423,7 +473,7 @@ export function RegistrarVentaModal({ onClose, onGuardar }) {
                   className="ru-form-input"
                   type="number"
                   min="1"
-                  max={Math.max(1, stockDisponible)}
+                  max={Math.max(1, stockRestante)}
                   value={cantidad}
                   onChange={(e) => {
                     setErrorItem(null);
@@ -447,9 +497,10 @@ export function RegistrarVentaModal({ onClose, onGuardar }) {
               </Field>
             </div>
 
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px", fontSize: "12px", color: stockDisponible > 0 ? "var(--color-text-muted, #64748b)" : "#ef4444" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px", fontSize: "12px", color: stockRestante > 0 ? "var(--color-text-muted, #64748b)" : "#ef4444" }}>
               <span>
-                Stock disponible en BD: <strong>{stockDisponible} unidades</strong>
+                Stock disponible en BD: <strong>{stockRestante} unidades</strong>
+                {cantidadYaAgregada > 0 ? ` (${cantidadYaAgregada} ya agregadas)` : ""}
               </span>
               <span>
                 Precio: <strong>{formatoMoneda(precioUnitario)}</strong>
@@ -466,10 +517,10 @@ export function RegistrarVentaModal({ onClose, onGuardar }) {
               type="button"
               className="btn btn-primary ru-v-block"
               onClick={agregar}
-              disabled={stockDisponible < 1}
+              disabled={stockRestante < 1 || !varianteSel}
             >
               <Icons.Plus width={17} height={17} />
-              <span>{stockDisponible < 1 ? "Agotado (Sin Stock)" : "Agregar producto"}</span>
+              <span>{stockRestante < 1 ? "Agotado (Sin Stock)" : "Agregar producto"}</span>
             </button>
           </div>
           {items.length > 0 && (
@@ -516,6 +567,60 @@ export function RegistrarVentaModal({ onClose, onGuardar }) {
               <span>Se registrará la orden con {nombreMetodoPago} para su validación contable.</span>
             )}
           </div>
+          {esMetodoDigital(nombreMetodoPago) && (
+            <div style={{ marginTop: "14px" }}>
+              <div className="ru-v-field-label">COMPROBANTE DE PAGO (OPCIONAL)</div>
+              <input
+                ref={archivoComprobanteRef}
+                type="file"
+                accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                onChange={manejarSubidaComprobante}
+                style={{ display: "none" }}
+              />
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  disabled={subiendoComprobante}
+                  onClick={() => archivoComprobanteRef.current?.click()}
+                >
+                  <span>
+                    {subiendoComprobante
+                      ? "Subiendo comprobante..."
+                      : fotoComprobante
+                        ? "Cambiar comprobante"
+                        : "Subir comprobante"}
+                  </span>
+                </button>
+                {fotoComprobante && (
+                  <div style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
+                    <a href={fotoComprobante} target="_blank" rel="noreferrer">
+                      <img
+                        src={fotoComprobante}
+                        alt="Vista previa comprobante"
+                        style={{ width: "48px", height: "48px", objectFit: "cover", borderRadius: "8px", display: "block" }}
+                      />
+                    </a>
+                    <button
+                      type="button"
+                      className="btn btn-outline"
+                      disabled={subiendoComprobante}
+                      onClick={() => setFotoComprobante("")}
+                      aria-label="Quitar comprobante"
+                      style={{ padding: "6px 10px" }}
+                    >
+                      <Icons.Close width={14} height={14} />
+                    </button>
+                  </div>
+                )}
+              </div>
+              {errorComprobante && (
+                <p className="ru-v-hint" style={{ color: "#ef4444", marginTop: "6px" }}>
+                  {errorComprobante}
+                </p>
+              )}
+            </div>
+          )}
         </>
       )}
 
@@ -533,6 +638,24 @@ export function RegistrarVentaModal({ onClose, onGuardar }) {
             <span>Estado pago</span>
             <Badge color={ESTADO_PAGO_META[estadoPago]}>{estadoPago}</Badge>
           </div>
+          {esMetodoDigital(nombreMetodoPago) && fotoComprobante && (
+            <div className="ru-v-kv">
+              <span>Comprobante</span>
+              <a
+                href={fotoComprobante}
+                target="_blank"
+                rel="noreferrer"
+                style={{ display: "inline-flex", alignItems: "center", gap: "8px", color: "inherit", fontWeight: 600 }}
+              >
+                <img
+                  src={fotoComprobante}
+                  alt="Comprobante de pago"
+                  style={{ width: "40px", height: "40px", objectFit: "cover", borderRadius: "6px" }}
+                />
+                <span>Ver imagen</span>
+              </a>
+            </div>
+          )}
         </>
       )}
     </ModalShell>
@@ -589,10 +712,37 @@ export function VerVentaModal({ venta, onClose, onEdit }) {
       </div>
 
       <Section>Comprobante de pago</Section>
-      <div className="ru-v-warning-box">
-        <span className="ru-v-warning-icon"><Icons.Info width={16} height={16} /></span>
-        <span>No se ha subido comprobante de pago. Estado: <strong>{String(venta.estadoPago).toUpperCase()}</strong></span>
-      </div>
+      {venta.fotoComprobante ? (
+        <div className="ru-v-info-box" style={{ flexDirection: "column", alignItems: "flex-start", gap: "10px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <span className="ru-v-info-icon"><Icons.Check width={16} height={16} /></span>
+            <span>
+              Comprobante registrado:{" "}
+              <a href={venta.fotoComprobante} target="_blank" rel="noreferrer" style={{ color: "inherit", fontWeight: 600 }}>
+                Ver comprobante
+              </a>
+            </span>
+          </div>
+          <a href={venta.fotoComprobante} target="_blank" rel="noreferrer" style={{ display: "block" }}>
+            <img
+              src={venta.fotoComprobante}
+              alt={`Comprobante ${venta.codigo}`}
+              style={{ maxWidth: "100%", maxHeight: "150px", objectFit: "cover", borderRadius: "8px", display: "block" }}
+            />
+          </a>
+        </div>
+      ) : (
+        <div className="ru-v-warning-box">
+          <span className="ru-v-warning-icon"><Icons.Info width={16} height={16} /></span>
+          <span>No se ha subido comprobante de pago. Estado: <strong>{String(venta.estadoPago).toUpperCase()}</strong></span>
+        </div>
+      )}
+      {venta.fechaEntrega && (
+        <div className="ru-v-kv plain">
+          <span>Fecha de entrega</span>
+          <strong>{venta.fechaEntrega}</strong>
+        </div>
+      )}
 
       <Section>Recibo</Section>
       <div className="ru-v-recibo">
@@ -639,12 +789,16 @@ export function EditarVentaModal({ venta, onClose, onSave }) {
   const [estadoVenta, setEstadoVenta] = useState(venta.estadoVenta);
   const [estadoPago, setEstadoPago] = useState(venta.estadoPago);
   const [metodoPago, setMetodoPago] = useState(venta.metodoPago);
+  const [fotoComprobante, setFotoComprobante] = useState(venta.fotoComprobante || "");
+  const [subiendoComprobante, setSubiendoComprobante] = useState(false);
+  const [errorComprobante, setErrorComprobante] = useState("");
+  const archivoComprobanteRef = useRef(null);
 
   const [listaMetodosPago, setListaMetodosPago] = useState(() =>
-    METODOS_PAGO.map((m, i) => ({ id: i + 1, nombre: m }))
+    venta.metodoPago ? [{ id: venta.idMetodoPago || venta.metodoPago, nombre: venta.metodoPago }] : []
   );
   const [listaEstados, setListaEstados] = useState(() =>
-    Object.keys(ESTADO_VENTA_META).map((e, i) => ({ id: i + 1, nombre: e }))
+    venta.estadoVenta ? [{ id: venta.idEstadoComp || venta.estadoVenta, nombre: venta.estadoVenta }] : []
   );
 
   // Cargar métodos de pago activos (tb_metodo_pago) y estados (tb_estado_comp) desde PostgreSQL
@@ -682,6 +836,22 @@ export function EditarVentaModal({ venta, onClose, onSave }) {
     };
   }, [venta.metodoPago, venta.idMetodoPago]);
 
+  const manejarSubidaComprobante = async (e) => {
+    const archivo = e.target.files?.[0];
+    e.target.value = "";
+    if (!archivo) return;
+    try {
+      setSubiendoComprobante(true);
+      setErrorComprobante("");
+      const res = await subirImagen(archivo, CARPETAS_UPLOAD.COMPROBANTES);
+      setFotoComprobante(res.url);
+    } catch (err) {
+      setErrorComprobante(err.message || "No se pudo subir el comprobante de pago.");
+    } finally {
+      setSubiendoComprobante(false);
+    }
+  };
+
   const handleGuardar = () => {
     const mpObj = listaMetodosPago.find((m) => m.nombre === metodoPago);
     const estObj = listaEstados.find((e) => e.nombre === estadoVenta);
@@ -692,6 +862,9 @@ export function EditarVentaModal({ venta, onClose, onSave }) {
       estadoPago,
       idMetodoPago: typeof mpObj?.id === "number" ? mpObj.id : undefined,
       metodoPago,
+      ...(fotoComprobante !== (venta.fotoComprobante || "")
+        ? { fotoComprobante: fotoComprobante.trim() || null }
+        : {}),
     });
   };
 
@@ -703,13 +876,14 @@ export function EditarVentaModal({ venta, onClose, onSave }) {
       maxWidth="500px"
       footer={
         <>
-          <button type="button" className="btn btn-outline" onClick={onClose}>Cancelar</button>
+          <button type="button" className="btn btn-outline" onClick={onClose} disabled={subiendoComprobante}>Cancelar</button>
           <button
             type="button"
             className="btn btn-primary"
             onClick={handleGuardar}
+            disabled={subiendoComprobante}
           >
-            Guardar cambios
+            {subiendoComprobante ? "Subiendo..." : "Guardar cambios"}
           </button>
         </>
       }
@@ -747,6 +921,59 @@ export function EditarVentaModal({ venta, onClose, onSave }) {
             ))}
           </select>
         </Field>
+        {esMetodoDigital(metodoPago) && (
+          <Field label="COMPROBANTE DE PAGO (OPCIONAL)" full>
+            <input
+              ref={archivoComprobanteRef}
+              type="file"
+              accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+              onChange={manejarSubidaComprobante}
+              style={{ display: "none" }}
+            />
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+              <button
+                type="button"
+                className="btn btn-outline"
+                disabled={subiendoComprobante}
+                onClick={() => archivoComprobanteRef.current?.click()}
+              >
+                <span>
+                  {subiendoComprobante
+                    ? "Subiendo comprobante..."
+                    : fotoComprobante
+                      ? "Cambiar comprobante"
+                      : "Subir comprobante"}
+                </span>
+              </button>
+              {fotoComprobante && (
+                <div style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
+                  <a href={fotoComprobante} target="_blank" rel="noreferrer">
+                    <img
+                      src={fotoComprobante}
+                      alt="Vista previa comprobante"
+                      style={{ width: "44px", height: "44px", objectFit: "cover", borderRadius: "8px", display: "block" }}
+                    />
+                  </a>
+                  <button
+                    type="button"
+                    className="btn btn-outline"
+                    disabled={subiendoComprobante}
+                    onClick={() => setFotoComprobante("")}
+                    aria-label="Quitar comprobante"
+                    style={{ padding: "6px 10px" }}
+                  >
+                    <Icons.Close width={14} height={14} />
+                  </button>
+                </div>
+              )}
+            </div>
+            {errorComprobante && (
+              <p className="ru-v-hint" style={{ color: "#ef4444", marginTop: "6px" }}>
+                {errorComprobante}
+              </p>
+            )}
+          </Field>
+        )}
       </div>
     </ModalShell>
   );
@@ -758,7 +985,7 @@ export function EditarVentaModal({ venta, onClose, onSave }) {
 export function CambiarEstadoModal({ venta, onClose, onSave }) {
   const [seleccion, setSeleccion] = useState(venta.estadoVenta);
   const [listaEstados, setListaEstados] = useState(() =>
-    Object.keys(ESTADO_VENTA_META).map((e, i) => ({ id: i + 1, nombre: e }))
+    venta.estadoVenta ? [{ id: venta.idEstadoComp || venta.estadoVenta, nombre: venta.estadoVenta }] : []
   );
 
   useEffect(() => {
@@ -776,6 +1003,15 @@ export function CambiarEstadoModal({ venta, onClose, onSave }) {
     };
   }, []);
 
+  const handleAplicar = () => {
+    const estObj = listaEstados.find((e) => e.nombre === seleccion);
+    onSave({
+      ...venta,
+      idEstadoComp: typeof estObj?.id === "number" ? estObj.id : undefined,
+      estadoVenta: seleccion,
+    });
+  };
+
   return (
     <ModalShell
       eyebrow={`VENTA ${venta.codigo}`}
@@ -788,7 +1024,7 @@ export function CambiarEstadoModal({ venta, onClose, onSave }) {
           <button
             type="button"
             className="btn btn-primary"
-            onClick={() => onSave({ ...venta, estadoVenta: seleccion })}
+            onClick={handleAplicar}
           >
             Aplicar
           </button>

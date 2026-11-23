@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Inicio.css';
 import {
@@ -23,6 +23,11 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import useTheme from '../../../components/hooks/useTheme';
+import { obtenerToken } from '../../usuarios/services/authService';
+import {
+  agregarItemCarrito,
+  obtenerCatalogoPublico,
+} from '../services/carritoService';
 
 const categories = [
   {
@@ -63,189 +68,6 @@ const features = [
     title: 'PARA TODOS',
     description: 'Hombre, mujer y accesorios en un solo lugar',
     icon: '○',
-  },
-];
-
-const DEFAULT_PRODUCTS = [
-  {
-    id: 1,
-    nombre: 'Chaqueta Premium Cuero',
-    tipo: 'Ropa',
-    publico: 'Hombre',
-    precio: 185000,
-    precioOriginal: 220000,
-    descripcion: 'Chaqueta urbana confeccionada en cuero sintético de alta resistencia con forro térmico y acabados metálicos.',
-    imagen: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?auto=format&fit=crop&w=800&q=80',
-    colores: ['Negro', 'Marrón'],
-    tallas: ['S', 'M', 'L', 'XL'],
-    badge: 'DESTACADO',
-    rating: 4.9,
-    reviews: 34,
-  },
-  {
-    id: 2,
-    nombre: 'Zapatos Casual Urbanos',
-    tipo: 'Tenis',
-    publico: 'Hombre',
-    precio: 145000,
-    precioOriginal: 175000,
-    descripcion: 'Tenis urbanos de suela vulcanizada con amortiguación premium, diseñados para el asfalto y el uso diario.',
-    imagen: 'https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?auto=format&fit=crop&w=800&q=80',
-    colores: ['Blanco', 'Negro', 'Gris'],
-    tallas: ['38', '39', '40', '41', '42'],
-    badge: 'NUEVO',
-    rating: 4.8,
-    reviews: 42,
-  },
-  {
-    id: 3,
-    nombre: 'Bolso Urbano Minimalista',
-    tipo: 'Bolsos',
-    publico: 'Mujer',
-    precio: 95000,
-    precioOriginal: 115000,
-    descripcion: 'Bolso cruzado resistente al agua con compartimento para tablet, textura mate y correa ergonómica.',
-    imagen: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=800&q=80',
-    colores: ['Negro', 'Beige', 'Verde'],
-    tallas: ['Única'],
-    badge: 'TENDENCIA',
-    rating: 5.0,
-    reviews: 29,
-  },
-  {
-    id: 4,
-    nombre: 'Manilla Tejida Negra',
-    tipo: 'Accesorios',
-    publico: 'Mujer',
-    precio: 8500,
-    precioOriginal: 12000,
-    descripcion: 'Manilla artesanal en hilo encerado de alta durabilidad con herrajes plateados y cierre ajustable.',
-    imagen: 'https://images.unsplash.com/photo-1611591475179-62cd34eb0e52?auto=format&fit=crop&w=800&q=80',
-    colores: ['Negro', 'Rojo', 'Azul'],
-    tallas: ['Ajustable'],
-    badge: 'POPULAR',
-    rating: 4.7,
-    reviews: 64,
-  },
-  {
-    id: 5,
-    nombre: 'Camiseta Básica Algodón',
-    tipo: 'Ropa',
-    publico: 'Hombre',
-    precio: 55000,
-    precioOriginal: 65000,
-    descripcion: 'Camiseta 100% algodón peinado de 220g, silueta relajada y cuello rib reforzado anti-deformación.',
-    imagen: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800&h=1000&fit=crop',
-    colores: ['Negro', 'Blanco', 'Gris', 'Azul'],
-    tallas: ['S', 'M', 'L', 'XL'],
-    badge: 'BÁSICO',
-    rating: 4.8,
-    reviews: 58,
-  },
-  {
-    id: 6,
-    nombre: 'Collar Artesanal Azul',
-    tipo: 'Accesorios',
-    publico: 'Mujer',
-    precio: 12000,
-    precioOriginal: 16000,
-    descripcion: 'Collar artesanal con dije náutico en acero pulido y cadena encerada ajustable.',
-    imagen: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=800&q=80',
-    colores: ['Azul', 'Dorado', 'Plateado'],
-    tallas: ['Única'],
-    badge: 'EXCLUSIVO',
-    rating: 4.9,
-    reviews: 31,
-  },
-  {
-    id: 7,
-    nombre: 'Tenis Street Classic',
-    tipo: 'Tenis',
-    publico: 'Unisex',
-    precio: 160000,
-    precioOriginal: 195000,
-    descripcion: 'Edición especial streetwear con plantilla acolchada memory foam y detalles reflectivos.',
-    imagen: 'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&w=800&q=80',
-    colores: ['Blanco', 'Negro'],
-    tallas: ['37', '38', '39', '40', '41', '42'],
-    badge: 'NUEVO',
-    rating: 4.9,
-    reviews: 18,
-  },
-  {
-    id: 8,
-    nombre: 'Bolso Bandolera Compacto',
-    tipo: 'Bolsos',
-    publico: 'Mujer',
-    precio: 85000,
-    precioOriginal: 99000,
-    descripcion: 'Bandolera compacta con textura suave, cierre magnético y bolsillo interno con cremallera.',
-    imagen: 'https://images.unsplash.com/photo-1590874103328-eac38a683ce7?auto=format&fit=crop&w=800&q=80',
-    colores: ['Marrón', 'Negro', 'Beige'],
-    tallas: ['Única'],
-    badge: 'OFERTA',
-    rating: 4.6,
-    reviews: 14,
-  },
-  {
-    id: 9,
-    nombre: 'Pantalón Recto Clásico',
-    tipo: 'Ropa',
-    publico: 'Mujer',
-    precio: 110000,
-    precioOriginal: 130000,
-    descripcion: 'Pantalón en drill suave de corte recto y tiro alto, ideal para un look casual estructurado.',
-    imagen: 'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=800&q=80',
-    colores: ['Negro', 'Beige', 'Gris'],
-    tallas: ['S', 'M', 'L'],
-    badge: 'CLÁSICO',
-    rating: 4.7,
-    reviews: 22,
-  },
-  {
-    id: 10,
-    nombre: 'Cinturón Hebilla Metálica',
-    tipo: 'Accesorios',
-    publico: 'Hombre',
-    precio: 45000,
-    precioOriginal: 55000,
-    descripcion: 'Cinturón táctico en reata resistente con hebilla metálica de aleación zinc de apertura rápida.',
-    imagen: 'https://images.unsplash.com/photo-1624222247344-550fb60583dc?auto=format&fit=crop&w=800&q=80',
-    colores: ['Negro', 'Verde', 'Marrón'],
-    tallas: ['Ajustable'],
-    badge: 'RESISTENTE',
-    rating: 4.8,
-    reviews: 37,
-  },
-  {
-    id: 11,
-    nombre: 'Chaqueta Denim Moderna',
-    tipo: 'Ropa',
-    publico: 'Mujer',
-    precio: 135000,
-    precioOriginal: 160000,
-    descripcion: 'Chaqueta en denim 100% algodón con desgastes sutiles y botones grabados metálicos.',
-    imagen: 'https://images.pexels.com/photos/19129082/pexels-photo-19129082.jpeg?auto=compress&cs=tinysrgb&w=800',
-    colores: ['Azul', 'Negro'],
-    tallas: ['S', 'M', 'L'],
-    badge: 'TENDENCIA',
-    rating: 4.9,
-    reviews: 41,
-  },
-  {
-    id: 12,
-    nombre: 'Tenis Retro High',
-    tipo: 'Tenis',
-    publico: 'Hombre',
-    precio: 175000,
-    precioOriginal: 210000,
-    descripcion: 'Silueta botín de caña media con protección de tobillo y cuero sintético de alto desgaste.',
-    imagen: 'https://images.unsplash.com/photo-1512374382149-233c42b6a83b?auto=format&fit=crop&w=800&q=80',
-    colores: ['Negro', 'Blanco', 'Rojo'],
-    tallas: ['39', '40', '41', '42', '43'],
-    badge: 'LIMITADO',
-    rating: 5.0,
-    reviews: 15,
   },
 ];
 
@@ -430,6 +252,64 @@ const Inicio = () => {
 
   // Toast flotante
   const [toast, setToast] = useState(null);
+  const [productosBase, setProductosBase] = useState([]);
+  const [cargandoCatalogo, setCargandoCatalogo] = useState(true);
+
+  useEffect(() => {
+    let activo = true;
+    obtenerCatalogoPublico()
+      .then((lista) => {
+        if (!activo || !Array.isArray(lista)) return;
+        const mapeados = lista
+          .filter((p) => String(p.estado || '').toLowerCase() === 'activo')
+          .map((p) => {
+            const variantesActivas = (p.variantes || []).filter(
+              (v) => String(v.estado || 'Activo').toLowerCase() === 'activo'
+            );
+            const precioMin = variantesActivas.length > 0
+              ? Math.min(...variantesActivas.map((v) => normalizarPrecio(v.precio)).filter((n) => n > 0))
+              : normalizarPrecio(p.precio);
+            const precioSeguro = Number.isFinite(precioMin) && precioMin > 0 ? precioMin : 0;
+            const stockTotal = variantesActivas.reduce((acc, v) => acc + Number(v.stock || 0), 0);
+
+            return {
+              id: p.id,
+              nombre: p.nombre,
+              tipo: p.tipo || 'Ropa',
+              publico: p.publico || 'Unisex',
+              precio: precioSeguro,
+              precioOriginal: null,
+              descripcion: p.descripcion || 'Pieza urbana Raíz Urbana.',
+              imagen: p.fotos?.[0] || p.foto || '',
+              foto: p.fotos?.[0] || p.foto || '',
+              variantes: variantesActivas.map((v) => ({
+                id: Number(v.id),
+                color: v.color || 'Único',
+                talla: v.talla || v.talle || 'Única',
+                precio: normalizarPrecio(v.precio),
+                stock: Number(v.stock || 0),
+              })),
+              colores: [...new Set(variantesActivas.map((v) => v.color).filter(Boolean))],
+              tallas: [...new Set(variantesActivas.map((v) => v.talla || v.talle).filter(Boolean))],
+              stockTotal,
+              badge: stockTotal > 0 ? 'DISPONIBLE' : 'AGOTADO',
+              rating: 4.9,
+              reviews: variantesActivas.length,
+            };
+          });
+        setProductosBase(mapeados);
+      })
+      .catch((err) => {
+        console.error('Error cargando catálogo real desde PostgreSQL:', err);
+        if (activo) setProductosBase([]);
+      })
+      .finally(() => {
+        if (activo) setCargandoCatalogo(false);
+      });
+    return () => {
+      activo = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (toast) {
@@ -459,50 +339,6 @@ const Inicio = () => {
       };
     }
   }, [productoModal]);
-
-  // Cargar productos base integrando posibles registros locales del admin
-  const productosBase = useMemo(() => {
-    let productosGuardados = [];
-    try {
-      const saved = localStorage.getItem('raiz-urbana-productos-v1');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          productosGuardados = parsed.map((p) => ({
-            id: p.id,
-            nombre: p.nombre,
-            tipo: p.tipo || 'Ropa',
-            publico: p.publico || 'Unisex',
-            precio: normalizarPrecio(p.variantes?.[0]?.precio ?? p.precio),
-            precioOriginal: Math.round(normalizarPrecio(p.variantes?.[0]?.precio ?? p.precio) * 1.2),
-            descripcion: p.descripcion || 'Pieza exclusiva urbana confeccionada con los mejores estándares de calidad.',
-            imagen: p.foto || '',
-            colores:
-              p.variantes?.length > 0
-                ? [...new Set(p.variantes.map((v) => v.color).filter(Boolean))]
-                : ['Negro', 'Blanco'],
-            tallas:
-              p.variantes?.length > 0
-                ? [...new Set(p.variantes.map((v) => v.talle || v.talla).filter(Boolean))]
-                : ['S', 'M', 'L'],
-            badge: p.estado === 'Activo' ? 'DISPONIBLE' : 'CATÁLOGO',
-            rating: 4.8,
-            reviews: 14,
-          }));
-        }
-      }
-    } catch (e) {
-      console.error('Error cargando productos de localStorage:', e);
-    }
-
-    if (productosGuardados.length > 0) {
-      const nombresDefault = new Set(DEFAULT_PRODUCTS.map((d) => d.nombre.toLowerCase()));
-      const nuevos = productosGuardados.filter((p) => !nombresDefault.has(p.nombre.toLowerCase()));
-      return [...DEFAULT_PRODUCTS, ...nuevos];
-    }
-
-    return DEFAULT_PRODUCTS;
-  }, []);
 
   // Filtrado reactivo y ordenación
   const productosFiltrados = useMemo(() => {
@@ -542,22 +378,87 @@ const Inicio = () => {
     return productosFiltrados.slice(inicio, inicio + itemsPorPagina);
   }, [productosFiltrados, paginaActual, itemsPorPagina]);
 
+  // Resolver la variante real seleccionada para un producto
+  const resolverVariante = (producto, colorParam, tallaParam) => {
+    const variantes = producto?.variantes || [];
+    if (variantes.length === 0) return null;
+    return (
+      variantes.find((v) => v.color === colorParam && v.talla === tallaParam) ||
+      variantes.find((v) => v.color === colorParam && v.stock > 0) ||
+      variantes.find((v) => v.color === colorParam) ||
+      variantes.find((v) => v.stock > 0) ||
+      variantes[0]
+    );
+  };
+
   // Apertura de modal de vista rápida
   const abrirVistaRapida = (producto) => {
     setProductoModal(producto);
-    const colorActual = coloresSeleccionados[producto.id] || producto.colores?.[0] || 'Negro';
-    setModalColor(colorActual);
-    setModalTalla(producto.tallas?.[0] || 'Única');
+    const colorActual = coloresSeleccionados[producto.id] || producto.colores?.[0] || '';
+    const vari = resolverVariante(producto, colorActual, producto.tallas?.[0]);
+    setModalColor(vari?.color || colorActual);
+    setModalTalla(vari?.talla || producto.tallas?.[0] || 'Única');
     setModalCantidad(1);
     setModalAgregado(false);
   };
 
-  // Agregar al carrito y sincronizar con Carrito.jsx
-  const agregarAlCarrito = (producto, colorParam, tallaParam, cantidad = 1) => {
-    if (normalizarPrecio(producto.precio) <= 0) return;
-    const color = colorParam || coloresSeleccionados[producto.id] || producto.colores?.[0] || 'Negro';
-    const talla = tallaParam || producto.tallas?.[0] || 'Única';
+  const varianteModal = useMemo(() => {
+    if (!productoModal) return null;
+    return resolverVariante(productoModal, modalColor, modalTalla);
+  }, [productoModal, modalColor, modalTalla]);
 
+  // Agregar al carrito real en Supabase (o staging en localStorage si no ha iniciado sesión)
+  const agregarAlCarrito = async (producto, colorParam, tallaParam, cantidad = 1) => {
+    const vari = resolverVariante(producto, colorParam, tallaParam);
+    if (!vari || vari.precio <= 0) return;
+
+    if (vari.stock <= 0) {
+      setToast({
+        error: true,
+        nombre: producto.nombre,
+        detalle: 'Esta variante se encuentra agotada en inventario.',
+      });
+      return;
+    }
+
+    if (cantidad > vari.stock) {
+      setToast({
+        error: true,
+        nombre: producto.nombre,
+        detalle: `Solo hay ${vari.stock} unidad(es) disponibles en inventario.`,
+      });
+      return;
+    }
+
+    if (obtenerToken()) {
+      try {
+        await agregarItemCarrito({
+          idProductoVari: vari.id,
+          cantidad,
+        });
+
+        setToast({
+          nombre: producto.nombre,
+          color: vari.color,
+          talla: vari.talla,
+          cantidad,
+        });
+
+        if (productoModal) {
+          setModalAgregado(true);
+          setTimeout(() => setModalAgregado(false), 2200);
+        }
+      } catch (err) {
+        setToast({
+          error: true,
+          nombre: producto.nombre,
+          detalle: err.message || 'No se pudo agregar al carrito.',
+        });
+      }
+      return;
+    }
+
+    // Visitante aún sin sesión: guardar con idProductoVari real para sincronizar al iniciar sesión
     try {
       const savedCart = localStorage.getItem('raiz_urbana_carrito');
       let cart = [];
@@ -571,22 +472,30 @@ const Inicio = () => {
       }
 
       const itemExistenteIndex = cart.findIndex(
-        (item) =>
-          (item.productId === String(producto.id) || item.name === producto.nombre) &&
-          item.color === color &&
-          item.talla === talla
+        (item) => Number(item.idProductoVari) === Number(vari.id)
       );
 
       if (itemExistenteIndex >= 0) {
-        cart[itemExistenteIndex].qty += cantidad;
+        const nuevaCant = cart[itemExistenteIndex].qty + cantidad;
+        if (nuevaCant > vari.stock) {
+          setToast({
+            error: true,
+            nombre: producto.nombre,
+            detalle: `Stock máximo disponible: ${vari.stock} unidad(es).`,
+          });
+          return;
+        }
+        cart[itemExistenteIndex].qty = nuevaCant;
       } else {
         cart.push({
+          idProductoVari: vari.id,
           productId: String(producto.id),
           name: producto.nombre,
-          color,
-          talla,
-          price: Number(producto.precio) || 0,
+          color: vari.color,
+          talla: vari.talla,
+          price: Number(vari.precio) || 0,
           qty: cantidad,
+          stock: vari.stock,
         });
       }
 
@@ -595,8 +504,8 @@ const Inicio = () => {
 
       setToast({
         nombre: producto.nombre,
-        color,
-        talla,
+        color: vari.color,
+        talla: vari.talla,
         cantidad,
       });
 
@@ -942,10 +851,10 @@ const Inicio = () => {
                         type="button"
                         className="inicio-btn-add-cart"
                         onClick={() => agregarAlCarrito(prod, colorActivo, prod.tallas?.[0] || 'Única', 1)}
-                          disabled={prod.precio <= 0}
+                        disabled={prod.precio <= 0 || prod.stockTotal <= 0}
                       >
                         <ShoppingBag size={15} />
-                        Añadir al carrito
+                        {prod.stockTotal <= 0 ? 'Agotado' : 'Añadir al carrito'}
                       </button>
                     </div>
                   </article>
@@ -955,9 +864,11 @@ const Inicio = () => {
           ) : (
             <div className="inicio-catalog-empty">
               <Package size={44} className="inicio-empty-icon" />
-              <h3>No encontramos productos</h3>
+              <h3>{cargandoCatalogo ? 'Cargando catálogo...' : 'No encontramos productos'}</h3>
               <p>
-                No hay resultados para los filtros seleccionados. Intenta con otra categoría o término de búsqueda.
+                {cargandoCatalogo
+                  ? 'Consultando productos y existencias en tiempo real desde la base de datos.'
+                  : 'No hay resultados para los filtros seleccionados. Intenta con otra categoría o término de búsqueda.'}
               </p>
               <button
                 type="button"
@@ -1116,13 +1027,15 @@ const Inicio = () => {
 
               <div className="inicio-quickview-price-row">
                 <span className="inicio-quickview-price">
-                  {productoModal.precio > 0 ? formatoPrecio(productoModal.precio) : 'Precio por definir'}
+                  {(varianteModal?.precio ?? productoModal.precio) > 0
+                    ? formatoPrecio(varianteModal?.precio ?? productoModal.precio)
+                    : 'Precio por definir'}
                 </span>
-                {productoModal.precioOriginal && productoModal.precioOriginal > productoModal.precio && (
-                  <span className="inicio-quickview-original">
-                    {formatoPrecio(productoModal.precioOriginal)}
-                  </span>
-                )}
+                <span style={{ fontSize: '12.5px', opacity: 0.78 }}>
+                  {varianteModal
+                    ? (varianteModal.stock > 0 ? `Stock disponible: ${varianteModal.stock} und.` : 'Agotado')
+                    : ''}
+                </span>
               </div>
 
               <p className="inicio-quickview-desc">
@@ -1197,7 +1110,12 @@ const Inicio = () => {
                   <button
                     type="button"
                     className="inicio-qty-btn"
-                    onClick={() => setModalCantidad((prev) => Math.min(10, prev + 1))}
+                    onClick={() =>
+                      setModalCantidad((prev) =>
+                        Math.min(Math.max(1, varianteModal?.stock || 1), prev + 1)
+                      )
+                    }
+                    disabled={!varianteModal || modalCantidad >= (varianteModal.stock || 0)}
                     aria-label="Aumentar cantidad"
                   >
                     <Plus size={14} />
@@ -1208,17 +1126,22 @@ const Inicio = () => {
                   type="button"
                   className="inicio-btn inicio-btn-primary inicio-quickview-btn-add"
                   onClick={() => agregarAlCarrito(productoModal, modalColor, modalTalla, modalCantidad)}
-                    disabled={productoModal.precio <= 0}
+                  disabled={!varianteModal || varianteModal.precio <= 0 || varianteModal.stock <= 0}
                 >
                   {modalAgregado ? (
                     <>
                       <Check size={16} />
                       ¡AÑADIDO!
                     </>
+                  ) : !varianteModal || varianteModal.stock <= 0 ? (
+                    <>
+                      <ShoppingBag size={16} />
+                      AGOTADO
+                    </>
                   ) : (
                     <>
                       <ShoppingBag size={16} />
-                      {productoModal.precio > 0 ? `AÑADIR (${formatoPrecio(productoModal.precio * modalCantidad)})` : 'PRECIO POR DEFINIR'}
+                      {`AÑADIR (${formatoPrecio(varianteModal.precio * modalCantidad)})`}
                     </>
                   )}
                 </button>
@@ -1247,9 +1170,13 @@ const Inicio = () => {
           </div>
 
           <div className="inicio-toast-content">
-            <div className="inicio-toast-title">¡Añadido al carrito!</div>
+            <div className="inicio-toast-title">
+              {toast.error ? 'Stock / Carrito' : '¡Añadido al carrito!'}
+            </div>
             <div className="inicio-toast-detail">
-              {toast.nombre} · {toast.color} · Talla {toast.talla} (x{toast.cantidad})
+              {toast.error
+                ? `${toast.nombre}: ${toast.detalle}`
+                : `${toast.nombre} · ${toast.color} · Talla ${toast.talla} (x${toast.cantidad})`}
             </div>
           </div>
 

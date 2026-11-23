@@ -1,91 +1,31 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ScatterChart, Scatter, BarChart, Bar, LineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList,
 } from "recharts";
 import {
-  ShoppingCart, DollarSign, Factory, Package, Users, TrendingUp,
+  ShoppingCart, DollarSign, Factory, Package, Users, TrendingUp, TrendingDown,
   Clock, X,
 } from "lucide-react";
+import { obtenerResumenDashboard } from "../services/dashboardService";
 import "./Dashboard.css";
 
-/* ============================================================
-   DATA — matches the reference screenshots exactly
-   ============================================================ */
+const fmt = (n) => "$" + Math.round(Number(n) || 0).toLocaleString("es-CO");
 
-const TOP_CLIENTES = [
-  { initials: "VR", nombre: "Valentina Ríos", ultima: "19 de Jun 2026", compras: 24, gastado: 128400 },
-  { initials: "SM", nombre: "Sebastián Molina", ultima: "17 de Jun 2026", compras: 19, gastado: 97500 },
-  { initials: "GT", nombre: "Gabriela Torres", ultima: "21 de Jun 2026", compras: 17, gastado: 85200 },
-  { initials: "AC", nombre: "Andrés Castillo", ultima: "14 de Jun 2026", compras: 15, gastado: 76000 },
-  { initials: "CH", nombre: "Camila Herrera", ultima: "22 de Jun 2026", compras: 13, gastado: 61800 },
-];
+const fmtCompactMoney = (n) => {
+  const val = Number(n) || 0;
+  if (val >= 1_000_000) {
+    return `$${(val / 1_000_000).toFixed(2).replace(/\.00$/, "")}M`;
+  }
+  return fmt(val);
+};
 
-const PRODUCTOS_VENDIDOS = [
-  { producto: "Vestido", nombreCompleto: "Vestido floral manga larga", tag: "Vestidos", uds: 142, ingresos: 852000 },
-  { producto: "Blusa", nombreCompleto: "Blusa de seda off-shoulder", tag: "Blusas", uds: 118, ingresos: 590000 },
-  { producto: "Pantalón", nombreCompleto: "Pantalón recto tiro alto", tag: "Pantalones", uds: 97, ingresos: 485000 },
-  { producto: "Chaqueta", nombreCompleto: "Chaqueta denim oversize", tag: "Chaquetas", uds: 84, ingresos: 756000 },
-  { producto: "Falda", nombreCompleto: "Falda midi plisada", tag: "Faldas", uds: 76, ingresos: 380000 },
-];
-
-const PRODUCTOS_FABRICADOS = [
-  { accesorio: "Manillas tejidas", uds: 320 },
-  { accesorio: "Pulseras de cuero", uds: 245 },
-  { accesorio: "Collares artesanales", uds: 198 },
-  { accesorio: "Aretes de tela", uds: 167 },
-  { accesorio: "Cinturones bordados", uds: 134 },
-];
-
-const GANANCIAS_MENSUALES = [
-  { mes: "Ene", mesLargo: "Ene 2026", ganancia: 38000 },
-  { mes: "Feb", mesLargo: "Feb 2026", ganancia: 42000 },
-  { mes: "Mar", mesLargo: "Mar 2026", ganancia: 39500 },
-  { mes: "Abr", mesLargo: "Abr 2026", ganancia: 51000 },
-  { mes: "May", mesLargo: "May 2026", ganancia: 47800 },
-  { mes: "Jun", mesLargo: "Jun 2026", ganancia: 56400 },
-  { mes: "Jul", mesLargo: "Jul 2026", ganancia: 53200 },
-  { mes: "Ago", mesLargo: "Ago 2026", ganancia: 61000 },
-  { mes: "Sep", mesLargo: "Sep 2026", ganancia: 58700 },
-  { mes: "Oct", mesLargo: "Oct 2026", ganancia: 67300 },
-  { mes: "Nov", mesLargo: "Nov 2026", ganancia: 72100 },
-  { mes: "Dic", mesLargo: "Dic 2026", ganancia: 85000 },
-];
-
-const PRODUCCION_MENSUAL = [
-  { mes: "Ene", mesLargo: "Ene 2026", produccion: 210, ventas: 185, diff: 25 },
-  { mes: "Feb", mesLargo: "Feb 2026", produccion: 245, ventas: 220, diff: 25 },
-  { mes: "Mar", mesLargo: "Mar 2026", produccion: 198, ventas: 210, diff: -12 },
-  { mes: "Abr", mesLargo: "Abr 2026", produccion: 280, ventas: 255, diff: 25 },
-  { mes: "May", mesLargo: "May 2026", produccion: 315, ventas: 290, diff: 25 },
-  { mes: "Jun", mesLargo: "Jun 2026", produccion: 362, ventas: 340, diff: 22 },
-  { mes: "Jul", mesLargo: "Jul 2026", produccion: 328, ventas: 315, diff: 13 },
-  { mes: "Ago", mesLargo: "Ago 2026", produccion: 395, ventas: 370, diff: 25 },
-];
-
-const INSUMOS_SERIES = [
-  { mes: "Ene", Hilo: 28, Dije: 18, Cierre: 15, Cadena: 22, Tela: 37 },
-  { mes: "Feb", Hilo: 32, Dije: 20, Cierre: 17, Cadena: 26, Tela: 44 },
-  { mes: "Mar", Hilo: 24, Dije: 15, Cierre: 14, Cadena: 30, Tela: 41 },
-  { mes: "Abr", Hilo: 33, Dije: 24, Cierre: 20, Cadena: 34, Tela: 34 },
-  { mes: "May", Hilo: 36, Dije: 25, Cierre: 24, Cadena: 31, Tela: 33 },
-  { mes: "Jun", Hilo: 40, Dije: 30, Cierre: 25, Cadena: 33, Tela: 36 },
-  { mes: "Jul", Hilo: 47, Dije: 26, Cierre: 28, Cadena: 30, Tela: 28 },
-  { mes: "Ago", Hilo: 55, Dije: 38, Cierre: 25, Cadena: 43, Tela: 29 },
-];
-
-const INSUMOS_TABLA = [
-  { mesLargo: "Ene 2026", uds: 120, variacion: null },
-  { mesLargo: "Feb 2026", uds: 135, variacion: 15 },
-  { mesLargo: "Mar 2026", uds: 118, variacion: -17 },
-  { mesLargo: "Abr 2026", uds: 148, variacion: 30 },
-  { mesLargo: "May 2026", uds: 162, variacion: 14 },
-  { mesLargo: "Jun 2026", uds: 175, variacion: 13 },
-  { mesLargo: "Jul 2026", uds: 158, variacion: -17 },
-  { mesLargo: "Ago 2026", uds: 189, variacion: 31 },
-];
-
-const fmt = (n) => "$" + n.toLocaleString("es-CO");
+const fmtTickMoney = (v) => {
+  const num = Number(v) || 0;
+  if (Math.abs(num) >= 1_000_000) return `$${(num / 1_000_000).toFixed(1)}M`;
+  if (Math.abs(num) >= 1000) return `$${Math.round(num / 1000)}k`;
+  return `$${num}`;
+};
 
 const FECHA_HOY = new Intl.DateTimeFormat("es-CO", {
   weekday: "long",
@@ -96,29 +36,37 @@ const FECHA_HOY = new Intl.DateTimeFormat("es-CO", {
 const FECHA_HOY_CAP = FECHA_HOY.charAt(0).toUpperCase() + FECHA_HOY.slice(1);
 
 /* ============================================================
-   COLORES DE GRÁFICAS
-   Recharts pinta con atributos SVG (fill/stroke), no con clases CSS,
-   así que se referencian directamente las variables definidas en
-   Dashboard.css. El navegador las resuelve según data-theme y se
-   actualizan solas al cambiar de tema, sin necesidad de JS.
+   COLORES DE GRÁFICAS (Variables CSS de Dashboard.css)
    ============================================================ */
 const CHART = {
   grid: "var(--chart-grid)",
   tick: "var(--chart-tick)",
   tickAlt: "var(--chart-tick-alt)",
-  c1: "var(--chart-1)", // navy — serie principal
-  c2: "var(--chart-2)", // rosa suave — serie secundaria
-  c3: "var(--chart-3)", // pizarra — fabricados / Dije
-  c4: "var(--chart-4)", // malva — Cierre
-  c5: "var(--chart-5)", // dorado — Cadena
+  c1: "var(--chart-1)",
+  c2: "var(--chart-2)",
+  c3: "var(--chart-3)",
+  c4: "var(--chart-4)",
+  c5: "var(--chart-5)",
 };
 
-const TAG_COLORS = {
-  Vestidos: { fg: "var(--tag-vestidos-fg)", bg: "var(--tag-vestidos-bg)" },
-  Blusas: { fg: "var(--tag-blusas-fg)", bg: "var(--tag-blusas-bg)" },
-  Pantalones: { fg: "var(--tag-pantalones-fg)", bg: "var(--tag-pantalones-bg)" },
-  Chaquetas: { fg: "var(--tag-chaquetas-fg)", bg: "var(--tag-chaquetas-bg)" },
-  Faldas: { fg: "var(--tag-faldas-fg)", bg: "var(--tag-faldas-bg)" },
+const LINE_PALETTE = [CHART.c1, CHART.c3, CHART.c4, CHART.c5, CHART.c2];
+
+const TAG_PALETTE = [
+  { fg: "var(--tag-vestidos-fg)", bg: "var(--tag-vestidos-bg)" },
+  { fg: "var(--tag-blusas-fg)", bg: "var(--tag-blusas-bg)" },
+  { fg: "var(--tag-pantalones-fg)", bg: "var(--tag-pantalones-bg)" },
+  { fg: "var(--tag-chaquetas-fg)", bg: "var(--tag-chaquetas-bg)" },
+  { fg: "var(--tag-faldas-fg)", bg: "var(--tag-faldas-bg)" },
+];
+
+const getTagStyle = (tag, idx = 0) => {
+  const key = String(tag || "").toLowerCase();
+  if (key.includes("vestid")) return TAG_PALETTE[0];
+  if (key.includes("blus") || key.includes("camis")) return TAG_PALETTE[1];
+  if (key.includes("pantal")) return TAG_PALETTE[2];
+  if (key.includes("chaquet") || key.includes("abrig")) return TAG_PALETTE[3];
+  if (key.includes("fald")) return TAG_PALETTE[4];
+  return TAG_PALETTE[idx % TAG_PALETTE.length];
 };
 
 /* ============================================================
@@ -132,16 +80,29 @@ function Delta({ value }) {
 }
 
 function KpiCard({ icon, label, value, delta, extra }) {
+  const deltaStr = String(delta || "");
+  const isPositive = deltaStr.startsWith("+") && deltaStr !== "+0%";
+  const isNegative = deltaStr.startsWith("-");
+  const toneClass = isPositive ? "up" : isNegative ? "down" : "neutral";
+
   return (
-    <div className="ru-kpi-card">
-      <div className="ru-kpi-top">
-        <span className="ru-kpi-label">{label}</span>
-        <span className="ru-kpi-icon">{icon}</span>
+    <div className="ru-dash-kpi-card">
+      <div className="ru-dash-kpi-top">
+        <span className="ru-dash-kpi-label">{label}</span>
+        <span className="ru-dash-kpi-icon">{icon}</span>
       </div>
-      <div className="ru-kpi-value">{value}</div>
-      <div className="ru-kpi-delta">
-        <span className="up"><TrendingUp size={13} /> {delta}</span>
-        {extra && <span>{extra}</span>}
+      <div className="ru-dash-kpi-main">
+        <div className="ru-dash-kpi-value">{value}</div>
+        <div className="ru-dash-kpi-delta">
+          {deltaStr && (
+            <span className={`ru-dash-kpi-pill ${toneClass}`}>
+              {isPositive && <TrendingUp size={12} />}
+              {isNegative && <TrendingDown size={12} />}
+              {deltaStr}
+            </span>
+          )}
+          {extra && <span className="ru-dash-kpi-extra">{extra}</span>}
+        </div>
       </div>
     </div>
   );
@@ -163,6 +124,25 @@ function ClienteLabel(props) {
     >
       {value}
     </text>
+  );
+}
+
+function EmptyChart({ texto = "Sin datos registrados en la base de datos." }) {
+  return (
+    <div
+      style={{
+        height: "100%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: 12.5,
+        color: "var(--muted-text)",
+        textAlign: "center",
+        padding: "0 12px",
+      }}
+    >
+      {texto}
+    </div>
   );
 }
 
@@ -191,33 +171,57 @@ function Modal({ eyebrow, title, onClose, children }) {
 }
 
 /* ============================================================
-   MODAL CONTENTS
+   MODAL CONTENTS (Conectados a Supabase)
    ============================================================ */
 
-function ModalTopClientes({ onClose }) {
-  const data = TOP_CLIENTES.map((c) => ({ x: c.compras, y: c.gastado, nombre: c.nombre.split(" ")[0] }));
-  const top = TOP_CLIENTES[0];
-  const promedio = Math.round(TOP_CLIENTES.reduce((s, c) => s + c.gastado, 0) / TOP_CLIENTES.length);
+function ModalTopClientes({ clientes, onClose }) {
+  const data = clientes.map((c) => ({ x: c.compras, y: c.gastado, nombre: c.nombre.split(" ")[0] }));
+  const top = clientes[0] || null;
+  const promedio = clientes.length
+    ? Math.round(clientes.reduce((s, c) => s + Number(c.gastado || 0), 0) / clientes.length)
+    : 0;
+  const maxX = Math.max(4, ...clientes.map((c) => Number(c.compras || 0))) + 2;
+
   return (
     <Modal eyebrow="ESTADÍSTICA · CLIENTES" title="Top clientes" onClose={onClose}>
       <div className="ru-modal-chart">
-        <ResponsiveContainer width="100%" height="100%">
-          <ScatterChart margin={{ top: 10, right: 55, bottom: 0, left: -10 }}>
-            <CartesianGrid stroke={CHART.grid} strokeDasharray="3 3" />
-            <XAxis type="number" dataKey="x" name="N° compras" domain={[0, 26]} ticks={[0, 6, 12, 18, 24]}
-              tick={{ fontSize: 11, fill: CHART.tick }} axisLine={{ stroke: CHART.grid }} tickLine={false}
-              label={{ value: "N.° compras", position: "insideBottom", offset: -4, fontSize: 11, fill: CHART.tick }} />
-            <YAxis type="number" dataKey="y" name="Gastado" domain={[0, 140000]}
-              tickFormatter={(v) => `$${v / 1000}k`} tick={{ fontSize: 11, fill: CHART.tick }}
-              axisLine={false} tickLine={false} />
-            <Tooltip cursor={{ strokeDasharray: "3 3" }}
-              formatter={(v, n) => (n === "y" ? fmt(v) : v)}
-              labelFormatter={() => ""} />
-            <Scatter data={data} fill={CHART.c1}>
-              <LabelList dataKey="nombre" content={ClienteLabel} />
-            </Scatter>
-          </ScatterChart>
-        </ResponsiveContainer>
+        {data.length > 0 ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <ScatterChart margin={{ top: 10, right: 55, bottom: 0, left: -10 }}>
+              <CartesianGrid stroke={CHART.grid} strokeDasharray="3 3" />
+              <XAxis
+                type="number"
+                dataKey="x"
+                name="N° compras"
+                domain={[0, maxX]}
+                allowDecimals={false}
+                tick={{ fontSize: 11, fill: CHART.tick }}
+                axisLine={{ stroke: CHART.grid }}
+                tickLine={false}
+                label={{ value: "N.° compras", position: "insideBottom", offset: -4, fontSize: 11, fill: CHART.tick }}
+              />
+              <YAxis
+                type="number"
+                dataKey="y"
+                name="Gastado"
+                tickFormatter={fmtTickMoney}
+                tick={{ fontSize: 11, fill: CHART.tick }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <Tooltip
+                cursor={{ strokeDasharray: "3 3" }}
+                formatter={(v, n) => (n === "y" ? fmt(v) : v)}
+                labelFormatter={() => ""}
+              />
+              <Scatter data={data} fill={CHART.c1}>
+                <LabelList dataKey="nombre" content={ClienteLabel} />
+              </Scatter>
+            </ScatterChart>
+          </ResponsiveContainer>
+        ) : (
+          <EmptyChart />
+        )}
       </div>
       <div className="ru-table-wrap">
         <table className="ru-table">
@@ -225,8 +229,8 @@ function ModalTopClientes({ onClose }) {
             <tr><th>CLIENTE</th><th>COMPRAS</th><th>TOTAL GASTADO</th></tr>
           </thead>
           <tbody>
-            {TOP_CLIENTES.map((c) => (
-              <tr key={c.nombre}>
+            {clientes.map((c) => (
+              <tr key={c.idUsuario || c.nombre}>
                 <td>
                   <div className="ru-client-cell">
                     <span className="ru-avatar">{c.initials}</span>
@@ -243,32 +247,37 @@ function ModalTopClientes({ onClose }) {
           </tbody>
         </table>
       </div>
-      <div className="ru-modal-summary-line">
-        <div>Cliente top<br /><b style={{ color: "var(--primary)", fontSize: 13 }}>{top.nombre}</b><br />{fmt(top.gastado)}</div>
-        <div style={{ textAlign: "right" }}>Promedio por cliente<br /><b style={{ color: "var(--primary)", fontSize: 13 }}>{fmt(promedio)}</b><br />total gastado</div>
-      </div>
+      {top && (
+        <div className="ru-modal-summary-line">
+          <div>Cliente top<br /><b style={{ color: "var(--primary)", fontSize: 13 }}>{top.nombre}</b><br />{fmt(top.gastado)}</div>
+          <div style={{ textAlign: "right" }}>Promedio por cliente<br /><b style={{ color: "var(--primary)", fontSize: 13 }}>{fmt(promedio)}</b><br />total gastado</div>
+        </div>
+      )}
     </Modal>
   );
 }
 
-function ModalProductosVendidos({ onClose }) {
-  const totalIngresos = PRODUCTOS_VENDIDOS.reduce((s, p) => s + p.ingresos, 0);
-  const lider = PRODUCTOS_VENDIDOS[0];
+function ModalProductosVendidos({ productos, onClose }) {
+  const totalIngresos = productos.reduce((s, p) => s + Number(p.ingresos || 0), 0);
+  const lider = productos[0] || null;
   return (
     <Modal eyebrow="ESTADÍSTICA · PRODUCTOS" title="Productos más vendidos" onClose={onClose}>
       <div className="ru-modal-chart">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={PRODUCTOS_VENDIDOS} margin={{ top: 10, right: 8, bottom: 0, left: -18 }}>
-            <CartesianGrid stroke={CHART.grid} strokeDasharray="3 3" vertical={false} />
-            <XAxis dataKey="producto" tick={{ fontSize: 11, fill: CHART.tick }} axisLine={{ stroke: CHART.grid }} tickLine={false} />
-            <YAxis yAxisId="left" tick={{ fontSize: 10, fill: CHART.tick }} axisLine={false} tickLine={false} />
-            <YAxis yAxisId="right" orientation="right" tickFormatter={(v) => `$${v / 1000}k`}
-              tick={{ fontSize: 10, fill: CHART.tick }} axisLine={false} tickLine={false} />
-            <Tooltip formatter={(v, n) => [n === "uds" ? `${v} uds` : fmt(v), n === "uds" ? "Unidades" : "Ingresos"]} />
-            <Bar yAxisId="left" dataKey="uds" fill={CHART.c1} radius={[3, 3, 0, 0]} barSize={16} />
-            <Bar yAxisId="right" dataKey="ingresos" fill={CHART.c2} radius={[3, 3, 0, 0]} barSize={16} />
-          </BarChart>
-        </ResponsiveContainer>
+        {productos.length > 0 ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={productos} margin={{ top: 10, right: 8, bottom: 0, left: -18 }}>
+              <CartesianGrid stroke={CHART.grid} strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="producto" tick={{ fontSize: 11, fill: CHART.tick }} axisLine={{ stroke: CHART.grid }} tickLine={false} />
+              <YAxis yAxisId="left" allowDecimals={false} tick={{ fontSize: 10, fill: CHART.tick }} axisLine={false} tickLine={false} />
+              <YAxis yAxisId="right" orientation="right" tickFormatter={fmtTickMoney} tick={{ fontSize: 10, fill: CHART.tick }} axisLine={false} tickLine={false} />
+              <Tooltip formatter={(v, n) => [n === "uds" ? `${v} uds` : fmt(v), n === "uds" ? "Unidades" : "Ingresos"]} />
+              <Bar yAxisId="left" dataKey="uds" fill={CHART.c1} radius={[3, 3, 0, 0]} barSize={16} />
+              <Bar yAxisId="right" dataKey="ingresos" fill={CHART.c2} radius={[3, 3, 0, 0]} barSize={16} />
+            </BarChart>
+          </ResponsiveContainer>
+        ) : (
+          <EmptyChart />
+        )}
       </div>
       <div className="ru-legend-row">
         <span className="ru-legend-item"><span className="sq" style={{ background: CHART.c1 }} /><span style={{ color: "var(--primary)" }}>Unidades</span></span>
@@ -278,48 +287,57 @@ function ModalProductosVendidos({ onClose }) {
         <table className="ru-table">
           <thead><tr><th>PRODUCTO</th><th>CANT. VENDIDA</th><th>INGRESOS</th></tr></thead>
           <tbody>
-            {PRODUCTOS_VENDIDOS.map((p) => (
-              <tr key={p.producto}>
-                <td>
-                  <div className="ru-client-name">{p.nombreCompleto}</div>
-                  <span className="ru-tag" style={{ background: TAG_COLORS[p.tag].bg, color: TAG_COLORS[p.tag].fg }}>{p.tag}</span>
-                </td>
-                <td>{p.uds} uds</td>
-                <td>{fmt(p.ingresos)}</td>
-              </tr>
-            ))}
+            {productos.map((p, idx) => {
+              const tagColor = getTagStyle(p.tag, idx);
+              return (
+                <tr key={p.idProducto || p.nombreCompleto}>
+                  <td>
+                    <div className="ru-client-name">{p.nombreCompleto}</div>
+                    <span className="ru-tag" style={{ background: tagColor.bg, color: tagColor.fg }}>{p.tag}</span>
+                  </td>
+                  <td>{p.uds} uds</td>
+                  <td>{fmt(p.ingresos)}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
-      <div className="ru-modal-summary-line">
-        <div>Producto líder<br /><b style={{ color: "var(--primary)", fontSize: 13 }}>{lider.nombreCompleto}</b><br />{lider.uds} unidades</div>
-        <div style={{ textAlign: "right" }}>Ingresos totales<br /><b style={{ color: "var(--primary)", fontSize: 13 }}>{fmt(totalIngresos)}</b><br />top 5 productos</div>
-      </div>
+      {lider && (
+        <div className="ru-modal-summary-line">
+          <div>Producto líder<br /><b style={{ color: "var(--primary)", fontSize: 13 }}>{lider.nombreCompleto}</b><br />{lider.uds} unidades</div>
+          <div style={{ textAlign: "right" }}>Ingresos totales<br /><b style={{ color: "var(--primary)", fontSize: 13 }}>{fmt(totalIngresos)}</b><br />top {productos.length} productos</div>
+        </div>
+      )}
     </Modal>
   );
 }
 
-function ModalProductosFabricados({ onClose }) {
-  const total = PRODUCTOS_FABRICADOS.reduce((s, p) => s + p.uds, 0);
+function ModalProductosFabricados({ fabricados, onClose }) {
+  const total = fabricados.reduce((s, p) => s + Number(p.uds || 0), 0);
   return (
     <Modal eyebrow="ESTADÍSTICA · PRODUCCIÓN" title="Productos más fabricados" onClose={onClose}>
       <div className="ru-modal-chart" style={{ height: 190 }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={PRODUCTOS_FABRICADOS} layout="vertical" margin={{ top: 4, right: 20, bottom: 0, left: 10 }}>
-            <CartesianGrid stroke={CHART.grid} strokeDasharray="3 3" horizontal={false} />
-            <XAxis type="number" domain={[0, 320]} tick={{ fontSize: 10, fill: CHART.tick }} axisLine={{ stroke: CHART.grid }} tickLine={false} />
-            <YAxis type="category" dataKey="accesorio" width={100} tick={{ fontSize: 10.5, fill: CHART.tickAlt }} axisLine={false} tickLine={false} />
-            <Tooltip formatter={(v) => [`${v} uds`, "Fabricadas"]} />
-            <Bar dataKey="uds" fill={CHART.c3} radius={[0, 4, 4, 0]} barSize={16} />
-          </BarChart>
-        </ResponsiveContainer>
+        {fabricados.length > 0 ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={fabricados} layout="vertical" margin={{ top: 4, right: 20, bottom: 0, left: 10 }}>
+              <CartesianGrid stroke={CHART.grid} strokeDasharray="3 3" horizontal={false} />
+              <XAxis type="number" allowDecimals={false} tick={{ fontSize: 10, fill: CHART.tick }} axisLine={{ stroke: CHART.grid }} tickLine={false} />
+              <YAxis type="category" dataKey="accesorio" width={110} tick={{ fontSize: 10.5, fill: CHART.tickAlt }} axisLine={false} tickLine={false} />
+              <Tooltip formatter={(v) => [`${v} uds`, "Fabricadas"]} />
+              <Bar dataKey="uds" fill={CHART.c3} radius={[0, 4, 4, 0]} barSize={16} />
+            </BarChart>
+          </ResponsiveContainer>
+        ) : (
+          <EmptyChart />
+        )}
       </div>
       <div className="ru-table-wrap">
         <table className="ru-table">
-          <thead><tr><th>ACCESORIO</th><th>CANT. FABRICADA</th></tr></thead>
+          <thead><tr><th>ACCESORIO / PRODUCTO</th><th>CANT. FABRICADA</th></tr></thead>
           <tbody>
-            {PRODUCTOS_FABRICADOS.map((p) => (
-              <tr key={p.accesorio}><td>{p.accesorio}</td><td>{p.uds} uds</td></tr>
+            {fabricados.map((p) => (
+              <tr key={p.idProducto || p.accesorio}><td>{p.accesorio}</td><td>{p.uds} uds</td></tr>
             ))}
             <tr><td><b>Total fabricado</b></td><td><b>{total} uds</b></td></tr>
           </tbody>
@@ -327,69 +345,83 @@ function ModalProductosFabricados({ onClose }) {
       </div>
       <div className="ru-context-note">
         <b>Nota de contexto</b><br />
-        Los productos fabricados corresponden a <b>accesorios producidos internamente</b>. La ropa que no aparece aquí puede ser revendida sin producción propia.
+        Los productos fabricados provienen directamente de las órdenes registradas en <b>tb_detalle_produccion</b>.
       </div>
     </Modal>
   );
 }
 
-function ModalGananciasMensuales({ onClose }) {
-  const mesActual = GANANCIAS_MENSUALES[5];
-  const mejorMes = GANANCIAS_MENSUALES.reduce((a, b) => (b.ganancia > a.ganancia ? b : a));
-  const totalAnual = GANANCIAS_MENSUALES.reduce((s, m) => s + m.ganancia, 0);
+function ModalGananciasMensuales({ ganancias, onClose }) {
+  const mesActual = ganancias[ganancias.length - 1] || { ganancia: 0, mesLargo: "—" };
+  const mejorMes = ganancias.length
+    ? ganancias.reduce((a, b) => (Number(b.ganancia) > Number(a.ganancia) ? b : a))
+    : { ganancia: 0, mesLargo: "—" };
+  const totalAnual = ganancias.reduce((s, m) => s + Number(m.ganancia || 0), 0);
   return (
     <Modal eyebrow="ESTADÍSTICA · FINANZAS" title="Ganancias mensuales" onClose={onClose}>
       <div className="ru-modal-chart">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={GANANCIAS_MENSUALES} margin={{ top: 10, right: 16, bottom: 0, left: -10 }}>
-            <CartesianGrid stroke={CHART.grid} strokeDasharray="3 3" vertical={false} />
-            <XAxis dataKey="mes" tick={{ fontSize: 10.5, fill: CHART.tick }} axisLine={{ stroke: CHART.grid }} tickLine={false} />
-            <YAxis tickFormatter={(v) => `$${v / 1000}k`} tick={{ fontSize: 10.5, fill: CHART.tick }} axisLine={false} tickLine={false} />
-            <Tooltip formatter={(v) => fmt(v)} />
-            <Line type="monotone" dataKey="ganancia" stroke={CHART.c1} strokeWidth={2} dot={{ r: 3, fill: CHART.c1 }} activeDot={{ r: 5 }} />
-          </LineChart>
-        </ResponsiveContainer>
+        {ganancias.length > 0 ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={ganancias} margin={{ top: 10, right: 16, bottom: 0, left: -10 }}>
+              <CartesianGrid stroke={CHART.grid} strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="mes" tick={{ fontSize: 10.5, fill: CHART.tick }} axisLine={{ stroke: CHART.grid }} tickLine={false} />
+              <YAxis tickFormatter={fmtTickMoney} tick={{ fontSize: 10.5, fill: CHART.tick }} axisLine={false} tickLine={false} />
+              <Tooltip formatter={(v) => [fmt(v), "Ingresos por ventas"]} />
+              <Line type="monotone" dataKey="ganancia" stroke={CHART.c1} strokeWidth={2} dot={{ r: 3, fill: CHART.c1 }} activeDot={{ r: 5 }} />
+            </LineChart>
+          </ResponsiveContainer>
+        ) : (
+          <EmptyChart />
+        )}
       </div>
       <div className="ru-table-wrap">
         <table className="ru-table">
-          <thead><tr><th>MES</th><th>GANANCIA</th></tr></thead>
+          <thead><tr><th>MES</th><th>INGRESOS VENTAS</th></tr></thead>
           <tbody>
-            {GANANCIAS_MENSUALES.map((m) => (
+            {ganancias.map((m) => (
               <tr key={m.mesLargo}><td>{m.mesLargo}</td><td>{fmt(m.ganancia)}</td></tr>
             ))}
           </tbody>
         </table>
       </div>
       <div className="ru-modal-summary-line">
-        <div>Mes actual<br /><b style={{ color: "var(--primary)", fontSize: 13 }}>{fmt(mesActual.ganancia)}</b></div>
-        <div style={{ textAlign: "center" }}>Mejor mes<br /><b style={{ color: "var(--primary)", fontSize: 13 }}>{fmt(mejorMes.ganancia)}</b></div>
-        <div style={{ textAlign: "right" }}>Total anual<br /><b style={{ color: "var(--primary)", fontSize: 13 }}>{fmt(totalAnual)}</b></div>
+        <div>Último mes ({mesActual.mesLargo})<br /><b style={{ color: "var(--primary)", fontSize: 13 }}>{fmt(mesActual.ganancia)}</b></div>
+        <div style={{ textAlign: "center" }}>Mejor mes ({mejorMes.mesLargo})<br /><b style={{ color: "var(--primary)", fontSize: 13 }}>{fmt(mejorMes.ganancia)}</b></div>
+        <div style={{ textAlign: "right" }}>Total acumulado<br /><b style={{ color: "var(--primary)", fontSize: 13 }}>{fmt(totalAnual)}</b></div>
       </div>
     </Modal>
   );
 }
 
-function ModalProduccionMensual({ onClose }) {
-  const totalProducido = PRODUCCION_MENSUAL.reduce((s, m) => s + m.produccion, 0);
-  const totalVendido = PRODUCCION_MENSUAL.reduce((s, m) => s + m.ventas, 0);
+function ModalProduccionMensual({ produccion, onClose }) {
+  const totalProducido = produccion.reduce((s, m) => s + Number(m.produccion || 0), 0);
+  const totalVendido = produccion.reduce((s, m) => s + Number(m.ventas || 0), 0);
+  const rango = produccion.length > 1
+    ? `${produccion[0].mesLargo} – ${produccion[produccion.length - 1].mesLargo}`
+    : produccion[0]?.mesLargo || "Sin periodo";
   return (
     <Modal eyebrow="ESTADÍSTICA · PRODUCCIÓN" title="Producción mensual" onClose={onClose}>
       <div className="ru-modal-chart">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={PRODUCCION_MENSUAL} margin={{ top: 10, right: 8, bottom: 0, left: -18 }}>
-            <CartesianGrid stroke={CHART.grid} strokeDasharray="3 3" vertical={false} />
-            <XAxis dataKey="mes" tick={{ fontSize: 10.5, fill: CHART.tick }} axisLine={{ stroke: CHART.grid }} tickLine={false} />
-            <YAxis tick={{ fontSize: 10.5, fill: CHART.tick }} axisLine={false} tickLine={false} />
-            <Tooltip />
-            <Bar dataKey="produccion" fill={CHART.c1} radius={[3, 3, 0, 0]} barSize={20} />
-          </BarChart>
-        </ResponsiveContainer>
+        {produccion.length > 0 ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={produccion} margin={{ top: 10, right: 8, bottom: 0, left: -18 }}>
+              <CartesianGrid stroke={CHART.grid} strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="mes" tick={{ fontSize: 10.5, fill: CHART.tick }} axisLine={{ stroke: CHART.grid }} tickLine={false} />
+              <YAxis allowDecimals={false} tick={{ fontSize: 10.5, fill: CHART.tick }} axisLine={false} tickLine={false} />
+              <Tooltip />
+              <Bar dataKey="produccion" name="Producción" fill={CHART.c1} radius={[3, 3, 0, 0]} barSize={16} />
+              <Bar dataKey="ventas" name="Ventas" fill={CHART.c2} radius={[3, 3, 0, 0]} barSize={16} />
+            </BarChart>
+          </ResponsiveContainer>
+        ) : (
+          <EmptyChart />
+        )}
       </div>
       <div className="ru-table-wrap">
         <table className="ru-table">
           <thead><tr><th>MES</th><th>PRODUCCIÓN</th><th>VENTAS</th><th>DIFERENCIA</th></tr></thead>
           <tbody>
-            {PRODUCCION_MENSUAL.map((m) => (
+            {produccion.map((m) => (
               <tr key={m.mesLargo}>
                 <td>{m.mesLargo}</td>
                 <td>{m.produccion} uds</td>
@@ -401,46 +433,54 @@ function ModalProduccionMensual({ onClose }) {
         </table>
       </div>
       <div className="ru-modal-summary-line">
-        <div>Total producido<br /><b style={{ color: "var(--primary)", fontSize: 13 }}>{totalProducido} uds</b><br />Ene – Ago 2026</div>
-        <div style={{ textAlign: "right" }}>Total vendido<br /><b style={{ color: "var(--primary)", fontSize: 13 }}>{totalVendido} uds</b><br />Ene – Ago 2026</div>
+        <div>Total producido<br /><b style={{ color: "var(--primary)", fontSize: 13 }}>{totalProducido} uds</b><br />{rango}</div>
+        <div style={{ textAlign: "right" }}>Total vendido<br /><b style={{ color: "var(--primary)", fontSize: 13 }}>{totalVendido} uds</b><br />{rango}</div>
       </div>
     </Modal>
   );
 }
 
-function ModalInsumos({ onClose }) {
-  const total = INSUMOS_TABLA.reduce((s, m) => s + m.uds, 0);
-  const mejorMes = INSUMOS_TABLA.reduce((a, b) => (b.uds > a.uds ? b : a));
-  const promedio = Math.round(total / INSUMOS_TABLA.length);
-  const colors = { Hilo: CHART.c1, Dije: CHART.c3, Cierre: CHART.c4, Cadena: CHART.c5, Tela: CHART.c2 };
+function ModalInsumos({ insumosNombres, insumosSeries, insumosTabla, onClose }) {
+  const total = insumosTabla.reduce((s, m) => s + Number(m.uds || 0), 0);
+  const mejorMes = insumosTabla.length
+    ? insumosTabla.reduce((a, b) => (Number(b.uds) > Number(a.uds) ? b : a))
+    : { mesLargo: "—", uds: 0 };
+  const promedio = insumosTabla.length ? Math.round(total / insumosTabla.length) : 0;
+
   return (
     <Modal eyebrow="ESTADÍSTICA · CONSUMO ESTIMADO SEGÚN FICHA TÉCNICA" title="Insumos más utilizados" onClose={onClose}>
       <div className="ru-modal-chart">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={INSUMOS_SERIES} margin={{ top: 10, right: 16, bottom: 0, left: -10 }}>
-            <CartesianGrid stroke={CHART.grid} strokeDasharray="3 3" vertical={false} />
-            <XAxis dataKey="mes" tick={{ fontSize: 10.5, fill: CHART.tick }} axisLine={{ stroke: CHART.grid }} tickLine={false} />
-            <YAxis tick={{ fontSize: 10.5, fill: CHART.tick }} axisLine={false} tickLine={false} />
-            <Tooltip />
-            {Object.keys(colors).map((k) => (
-              <Line key={k} type="monotone" dataKey={k} stroke={colors[k]} strokeWidth={2} dot={{ r: 2.5 }} activeDot={{ r: 4 }} />
-            ))}
-          </LineChart>
-        </ResponsiveContainer>
+        {insumosSeries.length > 0 && insumosNombres.length > 0 ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={insumosSeries} margin={{ top: 10, right: 16, bottom: 0, left: -10 }}>
+              <CartesianGrid stroke={CHART.grid} strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="mes" tick={{ fontSize: 10.5, fill: CHART.tick }} axisLine={{ stroke: CHART.grid }} tickLine={false} />
+              <YAxis allowDecimals={false} tick={{ fontSize: 10.5, fill: CHART.tick }} axisLine={false} tickLine={false} />
+              <Tooltip />
+              {insumosNombres.map((k, idx) => (
+                <Line key={k} type="monotone" dataKey={k} stroke={LINE_PALETTE[idx % LINE_PALETTE.length]} strokeWidth={2} dot={{ r: 2.5 }} activeDot={{ r: 4 }} />
+              ))}
+            </LineChart>
+          </ResponsiveContainer>
+        ) : (
+          <EmptyChart />
+        )}
       </div>
-      <div className="ru-legend-row">
-        {Object.keys(colors).map((k) => (
-          <span className="ru-legend-item" key={k}>
-            <span className="sq" style={{ background: colors[k] }} />
-            <span style={{ color: "var(--primary)" }}>{k}</span>
-          </span>
-        ))}
-      </div>
+      {insumosNombres.length > 0 && (
+        <div className="ru-legend-row">
+          {insumosNombres.map((k, idx) => (
+            <span className="ru-legend-item" key={k}>
+              <span className="sq" style={{ background: LINE_PALETTE[idx % LINE_PALETTE.length] }} />
+              <span style={{ color: "var(--primary)" }}>{k}</span>
+            </span>
+          ))}
+        </div>
+      )}
       <div className="ru-table-wrap">
         <table className="ru-table">
           <thead><tr><th>MES</th><th>INSUMOS</th><th>VARIACIÓN</th></tr></thead>
           <tbody>
-            {INSUMOS_TABLA.map((m) => (
+            {insumosTabla.map((m) => (
               <tr key={m.mesLargo}>
                 <td>{m.mesLargo}</td>
                 <td>{m.uds} uds</td>
@@ -483,17 +523,77 @@ function ChartCard({ icon, title, subtitle, badge, children, onView }) {
 }
 
 /* ============================================================
-   MAIN DASHBOARD
+   MAIN DASHBOARD (100% conectado a PostgreSQL / Supabase)
    ============================================================ */
 
 export default function Dashboard() {
   const [modal, setModal] = useState(null);
+  const [resumen, setResumen] = useState(null);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState("");
 
-  const scatterData = TOP_CLIENTES.map((c) => ({
-    x: c.compras,
-    y: c.gastado,
-    nombre: c.nombre.split(" ")[0],
-  }));
+  useEffect(() => {
+    let activo = true;
+    obtenerResumenDashboard()
+      .then((data) => {
+        if (!activo) return;
+        setResumen(data);
+        setError("");
+      })
+      .catch((err) => {
+        if (!activo) return;
+        setError(err.message || "No fue posible cargar las estadísticas desde la base de datos.");
+      })
+      .finally(() => {
+        if (activo) setCargando(false);
+      });
+    return () => {
+      activo = false;
+    };
+  }, []);
+
+  const kpis = resumen?.kpis || {
+    ventasTotales: 0,
+    ventasMesActual: 0,
+    deltaVentasLabel: "0%",
+    ingresosTotales: 0,
+    deltaIngresosLabel: "0%",
+    eficienciaProduccion: 0,
+    produccionesPendientes: 0,
+    productosVendidos: 0,
+    productosVendidosMes: 0,
+    deltaProductosLabel: "0%",
+    stockBajoTotal: 0,
+    periodoLabel: "",
+  };
+
+  const topClientes = useMemo(() => resumen?.topClientes || [], [resumen]);
+  const productosVendidos = useMemo(() => resumen?.productosVendidos || [], [resumen]);
+  const productosFabricados = useMemo(() => resumen?.productosFabricados || [], [resumen]);
+  const gananciasMensuales = useMemo(() => resumen?.gananciasMensuales || [], [resumen]);
+  const produccionMensual = useMemo(() => resumen?.produccionMensual || [], [resumen]);
+  const insumosNombres = useMemo(() => resumen?.insumosNombres || [], [resumen]);
+  const insumosSeries = useMemo(() => resumen?.insumosSeries || [], [resumen]);
+  const insumosTabla = useMemo(() => resumen?.insumosTabla || [], [resumen]);
+
+  const scatterData = useMemo(
+    () =>
+      topClientes.map((c) => ({
+        x: c.compras,
+        y: c.gastado,
+        nombre: c.nombre.split(" ")[0],
+      })),
+    [topClientes]
+  );
+
+  const maxComprasScatter = useMemo(
+    () => Math.max(4, ...topClientes.map((c) => Number(c.compras || 0))) + 2,
+    [topClientes]
+  );
+
+  const rangoGanancias = gananciasMensuales.length > 1
+    ? `${gananciasMensuales[0].mesLargo} – ${gananciasMensuales[gananciasMensuales.length - 1].mesLargo}`
+    : gananciasMensuales[0]?.mesLargo || "Periodo actual";
 
   return (
     <div className="ru-root">
@@ -512,14 +612,56 @@ export default function Dashboard() {
             <div className="ru-eyebrow">MÓDULO</div>
             <h2 className="ru-module-title">Estadísticas</h2>
           </div>
-          <div className="ru-module-date">Junio 2026</div>
+          <div className="ru-module-date">
+            {cargando ? "Cargando..." : (kpis.periodoLabel || FECHA_HOY_CAP)}
+          </div>
         </div>
 
-        <section className="ru-kpi-grid">
-          <KpiCard icon={<ShoppingCart size={16} />} label="Ventas totales" value="517" delta="+18%" extra="vs. mes anterior" />
-          <KpiCard icon={<DollarSign size={16} />} label="Ingresos por ventas" value="$3.06M" delta="+22%" extra="vs. mes anterior" />
-          <KpiCard icon={<Factory size={16} />} label="Eficiencia de producción" value="82%" delta="+3%" extra="Producciones pendientes: 5" />
-          <KpiCard icon={<Package size={16} />} label="Productos vendidos" value="517" delta="+15%" extra="unidades este mes" />
+        {error && (
+          <div
+            role="alert"
+            style={{
+              marginBottom: 16,
+              padding: "10px 14px",
+              borderRadius: 10,
+              background: "rgba(216, 72, 58, 0.12)",
+              color: "#d8483a",
+              fontSize: 13,
+            }}
+          >
+            {error}
+          </div>
+        )}
+
+        <section className="ru-dash-kpi-grid">
+          <KpiCard
+            icon={<ShoppingCart size={18} />}
+            label="Ventas totales"
+            value={cargando ? "—" : String(kpis.ventasTotales)}
+            delta={kpis.deltaVentasLabel}
+            extra={`${kpis.ventasMesActual} este mes`}
+          />
+          <KpiCard
+            icon={<DollarSign size={18} />}
+            label="Ingresos por ventas"
+            value={cargando ? "—" : fmtCompactMoney(kpis.ingresosTotales)}
+            delta={kpis.deltaIngresosLabel}
+            extra="vs. mes anterior"
+          />
+          <KpiCard
+            icon={<Factory size={18} />}
+            label="Eficiencia de producción"
+            value={cargando ? "—" : `${kpis.eficienciaProduccion}%`}
+            delta={`${kpis.ordenesTerminadas || 0}/${kpis.ordenesTotales || 0}`}
+            extra={`Pendientes: ${kpis.produccionesPendientes}`}
+          />
+          <KpiCard
+            icon={<Package size={18} />}
+            label="Productos vendidos"
+            value={cargando ? "—" : String(kpis.productosVendidos)}
+            delta={kpis.deltaProductosLabel}
+            extra={`${kpis.productosVendidosMes} uds este mes`}
+          />
         </section>
 
         <section className="ru-charts-grid">
@@ -527,23 +669,40 @@ export default function Dashboard() {
             icon={<Users size={17} />}
             title="Top clientes"
             subtitle="Frecuencia de compra vs. valor total"
-            badge={<span className="ru-chart-count-badge">5 clientes</span>}
+            badge={<span className="ru-chart-count-badge">{topClientes.length} clientes</span>}
             onView={() => setModal("clientes")}
           >
-            <ResponsiveContainer width="100%" height="100%">
-              <ScatterChart margin={{ top: 10, right: 55, bottom: 6, left: -10 }}>
-                <CartesianGrid stroke={CHART.grid} strokeDasharray="3 3" />
-                <XAxis type="number" dataKey="x" domain={[0, 26]} ticks={[0, 6, 12, 18, 24]}
-                  tick={{ fontSize: 10.5, fill: CHART.tick }} axisLine={{ stroke: CHART.grid }} tickLine={false}
-                  label={{ value: "N.° compras", position: "insideBottom", offset: -2, fontSize: 10.5, fill: CHART.tick }} />
-                <YAxis type="number" dataKey="y" domain={[0, 140000]} tickFormatter={(v) => `$${v / 1000}k`}
-                  tick={{ fontSize: 10.5, fill: CHART.tick }} axisLine={false} tickLine={false} />
-                <Tooltip formatter={(v, n) => (n === "y" ? fmt(v) : v)} />
-                <Scatter data={scatterData} fill={CHART.c1}>
-                  <LabelList dataKey="nombre" content={ClienteLabel} />
-                </Scatter>
-              </ScatterChart>
-            </ResponsiveContainer>
+            {scatterData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <ScatterChart margin={{ top: 10, right: 55, bottom: 6, left: -10 }}>
+                  <CartesianGrid stroke={CHART.grid} strokeDasharray="3 3" />
+                  <XAxis
+                    type="number"
+                    dataKey="x"
+                    domain={[0, maxComprasScatter]}
+                    allowDecimals={false}
+                    tick={{ fontSize: 10.5, fill: CHART.tick }}
+                    axisLine={{ stroke: CHART.grid }}
+                    tickLine={false}
+                    label={{ value: "N.° compras", position: "insideBottom", offset: -2, fontSize: 10.5, fill: CHART.tick }}
+                  />
+                  <YAxis
+                    type="number"
+                    dataKey="y"
+                    tickFormatter={fmtTickMoney}
+                    tick={{ fontSize: 10.5, fill: CHART.tick }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <Tooltip formatter={(v, n) => (n === "y" ? fmt(v) : v)} />
+                  <Scatter data={scatterData} fill={CHART.c1}>
+                    <LabelList dataKey="nombre" content={ClienteLabel} />
+                  </Scatter>
+                </ScatterChart>
+              </ResponsiveContainer>
+            ) : (
+              <EmptyChart texto={cargando ? "Cargando clientes..." : "Sin ventas registradas aún."} />
+            )}
           </ChartCard>
 
           <ChartCard
@@ -552,22 +711,27 @@ export default function Dashboard() {
             subtitle="Unidades (izq.) vs. ingresos (der.)"
             onView={() => setModal("productos")}
           >
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={PRODUCTOS_VENDIDOS} margin={{ top: 10, right: 4, bottom: 0, left: -18 }}>
-                <CartesianGrid stroke={CHART.grid} strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="producto" tick={{ fontSize: 10.5, fill: CHART.tick }} axisLine={{ stroke: CHART.grid }} tickLine={false} />
-                <YAxis yAxisId="left" tick={{ fontSize: 10, fill: CHART.tick }} axisLine={false} tickLine={false} />
-                <YAxis yAxisId="right" orientation="right" tickFormatter={(v) => `$${v / 1000}k`}
-                  tick={{ fontSize: 10, fill: CHART.tick }} axisLine={false} tickLine={false} />
-                <Tooltip formatter={(v, n) => [n === "uds" ? `${v} uds` : fmt(v), n === "uds" ? "Unidades" : "Ingresos"]} />
-                <Bar yAxisId="left" dataKey="uds" fill={CHART.c1} radius={[3, 3, 0, 0]} barSize={14} />
-                <Bar yAxisId="right" dataKey="ingresos" fill={CHART.c2} radius={[3, 3, 0, 0]} barSize={14} />
-              </BarChart>
-            </ResponsiveContainer>
-            <div className="ru-legend-row">
-              <span className="ru-legend-item"><span className="sq" style={{ background: CHART.c1 }} /><span style={{ color: "var(--primary)" }}>Unidades</span></span>
-              <span className="ru-legend-item"><span className="sq" style={{ background: CHART.c2 }} /><span style={{ color: "var(--soft)" }}>Ingresos</span></span>
-            </div>
+            {productosVendidos.length > 0 ? (
+              <>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={productosVendidos} margin={{ top: 10, right: 4, bottom: 0, left: -18 }}>
+                    <CartesianGrid stroke={CHART.grid} strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="producto" tick={{ fontSize: 10.5, fill: CHART.tick }} axisLine={{ stroke: CHART.grid }} tickLine={false} />
+                    <YAxis yAxisId="left" allowDecimals={false} tick={{ fontSize: 10, fill: CHART.tick }} axisLine={false} tickLine={false} />
+                    <YAxis yAxisId="right" orientation="right" tickFormatter={fmtTickMoney} tick={{ fontSize: 10, fill: CHART.tick }} axisLine={false} tickLine={false} />
+                    <Tooltip formatter={(v, n) => [n === "uds" ? `${v} uds` : fmt(v), n === "uds" ? "Unidades" : "Ingresos"]} />
+                    <Bar yAxisId="left" dataKey="uds" fill={CHART.c1} radius={[3, 3, 0, 0]} barSize={14} />
+                    <Bar yAxisId="right" dataKey="ingresos" fill={CHART.c2} radius={[3, 3, 0, 0]} barSize={14} />
+                  </BarChart>
+                </ResponsiveContainer>
+                <div className="ru-legend-row">
+                  <span className="ru-legend-item"><span className="sq" style={{ background: CHART.c1 }} /><span style={{ color: "var(--primary)" }}>Unidades</span></span>
+                  <span className="ru-legend-item"><span className="sq" style={{ background: CHART.c2 }} /><span style={{ color: "var(--soft)" }}>Ingresos</span></span>
+                </div>
+              </>
+            ) : (
+              <EmptyChart texto={cargando ? "Cargando productos..." : "Sin productos vendidos aún."} />
+            )}
           </ChartCard>
 
           <ChartCard
@@ -576,33 +740,41 @@ export default function Dashboard() {
             subtitle="Accesorios con mayor producción"
             onView={() => setModal("fabricados")}
           >
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={PRODUCTOS_FABRICADOS} layout="vertical" margin={{ top: 4, right: 20, bottom: 0, left: 8 }}>
-                <CartesianGrid stroke={CHART.grid} strokeDasharray="3 3" horizontal={false} />
-                <XAxis type="number" domain={[0, 320]} tick={{ fontSize: 10, fill: CHART.tick }} axisLine={{ stroke: CHART.grid }} tickLine={false} />
-                <YAxis type="category" dataKey="accesorio" width={92} tick={{ fontSize: 9.5, fill: CHART.tickAlt }} axisLine={false} tickLine={false} />
-                <Tooltip formatter={(v) => [`${v} uds`, "Fabricadas"]} />
-                <Bar dataKey="uds" fill={CHART.c3} radius={[0, 4, 4, 0]} barSize={14} />
-              </BarChart>
-            </ResponsiveContainer>
+            {productosFabricados.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={productosFabricados} layout="vertical" margin={{ top: 4, right: 20, bottom: 0, left: 8 }}>
+                  <CartesianGrid stroke={CHART.grid} strokeDasharray="3 3" horizontal={false} />
+                  <XAxis type="number" allowDecimals={false} tick={{ fontSize: 10, fill: CHART.tick }} axisLine={{ stroke: CHART.grid }} tickLine={false} />
+                  <YAxis type="category" dataKey="accesorio" width={92} tick={{ fontSize: 9.5, fill: CHART.tickAlt }} axisLine={false} tickLine={false} />
+                  <Tooltip formatter={(v) => [`${v} uds`, "Fabricadas"]} />
+                  <Bar dataKey="uds" fill={CHART.c3} radius={[0, 4, 4, 0]} barSize={14} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <EmptyChart texto={cargando ? "Cargando producción..." : "Sin órdenes de producción aún."} />
+            )}
           </ChartCard>
 
           <ChartCard
             icon={<TrendingUp size={17} />}
             title="Ganancias mensuales"
-            subtitle="Ene – Dic 2026"
-            badge={<span className="ru-chart-badge"><TrendingUp size={11} /> +18%</span>}
+            subtitle={rangoGanancias}
+            badge={<span className="ru-chart-badge"><TrendingUp size={11} /> {kpis.deltaIngresosLabel}</span>}
             onView={() => setModal("ganancias")}
           >
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={GANANCIAS_MENSUALES} margin={{ top: 10, right: 16, bottom: 0, left: -10 }}>
-                <CartesianGrid stroke={CHART.grid} strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="mes" tick={{ fontSize: 10, fill: CHART.tick }} axisLine={{ stroke: CHART.grid }} tickLine={false} />
-                <YAxis tickFormatter={(v) => `$${v / 1000}k`} tick={{ fontSize: 10, fill: CHART.tick }} axisLine={false} tickLine={false} />
-                <Tooltip formatter={(v) => fmt(v)} />
-                <Line type="monotone" dataKey="ganancia" stroke={CHART.c1} strokeWidth={2} dot={{ r: 2.5, fill: CHART.c1 }} activeDot={{ r: 5 }} />
-              </LineChart>
-            </ResponsiveContainer>
+            {gananciasMensuales.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={gananciasMensuales} margin={{ top: 10, right: 16, bottom: 0, left: -10 }}>
+                  <CartesianGrid stroke={CHART.grid} strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="mes" tick={{ fontSize: 10, fill: CHART.tick }} axisLine={{ stroke: CHART.grid }} tickLine={false} />
+                  <YAxis tickFormatter={fmtTickMoney} tick={{ fontSize: 10, fill: CHART.tick }} axisLine={false} tickLine={false} />
+                  <Tooltip formatter={(v) => [fmt(v), "Ingresos"]} />
+                  <Line type="monotone" dataKey="ganancia" stroke={CHART.c1} strokeWidth={2} dot={{ r: 2.5, fill: CHART.c1 }} activeDot={{ r: 5 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <EmptyChart texto={cargando ? "Cargando finanzas..." : "Sin movimientos registrados."} />
+            )}
           </ChartCard>
 
           <ChartCard
@@ -617,15 +789,20 @@ export default function Dashboard() {
             }
             onView={() => setModal("produccion")}
           >
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={PRODUCCION_MENSUAL} margin={{ top: 10, right: 4, bottom: 0, left: -18 }}>
-                <CartesianGrid stroke={CHART.grid} strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="mes" tick={{ fontSize: 10, fill: CHART.tick }} axisLine={{ stroke: CHART.grid }} tickLine={false} />
-                <YAxis tick={{ fontSize: 10, fill: CHART.tick }} axisLine={false} tickLine={false} />
-                <Tooltip />
-                <Bar dataKey="produccion" fill={CHART.c1} radius={[3, 3, 0, 0]} barSize={16} />
-              </BarChart>
-            </ResponsiveContainer>
+            {produccionMensual.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={produccionMensual} margin={{ top: 10, right: 4, bottom: 0, left: -18 }}>
+                  <CartesianGrid stroke={CHART.grid} strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="mes" tick={{ fontSize: 10, fill: CHART.tick }} axisLine={{ stroke: CHART.grid }} tickLine={false} />
+                  <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: CHART.tick }} axisLine={false} tickLine={false} />
+                  <Tooltip />
+                  <Bar dataKey="produccion" name="Producción" fill={CHART.c1} radius={[3, 3, 0, 0]} barSize={14} />
+                  <Bar dataKey="ventas" name="Ventas" fill={CHART.c2} radius={[3, 3, 0, 0]} barSize={14} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <EmptyChart texto={cargando ? "Cargando comparativa..." : "Sin datos mensuales."} />
+            )}
           </ChartCard>
 
           <ChartCard
@@ -634,29 +811,45 @@ export default function Dashboard() {
             subtitle="Consumo estimado según ficha técnica · Top 5"
             onView={() => setModal("insumos")}
           >
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={INSUMOS_SERIES} margin={{ top: 10, right: 16, bottom: 0, left: -10 }}>
-                <CartesianGrid stroke={CHART.grid} strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="mes" tick={{ fontSize: 10, fill: CHART.tick }} axisLine={{ stroke: CHART.grid }} tickLine={false} />
-                <YAxis tick={{ fontSize: 10, fill: CHART.tick }} axisLine={false} tickLine={false} />
-                <Tooltip />
-                <Line type="monotone" dataKey="Hilo" stroke={CHART.c1} strokeWidth={1.6} dot={false} />
-                <Line type="monotone" dataKey="Dije" stroke={CHART.c3} strokeWidth={1.6} dot={false} />
-                <Line type="monotone" dataKey="Cierre" stroke={CHART.c4} strokeWidth={1.6} dot={false} />
-                <Line type="monotone" dataKey="Cadena" stroke={CHART.c5} strokeWidth={1.6} dot={false} />
-                <Line type="monotone" dataKey="Tela" stroke={CHART.c2} strokeWidth={1.6} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
+            {insumosSeries.length > 0 && insumosNombres.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={insumosSeries} margin={{ top: 10, right: 16, bottom: 0, left: -10 }}>
+                  <CartesianGrid stroke={CHART.grid} strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="mes" tick={{ fontSize: 10, fill: CHART.tick }} axisLine={{ stroke: CHART.grid }} tickLine={false} />
+                  <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: CHART.tick }} axisLine={false} tickLine={false} />
+                  <Tooltip />
+                  {insumosNombres.map((nombre, idx) => (
+                    <Line
+                      key={nombre}
+                      type="monotone"
+                      dataKey={nombre}
+                      stroke={LINE_PALETTE[idx % LINE_PALETTE.length]}
+                      strokeWidth={1.6}
+                      dot={false}
+                    />
+                  ))}
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <EmptyChart texto={cargando ? "Cargando insumos..." : "Sin consumo registrado aún."} />
+            )}
           </ChartCard>
         </section>
       </div>
 
-      {modal === "clientes" && <ModalTopClientes onClose={() => setModal(null)} />}
-      {modal === "productos" && <ModalProductosVendidos onClose={() => setModal(null)} />}
-      {modal === "fabricados" && <ModalProductosFabricados onClose={() => setModal(null)} />}
-      {modal === "ganancias" && <ModalGananciasMensuales onClose={() => setModal(null)} />}
-      {modal === "produccion" && <ModalProduccionMensual onClose={() => setModal(null)} />}
-      {modal === "insumos" && <ModalInsumos onClose={() => setModal(null)} />}
+      {modal === "clientes" && <ModalTopClientes clientes={topClientes} onClose={() => setModal(null)} />}
+      {modal === "productos" && <ModalProductosVendidos productos={productosVendidos} onClose={() => setModal(null)} />}
+      {modal === "fabricados" && <ModalProductosFabricados fabricados={productosFabricados} onClose={() => setModal(null)} />}
+      {modal === "ganancias" && <ModalGananciasMensuales ganancias={gananciasMensuales} onClose={() => setModal(null)} />}
+      {modal === "produccion" && <ModalProduccionMensual produccion={produccionMensual} onClose={() => setModal(null)} />}
+      {modal === "insumos" && (
+        <ModalInsumos
+          insumosNombres={insumosNombres}
+          insumosSeries={insumosSeries}
+          insumosTabla={insumosTabla}
+          onClose={() => setModal(null)}
+        />
+      )}
     </div>
   );
 }

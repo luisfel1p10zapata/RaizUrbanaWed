@@ -174,8 +174,9 @@ export async function actualizarUsuario(id, datos) {
     ...(nombres ? { nombres } : {}),
     ...(apellidos ? { apellidos } : {}),
     ...(datos.correo ? { correo: datos.correo.trim().toLowerCase() } : {}),
-    ...(datos.telefono !== undefined ? { telefono: datos.telefono } : {}),
-    ...(datos.direccion !== undefined ? { direccion: datos.direccion } : {}),
+    ...(datos.telefono !== undefined ? { telefono: String(datos.telefono || '').trim() } : {}),
+    ...(datos.direccion !== undefined ? { direccion: String(datos.direccion || '').trim() } : {}),
+    ...(datos.genero ? { genero: datos.genero } : {}),
     ...(datos.estado ? { estado: datos.estado } : {}),
     ...(datos.rol ? { rol: datos.rol } : {}),
   };

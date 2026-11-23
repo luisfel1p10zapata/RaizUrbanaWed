@@ -11,6 +11,7 @@ Utiliza los procedimientos almacenados y funciones oficiales desplegados en Supa
 from datetime import date
 from decimal import Decimal
 import json
+import re
 from typing import Any
 import unicodedata
 import psycopg
@@ -125,17 +126,26 @@ class VentaPostgresRepository:
         else:
             fecha_val = date.today()
 
+        fecha_entrega_raw = v.get("fecha_entrega")
+        if isinstance(fecha_entrega_raw, str) and fecha_entrega_raw.strip():
+            fecha_entrega_val = date.fromisoformat(fecha_entrega_raw[:10])
+        elif isinstance(fecha_entrega_raw, date):
+            fecha_entrega_val = fecha_entrega_raw
+        else:
+            fecha_entrega_val = None
+
         items = []
         for d in v.get("detalles", []):
             items.append({
                 "id_det_venta": d.get("id_det_venta"),
+                "id_producto_vari": d.get("id_producto_vari"),
                 "producto": {
                     "id": d["id_producto"],
                     "nombre": d["producto"],
                     "precio": float(d["precio_unitario"]),
                 },
                 "cantidad": d["cantidad"],
-                "talla": d.get("talla") or "M",
+                "talla": d.get("talla") or "Única",
                 "color": d.get("color") or "Único",
                 "subtotal": float(d["subtotal"]),
             })
@@ -152,6 +162,8 @@ class VentaPostgresRepository:
             "rol_usuario": rol_usuario,
             "creado_por_admin": es_admin,
             "fecha": fecha_val,
+            "fecha_entrega": fecha_entrega_val,
+            "foto_comprobante": v.get("foto_comprobante"),
             "id_estado_comp": v.get("id_estado_comp"),
             "estado_venta": estado_venta,
             "estado_pago": estado_pago,
@@ -187,10 +199,38 @@ class VentaPostgresRepository:
             if unicodedata.category(ch) != "Mn"
         )
 
+    @staticmethod
+    def _formatos_fecha(fecha_obj: Any) -> list[str]:
+        if not fecha_obj:
+            return []
+        d: date | None = None
+        if isinstance(fecha_obj, date):
+            d = fecha_obj
+        else:
+            try:
+                d = date.fromisoformat(str(fecha_obj)[:10])
+            except ValueError:
+                return [str(fecha_obj)]
+        meses = [
+            "", "enero", "febrero", "marzo", "abril", "mayo", "junio",
+            "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
+        ]
+        mes_nom = meses[d.month]
+        return [
+            d.strftime("%Y-%m-%d"),
+            d.strftime("%d/%m/%Y"),
+            d.strftime("%d-%m-%Y"),
+            d.strftime("%Y/%m/%d"),
+            mes_nom,
+            mes_nom[:3],
+            str(d.year),
+        ]
+
     def listar(self, filtros: VentaFiltros) -> tuple[list[dict[str, Any]], int]:
         """Obtiene la lista de ventas en orden ascendente (1..N) invocando sp_listar_ventas y sp_obtener_venta.
-        La búsqueda global compara todos los datos de la tabla (código, cliente, correo, fecha, total,
-        estado venta, estado pago, método de pago y productos).
+        La búsqueda global compara absolutamente todos los datos visibles y relacionados de la tabla
+        (código, cliente, correo, documento, teléfono, rol, fecha, fecha de entrega, total,
+        estado venta, estado pago, método de pago, cuenta, comprobante, productos, tallas y colores).
         """
         with self._get_connection() as conn:
             with conn.cursor(row_factory=dict_row) as cursor:
@@ -210,26 +250,38 @@ class VentaPostgresRepository:
                 todas_filas.sort(key=lambda r: r["id_venta"])
 
                 if buscar_param:
-                    # Enriquecer en una sola consulta con correo del cliente y nombres de productos para búsqueda total
+                    # Enriquecer en una sola consulta con datos completos del cliente, método de pago y productos/variantes
                     cursor.execute("""
                         SELECT
                             v.id_venta,
                             u.correo,
+                            u.numerodoc,
+                            u.telefono,
+                            u.direccion,
                             r.nombre AS rol_usuario,
-                            COALESCE(STRING_AGG(DISTINCT p.nombre, ' '), '') AS productos_txt
+                            mp.nro_cuenta,
+                            COALESCE(STRING_AGG(DISTINCT p.nombre, ' '), '') AS productos_txt,
+                            COALESCE(STRING_AGG(DISTINCT c.nombre, ' '), '') AS colores_txt,
+                            COALESCE(STRING_AGG(DISTINCT t.nombre, ' '), '') AS tallas_txt
                         FROM tb_ventas v
                         JOIN tb_usuario u ON u.id_usuario = v.id_usuario
                         JOIN tb_roles r ON r.id_rol = u.id_rol
+                        LEFT JOIN tb_metodo_pago mp ON mp.id_metodo_pago = v.id_metodo_pago
                         LEFT JOIN tb_det_ventas dv ON dv.id_ventas = v.id_venta
                         LEFT JOIN tb_producto_variante pv ON pv.id_producto_vari = dv.id_producto_vari
                         LEFT JOIN tb_productos p ON p.id_producto = pv.id_producto
-                        GROUP BY v.id_venta, u.correo, r.nombre;
+                        LEFT JOIN tb_colores c ON c.id_color = pv.id_color
+                        LEFT JOIN tb_tallas t ON t.id_talla = pv.id_talla
+                        GROUP BY v.id_venta, u.correo, u.numerodoc, u.telefono, u.direccion, r.nombre, mp.nro_cuenta;
                     """)
                     extras = {row["id_venta"]: row for row in cursor.fetchall()}
 
                     q_norm = self._normalizar_texto(buscar_param)
-                    q_num = q_norm.replace("$", "").replace(".", "").replace(",", "").replace(" ", "")
-                    tokens = [t for t in q_norm.split() if t]
+                    # Separar por espacios (incl. NBSP) o separadores de celdas copiadas (·, |, ;)
+                    raw_tokens = re.split(r"[\s\u00a0·|;]+", q_norm)
+                    tokens = [t for t in raw_tokens if t and re.search(r"[a-z0-9#]", t)]
+                    if not tokens and q_norm:
+                        tokens = [q_norm]
 
                     filtradas = []
                     for row in todas_filas:
@@ -237,45 +289,78 @@ class VentaPostgresRepository:
                         ext = extras.get(vid, {})
                         codigo = f"{vid:03d}"
                         total_num = int(round(float(row.get("costo_total") or 0)))
-                        total_fmt = f"{total_num:,}".replace(",", ".")
+                        total_fmt_dot = f"{total_num:,}".replace(",", ".")
+                        total_fmt_comma = f"{total_num:,}"
                         estado_nom = str(row.get("estado") or "")
                         estado_pago_val = str(self._mapear_estado_pago(estado_nom).value)
+                        tel_val = str(ext.get("telefono") or "")
+                        tel_dig = re.sub(r"\D+", "", tel_val)
+                        doc_val = str(ext.get("numerodoc") or "")
+                        doc_dig = re.sub(r"\D+", "", doc_val)
+                        comprobante_txt = "comprobante con comprobante" if row.get("foto_comprobante") else "sin comprobante"
 
-                        fecha_obj = row.get("fecha")
-                        fecha_str = str(fecha_obj or "")
-                        fecha_dmy = fecha_obj.strftime("%d/%m/%Y") if isinstance(fecha_obj, date) else ""
+                        fechas_venta = self._formatos_fecha(row.get("fecha"))
+                        fechas_entrega = self._formatos_fecha(row.get("fecha_entrega"))
 
-                        campos = " ".join([
+                        partes = [
                             codigo,
                             str(vid),
+                            f"#{codigo}",
+                            f"#{vid}",
                             f"vt-{codigo}",
+                            f"vt-{vid}",
                             str(row.get("cliente") or ""),
                             str(ext.get("correo") or ""),
+                            doc_val,
+                            doc_dig,
+                            tel_val,
+                            tel_dig,
+                            str(ext.get("direccion") or ""),
                             str(ext.get("rol_usuario") or ""),
-                            fecha_str,
-                            fecha_dmy,
+                            *fechas_venta,
+                            *fechas_entrega,
                             str(total_num),
-                            total_fmt,
-                            f"${total_fmt}",
+                            total_fmt_dot,
+                            total_fmt_comma,
+                            f"${total_fmt_dot}",
+                            f"$ {total_fmt_dot}",
+                            f"${total_num}",
                             estado_nom,
                             estado_pago_val,
                             str(row.get("metodo_pago") or ""),
+                            str(ext.get("nro_cuenta") or ""),
                             str(ext.get("productos_txt") or ""),
-                        ])
-                        haystack = self._normalizar_texto(campos)
-                        haystack_num = haystack.replace("$", "").replace(".", "").replace(",", "")
+                            str(ext.get("colores_txt") or ""),
+                            str(ext.get("tallas_txt") or ""),
+                            str(row.get("total_items") or ""),
+                            comprobante_txt,
+                        ]
+                        haystack = self._normalizar_texto(" ".join(p for p in partes if p))
+                        haystack_clean = re.sub(r"[^a-z0-9@#]+", " ", haystack)
+                        haystack_num = re.sub(r"[$.,]+", "", haystack)
+                        haystack_compact = re.sub(r"[^a-z0-9]+", "", haystack)
 
                         def _match_token(tok: str) -> bool:
-                            if tok in haystack:
-                                return True
-                            tok_num = tok.replace("$", "").replace(".", "").replace(",", "")
-                            return tok_num.isdigit() and tok_num in haystack_num
+                            tok_sin_moneda = tok.lstrip("$")
+                            tok_clean = re.sub(r"[^a-z0-9@#]+", " ", tok_sin_moneda).strip()
 
-                        if (
-                            q_norm in haystack
-                            or (q_num.isdigit() and q_num in haystack_num)
-                            or (bool(tokens) and all(_match_token(tok) for tok in tokens))
-                        ):
+                            if tok in haystack or (tok_sin_moneda and tok_sin_moneda in haystack):
+                                return True
+                            if tok_clean and tok_clean in haystack_clean:
+                                return True
+
+                            # Montos con decimales .00 o separadores de miles (ej: $1.534.000, 1,534,000, 135000.00)
+                            tok_monto = re.sub(r"[,.]00$", "", tok_sin_moneda)
+                            tok_num = re.sub(r"[$.,]+", "", tok_monto)
+                            if tok_num.isdigit() and tok_num in haystack_num:
+                                return True
+
+                            tok_alnum = re.sub(r"[^a-z0-9]+", "", tok_sin_moneda)
+                            if len(tok_alnum) >= 2 and tok_alnum in haystack_compact:
+                                return True
+                            return False
+
+                        if all(_match_token(tok) for tok in tokens):
                             filtradas.append(row)
 
                     todas_filas = filtradas
@@ -320,8 +405,14 @@ class VentaPostgresRepository:
         sql = """
             SELECT
                 COUNT(*) AS ventas_totales,
-                COALESCE(SUM(v.costo_total), 0) AS monto_total,
-                COUNT(*) FILTER (WHERE ec.nombre = 'Pendiente' OR v.id_estado_comp = 2) AS ventas_pendientes,
+                COALESCE(
+                    SUM(v.costo_total) FILTER (
+                        WHERE LOWER(BTRIM(COALESCE(ec.nombre, ''))) <> 'cancelada'
+                          AND v.id_estado_comp <> 5
+                    ),
+                    0
+                ) AS monto_total,
+                COUNT(*) FILTER (WHERE LOWER(BTRIM(COALESCE(ec.nombre, ''))) = 'pendiente' OR v.id_estado_comp = 2) AS ventas_pendientes,
                 COUNT(*) FILTER (WHERE EXTRACT(MONTH FROM v.fecha) = EXTRACT(MONTH FROM CURRENT_DATE) AND EXTRACT(YEAR FROM v.fecha) = EXTRACT(YEAR FROM CURRENT_DATE)) AS ventas_del_mes
             FROM tb_ventas v
             LEFT JOIN tb_estado_comp ec ON v.id_estado_comp = ec.id_estado_comp;
@@ -353,9 +444,9 @@ class VentaPostgresRepository:
                     id_usuario = getattr(datos.get("cliente"), "id")
 
                 if id_usuario:
-                    cursor.execute("SELECT id_usuario FROM tb_usuario WHERE id_usuario = %s;", (id_usuario,))
+                    cursor.execute("SELECT id_usuario FROM tb_usuario WHERE id_usuario = %s;", (int(id_usuario),))
                     if not cursor.fetchone():
-                        id_usuario = None
+                        raise ValueError("El cliente seleccionado no existe en la base de datos.")
 
                 # Si es None, sp_registrar_venta buscará automáticamente el cliente general
                 # 2. Resolver id_metodo_pago
@@ -364,17 +455,26 @@ class VentaPostgresRepository:
                     metodo_val = datos.get("metodo_pago", "Efectivo")
                     id_metodo_pago = self._resolver_id_metodo_pago(cursor, str(metodo_val))
 
-                # 3. Resolver id_estado_comp
-                estado_val = datos.get("estado_venta", "Pendiente")
-                id_estado_comp = self._resolver_estado_comp(str(estado_val))
+                # 3. Resolver id_estado_comp desde tb_estado_comp
+                id_estado_comp = datos.get("id_estado_comp") or datos.get("idEstadoComp")
+                if not id_estado_comp:
+                    estado_val = str(datos.get("estado_venta", "Pendiente")).strip()
+                    cursor.execute(
+                        "SELECT id_estado_comp FROM tb_estado_comp WHERE LOWER(BTRIM(nombre)) = LOWER(%s) LIMIT 1;",
+                        (estado_val,),
+                    )
+                    row_est = cursor.fetchone()
+                    id_estado_comp = row_est["id_estado_comp"] if row_est else self._resolver_estado_comp(estado_val)
 
-                # 4. Preparar JSON de detalles para el SP
+                # 4. Preparar JSON de detalles para el SP (agrupando por variante real)
                 items_in = datos.get("items", [])
-                detalles_json_list = []
+                detalles_agrupados: dict[int, int] = {}
 
                 for item in items_in:
                     cant = int(item.get("cantidad", 1)) if isinstance(item, dict) else getattr(item, "cantidad", 1)
-                    
+                    if cant < 1:
+                        raise ValueError("La cantidad de cada producto debe ser mayor que cero.")
+
                     id_vari = item.get("id_producto_vari") if isinstance(item, dict) else getattr(item, "id_producto_vari", None)
                     if not id_vari and isinstance(item, dict):
                         id_vari = item.get("idProductoVari")
@@ -388,25 +488,46 @@ class VentaPostgresRepository:
                             if prod_dict:
                                 prod_id = prod_dict.get("id") if isinstance(prod_dict, dict) else getattr(prod_dict, "id", None)
 
-                        # Buscar variante asociada
+                        talla_val = item.get("talla") if isinstance(item, dict) else getattr(item, "talla", None)
+                        color_val = item.get("color") if isinstance(item, dict) else getattr(item, "color", None)
+
+                        # Buscar variante exacta por producto + talla + color
                         cursor.execute("""
-                            SELECT pv.id_producto_vari, pv.precio
+                            SELECT pv.id_producto_vari
                             FROM tb_producto_variante pv
-                            WHERE pv.id_producto_vari = %s OR pv.id_producto = %s
+                            JOIN tb_colores c ON c.id_color = pv.id_color
+                            JOIN tb_tallas t ON t.id_talla = pv.id_talla
+                            WHERE pv.id_producto = %s
+                              AND pv.estado = true
+                              AND (%s::TEXT IS NULL OR LOWER(BTRIM(t.nombre)) = LOWER(BTRIM(%s::TEXT)))
+                              AND (%s::TEXT IS NULL OR LOWER(BTRIM(c.nombre)) = LOWER(BTRIM(%s::TEXT)))
+                            ORDER BY pv.id_producto_vari ASC
                             LIMIT 1;
-                        """, (prod_id or 0, prod_id or 0))
+                        """, (prod_id or 0, talla_val, talla_val, color_val, color_val))
                         f_vari = cursor.fetchone()
-                        if not f_vari:
-                            cursor.execute("SELECT id_producto_vari, precio FROM tb_producto_variante WHERE estado = true ORDER BY id_producto_vari ASC LIMIT 1;")
+                        if not f_vari and prod_id:
+                            cursor.execute("""
+                                SELECT pv.id_producto_vari
+                                FROM tb_producto_variante pv
+                                WHERE (pv.id_producto_vari = %s OR pv.id_producto = %s)
+                                  AND pv.estado = true
+                                ORDER BY pv.id_producto_vari ASC
+                                LIMIT 1;
+                            """, (prod_id, prod_id))
                             f_vari = cursor.fetchone()
+
+                        if not f_vari:
+                            raise ValueError("La variante de producto seleccionada no existe o está inactiva en inventario.")
 
                         id_vari = f_vari["id_producto_vari"]
 
-                    detalles_json_list.append({
-                        "id_producto_vari": id_vari,
-                        "cantidad": cant,
-                    })
+                    id_vari_int = int(id_vari)
+                    detalles_agrupados[id_vari_int] = detalles_agrupados.get(id_vari_int, 0) + cant
 
+                detalles_json_list = [
+                    {"id_producto_vari": vid, "cantidad": q}
+                    for vid, q in detalles_agrupados.items()
+                ]
                 detalles_json_str = json.dumps(detalles_json_list)
 
                 # 5. Invocar sp_registrar_venta de Supabase
@@ -417,10 +538,10 @@ class VentaPostgresRepository:
                         );
                     """, (
                         id_usuario,
-                        id_metodo_pago,
+                        int(id_metodo_pago),
                         datos.get("foto_comprobante"),
                         datos.get("fecha_entrega"),
-                        id_estado_comp,
+                        int(id_estado_comp),
                         detalles_json_str,
                     ))
                     nuevo_id_venta = cursor.fetchone()["sp_registrar_venta"]
@@ -439,16 +560,26 @@ class VentaPostgresRepository:
 
         with self._get_connection() as conn:
             with conn.cursor(row_factory=dict_row) as cursor:
-                # 1. Actualizar método de pago primero (si cambia, antes de posibles cierres de estado)
+                # 1. Actualizar método de pago, fecha de entrega o comprobante (si cambian)
                 id_mp = datos.get("id_metodo_pago") or datos.get("idMetodoPago")
                 if not id_mp and "metodo_pago" in datos and datos["metodo_pago"] is not None:
                     id_mp = self._resolver_id_metodo_pago(cursor, str(datos["metodo_pago"]))
 
-                if id_mp and int(id_mp) != venta_actual.get("id_metodo_pago"):
+                mp_final = int(id_mp) if id_mp else venta_actual.get("id_metodo_pago")
+                fecha_entrega_in = datos.get("fecha_entrega") if "fecha_entrega" in datos else venta_actual.get("fecha_entrega")
+                foto_comp_in = datos.get("foto_comprobante") if "foto_comprobante" in datos else None
+
+                cambio_cabecera = (
+                    (mp_final and mp_final != venta_actual.get("id_metodo_pago"))
+                    or ("fecha_entrega" in datos and fecha_entrega_in != venta_actual.get("fecha_entrega"))
+                    or bool(foto_comp_in)
+                )
+
+                if cambio_cabecera:
                     try:
                         cursor.execute(
-                            "SELECT sp_actualizar_venta(%s, %s, NULL, NULL, NULL);",
-                            (venta_id, int(id_mp))
+                            "SELECT sp_actualizar_venta(%s, %s, %s, %s, NULL);",
+                            (venta_id, int(mp_final), fecha_entrega_in, foto_comp_in)
                         )
                     except psycopg.errors.RaiseException as e:
                         conn.rollback()

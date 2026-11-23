@@ -506,10 +506,12 @@
 .ru-usuarios-root .ru-icon-btn.view { color: var(--info-blue); }
 .ru-usuarios-root .ru-icon-btn.edit { color: var(--warn-amber); }
 .ru-usuarios-root .ru-icon-btn.delete { color: var(--negative); }
+.ru-usuarios-root .ru-icon-btn.activate { color: var(--positive, #2E9E5B); }
 
 .ru-usuarios-root .ru-icon-btn.view:hover:not(:disabled)   { background-color: rgba(74, 118, 168, 0.12) !important; opacity: 1 !important; }
 .ru-usuarios-root .ru-icon-btn.edit:hover:not(:disabled)   { background-color: rgba(201, 151, 63, 0.14) !important; opacity: 1 !important; }
 .ru-usuarios-root .ru-icon-btn.delete:hover:not(:disabled) { background-color: rgba(209, 73, 91, 0.12) !important; opacity: 1 !important; }
+.ru-usuarios-root .ru-icon-btn.activate:hover:not(:disabled) { background-color: rgba(46, 158, 91, 0.14) !important; opacity: 1 !important; }
 
 .ru-usuarios-root .ru-icon-btn:disabled,
 .ru-usuarios-root .ru-icon-btn.disabled {

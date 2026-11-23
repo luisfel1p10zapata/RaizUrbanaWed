@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   AlertTriangle,
@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   Eye,
   Filter,
+  ImagePlus,
   Pencil,
   Plus,
   Search,
@@ -15,6 +16,7 @@ import {
 } from 'lucide-react';
 
 import TableGlobal from '../../../components/ui/TableGlobal';
+import { subirImagen, CARPETAS_UPLOAD } from '../../../services/uploadService';
 
 import {
   listarInsumosApi,
@@ -321,6 +323,27 @@ export default function Insumos() {
 
   const [cargando, setCargando] = useState(true);
   const [procesando, setProcesando] = useState(false);
+  const [subiendoFoto, setSubiendoFoto] = useState(false);
+  const archivoFotoRef = useRef(null);
+
+  const manejarSubidaFotoInsumo = async (event) => {
+    const archivo = event.target.files?.[0];
+    event.target.value = '';
+    if (!archivo) return;
+
+    try {
+      setSubiendoFoto(true);
+      setErrorFormulario('');
+      const resultado = await subirImagen(archivo, CARPETAS_UPLOAD.INSUMOS);
+      cambiarCampo('fotoInsumo', resultado.url);
+    } catch (error) {
+      setErrorFormulario(
+        error.message || 'No se pudo subir la imagen del insumo.'
+      );
+    } finally {
+      setSubiendoFoto(false);
+    }
+  };
 
   // Carga inicial de insumos, materiales y tamaños.
   useEffect(() => {
@@ -1425,7 +1448,7 @@ export default function Insumos() {
                   id="ins-foto"
                   type="text"
                   maxLength={255}
-                  placeholder="Ejemplo: /img/insumos/foto.jpg"
+                  placeholder="https://... o sube una imagen desde tu equipo"
                   value={formulario.fotoInsumo}
                   onChange={(event) =>
                     cambiarCampo(
@@ -1437,6 +1460,68 @@ export default function Insumos() {
                     mostrarError('fotoInsumo')
                   )}
                 />
+
+                <input
+                  ref={archivoFotoRef}
+                  type="file"
+                  accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                  onChange={manejarSubidaFotoInsumo}
+                  style={{ display: 'none' }}
+                />
+
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    marginTop: '8px',
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  <button
+                    type="button"
+                    className="btn-cancel-custom"
+                    disabled={subiendoFoto || procesando}
+                    onClick={() => archivoFotoRef.current?.click()}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                    }}
+                  >
+                    <ImagePlus size={15} />
+                    <span>
+                      {subiendoFoto ? 'Subiendo imagen...' : 'Subir desde equipo'}
+                    </span>
+                  </button>
+
+                  {formulario.fotoInsumo?.trim() && (
+                    <div
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                      }}
+                    >
+                      <ImagenInsumo
+                        key={formulario.fotoInsumo}
+                        src={formulario.fotoInsumo.trim()}
+                        nombre={formulario.nombre || 'Vista previa'}
+                        className="ins-ref-avatar"
+                      />
+                      <button
+                        type="button"
+                        className="btn-cancel-custom"
+                        disabled={subiendoFoto || procesando}
+                        onClick={() => cambiarCampo('fotoInsumo', '')}
+                        aria-label="Quitar foto del insumo"
+                        style={{ padding: '6px 8px' }}
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  )}
+                </div>
 
                 <CampoError mensaje={mostrarError('fotoInsumo')} />
               </div>
@@ -1453,7 +1538,7 @@ export default function Insumos() {
                 type="button"
                 className="btn-cancel-custom"
                 onClick={cerrarModal}
-                disabled={procesando}
+                disabled={procesando || subiendoFoto}
               >
                 Cancelar
               </button>
@@ -1461,13 +1546,15 @@ export default function Insumos() {
               <button
                 type="submit"
                 className="btn-submit-custom"
-                disabled={procesando}
+                disabled={procesando || subiendoFoto}
               >
-                {procesando
-                  ? 'Guardando...'
-                  : editando
-                    ? 'Guardar cambios'
-                    : 'Registrar'}
+                {subiendoFoto
+                  ? 'Subiendo imagen...'
+                  : procesando
+                    ? 'Guardando...'
+                    : editando
+                      ? 'Guardar cambios'
+                      : 'Registrar'}
               </button>
             </div>
           </form>

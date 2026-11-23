@@ -3,7 +3,6 @@ from app.modules.usuarios.application.schemas import (
     UsuarioResponse,
     UsuarioUpdate,
 )
-from app.modules.usuarios.application.registrar_usuario import ROLES_VALIDOS
 from app.modules.usuarios.domain.exceptions import RolInvalidoError, UsuarioNoEncontradoError
 from app.modules.usuarios.infrastructure.usuario_repository import (
     UsuarioRepository,

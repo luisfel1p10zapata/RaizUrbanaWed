@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, useState, useEffect } from 'react';
-import { Trash2, X } from 'lucide-react';
+import { ImagePlus, Trash2, X } from 'lucide-react';
 import {
   obtenerCategorias,
   registrarCategoriaApi,
@@ -7,6 +7,7 @@ import {
   cambiarEstadoApi,
   eliminarCategoriaApi,
 } from '../services/categoriaService';
+import { subirImagen, CARPETAS_UPLOAD } from '../../../services/uploadService';
 import { Icons } from '../../../components/ui/Icons';
 import FiltrarBuscarGlobal from '../../../components/ui/FiltrarBuscarGlobal';
 import TableGlobal from '../../../components/ui/TableGlobal';
@@ -65,6 +66,9 @@ export default function Categorias() {
   const [selected, setSelected] = useState(null);
   const [formNombre, setFormNombre] = useState('');
   const [formEstado, setFormEstado] = useState(true);
+  const [formFoto, setFormFoto] = useState('');
+  const [subiendoFoto, setSubiendoFoto] = useState(false);
+  const archivoFotoRef = useRef(null);
   const [pagina, setPagina] = useState(1);
   const [nombreTocado, setNombreTocado] = useState(false);
   const [guardando, setGuardando] = useState(false);
@@ -243,6 +247,7 @@ export default function Categorias() {
   const abrirRegistrar = () => {
     setFormNombre('');
     setFormEstado(true);
+    setFormFoto('');
     setSelected(null);
     setNombreTocado(false);
     setErrorServidor('');
@@ -258,9 +263,27 @@ export default function Categorias() {
     setSelected(categoria);
     setFormNombre(categoria.nombre);
     setFormEstado(categoria.estado);
+    setFormFoto(categoria.fotoCategoria || categoria.foto_categoria || '');
     setNombreTocado(false);
     setErrorServidor('');
     setModal('editar');
+  };
+
+  const manejarSubidaFotoCategoria = async (event) => {
+    const archivo = event.target.files?.[0];
+    event.target.value = '';
+    if (!archivo) return;
+
+    try {
+      setSubiendoFoto(true);
+      setErrorServidor('');
+      const res = await subirImagen(archivo, CARPETAS_UPLOAD.CATEGORIAS);
+      setFormFoto(res.url);
+    } catch (error) {
+      setErrorServidor(error.message || 'No se pudo subir la imagen de la categoría.');
+    } finally {
+      setSubiendoFoto(false);
+    }
   };
 
   const abrirEliminar = (categoria) => {
@@ -297,11 +320,16 @@ export default function Categorias() {
     setGuardando(true);
     setErrorServidor('');
     try {
-      const creada = await registrarCategoriaApi({ nombre: formNombre.trim(), estado: true });
+      const creada = await registrarCategoriaApi({
+        nombre: formNombre.trim(),
+        estado: true,
+        fotoCategoria: formFoto.trim() || null,
+      });
       const nuevaNormalizada = normalizarCategoriaUI(creada);
       setCategorias((prev) => [...prev, nuevaNormalizada]);
       setModal(null);
       setFormNombre('');
+      setFormFoto('');
       setPagina(1);
       avisar('exito', '¡Categoría registrada correctamente!');
     } catch (error) {
@@ -320,7 +348,11 @@ export default function Categorias() {
     setErrorServidor('');
     const idReal = selected.id_categoria || String(selected.id).replace('#', '');
     try {
-      const actualizada = await editarCategoriaApi(idReal, { nombre: formNombre.trim(), estado: formEstado });
+      const actualizada = await editarCategoriaApi(idReal, {
+        nombre: formNombre.trim(),
+        estado: formEstado,
+        fotoCategoria: formFoto.trim() || null,
+      });
       const normalizada = normalizarCategoriaUI(actualizada);
       setCategorias((prev) =>
         prev.map((c) =>
@@ -627,6 +659,47 @@ export default function Categorias() {
                 {errorNombre}
               </small>
             )}
+            <label style={{ marginTop: '14px' }}>
+              IMAGEN (OPCIONAL)
+            </label>
+            <input
+              ref={archivoFotoRef}
+              type="file"
+              accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+              onChange={manejarSubidaFotoCategoria}
+              style={{ display: 'none' }}
+            />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                className="categoria-secondary-button"
+                disabled={guardando || subiendoFoto}
+                onClick={() => archivoFotoRef.current?.click()}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+              >
+                <ImagePlus size={15} />
+                <span>{subiendoFoto ? 'Subiendo...' : formFoto ? 'Cambiar imagen' : 'Subir imagen'}</span>
+              </button>
+              {formFoto && (
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                  <img
+                    src={formFoto}
+                    alt="Vista previa categoría"
+                    style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '8px' }}
+                  />
+                  <button
+                    type="button"
+                    className="categoria-secondary-button"
+                    disabled={guardando || subiendoFoto}
+                    onClick={() => setFormFoto('')}
+                    aria-label="Quitar imagen"
+                    style={{ padding: '6px 8px' }}
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              )}
+            </div>
             {errorServidor && (
               <small className="categoria-error-tiempo-real" role="alert">
                 {errorServidor}
@@ -634,16 +707,16 @@ export default function Categorias() {
             )}
           </div>
           <div className="categoria-modal-footer">
-            <button className="categoria-secondary-button" type="button" disabled={guardando} onClick={() => setModal(null)}>
+            <button className="categoria-secondary-button" type="button" disabled={guardando || subiendoFoto} onClick={() => setModal(null)}>
               Cancelar
             </button>
             <button
               className="categoria-primary-modal-button"
               type="button"
-              disabled={Boolean(errorNombre) || guardando}
+              disabled={Boolean(errorNombre) || guardando || subiendoFoto}
               onClick={registrar}
             >
-              {guardando ? 'Registrando...' : 'Registrar categoría'}
+              {subiendoFoto ? 'Subiendo...' : guardando ? 'Registrando...' : 'Registrar categoría'}
             </button>
           </div>
         </ModalShell>
@@ -665,6 +738,22 @@ export default function Categorias() {
             <div><span>ID</span><strong>{selected.id}</strong></div>
             <div><span>Nombre</span><strong>{selected.nombre}</strong></div>
             <div><span>Estado</span><EstadoBadge activo={selected.estado} /></div>
+            {(selected.fotoCategoria || selected.foto_categoria) && (
+              <div>
+                <span>Imagen</span>
+                <a
+                  href={selected.fotoCategoria || selected.foto_categoria}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <img
+                    src={selected.fotoCategoria || selected.foto_categoria}
+                    alt={selected.nombre}
+                    style={{ width: '56px', height: '56px', objectFit: 'cover', borderRadius: '8px', display: 'block' }}
+                  />
+                </a>
+              </div>
+            )}
           </div>
           <div className="categoria-modal-footer">
             <button className="categoria-secondary-button" type="button" onClick={() => setModal(null)}>
@@ -682,7 +771,7 @@ export default function Categorias() {
               <span className="categoria-modal-eyebrow">EDITAR</span>
               <h2>Modificar Categoría</h2>
             </div>
-            <button className="categoria-modal-close" type="button" disabled={guardando} onClick={() => setModal(null)}>
+            <button className="categoria-modal-close" type="button" disabled={guardando || subiendoFoto} onClick={() => setModal(null)}>
               <X size={20} />
             </button>
           </div>
@@ -706,6 +795,47 @@ export default function Categorias() {
                 {errorNombre}
               </small>
             )}
+            <label style={{ marginTop: '14px' }}>
+              IMAGEN (OPCIONAL)
+            </label>
+            <input
+              ref={archivoFotoRef}
+              type="file"
+              accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+              onChange={manejarSubidaFotoCategoria}
+              style={{ display: 'none' }}
+            />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                className="categoria-secondary-button"
+                disabled={guardando || subiendoFoto}
+                onClick={() => archivoFotoRef.current?.click()}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+              >
+                <ImagePlus size={15} />
+                <span>{subiendoFoto ? 'Subiendo...' : formFoto ? 'Cambiar imagen' : 'Subir imagen'}</span>
+              </button>
+              {formFoto && (
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                  <img
+                    src={formFoto}
+                    alt="Vista previa categoría"
+                    style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '8px' }}
+                  />
+                  <button
+                    type="button"
+                    className="categoria-secondary-button"
+                    disabled={guardando || subiendoFoto}
+                    onClick={() => setFormFoto('')}
+                    aria-label="Quitar imagen"
+                    style={{ padding: '6px 8px' }}
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              )}
+            </div>
             {errorServidor && (
               <small className="categoria-error-tiempo-real" role="alert">
                 {errorServidor}
@@ -713,16 +843,16 @@ export default function Categorias() {
             )}
           </div>
           <div className="categoria-modal-footer">
-            <button className="categoria-secondary-button" type="button" disabled={guardando} onClick={() => setModal(null)}>
+            <button className="categoria-secondary-button" type="button" disabled={guardando || subiendoFoto} onClick={() => setModal(null)}>
               Cancelar
             </button>
             <button
               className="categoria-primary-modal-button"
               type="button"
-              disabled={Boolean(errorNombre) || guardando}
+              disabled={Boolean(errorNombre) || guardando || subiendoFoto}
               onClick={guardarCambios}
             >
-              {guardando ? 'Guardando...' : 'Guardar cambios'}
+              {subiendoFoto ? 'Subiendo...' : guardando ? 'Guardando...' : 'Guardar cambios'}
             </button>
           </div>
         </ModalShell>

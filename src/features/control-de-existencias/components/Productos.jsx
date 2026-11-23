@@ -24,6 +24,7 @@ import "./Productos.css";
 import { listarProductosApi, registrarProductoApi, actualizarProductoApi, eliminarProductoApi } from "../services/productoService";
 import { listarProductoVariantesApi } from "../services/productoVarianteService";
 import { listarInsumosApi } from "../services/insumoService";
+import { subirImagen, CARPETAS_UPLOAD } from "../../../services/uploadService";
 const TIPOS = [
   "Camiseta",
   "Chaqueta",
@@ -80,7 +81,8 @@ const VARIANTE_VACIA = {
   talle: "M",
   precio: "",
   stock: 0,
-  estado: "Activo"
+  estado: "Activo",
+  foto: ""
 };
 const precioNumerico = valor => {
   if (typeof valor === "number") return valor;
@@ -253,6 +255,9 @@ export default function Productos() {
   );
   const [pasoRegistro, setPasoRegistro] = useState(1);
   const [fotosProducto, setFotosProducto] = useState([]);
+  const [subiendoFotos, setSubiendoFotos] = useState(false);
+  const [subiendoFotoVariante, setSubiendoFotoVariante] = useState(false);
+  const archivoVarianteRef = useRef(null);
   const [insumos, setInsumos] = useState([]);
   const [catalogoInsumos, setCatalogoInsumos] = useState([]);
   const [cargandoInsumos, setCargandoInsumos] = useState(false);
@@ -260,10 +265,13 @@ export default function Productos() {
   useEffect(() => {
     if (modal !== "producto" || pasoRegistro !== 2 || !registrarVarianteInicial) return;
     let activo = true;
-    setCargandoInsumos(true);
-    setErrorCatalogoInsumos("");
-    listarInsumosApi()
-      .then(respuesta => {
+    const cargar = async () => {
+      await Promise.resolve();
+      if (!activo) return;
+      setCargandoInsumos(true);
+      setErrorCatalogoInsumos("");
+      try {
+        const respuesta = await listarInsumosApi();
         // El servicio puede devolver un arreglo o una respuesta paginada.
         const lista = Array.isArray(respuesta) ? respuesta
           : [respuesta?.items, respuesta?.insumos, respuesta?.data, respuesta?.resultados, respuesta?.registros]
@@ -278,14 +286,16 @@ export default function Productos() {
         })).filter(item => Number.isInteger(item.id) && item.id > 0 && item.nombre &&
           ![false, "Inactivo", "inactivo", "INACTIVO", 0].includes(item.estado));
         if (activo) setCatalogoInsumos(catalogo);
-      })
-      .catch(err => {
+      } catch (err) {
         if (activo) {
           setCatalogoInsumos([]);
           setErrorCatalogoInsumos(err.message || "No se pudieron cargar los insumos.");
         }
-      })
-      .finally(() => { if (activo) setCargandoInsumos(false); });
+      } finally {
+        if (activo) setCargandoInsumos(false);
+      }
+    };
+    cargar();
     return () => { activo = false; };
   }, [modal, pasoRegistro, registrarVarianteInicial]);
   const [nombreInsumo, setNombreInsumo] = useState("");
@@ -306,7 +316,7 @@ export default function Productos() {
   const errorFotos = fotosProducto.length < 1 ? "Agrega al menos una fotografía." :
     fotosProducto.length > 6 ? "Se permiten máximo 6 fotografías." :
     fotosProducto.some(f => !/^https?:\/\//i.test(f) || f.length > 2048)
-      ? "Para guardar, utiliza URLs públicas válidas; las fotos locales son solo una vista previa." : "";
+      ? "Todas las fotografías deben tener una URL pública válida." : "";
   const errorPrecio = formVariante.precio === "" ? "El precio es obligatorio." :
     !Number.isFinite(Number(formVariante.precio)) || Number(formVariante.precio) <= 0
       ? "El precio debe ser mayor que cero." : "";
@@ -426,7 +436,7 @@ export default function Productos() {
     setModal("producto");
   };
   /* =========================================
-     FOTOGRAFÍA
+     FOTOGRAFÍA (Subida real a Supabase Storage)
   ========================================= */
   const cargarFoto = async e => {
     const archivos = Array.from(e.target.files || []);
@@ -436,22 +446,33 @@ export default function Productos() {
       setError("Puedes seleccionar máximo 6 fotografías por producto.");
       return;
     }
-    if (archivos.some(a => !["image/jpeg", "image/png"].includes(a.type))) {
-      setError("Solo se permiten fotografías JPG, JPEG o PNG.");
-      return;
-    }
     try {
-      const leer = archivo => new Promise((resolve, reject) => {
-        const lector = new FileReader();
-        lector.onload = () => resolve(String(lector.result));
-        lector.onerror = () => reject(new Error("No se pudo leer la imagen."));
-        lector.readAsDataURL(archivo);
-      });
-      const nuevas = await Promise.all(archivos.map(leer));
-      setFotosProducto(prev => [...prev, ...nuevas].slice(0, 6));
+      setSubiendoFotos(true);
       setError("");
+      const subidas = await Promise.all(
+        archivos.map(archivo => subirImagen(archivo, CARPETAS_UPLOAD.PRODUCTOS))
+      );
+      const nuevasUrls = subidas.map(res => res.url).filter(Boolean);
+      setFotosProducto(prev => [...prev, ...nuevasUrls].slice(0, 6));
     } catch (err) {
-      setError(err.message || "No se pudieron cargar las imágenes.");
+      setError(err.message || "No se pudieron subir las imágenes a Storage.");
+    } finally {
+      setSubiendoFotos(false);
+    }
+  };
+  const cargarFotoVariante = async e => {
+    const archivo = e.target.files?.[0];
+    e.target.value = "";
+    if (!archivo) return;
+    try {
+      setSubiendoFotoVariante(true);
+      setError("");
+      const res = await subirImagen(archivo, CARPETAS_UPLOAD.VARIANTES);
+      setFormVariante(prev => ({ ...prev, foto: res.url }));
+    } catch (err) {
+      setError(err.message || "No se pudo subir la imagen de la variante.");
+    } finally {
+      setSubiendoFotoVariante(false);
     }
   };
   const quitarFoto = indice => {
@@ -490,9 +511,9 @@ export default function Productos() {
       setError(errorNombre);
       return;
     }
-    // La API almacena rutas/URLs, no el contenido base64 de un archivo local.
-    if (fotosProducto.some(f => !f.startsWith("https://") && !f.startsWith("http://") || f.length > 2048)) {
-      setError("Para guardar en Supabase, agrega URLs públicas de las imágenes. Los archivos locales aún requieren un servicio de subida (Storage).");
+    // La API almacena únicamente URLs públicas (subidas a Supabase Storage o pegadas manualmente).
+    if (fotosProducto.some(f => (!f.startsWith("https://") && !f.startsWith("http://")) || f.length > 2048)) {
+      setError("Espera a que finalice la subida o ingresa URLs públicas válidas de las imágenes.");
       return;
     }
     if (registrarVarianteInicial && productoId === null && (errorPrecio || errorStock)) {
@@ -518,6 +539,7 @@ export default function Productos() {
           precio: Number(formVariante.precio),
           stock: Number(formVariante.stock) || 0,
           estado: formVariante.estado,
+          ...(formVariante.foto ? { foto: formVariante.foto } : {}),
           insumos: ficha
         }
       } : {})
@@ -781,6 +803,46 @@ export default function Productos() {
           onBlur={() => tocarCampo("stock")}
           onChange={e => { tocarCampo("stock"); setFormVariante(prev => ({ ...prev, stock: e.target.value })); }} />
         {camposTocados.stock && errorStock && <small className="ru-validacion-error" role="alert">{errorStock}</small>}
+      </label>
+      <label style={{ gridColumn: "1 / -1" }}>
+        FOTO DE VARIANTE (OPCIONAL)
+        <input
+          ref={archivoVarianteRef}
+          type="file"
+          accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+          onChange={cargarFotoVariante}
+          style={{ display: "none" }}
+        />
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: "6px", flexWrap: "wrap" }}>
+          <button
+            type="button"
+            className="ru-secondary"
+            disabled={subiendoFotoVariante}
+            onClick={() => archivoVarianteRef.current?.click()}
+            style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
+          >
+            <ImagePlus size={15} />
+            <span>{subiendoFotoVariante ? "Subiendo imagen..." : "Subir foto de variante"}</span>
+          </button>
+          {formVariante.foto && (
+            <div style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
+              <img
+                src={formVariante.foto}
+                alt="Vista previa variante"
+                style={{ width: "38px", height: "38px", objectFit: "cover", borderRadius: "8px" }}
+              />
+              <button
+                type="button"
+                className="ru-secondary"
+                onClick={() => setFormVariante(prev => ({ ...prev, foto: "" }))}
+                aria-label="Quitar foto de variante"
+                style={{ padding: "4px 8px" }}
+              >
+                <X size={14} />
+              </button>
+            </div>
+          )}
+        </div>
       </label>
     </div>
   );
@@ -1162,14 +1224,16 @@ export default function Productos() {
                 type={pasoRegistro === 1 && productoId === null ? "button" : "submit"}
                 form={pasoRegistro === 2 || productoId !== null ? "form-producto" : undefined}
                 className="ru-primary"
-                disabled={guardandoProducto}
+                disabled={guardandoProducto || subiendoFotos || subiendoFotoVariante}
                 onClick={pasoRegistro === 1 && productoId === null ? siguientePaso : undefined}
               >
-                {productoId !== null
-                  ? "Guardar cambios"
-                  : pasoRegistro === 1
-                    ? "Siguiente: variantes"
-                    : guardandoProducto ? "Registrando..." : "Registrar producto"}
+                {subiendoFotos || subiendoFotoVariante
+                  ? "Subiendo imagen..."
+                  : productoId !== null
+                    ? "Guardar cambios"
+                    : pasoRegistro === 1
+                      ? "Siguiente: variantes"
+                      : guardandoProducto ? "Registrando..." : "Registrar producto"}
               </button>
             </>
           }
@@ -1323,7 +1387,7 @@ export default function Productos() {
               <input
                 ref={archivoRef}
                 type="file"
-                accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+                accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
                 multiple
                 onChange={e => { tocarCampo("fotos"); cargarFoto(e); }}
                 style={{ display: "none" }}
@@ -1332,11 +1396,12 @@ export default function Productos() {
                 <button
                   type="button"
                   className="ru-foto-upload"
+                  disabled={subiendoFotos}
                   onClick={() => archivoRef.current?.click()}
                 >
                   <ImagePlus size={28} />
-                  <span>Haz clic para seleccionar fotografías</span>
-                  <span>{fotosProducto.length} de 6 fotografías</span>
+                  <span>{subiendoFotos ? "Subiendo fotografías..." : "Haz clic para seleccionar fotografías"}</span>
+                  <span>{fotosProducto.length} de 6 fotografías · JPG, PNG o WEBP (máx. 5 MB)</span>
                 </button>
               )}
               {!!fotosProducto.length && (
@@ -1376,7 +1441,7 @@ export default function Productos() {
                 </div>
                 {camposTocados.url && errorUrl && <small className="ru-validacion-error" role="alert">{errorUrl}</small>}
               </div>
-              <p className="ru-muted">La primera imagen será la portada. Las fotos seleccionadas desde tu equipo son solo vista previa; para guardarlas necesitas subirlas primero a Storage y agregar sus URLs.</p>
+              <p className="ru-muted">La primera imagen será la portada. Las fotos seleccionadas desde tu equipo se suben automáticamente a Supabase Storage y solo se guarda su URL pública.</p>
             </div>
             </>}
             {pasoRegistro === 2 && <>

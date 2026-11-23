@@ -8,6 +8,7 @@ import { apiRequest } from '../../../utils/apiClient';
 const normalizarCategoria = (categoria) => ({
   ...categoria,
   id_categoria: categoria.id ?? categoria.id_categoria,
+  fotoCategoria: categoria.fotoCategoria ?? categoria.foto_categoria ?? '',
 });
 
 const solicitar = async (ruta = '', opciones = {}) => {
@@ -54,6 +55,9 @@ export const registrarCategoriaApi = async (categoriaData) => {
     body: JSON.stringify({
       nombre,
       estado: categoriaData.estado ?? true,
+      ...(categoriaData.fotoCategoria !== undefined
+        ? { fotoCategoria: categoriaData.fotoCategoria?.trim() || null }
+        : {}),
     }),
   });
 
@@ -70,6 +74,9 @@ export const editarCategoriaApi = async (id, categoriaData) => {
     body: JSON.stringify({
       nombre,
       estado: categoriaData.estado,
+      ...(categoriaData.fotoCategoria !== undefined
+        ? { fotoCategoria: categoriaData.fotoCategoria?.trim() || null }
+        : {}),
     }),
   });
 
