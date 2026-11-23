@@ -17,6 +17,8 @@ import {
     consultarSesion,
 } from '../../features/usuarios/services/authService';
 
+import NotificacionesBell from '../notificaciones/NotificacionesBell';
+
 import './MainNavbar.css';
 
 const MainNavbar = () => {
@@ -155,6 +157,11 @@ const MainNavbar = () => {
                                 <LayoutDashboard size={18} />
                             </NavLink>
                         )}
+
+                        <NotificacionesBell
+                            variant="navbar"
+                            currentUser={currentUser}
+                        />
 
                         <NavLink
                             to="/cuenta/perfil"

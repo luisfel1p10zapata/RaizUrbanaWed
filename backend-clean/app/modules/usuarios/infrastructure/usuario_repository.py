@@ -70,18 +70,15 @@ class UsuarioPostgresRepository:
         return fila[0] if fila else 1
 
     def _resolver_id_rol(self, cursor, rol_nombre: str) -> int:
-        nombre_limpio = rol_nombre.strip()
+        nombre_limpio = (rol_nombre or "").strip()
         cursor.execute(
-            "SELECT id_rol FROM tb_roles WHERE LOWER(nombre) = LOWER(%s) LIMIT 1;",
+            "SELECT id_rol FROM tb_roles WHERE LOWER(BTRIM(nombre)) = LOWER(%s) AND estado = true LIMIT 1;",
             (nombre_limpio,)
         )
         fila = cursor.fetchone()
         if fila:
             return fila[0]
-
-        cursor.execute("SELECT id_rol FROM tb_roles WHERE LOWER(nombre) = 'empleado' LIMIT 1;")
-        f = cursor.fetchone()
-        return f[0] if f else 1
+        raise ValueError(f"El rol '{nombre_limpio}' no existe o está inactivo en el sistema.")
 
     def _mapear_fila(self, f: dict[str, Any]) -> dict[str, Any]:
         sigla_doc = f.get("tipodoc") or f.get("tipo_doc_sigla")
@@ -159,9 +156,38 @@ class UsuarioPostgresRepository:
         )
         return sin_tildes
 
+    @staticmethod
+    def _formatos_fecha(fecha_obj: Any) -> list[str]:
+        if not fecha_obj:
+            return []
+        d: date | None = None
+        if isinstance(fecha_obj, date):
+            d = fecha_obj
+        else:
+            try:
+                d = date.fromisoformat(str(fecha_obj)[:10])
+            except ValueError:
+                return [str(fecha_obj)]
+        meses = [
+            "", "enero", "febrero", "marzo", "abril", "mayo", "junio",
+            "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
+        ]
+        mes_nom = meses[d.month]
+        return [
+            d.strftime("%Y-%m-%d"),
+            d.strftime("%d/%m/%Y"),
+            d.strftime("%d-%m-%Y"),
+            d.strftime("%Y/%m/%d"),
+            mes_nom,
+            mes_nom[:3],
+            str(d.year),
+        ]
+
     def listar(self, filtros: UsuarioFiltros) -> tuple[list[dict[str, Any]], int]:
         """Obtiene la lista paginada y filtrada invocando sp_listar_usuarios de Supabase.
-        La búsqueda global compara todos los campos visibles en la tabla (sin distinguir tildes ni puntos).
+        La búsqueda global compara absolutamente todos los campos visibles y técnicos de la tabla
+        (ID, fila, tipo y número de documento, nombre, correo, teléfono, dirección, género, rol, estado y fecha),
+        tolerando tildes, mayúsculas, separadores y búsquedas combinadas.
         """
         with self._get_connection() as conn:
             with conn.cursor(row_factory=dict_row) as cursor:
@@ -187,47 +213,89 @@ class UsuarioPostgresRepository:
                 todos_items = [self._mapear_fila(f) for f in todas_filas]
 
                 if buscar_param:
-                    q_norm = self._normalizar_texto(buscar_param)
-                    tokens = [t for t in q_norm.split() if t]
+                    # Enriquecer con sigla y nombre completo de tb_tipodoc (ej. "Cédula de Ciudadanía")
+                    cursor.execute("SELECT id_tipodoc, sigla, nombre FROM tb_tipodoc;")
+                    tipodoc_map = {
+                        r["id_tipodoc"]: (r["sigla"] or "", r["nombre"] or "")
+                        for r in cursor.fetchall()
+                    }
+                    id_tipodoc_por_usuario = {
+                        f["id_usuario"]: f.get("id_tipodoc")
+                        for f in todas_filas
+                    }
 
-                    def _coincide_token(tok: str, texto: str) -> bool:
-                        if tok in ("act", "acti", "activ", "activo"):
-                            return bool(re.search(rf"(?<![a-z0-9]){re.escape(tok)}", texto))
-                        return tok in texto
+                    q_norm = self._normalizar_texto(buscar_param)
+                    # Separar por espacios o separadores comunes de celdas copiadas (·, |, ;, ,)
+                    raw_tokens = re.split(r"[\s·|,;]+", q_norm)
+                    tokens = [t for t in raw_tokens if t and re.search(r"[a-z0-9#]", t)]
+                    if not tokens and q_norm:
+                        tokens = [q_norm]
+
+                    def _coincide_token(tok: str, haystack: str, haystack_clean: str, haystack_compact: str) -> bool:
+                        tok_clean = re.sub(r"[^a-z0-9@#]+", " ", tok).strip()
+                        tok_alnum = re.sub(r"[^a-z0-9]+", "", tok)
+
+                        # Evitar que buscar "activo" coincida por subcadena dentro de "inactivo"
+                        if tok in ("act", "acti", "activ", "activo", "activos"):
+                            tok_base = "activo" if tok == "activos" else tok
+                            return bool(re.search(rf"(?<![a-z0-9]){re.escape(tok_base)}", haystack_clean))
+
+                        if tok in haystack or (tok_clean and tok_clean in haystack_clean):
+                            return True
+                        if tok.startswith("#") and len(tok) > 1 and tok in haystack:
+                            return True
+                        # Coincidencia flexible sin puntos/guiones (ej: 1.038.475.621, 300-412-7856, C.C.1038)
+                        if len(tok_alnum) >= 2 and tok_alnum in haystack_compact:
+                            return True
+                        return False
 
                     filtrados = []
                     for idx, item in enumerate(todos_items, start=1):
                         tipo_val = str(item["tipo_doc"].value if hasattr(item["tipo_doc"], "value") else item["tipo_doc"])
                         tipo_sigla = tipo_val.replace(".", "")
+                        td_sigla_bd, td_nombre_bd = tipodoc_map.get(
+                            id_tipodoc_por_usuario.get(item["id"]), ("", "")
+                        )
                         genero_val = str(item["genero"].value if hasattr(item["genero"], "value") else item["genero"])
                         estado_val = str(item["estado"].value if hasattr(item["estado"], "value") else item["estado"])
-                        fecha_obj = item.get("fecha_registro")
-                        fecha_val = str(fecha_obj or "")
-                        fecha_dmy = fecha_obj.strftime("%d/%m/%Y") if isinstance(fecha_obj, date) else ""
+                        num_doc = str(item.get("numero_doc") or "")
+                        num_doc_solo_dig = re.sub(r"\D+", "", num_doc)
+                        num_doc_fmt = f"{int(num_doc_solo_dig):,}".replace(",", ".") if num_doc_solo_dig.isdigit() else ""
+                        tel_val = str(item.get("telefono") or "")
+                        tel_dig = re.sub(r"\D+", "", tel_val)
+                        fechas_txt = self._formatos_fecha(item.get("fecha_registro"))
 
-                        campos = " ".join([
+                        partes = [
                             f"#{idx}",
                             str(idx),
+                            f"#{item['id']}",
                             str(item["id"]),
                             tipo_val,
                             tipo_sigla,
-                            str(item["numero_doc"] or ""),
-                            f"{tipo_val} {item['numero_doc']}",
-                            f"{tipo_sigla} {item['numero_doc']}",
+                            td_sigla_bd,
+                            td_nombre_bd,
+                            num_doc,
+                            num_doc_fmt,
+                            f"{tipo_val} {num_doc}",
+                            f"{tipo_sigla} {num_doc}",
+                            f"{tipo_sigla}{num_doc}",
                             str(item["nombres"] or ""),
                             str(item["apellidos"] or ""),
+                            f"{item['nombres'] or ''} {item['apellidos'] or ''}",
                             str(item["correo"] or ""),
-                            str(item.get("telefono") or ""),
+                            tel_val,
+                            tel_dig,
                             str(item.get("direccion") or ""),
                             genero_val,
                             str(item.get("rol") or ""),
                             estado_val,
-                            fecha_val,
-                            fecha_dmy,
-                        ])
-                        haystack = self._normalizar_texto(campos)
+                            *fechas_txt,
+                        ]
+                        haystack = self._normalizar_texto(" ".join(p for p in partes if p))
+                        haystack_clean = re.sub(r"[^a-z0-9@#]+", " ", haystack)
+                        haystack_compact = re.sub(r"[^a-z0-9]+", "", haystack)
 
-                        if bool(tokens) and all(_coincide_token(tok, haystack) for tok in tokens):
+                        if all(_coincide_token(tok, haystack, haystack_clean, haystack_compact) for tok in tokens):
                             filtrados.append(item)
                     todos_items = filtrados
 
@@ -380,9 +448,13 @@ class UsuarioPostgresRepository:
 
                 nombres = datos.get("nombres") or usuario_actual["nombres"]
                 apellidos = datos.get("apellidos") or usuario_actual["apellidos"]
-                telefono = datos.get("telefono") if "telefono" in datos else usuario_actual["telefono"]
-                direccion = datos.get("direccion") if "direccion" in datos else usuario_actual["direccion"]
-                genero = str(datos.get("genero") or usuario_actual["genero"])
+                telefono = (datos.get("telefono") or "").strip() if "telefono" in datos and datos.get("telefono") is not None else (usuario_actual["telefono"] or "").strip()
+                direccion = (datos.get("direccion") or "").strip() if "direccion" in datos and datos.get("direccion") is not None else (usuario_actual["direccion"] or "").strip()
+                genero_raw = datos.get("genero") if "genero" in datos and datos.get("genero") is not None else usuario_actual["genero"]
+                genero = str(genero_raw.value if hasattr(genero_raw, "value") else genero_raw)
+
+                if not telefono or not direccion:
+                    raise ValueError("Teléfono y dirección son obligatorios.")
 
                 try:
                     cursor.execute("""
@@ -391,8 +463,8 @@ class UsuarioPostgresRepository:
                         usuario_id,
                         nombres.strip(),
                         apellidos.strip(),
-                        (telefono or "").strip(),
-                        (direccion or "").strip(),
+                        telefono,
+                        direccion,
                         genero,
                         id_rol,
                     ))
@@ -409,8 +481,13 @@ class UsuarioPostgresRepository:
                         cursor.execute("UPDATE tb_usuario SET correo = %s WHERE id_usuario = %s;", (correo_nuevo, usuario_id))
 
                 if "estado" in datos and datos["estado"] is not None:
-                    estado_str = str(datos["estado"])
-                    if estado_str in ("Activo", "Inactivo", "Pendiente"):
+                    estado_raw = datos["estado"]
+                    estado_str = str(estado_raw.value if hasattr(estado_raw, "value") else estado_raw).strip()
+                    estado_actual_raw = usuario_actual.get("estado")
+                    estado_actual_str = str(
+                        estado_actual_raw.value if hasattr(estado_actual_raw, "value") else estado_actual_raw
+                    ).strip()
+                    if estado_str in ("Activo", "Inactivo", "Pendiente") and estado_str != estado_actual_str:
                         try:
                             cursor.execute("SELECT sp_cambiar_estado_usuario(%s, %s);", (usuario_id, estado_str))
                         except psycopg.errors.RaiseException as e:
@@ -469,7 +546,7 @@ class UsuarioPostgresRepository:
         with self._get_connection() as conn:
             with conn.cursor() as cursor:
                 cursor.execute(
-                    "SELECT 1 FROM tb_roles WHERE LOWER(BTRIM(nombre)) = LOWER(%s) LIMIT 1;",
+                    "SELECT 1 FROM tb_roles WHERE LOWER(BTRIM(nombre)) = LOWER(%s) AND estado = true LIMIT 1;",
                     (nombre_limpio,)
                 )
                 return cursor.fetchone() is not None

@@ -9,17 +9,6 @@ from app.modules.usuarios.infrastructure.usuario_repository import (
     UsuarioRepository,
 )
 
-ROLES_VALIDOS = {
-    "administrador",
-    "supervisora",
-    "supervisor",
-    "vendedor",
-    "empleado",
-    "bodeguero",
-    "usuario",
-    "cliente",
-}
-
 
 class RegistrarUsuario:
     def __init__(self, repositorio=None):

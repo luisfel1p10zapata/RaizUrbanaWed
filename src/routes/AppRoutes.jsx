@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import {
   BrowserRouter,
   Routes,
@@ -7,6 +8,7 @@ import {
 
 import MainNavbar from '../components/navegacion/MainNavbar';
 import AdminLayout from '../components/layout/AdminLayout';
+import { consultarSesion } from '../features/usuarios/services/authService';
 
 // Ventas y catálogo
 import Inicio from '../features/ventas/components/Inicio';
@@ -46,6 +48,50 @@ import RestablecerContrasena from '../features/usuarios/components/RestablecerCo
 import ActivarCuenta from '../features/usuarios/components/ActivarCuenta';
 import Perfil from '../features/usuarios/components/Perfil';
 import RutaProtegida from '../features/usuarios/components/RutaProtegida';
+
+const CarritoAdaptivePage = () => {
+  const [esAdmin, setEsAdmin] = useState(null);
+
+  useEffect(() => {
+    let activo = true;
+    consultarSesion()
+      .then((usuario) => {
+        if (!activo) return;
+        const permisos = Array.isArray(usuario?.permisos) ? usuario.permisos : [];
+        const admin =
+          usuario?.rol === 'Administrador' ||
+          usuario?.rol === 'Empleado' ||
+          permisos.some((p) => ['Acceso Total', 'Dashboard', 'Ventas'].includes(p));
+        setEsAdmin(Boolean(admin));
+      })
+      .catch(() => {
+        if (activo) setEsAdmin(false);
+      });
+    return () => {
+      activo = false;
+    };
+  }, []);
+
+  if (esAdmin === null) {
+    return (
+      <>
+        <MainNavbar />
+        <p role="status" style={{ padding: '24px' }}>Cargando carrito...</p>
+      </>
+    );
+  }
+
+  if (esAdmin) {
+    return <AdminLayout />;
+  }
+
+  return (
+    <>
+      <MainNavbar />
+      <Carrito />
+    </>
+  );
+};
 
 const AppRoutes = () => {
   return (
@@ -88,7 +134,7 @@ const AppRoutes = () => {
           element={<ActivarCuenta />}
         />
 
-        {/* Perfil para personas con sesión activa */}
+        {/* Perfil y Carrito para cualquier usuario con sesión activa (Clientes y Admin) */}
 
         <Route element={<RutaProtegida />}>
           <Route
@@ -100,6 +146,9 @@ const AppRoutes = () => {
               </>
             }
           />
+          <Route path="/carrito" element={<CarritoAdaptivePage />}>
+            <Route index element={<Carrito />} />
+          </Route>
         </Route>
 
         {/* Área administrativa */}
@@ -117,13 +166,6 @@ const AppRoutes = () => {
               <Route
                 path="/ventas"
                 element={<Ventas />}
-              />
-            </Route>
-
-            <Route element={<RutaProtegida permiso="Carrito" />}>
-              <Route
-                path="/carrito"
-                element={<Carrito />}
               />
             </Route>
 

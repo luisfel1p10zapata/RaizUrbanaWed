@@ -89,37 +89,44 @@ class EstadoUsuario(StrEnum):
 # --------------------------------------------------------------------------
 class UsuarioCreate(CamelModel):
     """El administrador registra al usuario SIN contraseña.
-    El sistema envía un enlace al correo para que el usuario la defina."""
-    nombres: str = Field(min_length=1, max_length=80)
-    apellidos: str = Field(min_length=1, max_length=80)
+    El sistema envía un enlace al correo para que el usuario la defina.
+    Alineado a las columnas NOT NULL y longitudes de tb_usuario en Supabase."""
+    nombres: str = Field(min_length=2, max_length=50)
+    apellidos: str = Field(min_length=2, max_length=50)
     tipo_doc: TipoDocumento = TipoDocumento.CC
     numero_doc: str = Field(min_length=1, max_length=20)
-    correo: EmailStr
+    correo: EmailStr = Field(max_length=100)
     # Opcional en el registro: si es None, el usuario queda Pendiente
     # y define su clave mediante el enlace de activación.
     contrasena: str | None = Field(default=None, max_length=128)
-    telefono: str | None = Field(default=None, max_length=20)
-    direccion: str | None = Field(default=None, max_length=200)
+    telefono: str = Field(min_length=7, max_length=15)
+    direccion: str = Field(min_length=3, max_length=100)
     genero: Genero = Genero.MASCULINO
     rol: str = Field(default="Empleado", min_length=1, max_length=50)
 
     @model_validator(mode="after")
     def validar_tipo_y_numero_doc(self) -> "UsuarioCreate":
         self.numero_doc = validar_documento_colombia(self.tipo_doc, self.numero_doc)
+        self.telefono = self.telefono.strip()
+        self.direccion = self.direccion.strip()
+        if not self.telefono:
+            raise ValueError("El teléfono es obligatorio.")
+        if not self.direccion:
+            raise ValueError("La dirección es obligatoria.")
         return self
 
 
 class UsuarioUpdate(CamelModel):
     """Editar usuario (actualización parcial: solo se cambia lo que se envía).
-
-    No incluye contraseña, documento ni género: el modal no los edita.
+    Alineado a las longitudes y restricciones de tb_usuario en Supabase.
     """
 
-    nombres: str | None = Field(default=None, min_length=1, max_length=80)
-    apellidos: str | None = Field(default=None, min_length=1, max_length=80)
-    correo: EmailStr | None = None
-    telefono: str | None = Field(default=None, max_length=20)
-    direccion: str | None = Field(default=None, max_length=200)
+    nombres: str | None = Field(default=None, min_length=2, max_length=50)
+    apellidos: str | None = Field(default=None, min_length=2, max_length=50)
+    correo: EmailStr | None = Field(default=None, max_length=100)
+    telefono: str | None = Field(default=None, min_length=7, max_length=15)
+    direccion: str | None = Field(default=None, min_length=3, max_length=100)
+    genero: Genero | None = None
     estado: EstadoUsuario | None = None
     rol: str | None = Field(default=None, min_length=1, max_length=50)
 

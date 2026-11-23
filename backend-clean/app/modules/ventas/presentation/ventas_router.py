@@ -33,7 +33,7 @@ router = APIRouter(prefix="/ventas", tags=["Ventas"])
 @router.get("", response_model=VentaPagina, status_code=status.HTTP_200_OK)
 def listar_ventas(
     search: str | None = Query(default=None, description="Búsqueda por código o cliente"),
-    estado_venta: EstadoVenta | None = Query(default=None, alias="estadoVenta", description="Filtrar por estado"),
+    estado_venta: str | None = Query(default=None, alias="estadoVenta", description="Filtrar por estado"),
     page: int = Query(default=1, ge=1, description="Número de página"),
     page_size: int = Query(default=8, ge=1, le=100, alias="pageSize", description="Registros por página"),
 ):
@@ -116,7 +116,11 @@ def cambiar_estado(venta_id: int, datos: VentaEstadoUpdate):
     """Cambia el estado de una venta."""
     caso_uso = CambiarEstadoVenta()
     try:
-        return caso_uso.ejecutar(venta_id, datos.estado_venta)
+        return caso_uso.ejecutar(
+            venta_id,
+            datos.estado_venta,
+            id_estado_comp=datos.id_estado_comp,
+        )
     except VentaNoEncontradaError as err:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

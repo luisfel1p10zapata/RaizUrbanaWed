@@ -98,27 +98,30 @@ export async function obtenerVentaPorId(id) {
  */
 export async function crearVenta(datos) {
   const payload = {
-    clienteId: datos.clienteId || datos.cliente?.id || 1,
+    clienteId: datos.clienteId || datos.cliente?.id || undefined,
     cliente: datos.cliente ? {
-      id: datos.cliente.id || 1,
-      nombre: datos.cliente.nombre || 'Cliente General',
-      email: datos.cliente.email || 'cliente@empresa.com',
+      id: datos.cliente.id,
+      nombre: datos.cliente.nombre || 'Cliente',
+      email: datos.cliente.email || '',
       rol: datos.cliente.rol || undefined,
     } : undefined,
     idMetodoPago: datos.idMetodoPago || (datos.metodoPago?.id ? datos.metodoPago.id : undefined),
     metodoPago: typeof datos.metodoPago === 'string' ? datos.metodoPago : (datos.metodoPago?.nombre || 'Efectivo'),
+    ...(datos.idEstadoComp ? { idEstadoComp: Number(datos.idEstadoComp) } : {}),
     estadoVenta: datos.estadoVenta || 'Pendiente',
     estadoPago: datos.estadoPago || 'Pendiente',
+    ...(datos.fotoComprobante ? { fotoComprobante: String(datos.fotoComprobante).trim() } : {}),
+    ...(datos.fechaEntrega ? { fechaEntrega: datos.fechaEntrega } : {}),
     items: (datos.items || []).map((it) => ({
       idProductoVari: it.idProductoVari || it.id_producto_vari || undefined,
-      productoId: it.productoId || it.producto?.id || 101,
+      productoId: it.productoId || it.producto?.id || undefined,
       producto: it.producto ? {
-        id: it.producto.id || 101,
-        nombre: it.producto.nombre || 'Producto',
-        precio: Number(it.producto.precio || 10000),
+        id: it.producto.id,
+        nombre: it.producto.nombre,
+        precio: Number(it.producto.precio || 0),
       } : undefined,
       cantidad: Number(it.cantidad || 1),
-      talla: it.talla || 'M',
+      talla: it.talla || 'Única',
       color: it.color || 'Único',
       subtotal: Number(it.subtotal || 0),
     })),
@@ -141,6 +144,8 @@ export async function actualizarVenta(id, datos) {
     ...(datos.estadoPago ? { estadoPago: datos.estadoPago } : {}),
     ...(datos.idMetodoPago ? { idMetodoPago: Number(datos.idMetodoPago) } : {}),
     ...(datos.metodoPago ? { metodoPago: datos.metodoPago } : {}),
+    ...(datos.fotoComprobante !== undefined ? { fotoComprobante: datos.fotoComprobante } : {}),
+    ...(datos.fechaEntrega !== undefined ? { fechaEntrega: datos.fechaEntrega } : {}),
   };
 
   return solicitar(`/${encodeURIComponent(id)}`, {
@@ -152,10 +157,13 @@ export async function actualizarVenta(id, datos) {
 /**
  * Cambiar exclusivamente el estado de una venta.
  */
-export async function cambiarEstadoVenta(id, nuevoEstado) {
+export async function cambiarEstadoVenta(id, nuevoEstado, idEstadoComp = undefined) {
   return solicitar(`/${encodeURIComponent(id)}/estado`, {
     method: 'PATCH',
-    body: JSON.stringify({ estadoVenta: nuevoEstado }),
+    body: JSON.stringify({
+      estadoVenta: nuevoEstado,
+      ...(idEstadoComp ? { idEstadoComp: Number(idEstadoComp) } : {}),
+    }),
   });
 }
 

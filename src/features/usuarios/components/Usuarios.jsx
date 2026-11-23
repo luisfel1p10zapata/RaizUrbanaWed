@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import {
   obtenerUsuarios,
+  obtenerUsuarioPorId,
   obtenerAuxiliaresUsuarios,
   crearUsuario,
   actualizarUsuario,
@@ -8,7 +9,7 @@ import {
   activarUsuarioConToken,
 } from "../services/usuariosService";
 import {
-  Eye, EyeOff, Pencil, UserX, X, Mail, Phone, IdCard,
+  Eye, EyeOff, Pencil, UserX, UserCheck, X, Mail, Phone, IdCard,
   MapPin, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight,
   CheckCircle2, AlertCircle, Users, UserPlus, Copy, Check, ShieldCheck, KeyRound, Lock, AlertTriangle
 } from "lucide-react";
@@ -241,26 +242,13 @@ function ViewUserModal({ user, index, onClose, onEdit, onActivate }) {
   );
 }
 
-const FALLBACK_ROLES = [
-  { id: 1, nombre: "Administrador" },
-  { id: 2, nombre: "Empleado" },
-  { id: 3, nombre: "Cliente" },
-];
-
-const FALLBACK_TIPOS_DOC = [
-  { id: 1, sigla: "CC", valor: "C.C.", nombre: "Cédula de Ciudadanía" },
-  { id: 2, sigla: "CE", valor: "C.E.", nombre: "Cédula de Extranjería" },
-  { id: 3, sigla: "TI", valor: "T.I.", nombre: "Tarjeta de Identidad" },
-];
-
 /* ============================================================
    MODAL: REGISTRAR USUARIO (SIN CONTRASEÑA - ADMIN FLOW)
+   Alineado 100% con tb_usuario (NOT NULL, longitudes) y tb_roles activos
    ============================================================ */
-function CreateUserModal({ nextId, onClose, onCreate, rolesDisponibles = FALLBACK_ROLES, tiposDocDisponibles = FALLBACK_TIPOS_DOC }) {
-  const rolesLista = rolesDisponibles.length > 0 ? rolesDisponibles : FALLBACK_ROLES;
-  const tiposDocLista = tiposDocDisponibles.length > 0 ? tiposDocDisponibles : FALLBACK_TIPOS_DOC;
-  const defaultRol = rolesLista.find((r) => r.nombre === "Empleado")?.nombre || rolesLista[0]?.nombre || "Empleado";
-  const defaultTipoDoc = tiposDocLista[0]?.valor || "C.C.";
+function CreateUserModal({ nextId, onClose, onCreate, rolesDisponibles = [], tiposDocDisponibles = [], cargandoAux = false }) {
+  const defaultRol = rolesDisponibles.find((r) => r.nombre === "Empleado")?.nombre || rolesDisponibles[0]?.nombre || "";
+  const defaultTipoDoc = tiposDocDisponibles[0]?.valor || "C.C.";
 
   const [form, setForm] = useState({
     nombres: "",
@@ -274,26 +262,31 @@ function CreateUserModal({ nextId, onClose, onCreate, rolesDisponibles = FALLBAC
     rol: defaultRol,
   });
 
+  const tipoDocActual = form.tipoDoc || defaultTipoDoc;
+  const rolActual = form.rol || defaultRol;
+
   const [touched, setTouched] = useState({});
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
 
-  const docConfig = getDocumentoConfig(form.tipoDoc);
+  const docConfig = getDocumentoConfig(tipoDocActual);
 
-  // Validación de campo individual en tiempo real
-  const validarCampo = (campo, valor, tipoDocActual = form.tipoDoc) => {
+  // Validación alineada a restricciones reales de tb_usuario en Supabase
+  const validarCampo = (campo, valor, tipoDocRef = tipoDocActual) => {
     const val = (valor || "").trim();
 
     switch (campo) {
       case "nombres":
         if (!val) return "El nombre es obligatorio.";
         if (val.length < 2) return "Mínimo 2 caracteres.";
+        if (val.length > 50) return "Máximo 50 caracteres.";
         if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(val)) return "Solo se permiten letras y espacios.";
         return null;
 
       case "apellidos":
         if (!val) return "El apellido es obligatorio.";
         if (val.length < 2) return "Mínimo 2 caracteres.";
+        if (val.length > 50) return "Máximo 50 caracteres.";
         if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(val)) return "Solo se permiten letras y espacios.";
         return null;
 
@@ -302,25 +295,30 @@ function CreateUserModal({ nextId, onClose, onCreate, rolesDisponibles = FALLBAC
         return null;
 
       case "numeroDoc":
-        return validarNumeroDocumento(tipoDocActual, val);
+        return validarNumeroDocumento(tipoDocRef, val);
 
       case "correo":
         if (!val) return "El correo electrónico es obligatorio.";
+        if (val.length > 100) return "Máximo 100 caracteres.";
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) return "Ingresa un correo válido (ej: usuario@empresa.com).";
         return null;
 
       case "telefono":
-        if (val && !/^\+?[\d\s-]{7,15}$/.test(val)) {
-          return "Teléfono inválido (mínimo 7 dígitos).";
+        if (!val) return "El teléfono es obligatorio.";
+        if (val.length > 15) return "Máximo 15 caracteres.";
+        if (!/^\+?[\d\s-]{7,15}$/.test(val)) {
+          return "Teléfono inválido (entre 7 y 15 caracteres).";
         }
         return null;
 
       case "direccion":
-        if (val && val.length > 200) return "Máximo 200 caracteres.";
+        if (!val) return "La dirección es obligatoria.";
+        if (val.length < 3) return "Mínimo 3 caracteres.";
+        if (val.length > 100) return "Máximo 100 caracteres.";
         return null;
 
       case "rol":
-        if (!val) return "Selecciona un rol.";
+        if (!val) return "Selecciona un rol activo.";
         return null;
 
       case "genero":
@@ -334,7 +332,8 @@ function CreateUserModal({ nextId, onClose, onCreate, rolesDisponibles = FALLBAC
 
   const handleBlur = (campo) => {
     setTouched((prev) => ({ ...prev, [campo]: true }));
-    const err = validarCampo(campo, form[campo], form.tipoDoc);
+    const val = campo === "rol" ? rolActual : campo === "tipoDoc" ? tipoDocActual : form[campo];
+    const err = validarCampo(campo, val, tipoDocActual);
     setErrors((prev) => ({ ...prev, [campo]: err }));
   };
 
@@ -352,25 +351,25 @@ function CreateUserModal({ nextId, onClose, onCreate, rolesDisponibles = FALLBAC
     }
 
     if (campo === "numeroDoc") {
-      const formatted = formatearEntradaDocumento(form.tipoDoc, valor);
+      const formatted = formatearEntradaDocumento(tipoDocActual, valor);
       setForm((prev) => ({ ...prev, numeroDoc: formatted }));
-      const errDoc = validarNumeroDocumento(form.tipoDoc, formatted);
+      const errDoc = validarNumeroDocumento(tipoDocActual, formatted);
       setErrors((prev) => ({ ...prev, numeroDoc: errDoc }));
       return;
     }
 
     setForm((prev) => ({ ...prev, [campo]: valor }));
-    // Validación inmediata en tiempo real si el campo ya fue tocado o tiene valor
-    const err = validarCampo(campo, valor, form.tipoDoc);
+    const err = validarCampo(campo, valor, tipoDocActual);
     setErrors((prev) => ({ ...prev, [campo]: err }));
   };
 
   const validarTodo = () => {
     const nuevosErrores = {};
-    const camposObligatorios = ["nombres", "apellidos", "tipoDoc", "numeroDoc", "correo", "rol", "genero"];
+    const camposObligatorios = ["nombres", "apellidos", "tipoDoc", "numeroDoc", "correo", "telefono", "direccion", "rol", "genero"];
+    const formEfectivo = { ...form, tipoDoc: tipoDocActual, rol: rolActual };
 
-    Object.keys(form).forEach((campo) => {
-      const err = validarCampo(campo, form[campo], form.tipoDoc);
+    camposObligatorios.forEach((campo) => {
+      const err = validarCampo(campo, formEfectivo[campo], tipoDocActual);
       if (err) nuevosErrores[campo] = err;
     });
 
@@ -380,13 +379,14 @@ function CreateUserModal({ nextId, onClose, onCreate, rolesDisponibles = FALLBAC
   };
 
   const isFormValid = useMemo(() => {
-    const camposReq = ["nombres", "apellidos", "tipoDoc", "numeroDoc", "correo", "rol", "genero"];
-    const tieneVacios = camposReq.some((c) => !form[c] || !form[c].trim());
+    const formEfectivo = { ...form, tipoDoc: tipoDocActual, rol: rolActual };
+    const camposReq = ["nombres", "apellidos", "tipoDoc", "numeroDoc", "correo", "telefono", "direccion", "rol", "genero"];
+    const tieneVacios = camposReq.some((c) => !formEfectivo[c] || !String(formEfectivo[c]).trim());
     if (tieneVacios) return false;
-    if (validarNumeroDocumento(form.tipoDoc, form.numeroDoc)) return false;
+    if (validarNumeroDocumento(tipoDocActual, form.numeroDoc)) return false;
     const tieneErrores = Object.values(errors).some((e) => Boolean(e));
     return !tieneErrores;
-  }, [form, errors]);
+  }, [form, tipoDocActual, rolActual, errors]);
 
   const handleSubmit = async () => {
     if (!validarTodo() || submitting) return;
@@ -396,13 +396,13 @@ function CreateUserModal({ nextId, onClose, onCreate, rolesDisponibles = FALLBAC
         id: nextId,
         nombres: form.nombres.trim(),
         apellidos: form.apellidos.trim(),
-        tipoDoc: form.tipoDoc,
+        tipoDoc: tipoDocActual,
         numeroDoc: form.numeroDoc.trim(),
         correo: form.correo.trim().toLowerCase(),
-        telefono: form.telefono.trim() || null,
-        direccion: form.direccion.trim() || null,
+        telefono: form.telefono.trim(),
+        direccion: form.direccion.trim(),
         genero: form.genero,
-        rol: form.rol,
+        rol: rolActual,
         contrasena: null, // Admin flow: no password set by admin
       });
     } finally {
@@ -458,6 +458,7 @@ function CreateUserModal({ nextId, onClose, onCreate, rolesDisponibles = FALLBAC
         <Field label="NOMBRES" required error={touched.nombres && errors.nombres}>
           <TextInput
             placeholder="Ej: Carlos Andrés"
+            maxLength={50}
             value={form.nombres}
             error={touched.nombres && errors.nombres}
             onChange={(e) => handleChange("nombres", e.target.value)}
@@ -468,6 +469,7 @@ function CreateUserModal({ nextId, onClose, onCreate, rolesDisponibles = FALLBAC
         <Field label="APELLIDOS" required error={touched.apellidos && errors.apellidos}>
           <TextInput
             placeholder="Ej: Mendoza Gómez"
+            maxLength={50}
             value={form.apellidos}
             error={touched.apellidos && errors.apellidos}
             onChange={(e) => handleChange("apellidos", e.target.value)}
@@ -479,11 +481,15 @@ function CreateUserModal({ nextId, onClose, onCreate, rolesDisponibles = FALLBAC
           <select
             className={`ru-form-input ru-select ${touched.tipoDoc && errors.tipoDoc ? "is-invalid" : ""}`}
             style={{ cursor: "pointer" }}
-            value={form.tipoDoc}
+            value={tipoDocActual}
+            disabled={cargandoAux || tiposDocDisponibles.length === 0}
             onChange={(e) => handleChange("tipoDoc", e.target.value)}
             onBlur={() => handleBlur("tipoDoc")}
           >
-            {tiposDocLista.map((td) => (
+            {tiposDocDisponibles.length === 0 && (
+              <option value="">{cargandoAux ? "Cargando tipos..." : "Sin tipos de documento"}</option>
+            )}
+            {tiposDocDisponibles.map((td) => (
               <option key={td.id || td.valor} value={td.valor}>
                 {td.nombre} ({td.sigla || td.valor})
               </option>
@@ -512,6 +518,7 @@ function CreateUserModal({ nextId, onClose, onCreate, rolesDisponibles = FALLBAC
           <TextInput
             icon={<Mail size={15} />}
             type="email"
+            maxLength={100}
             placeholder="correo@empresa.com"
             value={form.correo}
             error={touched.correo && errors.correo}
@@ -520,9 +527,10 @@ function CreateUserModal({ nextId, onClose, onCreate, rolesDisponibles = FALLBAC
           />
         </Field>
 
-        <Field label="TELÉFONO" error={touched.telefono && errors.telefono}>
+        <Field label="TELÉFONO" required error={touched.telefono && errors.telefono}>
           <TextInput
             icon={<Phone size={15} />}
+            maxLength={15}
             placeholder="Ej: 3001234567"
             value={form.telefono}
             error={touched.telefono && errors.telefono}
@@ -545,9 +553,10 @@ function CreateUserModal({ nextId, onClose, onCreate, rolesDisponibles = FALLBAC
           </select>
         </Field>
 
-        <Field label="DIRECCIÓN" full error={touched.direccion && errors.direccion}>
+        <Field label="DIRECCIÓN" required full error={touched.direccion && errors.direccion}>
           <TextInput
             icon={<MapPin size={15} />}
+            maxLength={100}
             placeholder="Calle 80 # 45-12, Medellín"
             value={form.direccion}
             error={touched.direccion && errors.direccion}
@@ -560,11 +569,15 @@ function CreateUserModal({ nextId, onClose, onCreate, rolesDisponibles = FALLBAC
           <select
             className={`ru-form-input ru-select ${touched.rol && errors.rol ? "is-invalid" : ""}`}
             style={{ cursor: "pointer" }}
-            value={form.rol}
+            value={rolActual}
+            disabled={cargandoAux || rolesDisponibles.length === 0}
             onChange={(e) => handleChange("rol", e.target.value)}
             onBlur={() => handleBlur("rol")}
           >
-            {rolesLista.map((r) => (
+            {rolesDisponibles.length === 0 && (
+              <option value="">{cargandoAux ? "Cargando roles activos..." : "Sin roles activos"}</option>
+            )}
+            {rolesDisponibles.map((r) => (
               <option key={r.id || r.nombre} value={r.nombre}>
                 {r.nombre}
               </option>
@@ -851,43 +864,75 @@ function ActivarCuentaModal({ token, user, onClose, onActivated }) {
 }
 
 /* ============================================================
-   MODAL: EDITAR USUARIO
+   MODAL: EDITAR USUARIO (Precarga fresca desde PostgreSQL)
    ============================================================ */
-function EditUserModal({ user, index, onClose, onSave, rolesDisponibles = FALLBACK_ROLES }) {
+function EditUserModal({ user, index, onClose, onSave, rolesDisponibles = [] }) {
   // Separar nombre en nombres y apellidos si es necesario
   const partes = (user.nombre || "").trim().split(/\s+/);
   const initialNombres = user.nombres || (partes.length > 1 ? partes.slice(0, partes.length - 1).join(" ") : partes[0] || "");
   const initialApellidos = user.apellidos || (partes.length > 1 ? partes[partes.length - 1] : "");
 
-  const rolesLista = useMemo(() => {
-    const base = rolesDisponibles.length > 0 ? rolesDisponibles : FALLBACK_ROLES;
-    const existeActual = base.some((r) => r.nombre.toLowerCase() === (user.rol || "").toLowerCase());
-    if (user.rol && !existeActual) {
-      return [...base, { id: `actual-${user.rol}`, nombre: user.rol }];
-    }
-    return base;
-  }, [rolesDisponibles, user.rol]);
-
-  const isPendingUser = (user.estado || "").toLowerCase() === "pendiente";
-
   const [form, setForm] = useState({
     ...user,
     nombres: initialNombres,
     apellidos: initialApellidos,
+    tipoDoc: user.tipoDoc || "C.C.",
+    cedula: user.cedula || user.numeroDoc || "",
     telefono: user.telefono === "—" ? "" : user.telefono || "",
     direccion: user.direccion || "",
+    genero: user.genero || "Masculino",
+    rol: user.rol || "",
     estado: user.estado || "Activo",
   });
+
+  // Precargar los datos más frescos directamente desde Supabase (GET /api/usuarios/{id})
+  useEffect(() => {
+    let activo = true;
+    obtenerUsuarioPorId(user.id)
+      .then((fresco) => {
+        if (!activo || !fresco) return;
+        setForm((prev) => ({
+          ...prev,
+          ...fresco,
+          nombres: fresco.nombres || prev.nombres,
+          apellidos: fresco.apellidos || prev.apellidos,
+          tipoDoc: fresco.tipoDoc || prev.tipoDoc,
+          cedula: fresco.numeroDoc || prev.cedula,
+          correo: fresco.correo || prev.correo,
+          telefono: fresco.telefono || "",
+          direccion: fresco.direccion || "",
+          genero: fresco.genero || prev.genero || "Masculino",
+          rol: fresco.rol || prev.rol,
+          estado: fresco.estado || prev.estado,
+        }));
+      })
+      .catch(() => {});
+    return () => {
+      activo = false;
+    };
+  }, [user.id]);
+
+  const rolesLista = useMemo(() => {
+    const base = Array.isArray(rolesDisponibles) ? rolesDisponibles : [];
+    const existeActual = base.some((r) => r.nombre.toLowerCase() === (form.rol || "").toLowerCase());
+    if (form.rol && !existeActual) {
+      return [...base, { id: `actual-${form.rol}`, nombre: form.rol }];
+    }
+    return base;
+  }, [rolesDisponibles, form.rol]);
+
+  const isPendingUser = (user.estado || "").toLowerCase() === "pendiente";
 
   const [touched, setTouched] = useState({});
   const [errors, setErrors] = useState({});
 
   const validarCampo = (campo, valor) => {
     const val = (valor || "").trim();
-    if (campo === "nombres" && (!val || val.length < 2)) return "Nombres obligatorios (mínimo 2 letras).";
-    if (campo === "apellidos" && (!val || val.length < 2)) return "Apellidos obligatorios (mínimo 2 letras).";
-    if (campo === "correo" && (!val || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val))) return "Correo inválido.";
-    if (campo === "telefono" && val && !/^\+?[\d\s-]{7,15}$/.test(val)) return "Teléfono inválido.";
+    if (campo === "nombres" && (!val || val.length < 2 || val.length > 50)) return "Nombres obligatorios (2 a 50 caracteres).";
+    if (campo === "apellidos" && (!val || val.length < 2 || val.length > 50)) return "Apellidos obligatorios (2 a 50 caracteres).";
+    if (campo === "correo" && (!val || val.length > 100 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val))) return "Correo inválido (máx. 100 caracteres).";
+    if (campo === "telefono" && (!val || val.length > 15 || !/^\+?[\d\s-]{7,15}$/.test(val))) return "Teléfono obligatorio (7 a 15 caracteres).";
+    if (campo === "direccion" && (!val || val.length < 3 || val.length > 100)) return "Dirección obligatoria (3 a 100 caracteres).";
     return null;
   };
 
@@ -905,12 +950,18 @@ function EditUserModal({ user, index, onClose, onSave, rolesDisponibles = FALLBA
 
   const isFormValid =
     form.nombres.trim().length >= 2 &&
+    form.nombres.trim().length <= 50 &&
     form.apellidos.trim().length >= 2 &&
+    form.apellidos.trim().length <= 50 &&
     form.correo.trim().length > 3 &&
+    form.telefono.trim().length >= 7 &&
+    form.direccion.trim().length >= 3 &&
+    Boolean(form.rol) &&
     !errors.nombres &&
     !errors.apellidos &&
     !errors.correo &&
-    !errors.telefono;
+    !errors.telefono &&
+    !errors.direccion;
 
   return (
     <ModalShell
@@ -936,6 +987,7 @@ function EditUserModal({ user, index, onClose, onSave, rolesDisponibles = FALLBA
       <div className="ru-form-grid">
         <Field label="NOMBRES" required error={touched.nombres && errors.nombres}>
           <TextInput
+            maxLength={50}
             value={form.nombres}
             error={touched.nombres && errors.nombres}
             onChange={(e) => handleChange("nombres", e.target.value)}
@@ -945,6 +997,7 @@ function EditUserModal({ user, index, onClose, onSave, rolesDisponibles = FALLBA
 
         <Field label="APELLIDOS" required error={touched.apellidos && errors.apellidos}>
           <TextInput
+            maxLength={50}
             value={form.apellidos}
             error={touched.apellidos && errors.apellidos}
             onChange={(e) => handleChange("apellidos", e.target.value)}
@@ -953,12 +1006,17 @@ function EditUserModal({ user, index, onClose, onSave, rolesDisponibles = FALLBA
         </Field>
 
         <Field label="DOCUMENTO (SOLO LECTURA)">
-          <TextInput value={form.cedula} disabled style={{ opacity: 0.7, cursor: "not-allowed" }} />
+          <TextInput
+            value={`${form.tipoDoc ? `${form.tipoDoc} ` : ""}${form.cedula}`}
+            disabled
+            style={{ opacity: 0.7, cursor: "not-allowed" }}
+          />
         </Field>
 
-        <Field label="TELÉFONO" error={touched.telefono && errors.telefono}>
+        <Field label="TELÉFONO" required error={touched.telefono && errors.telefono}>
           <TextInput
             icon={<Phone size={15} />}
+            maxLength={15}
             value={form.telefono}
             error={touched.telefono && errors.telefono}
             onChange={(e) => handleChange("telefono", e.target.value)}
@@ -970,6 +1028,7 @@ function EditUserModal({ user, index, onClose, onSave, rolesDisponibles = FALLBA
           <TextInput
             icon={<Mail size={15} />}
             type="email"
+            maxLength={100}
             value={form.correo}
             error={touched.correo && errors.correo}
             onChange={(e) => handleChange("correo", e.target.value)}
@@ -977,12 +1036,28 @@ function EditUserModal({ user, index, onClose, onSave, rolesDisponibles = FALLBA
           />
         </Field>
 
-        <Field label="DIRECCIÓN" full>
+        <Field label="DIRECCIÓN" required full error={touched.direccion && errors.direccion}>
           <TextInput
             icon={<MapPin size={15} />}
+            maxLength={100}
             value={form.direccion}
+            error={touched.direccion && errors.direccion}
             onChange={(e) => handleChange("direccion", e.target.value)}
+            onBlur={() => handleBlur("direccion")}
           />
+        </Field>
+
+        <Field label="GÉNERO" required>
+          <select
+            className="ru-form-input ru-select"
+            style={{ cursor: "pointer" }}
+            value={form.genero}
+            onChange={(e) => handleChange("genero", e.target.value)}
+          >
+            <option value="Masculino">Masculino</option>
+            <option value="Femenino">Femenino</option>
+            <option value="Otro">Otro</option>
+          </select>
         </Field>
 
         <Field label="ROL EN EL SISTEMA" required>
@@ -1056,25 +1131,43 @@ export default function Usuarios() {
   const [page, setPage] = useState(1);
   const [modal, setModal] = useState(null);
   const [deactivateTarget, setDeactivateTarget] = useState(null);
+  const [activateTarget, setActivateTarget] = useState(null);
   const [alertMessage, setAlertMessage] = useState(null);
-  const [rolesDisponibles, setRolesDisponibles] = useState(FALLBACK_ROLES);
-  const [tiposDocDisponibles, setTiposDocDisponibles] = useState(FALLBACK_TIPOS_DOC);
+  const [rolesDisponibles, setRolesDisponibles] = useState([]);
+  const [tiposDocDisponibles, setTiposDocDisponibles] = useState([]);
+  const [cargandoAux, setCargandoAux] = useState(true);
 
   // Cargar catálogos reales (tb_roles activos y tb_tipodoc) desde PostgreSQL
+  const cargarAuxiliares = useCallback(async () => {
+    try {
+      const data = await obtenerAuxiliaresUsuarios();
+      if (!data) return;
+      if (Array.isArray(data.roles)) {
+        setRolesDisponibles(data.roles);
+      }
+      if (Array.isArray(data.tiposDoc)) {
+        setTiposDocDisponibles(data.tiposDoc);
+      }
+    } catch (err) {
+      console.error("Error cargando catálogos de Usuarios desde PostgreSQL:", err.message);
+    } finally {
+      setCargandoAux(false);
+    }
+  }, []);
+
   useEffect(() => {
     let activo = true;
     obtenerAuxiliaresUsuarios()
       .then((data) => {
         if (!activo || !data) return;
-        if (Array.isArray(data.roles) && data.roles.length > 0) {
-          setRolesDisponibles(data.roles);
-        }
-        if (Array.isArray(data.tiposDoc) && data.tiposDoc.length > 0) {
-          setTiposDocDisponibles(data.tiposDoc);
-        }
+        if (Array.isArray(data.roles)) setRolesDisponibles(data.roles);
+        if (Array.isArray(data.tiposDoc)) setTiposDocDisponibles(data.tiposDoc);
       })
       .catch((err) => {
-        console.warn("Usando catálogos de respaldo para Usuarios:", err.message);
+        console.error("Error cargando catálogos de Usuarios desde PostgreSQL:", err.message);
+      })
+      .finally(() => {
+        if (activo) setCargandoAux(false);
       });
     return () => {
       activo = false;
@@ -1168,11 +1261,13 @@ export default function Usuarios() {
     }
   }, [loading, users.length, recalcularFilas]);
 
+  const requestSeqRef = useRef(0);
+
   // Debounce para optimizar la velocidad de búsqueda y no saturar la red
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearch(search);
-    }, 300);
+    }, 200);
     return () => clearTimeout(handler);
   }, [search]);
 
@@ -1197,6 +1292,7 @@ export default function Usuarios() {
   }), []);
 
   const cargarUsuarios = useCallback(async () => {
+    const seq = ++requestSeqRef.current;
     setLoading(true);
     try {
       const resp = await obtenerUsuarios({
@@ -1204,6 +1300,8 @@ export default function Usuarios() {
         page,
         pageSize,
       });
+
+      if (seq !== requestSeqRef.current) return;
 
       if (resp && Array.isArray(resp.items)) {
         const norm = resp.items.map(normalizarUsuario);
@@ -1217,6 +1315,7 @@ export default function Usuarios() {
         setTotalPagesBackend(Math.max(1, Math.ceil(norm.length / pageSize)));
       }
     } catch (error) {
+      if (seq !== requestSeqRef.current) return;
       console.error("Error al obtener usuarios desde PostgreSQL:", error.message);
       setUsers([]);
       setTotalRecords(0);
@@ -1227,7 +1326,9 @@ export default function Usuarios() {
         message: "No se pudo sincronizar la lista de usuarios con la base de datos.",
       });
     } finally {
-      setLoading(false);
+      if (seq === requestSeqRef.current) {
+        setLoading(false);
+      }
     }
   }, [debouncedSearch, page, pageSize, normalizarUsuario]);
 
@@ -1264,6 +1365,28 @@ export default function Usuarios() {
         type: "error",
         title: "No se pudo desactivar",
         message: error.message || "No se pudo desactivar el usuario en la base de datos.",
+      });
+    }
+  };
+
+  const confirmActivate = async () => {
+    if (!activateTarget) return;
+    const nombre = activateTarget.nombre;
+    try {
+      await actualizarUsuario(activateTarget.id, { estado: "Activo" });
+      setActivateTarget(null);
+      await cargarUsuarios();
+      setAlertMessage({
+        type: "success",
+        title: "Usuario Activado",
+        message: `El usuario "${nombre}" fue activado correctamente y su estado cambió a Activo.`,
+      });
+    } catch (error) {
+      setActivateTarget(null);
+      setAlertMessage({
+        type: "error",
+        title: "No se pudo activar",
+        message: error.message || "No se pudo activar el usuario en la base de datos.",
       });
     }
   };
@@ -1409,17 +1532,33 @@ export default function Usuarios() {
             <button className="ru-icon-btn view" onClick={() => setModal({ type: "view", userId: u.id })} title="Ver">
               <Eye size={15} />
             </button>
-            <button className="ru-icon-btn edit" onClick={() => setModal({ type: "edit", userId: u.id })} title="Editar">
+            <button
+              className="ru-icon-btn edit"
+              onClick={() => {
+                void cargarAuxiliares();
+                setModal({ type: "edit", userId: u.id });
+              }}
+              title="Editar"
+            >
               <Pencil size={15} />
             </button>
-            <button
-              className={`ru-icon-btn delete${isInactive ? " disabled" : ""}`}
-              onClick={() => !isInactive && setDeactivateTarget(u)}
-              disabled={isInactive}
-              title={isInactive ? "Usuario ya inactivo" : "Desactivar usuario"}
-            >
-              <UserX size={15} />
-            </button>
+            {isInactive ? (
+              <button
+                className="ru-icon-btn activate"
+                onClick={() => setActivateTarget(u)}
+                title="Activar usuario"
+              >
+                <UserCheck size={15} />
+              </button>
+            ) : (
+              <button
+                className="ru-icon-btn delete"
+                onClick={() => setDeactivateTarget(u)}
+                title="Desactivar usuario"
+              >
+                <UserX size={15} />
+              </button>
+            )}
           </div>
         );
       },
@@ -1447,7 +1586,14 @@ export default function Usuarios() {
             setPage(1);
           }}
           action={
-            <button type="button" className="btn btn-primary" onClick={() => setModal({ type: "create" })}>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={() => {
+                void cargarAuxiliares();
+                setModal({ type: "create" });
+              }}
+            >
               <UserPlus size={15} />
               <span>REGISTRAR USUARIO</span>
             </button>
@@ -1562,6 +1708,7 @@ export default function Usuarios() {
           nextId={Math.max(0, ...users.map((u) => u.id), 0) + 1}
           rolesDisponibles={rolesDisponibles}
           tiposDocDisponibles={tiposDocDisponibles}
+          cargandoAux={cargandoAux}
           onClose={() => setModal(null)}
           onCreate={handleCreate}
         />
@@ -1605,6 +1752,20 @@ export default function Usuarios() {
           cancelText="Cancelar"
           confirmVariant="destructive"
           icon={<UserX size={24} style={{ color: "#D1495B" }} />}
+        />
+      )}
+
+      {/* Modal de Confirmación de Activación */}
+      {activateTarget && (
+        <ConfirmModal
+          title="¿Activar Usuario?"
+          message={`Estás a punto de activar a "${activateTarget.nombre}" (${activateTarget.rol}). Su estado cambiará a "Activo" y podrá volver a acceder al sistema.`}
+          onClose={() => setActivateTarget(null)}
+          onConfirm={confirmActivate}
+          confirmText="Sí, activar usuario"
+          cancelText="Cancelar"
+          confirmVariant="primary"
+          icon={<UserCheck size={24} style={{ color: "var(--positive, #2E9E5B)" }} />}
         />
       )}
 

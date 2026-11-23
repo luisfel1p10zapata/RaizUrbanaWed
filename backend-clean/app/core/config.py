@@ -15,5 +15,14 @@ class Settings:
     DB_USER: str = os.getenv("DB_USER", "")
     DB_PASSWORD: str = os.getenv("DB_PASSWORD", "")
 
+    # Supabase Storage
+    SUPABASE_URL: str = os.getenv("SUPABASE_URL", "").strip().rstrip("/")
+    SUPABASE_SERVICE_ROLE_KEY: str = os.getenv(
+        "SUPABASE_SERVICE_ROLE_KEY", ""
+    ).strip()
+    SUPABASE_STORAGE_BUCKET: str = (
+        os.getenv("SUPABASE_STORAGE_BUCKET", "media").strip() or "media"
+    )
+
 
 settings = Settings()

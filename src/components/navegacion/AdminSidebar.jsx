@@ -20,6 +20,7 @@ import {
 import navigationConfig from './NavigationConfig';
 import SidebarSection from './SidebarSection';
 import SidebarItem from './SidebarItem';
+import NotificacionesBell from '../notificaciones/NotificacionesBell';
 
 import './AdminSidebar.css';
 
@@ -172,6 +173,14 @@ const AdminSidebar = ({ collapsed, setCollapsed }) => {
             )}
 
             <div className="admin-sidebar-bottom">
+                {currentUser && (
+                    <NotificacionesBell
+                        variant="sidebar"
+                        collapsed={collapsed}
+                        currentUser={currentUser}
+                    />
+                )}
+
                 <button
                     type="button"
                     className="admin-sidebar-bottom-item"
