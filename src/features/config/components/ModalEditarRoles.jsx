@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { X, CircleCheck, ChevronDown, ChevronUp } from 'lucide-react';
 import Button from '../../../components/ui/Button';
 import useRolesForm from '../hooks/useRolesForm';
@@ -61,6 +61,20 @@ export default function ModalEditarRoles({
     }
   }, [isOpen, selectedRole, resetForm]);
 
+  // Filtrar 'Acceso Total' del catálogo para no duplicar con el toggle general
+  const permisosValidos = useMemo(() => {
+    return (permisos || []).filter(
+      (p) => (p?.permiso || p?.nombre || '').trim().toLowerCase() !== 'acceso total'
+    );
+  }, [permisos]);
+
+  // Manejo de permisos y privilegios
+  const todosLosPrivilegios = useMemo(() => {
+    return permisosValidos.flatMap((p) =>
+      (p?.privilegios ?? []).map((priv) => Number(priv.id_privilegio))
+    );
+  }, [permisosValidos]);
+
   if (!isOpen || !selectedRole) return null;
 
   const esAdmin = selectedRole.id === 1 || (selectedRole.nombre || '').toLowerCase() === 'administrador';
@@ -76,20 +90,6 @@ export default function ModalEditarRoles({
       // Error manejado en hook
     }
   };
-
-  // Filtrar 'Acceso Total' del catálogo para no duplicar con el toggle general
-  const permisosValidos = useMemo(() => {
-    return (permisos || []).filter(
-      (p) => (p.permiso || p.nombre || '').trim().toLowerCase() !== 'acceso total'
-    );
-  }, [permisos]);
-
-  // Manejo de permisos y privilegios
-  const todosLosPrivilegios = useMemo(() => {
-    return permisosValidos.flatMap((p) =>
-      (p.privilegios ?? []).map((priv) => Number(priv.id_privilegio))
-    );
-  }, [permisosValidos]);
 
   const accesoTotal =
     todosLosPrivilegios.length > 0 &&
@@ -307,7 +307,7 @@ export default function ModalEditarRoles({
                 </p>
               )}
 
-              <div className="roles-edit-perms-list" style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '250px', overflowY: 'auto' }}>
+              <div className="roles-edit-perms-list">
                 {permisosValidos.map((permiso) => {
                   const nombrePermiso = permiso.permiso || permiso.nombre || `Permiso #${permiso.id_permiso}`;
                   const privs = permiso.privilegios ?? [];
@@ -323,9 +323,8 @@ export default function ModalEditarRoles({
                     <div
                       key={permiso.id_permiso}
                       className="roles-edit-perm-card"
-                      style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '10px 12px', background: '#f8fafc' }}
                     >
-                      <div className="roles-edit-perm-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div className="roles-edit-perm-row">
                         <label className="roles-edit-perm-master-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', margin: 0 }}>
                           <IndeterminateCheckbox
                             checked={todosSeleccionados}
@@ -333,13 +332,12 @@ export default function ModalEditarRoles({
                             onChange={() => !esAdmin && handleTogglePermisoCompleto(permiso.id_permiso, privs)}
                             disabled={esAdmin}
                           />
-                          <span className="roles-edit-perm-title" style={{ fontWeight: 500, fontSize: '14px', color: '#1e293b' }}>{nombrePermiso}</span>
+                          <span className="roles-edit-perm-title">{nombrePermiso}</span>
                         </label>
                         <button
                           type="button"
                           className="btn btn-outline btn-sm roles-edit-toggle-btn"
                           onClick={() => togglePermisoExpandido(permiso.id_permiso)}
-                          style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 8px', fontSize: '12px' }}
                         >
                           <span>({seleccionados}/{idsPrivilegios.length})</span>
                           {expandido ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
@@ -347,12 +345,12 @@ export default function ModalEditarRoles({
                       </div>
 
                       {expandido && (
-                        <div className="roles-edit-privs-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '8px', marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #e2e8f0' }}>
+                        <div className="roles-edit-privs-grid">
                           {privs.map((priv) => {
                             const privId = Number(priv.id_privilegio);
                             const checked = (values.privilegios_ids || []).includes(privId);
                             return (
-                              <label key={privId} className="roles-edit-priv-item" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', cursor: 'pointer' }}>
+                              <label key={privId} className="roles-edit-priv-item">
                                 <input
                                   type="checkbox"
                                   checked={checked}

@@ -15,8 +15,11 @@ export const obtenerDevolucionPorId = async (id) => {
   return data;
 };
 
-export const listarDetallesDisponibles = async () => {
-  const { data } = await apiClient.get('/devoluciones/detalles-disponibles');
+export const listarDetallesDisponibles = async (idVenta = null) => {
+  const url = idVenta
+    ? `/devoluciones/detalles-disponibles?id_venta=${idVenta}`
+    : '/devoluciones/detalles-disponibles';
+  const { data } = await apiClient.get(url);
   return data;
 };
 
@@ -77,6 +80,11 @@ export const cambiarEstadoDevolucion = async (id, observacionAnulacion = null) =
   return data;
 };
 
+export const eliminarDevolucion = async (id) => {
+  const { data } = await apiClient.delete(`/devoluciones/${id}`);
+  return data;
+};
+
 export const cambiarMotivoDevolucion = async (id, idMotivo) => {
   const payload = {
     id_motivo: Number(idMotivo),
@@ -93,6 +101,48 @@ export const crearMotivo = async (nombre) => {
   return data;
 };
 
+export const eliminarMotivo = async (idMotivo) => {
+  const { data } = await apiClient.delete(`/devoluciones/motivos/${idMotivo}`);
+  return data;
+};
+
+export const listarTiposResolucion = async () => {
+  const { data } = await apiClient.get('/devoluciones/tipos-resolucion');
+  return data;
+};
+
+export const listarCandidatosCambio = async () => {
+  const { data } = await apiClient.get('/devoluciones/candidatos-cambio');
+  return data;
+};
+
+export const obtenerDetalleDevolucion = async (id) => {
+  const { data } = await apiClient.get(`/devoluciones/${id}/detalle`);
+  return data;
+};
+
+export const obtenerReciboDevolucion = async (id) => {
+  const { data } = await apiClient.get(`/devoluciones/${id}/recibo`);
+  return data;
+};
+
+export const definirResolucion = async (id, payload) => {
+  const body = {
+    id_tipo_resolucion: Number(payload.id_tipo_resolucion),
+    monto: payload.monto !== undefined && payload.monto !== null && payload.monto !== '' ? Number(payload.monto) : null,
+    id_producto_vari_cambio: payload.id_producto_vari_cambio ? Number(payload.id_producto_vari_cambio) : null,
+    detalle: payload.detalle?.trim() || null,
+  };
+  const { data } = await apiClient.post(`/devoluciones/${id}/resolucion`, body);
+  return data;
+};
+
+export const completarDevolucion = async (id, idUsuario = null) => {
+  const body = idUsuario ? { id_usuario: Number(idUsuario) } : {};
+  const { data } = await apiClient.post(`/devoluciones/${id}/completar`, body);
+  return data;
+};
+
 // Aliases para compatibilidad
 export const obtenerDevolucion = obtenerDevolucionPorId;
 export const registrarDevolucion = crearDevolucion;
@@ -104,8 +154,14 @@ const devolucionesService = {
   listarDevoluciones,
   obtenerDevolucionPorId,
   obtenerDevolucion,
+  obtenerDetalleDevolucion,
+  obtenerReciboDevolucion,
   listarDetallesDisponibles,
   listarMotivos,
+  listarTiposResolucion,
+  listarCandidatosCambio,
+  definirResolucion,
+  completarDevolucion,
   buscarDevoluciones,
   filtrarDevoluciones,
   crearDevolucion,
@@ -115,8 +171,10 @@ const devolucionesService = {
   cambiarEstadoDevolucion,
   cambiarMotivoDevolucion,
   anularDevolucion,
+  eliminarDevolucion,
   crearMotivo,
   registrarMotivo,
+  eliminarMotivo,
 };
 
 export default devolucionesService;

@@ -4,6 +4,7 @@ import "../styles/ModalsVentas.css";
 import { listarMotivos, crearDevolucion } from "../../../services/devolucionesService";
 import { subirImagen, CARPETAS_UPLOAD } from "../../../services/uploadService";
 import { obtenerAuxiliaresVenta } from "../services/ventasService";
+import DevolucionFormModal from "./DevolucionFormModal";
 import {
   ESTADO_VENTA_META,
   ESTADO_PAGO_META,
@@ -1062,208 +1063,15 @@ export function CambiarEstadoModal({ venta, onClose, onSave }) {
 /*  MODAL: REGISTRAR DEVOLUCIÓN DE UNA VENTA                          */
 /* ------------------------------------------------------------------ */
 export function RegistrarDevolucionModal({ venta, onClose, onDevolucionExitosa }) {
-  const [motivos, setMotivos] = useState([]);
-  const [selectedItemIdx, setSelectedItemIdx] = useState(0);
-  const [cantidad, setCantidad] = useState(1);
-  const [idMotivo, setIdMotivo] = useState("");
-  const [observaciones, setObservaciones] = useState("");
-  const [reintegraStock, setReintegraStock] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
-
-  const items = venta?.items || [];
-  const selectedItem = items[selectedItemIdx] || items[0] || null;
-  const maxCantidad = selectedItem ? Number(selectedItem.cantidad || 1) : 1;
-
-  useEffect(() => {
-    listarMotivos()
-      .then((data) => {
-        if (Array.isArray(data) && data.length > 0) {
-          setMotivos(data);
-          setIdMotivo(data[0].id_motivo || data[0].id || "");
-        } else {
-          const fallback = [
-            { id_motivo: 1, nombre: "Talla incorrecta" },
-            { id_motivo: 2, nombre: "Defecto de fábrica" },
-            { id_motivo: 3, nombre: "Cambio de producto" },
-            { id_motivo: 4, nombre: "Insatisfacción con el producto" },
-          ];
-          setMotivos(fallback);
-          setIdMotivo(1);
-        }
-      })
-      .catch(() => {
-        const fallback = [
-          { id_motivo: 1, nombre: "Talla incorrecta" },
-          { id_motivo: 2, nombre: "Defecto de fábrica" },
-          { id_motivo: 3, nombre: "Cambio de producto" },
-          { id_motivo: 4, nombre: "Insatisfacción con el producto" },
-        ];
-        setMotivos(fallback);
-        setIdMotivo(1);
-      });
-  }, []);
-
-  const handleSubmit = async () => {
-    if (!selectedItem) {
-      setErrorMsg("No hay productos disponibles para devolver en esta venta.");
-      return;
-    }
-    if (cantidad < 1 || cantidad > maxCantidad) {
-      setErrorMsg(`La cantidad debe estar entre 1 y ${maxCantidad}.`);
-      return;
-    }
-    if (!idMotivo) {
-      setErrorMsg("Selecciona un motivo de devolución.");
-      return;
-    }
-
-    setSubmitting(true);
-    setErrorMsg("");
-
-    try {
-      const payload = {
-        id_det_venta: selectedItem.id_det_venta || selectedItem.producto?.id || venta.id,
-        cantidad: Number(cantidad),
-        fecha_devolucion: new Date().toISOString().slice(0, 10),
-        id_motivo: Number(idMotivo),
-        observaciones: observaciones?.trim() || null,
-        reintegra_stock: Boolean(reintegraStock),
-      };
-
-      await crearDevolucion(payload);
-      if (onDevolucionExitosa) {
-        onDevolucionExitosa({
-          venta,
-          item: selectedItem,
-          cantidad: Number(cantidad),
-        });
-      }
-      onClose();
-    } catch (err) {
-      setErrorMsg(err.response?.data?.detail || err.message || "Error al procesar la devolución.");
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  if (!venta) return null;
 
   return (
-    <ModalShell
-      eyebrow={`DEVOLUCIÓN · ${venta?.codigo || "VENTA"}`}
-      title="Registrar Devolución"
+    <DevolucionFormModal
+      isOpen={Boolean(venta)}
+      mode="registrar"
+      venta={venta}
       onClose={onClose}
-      maxWidth="580px"
-      footer={
-        <>
-          <button type="button" className="btn btn-outline" onClick={onClose} disabled={submitting}>
-            Cancelar
-          </button>
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={handleSubmit}
-            disabled={submitting || !selectedItem}
-          >
-            {submitting ? "Procesando..." : "Confirmar devolución"}
-          </button>
-        </>
-      }
-    >
-      <div style={{ marginBottom: "16px" }}>
-        <p className="ru-v-hint">
-          Registra la devolución de uno de los productos de esta orden de venta. El stock podrá reintegrarse automáticamente al inventario.
-        </p>
-
-        <ClienteBox cliente={venta?.cliente} />
-      </div>
-
-      {errorMsg && (
-        <div style={{
-          padding: "10px 14px",
-          background: "rgba(209, 73, 91, 0.12)",
-          border: "1px solid var(--negative)",
-          borderRadius: "8px",
-          color: "var(--negative)",
-          fontSize: "13px",
-          marginBottom: "16px"
-        }}>
-          {errorMsg}
-        </div>
-      )}
-
-      <div className="ru-form-grid">
-        <Field label="PRODUCTO A DEVOLVER" required full>
-          <select
-            className="ru-form-input"
-            value={selectedItemIdx}
-            onChange={(e) => {
-              const idx = Number(e.target.value);
-              setSelectedItemIdx(idx);
-              const item = items[idx];
-              if (item) {
-                setCantidad(Math.min(cantidad, Number(item.cantidad || 1)));
-              }
-            }}
-          >
-            {items.map((it, idx) => (
-              <option key={idx} value={idx}>
-                {it.producto?.nombre} · Talla {it.talla} · {it.color} (Comprados: {it.cantidad} unid. - {formatoMoneda(it.subtotal)})
-              </option>
-            ))}
-          </select>
-        </Field>
-
-        <Field label="CANTIDAD A DEVOLVER" required>
-          <input
-            className="ru-form-input"
-            type="number"
-            min="1"
-            max={maxCantidad}
-            value={cantidad}
-            onChange={(e) => setCantidad(Math.max(1, Math.min(maxCantidad, Number(e.target.value))))}
-          />
-          <span style={{ fontSize: "11.5px", color: "var(--muted-text)", marginTop: "4px", display: "block" }}>
-            Máximo a devolver: {maxCantidad} unid.
-          </span>
-        </Field>
-
-        <Field label="MOTIVO DE DEVOLUCIÓN" required>
-          <select
-            className="ru-form-input"
-            value={idMotivo}
-            onChange={(e) => setIdMotivo(e.target.value)}
-          >
-            {motivos.map((m) => (
-              <option key={m.id_motivo || m.id} value={m.id_motivo || m.id}>
-                {m.nombre || m.descripcion}
-              </option>
-            ))}
-          </select>
-        </Field>
-
-        <Field label="OBSERVACIONES / JUSTIFICACIÓN" full>
-          <textarea
-            className="ru-form-input"
-            style={{ height: "70px", resize: "vertical" }}
-            placeholder="Describe el motivo detallado de la devolución..."
-            value={observaciones}
-            onChange={(e) => setObservaciones(e.target.value)}
-          />
-        </Field>
-
-        <div style={{ gridColumn: "1 / -1", display: "flex", alignItems: "center", gap: "8px", marginTop: "4px" }}>
-          <input
-            type="checkbox"
-            id="chk-reintegra"
-            checked={reintegraStock}
-            onChange={(e) => setReintegraStock(e.target.checked)}
-            style={{ cursor: "pointer", width: "16px", height: "16px" }}
-          />
-          <label htmlFor="chk-reintegra" style={{ fontSize: "13px", cursor: "pointer", color: "var(--primary)" }}>
-            Reintegrar unidades devueltas automáticamente al inventario
-          </label>
-        </div>
-      </div>
-    </ModalShell>
+      onSuccess={onDevolucionExitosa}
+    />
   );
 }

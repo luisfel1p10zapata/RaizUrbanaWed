@@ -15,6 +15,11 @@ export const obtenerProduccionPorId = async (id) => {
   return data;
 };
 
+export const obtenerCostoProduccion = async (id) => {
+  const { data } = await apiClient.get(`/ordenes-produccion/${id}/costo`);
+  return data;
+};
+
 export const listarEmpleados = async () => {
   const { data } = await apiClient.get('/ordenes-produccion/empleados');
   return data;
@@ -27,6 +32,47 @@ export const listarVariantes = async () => {
 
 export const listarEstadosProduccion = async () => {
   const { data } = await apiClient.get('/ordenes-produccion/estados');
+  return data;
+};
+
+export const listarAccionesNoConforme = async () => {
+  const { data } = await apiClient.get('/ordenes-produccion/acciones-no-conforme');
+  return data;
+};
+
+export const registrarProductoNoConforme = async (idDetalle, datos) => {
+  const payload = {
+    cantidad: Number(datos.cantidad),
+    motivo: datos.motivo?.trim(),
+    id_accion: Number(datos.id_accion),
+    detalle_accion: datos.detalle_accion?.trim() || null,
+  };
+  const { data } = await apiClient.post(
+    `/ordenes-produccion/detalles/${idDetalle}/no-conforme`,
+    payload
+  );
+  return data;
+};
+
+export const resolverProductoNoConforme = async (idNoConforme, observacion) => {
+  const payload = {
+    observacion: observacion?.trim() || null,
+  };
+  const { data } = await apiClient.patch(
+    `/ordenes-produccion/no-conforme/${idNoConforme}/resolver`,
+    payload
+  );
+  return data;
+};
+
+export const anularProductoNoConforme = async (idNoConforme, observacion) => {
+  const payload = {
+    observacion: observacion?.trim() || null,
+  };
+  const { data } = await apiClient.patch(
+    `/ordenes-produccion/no-conforme/${idNoConforme}/anular`,
+    payload
+  );
   return data;
 };
 
@@ -52,6 +98,7 @@ export const filtrarProduccion = async (filtros = {}) => {
 export const crearProduccion = async (datos) => {
   const payload = {
     id_usuario: Number(datos.id_usuario),
+    fecha_inicio: datos.fecha_inicio,
     fecha_estimada: datos.fecha_estimada,
     observaciones: datos.observaciones?.trim() || null,
     detalles: (datos.detalles || []).map((det) => ({
@@ -66,6 +113,7 @@ export const crearProduccion = async (datos) => {
 export const editarProduccion = async (id, datos) => {
   const payload = {
     id_usuario: Number(datos.id_usuario),
+    fecha_inicio: datos.fecha_inicio,
     fecha_estimada: datos.fecha_estimada,
     observaciones: datos.observaciones?.trim() || null,
     detalles: (datos.detalles || []).map((det) => ({
@@ -85,6 +133,14 @@ export const cambiarEstadoProduccion = async (id, idEstado) => {
   return data;
 };
 
+export const cancelarProduccion = async (id, motivo) => {
+  const payload = {
+    motivo: motivo?.trim(),
+  };
+  const { data } = await apiClient.post(`/ordenes-produccion/${id}/cancelar`, payload);
+  return data;
+};
+
 export const eliminarProduccion = async (id) => {
   const { data } = await apiClient.delete(`/ordenes-produccion/${id}`);
   return data;
@@ -96,6 +152,7 @@ export const obtenerOrdenProduccion = obtenerProduccionPorId;
 export const registrarOrdenProduccion = crearProduccion;
 export const actualizarOrdenProduccion = editarProduccion;
 export const cambiarEstadoOrdenProduccion = cambiarEstadoProduccion;
+export const cancelarOrdenProduccion = cancelarProduccion;
 export const eliminarOrdenProduccion = eliminarProduccion;
 export const listarEmpleadosProduccion = listarEmpleados;
 export const listarVariantesProduccion = listarVariantes;
@@ -105,19 +162,27 @@ export const filtrarOrdenesProduccion = filtrarProduccion;
 const produccionService = {
   listarProduccion,
   obtenerProduccionPorId,
+  obtenerCostoProduccion,
   listarEmpleados,
   listarVariantes,
+  listarEstadosProduccion,
+  listarAccionesNoConforme,
+  registrarProductoNoConforme,
+  resolverProductoNoConforme,
+  anularProductoNoConforme,
   buscarProduccion,
   filtrarProduccion,
   crearProduccion,
   editarProduccion,
   cambiarEstadoProduccion,
+  cancelarProduccion,
   eliminarProduccion,
   listarOrdenesProduccion,
   obtenerOrdenProduccion,
   registrarOrdenProduccion,
   actualizarOrdenProduccion,
   cambiarEstadoOrdenProduccion,
+  cancelarOrdenProduccion,
   eliminarOrdenProduccion,
   listarEmpleadosProduccion,
   listarVariantesProduccion,

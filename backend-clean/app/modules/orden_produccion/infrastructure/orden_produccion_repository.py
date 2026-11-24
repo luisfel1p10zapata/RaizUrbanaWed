@@ -1,4 +1,3 @@
-
 import psycopg
 from psycopg.types.json import Jsonb
 
@@ -90,6 +89,26 @@ class OrdenProduccionRepository:
                 return fila[0]
 
     # --------------------------------------------------
+    # CONSULTAR COSTO DE PRODUCCIÓN
+    # --------------------------------------------------
+
+    def obtener_costo(self, id_orden_produccion: int):
+        with get_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT sp_obtenercostoproduccion(%s)
+                    """,
+                    (id_orden_produccion,),
+                )
+                fila = cursor.fetchone()
+
+                if fila is None or fila[0] is None:
+                    return None
+
+                return fila[0]
+
+    # --------------------------------------------------
     # REGISTRAR ORDEN
     # --------------------------------------------------
 
@@ -99,6 +118,7 @@ class OrdenProduccionRepository:
         fecha_estimada,
         observaciones: str | None,
         detalles: list[dict],
+        fecha_inicio,
         id_estado_orden: int | None = None,
     ):
         with get_connection() as conn:
@@ -106,7 +126,7 @@ class OrdenProduccionRepository:
                 cursor.execute(
                     """
                     CALL sp_insertarordenproduccion(
-                        %s, %s, %s, %s::jsonb, NULL, NULL
+                        %s, %s, %s, %s::jsonb, NULL, %s, %s
                     )
                     """,
                     (
@@ -114,6 +134,8 @@ class OrdenProduccionRepository:
                         fecha_estimada,
                         observaciones,
                         Jsonb(detalles),
+                        id_estado_orden,
+                        fecha_inicio,
                     ),
                 )
 
@@ -148,13 +170,14 @@ class OrdenProduccionRepository:
         fecha_estimada,
         observaciones: str | None,
         detalles: list[dict],
+        fecha_inicio,
     ):
         with get_connection() as conn:
             with conn.cursor() as cursor:
                 cursor.execute(
                     """
                     CALL sp_actualizarordenproduccion(
-                        %s, %s, %s, %s, %s::jsonb
+                        %s, %s, %s, %s, %s::jsonb, %s
                     )
                     """,
                     (
@@ -163,6 +186,7 @@ class OrdenProduccionRepository:
                         fecha_estimada,
                         observaciones,
                         Jsonb(detalles),
+                        fecha_inicio,
                     ),
                 )
 
@@ -229,6 +253,37 @@ class OrdenProduccionRepository:
                 return fila[0] if fila else None
 
     # --------------------------------------------------
+    # CANCELAR ORDEN
+    # --------------------------------------------------
+
+    def cancelar(
+        self,
+        id_orden_produccion: int,
+        motivo: str,
+    ):
+        with get_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    """
+                    CALL sp_cancelarordenproduccion(%s, %s)
+                    """,
+                    (id_orden_produccion, motivo.strip()),
+                )
+
+                cursor.execute(
+                    """
+                    SELECT sp_obtenerordenproduccionporid(%s)
+                    """,
+                    (id_orden_produccion,),
+                )
+                fila = cursor.fetchone()
+
+                return fila[0] if fila else {
+                    "id_orden_produccion": id_orden_produccion,
+                    "mensaje": "Orden cancelada correctamente.",
+                }
+
+    # --------------------------------------------------
     # LISTAR EMPLEADOS
     # --------------------------------------------------
 
@@ -241,7 +296,7 @@ class OrdenProduccionRepository:
                 return self._obtener_registros(cursor)
 
     # --------------------------------------------------
-    # LISTAR VARIANTES Y SUS DATOS
+    # LISTAR VARIANTES Y SUS DATOS (ACCESORIOS)
     # --------------------------------------------------
 
     def listar_variantes(self):
@@ -266,3 +321,94 @@ class OrdenProduccionRepository:
                     {"id_estado_orden": fila[0], "id": fila[0], "nombre": fila[1]}
                     for fila in cursor.fetchall()
                 ]
+
+    # --------------------------------------------------
+    # LISTAR ACCIONES DE NO CONFORME
+    # --------------------------------------------------
+
+    def listar_acciones_no_conforme(self):
+        with get_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "SELECT id_accion, nombre FROM sp_listaraccionesnoconforme() ORDER BY id_accion"
+                )
+                return self._obtener_registros(cursor)
+
+    # --------------------------------------------------
+    # REGISTRAR PRODUCTO NO CONFORME
+    # --------------------------------------------------
+
+    def registrar_no_conforme(
+        self,
+        id_detalle_produccion: int,
+        cantidad: int,
+        motivo: str,
+        id_accion: int,
+        detalle_accion: str | None = None,
+    ):
+        with get_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    """
+                    CALL sp_registrarproductonoconforme(
+                        NULL, %s, %s, %s, %s, %s
+                    )
+                    """,
+                    (
+                        id_detalle_produccion,
+                        cantidad,
+                        motivo,
+                        id_accion,
+                        detalle_accion,
+                    ),
+                )
+                resultado = cursor.fetchone()
+                id_nuevo_nc = resultado[0] if resultado else None
+                return {
+                    "id_producto_no_conforme": id_nuevo_nc,
+                    "mensaje": "Producto no conforme registrado correctamente.",
+                }
+
+    # --------------------------------------------------
+    # RESOLVER PRODUCTO NO CONFORME
+    # --------------------------------------------------
+
+    def resolver_no_conforme(
+        self,
+        id_producto_no_conforme: int,
+        observacion: str | None = None,
+    ):
+        with get_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    """
+                    CALL sp_resolverproductonoconforme(%s, %s)
+                    """,
+                    (id_producto_no_conforme, observacion),
+                )
+                return {
+                    "id_producto_no_conforme": id_producto_no_conforme,
+                    "mensaje": "Producto no conforme resuelto correctamente.",
+                }
+
+    # --------------------------------------------------
+    # ANULAR PRODUCTO NO CONFORME
+    # --------------------------------------------------
+
+    def anular_no_conforme(
+        self,
+        id_producto_no_conforme: int,
+        observacion: str | None = None,
+    ):
+        with get_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    """
+                    CALL sp_anularproductonoconforme(%s, %s)
+                    """,
+                    (id_producto_no_conforme, observacion),
+                )
+                return {
+                    "id_producto_no_conforme": id_producto_no_conforme,
+                    "mensaje": "Producto no conforme anulado correctamente.",
+                }

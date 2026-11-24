@@ -8,19 +8,32 @@ import {
   crearProduccion,
   editarProduccion,
   cambiarEstadoProduccion,
+  cancelarProduccion,
   eliminarProduccion,
 } from '../services/produccionService';
-import { puedeEditar } from '../validations/produccionValidations';
+import {
+  puedeEditar,
+  normalizarEstado,
+  formatearFechaVisual,
+  validateFechasFiltro,
+} from '../validations/produccionValidations';
 
 export const ESTADOS_ORDEN = [
   { id: 1, id_estado_orden: 1, nombre: 'Pendiente' },
   { id: 2, id_estado_orden: 2, nombre: 'En Proceso' },
   { id: 3, id_estado_orden: 3, nombre: 'Terminado' },
-  { id: 4, id_estado_orden: 4, nombre: 'Entregado' },
-  { id: 5, id_estado_orden: 5, nombre: 'Producto no Conforme' },
+  { id: 6, id_estado_orden: 6, nombre: 'Cancelada' },
 ];
 
-export default function useProduccion() {
+const normalizar = (texto) => {
+  if (!texto) return '';
+  return String(texto)
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+};
+
+export default function useProduccion(initialPageSize = 6) {
   const [ordenes, setOrdenes] = useState([]);
   const [empleados, setEmpleados] = useState([]);
   const [variantes, setVariantes] = useState([]);
@@ -32,13 +45,26 @@ export default function useProduccion() {
   // Filtros y paginación
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('Todos los estados');
+  const [fechaDesde, setFechaDesde] = useState('');
+  const [fechaHasta, setFechaHasta] = useState('');
+  const [empleadoFilter, setEmpleadoFilter] = useState('');
+  const [filtroFechasError, setFiltroFechasError] = useState('');
+
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 6;
+  const [pageSize, setPageSize] = useState(initialPageSize);
+
+  useEffect(() => {
+    if (initialPageSize && initialPageSize !== pageSize) {
+      setPageSize(initialPageSize);
+    }
+  }, [initialPageSize]);
 
   // Estados de modales y elemento seleccionado
   const [modalRegistrarOpen, setModalRegistrarOpen] = useState(false);
   const [modalEditarOpen, setModalEditarOpen] = useState(false);
   const [modalCambiarEstadoOpen, setModalCambiarEstadoOpen] = useState(false);
+  const [modalCancelarOpen, setModalCancelarOpen] = useState(false);
+  const [modalCostoOpen, setModalCostoOpen] = useState(false);
   const [modalVerOpen, setModalVerOpen] = useState(false);
   const [modalEliminarOpen, setModalEliminarOpen] = useState(false);
   const [selectedOrden, setSelectedOrden] = useState(null);
@@ -71,8 +97,9 @@ export default function useProduccion() {
         setEstados(estadosData);
       }
     } catch (err) {
-      setError(err.message || 'Error al cargar las órdenes de producción.');
-      showAlert('error', err.message || 'Error al cargar las órdenes de producción.');
+      const msg = err.response?.data?.detail || err.message || 'Error al cargar las órdenes de producción.';
+      setError(msg);
+      showAlert('error', msg);
     } finally {
       setLoading(false);
     }
@@ -99,7 +126,8 @@ export default function useProduccion() {
         }
       } catch (err) {
         if (!cancel) {
-          setError(err.message || 'Error al cargar las órdenes de producción.');
+          const msg = err.response?.data?.detail || err.message || 'Error al cargar las órdenes de producción.';
+          setError(msg);
           setLoading(false);
         }
       }
@@ -110,12 +138,14 @@ export default function useProduccion() {
     };
   }, []);
 
-  // Normalización para visualización y relaciones (orden ascendente por id)
+  // Normalización para visualización y relaciones
   const normalizedOrdenes = useMemo(() => {
     return [...ordenes]
       .sort((a, b) => Number(a.id_orden_produccion ?? a.id ?? 0) - Number(b.id_orden_produccion ?? b.id ?? 0))
       .map((item) => {
         const id = item.id_orden_produccion ?? item.id;
+        const codigo_orden = item.codigo_orden || `P${String(id).padStart(4, '0')}`;
+
         const detalles = Array.isArray(item.detalles)
           ? item.detalles
           : Array.isArray(item.detalle)
@@ -123,16 +153,31 @@ export default function useProduccion() {
           : [];
         const primerDetalle = detalles[0] || {};
 
-        const productos =
-          item.productos ||
-          primerDetalle.producto ||
-          primerDetalle.nombre_producto ||
-          primerDetalle.nombre_variante ||
-          item.producto ||
-          item.nombre_producto ||
-          'Sin productos registrados';
+        // Extraer texto de productos (del campo backend 'productos' con ' | ')
+        let productosStr = item.productos || '';
+        if (!productosStr) {
+          if (detalles.length > 0) {
+            productosStr = detalles
+              .map((d) => {
+                const nom = [d.producto || d.nombre_producto, d.color, d.talla].filter(Boolean).join(' - ');
+                return `${nom} (x${d.cantidad})`;
+              })
+              .join(' | ');
+          } else if (item.producto) {
+            productosStr = item.producto;
+          }
+        }
 
-        const total_unidades = Number(item.total_unidades ?? primerDetalle.cantidad ?? item.cantidad ?? 0);
+        const productosList = productosStr ? productosStr.split(' | ').map((p) => p.trim()).filter(Boolean) : [];
+        const primerProducto = productosList[0] || '';
+        const totalProductosCount = productosList.length;
+
+        const total_unidades = Number(
+          item.total_unidades ??
+            (detalles.length > 0
+              ? detalles.reduce((acc, d) => acc + Number(d.cantidad || 0), 0)
+              : primerDetalle.cantidad ?? item.cantidad ?? 0)
+        );
 
         const responsable =
           item.empleado ||
@@ -145,44 +190,104 @@ export default function useProduccion() {
         const nombreEstado = item.estado || item.nombre_estado || 'Pendiente';
         const puedeModificar = puedeEditar(nombreEstado);
 
+        const fechaEstimadaStr = String(item.fecha_estimada || '').slice(0, 10);
+        const fechaEstimadaVisual = formatearFechaVisual(fechaEstimadaStr);
+
         return {
           ...item,
           id,
           id_orden_produccion: id,
-          producto: productos,
-          productos,
+          codigo_orden,
+          productos: productosStr,
+          productosList,
+          primerProducto,
+          totalProductosCount,
           total_unidades,
           cantidad: total_unidades,
           responsable,
+          empleado: responsable,
           id_estado_orden: idEstado,
           nombre_estado: nombreEstado,
           estado: nombreEstado,
           puedeModificar,
           detalles,
           primerDetalle,
+          fecha_estimada: fechaEstimadaStr,
+          fecha_estimada_visual: fechaEstimadaVisual,
+          retrasada: Boolean(item.retrasada),
+          tiene_no_conformes: Boolean(item.tiene_no_conformes),
+          no_conformes_pendientes: Number(item.no_conformes_pendientes ?? 0),
+          total_variantes: Number(item.total_variantes ?? detalles.length ?? 0),
         };
       });
   }, [ordenes]);
 
-  // Filtros
+  // Validar fechas de filtro
+  useEffect(() => {
+    if (fechaDesde && fechaHasta) {
+      const err = validateFechasFiltro(fechaDesde, fechaHasta);
+      setFiltroFechasError(err);
+    } else {
+      setFiltroFechasError('');
+    }
+  }, [fechaDesde, fechaHasta]);
+
+  // Filtros y Búsqueda en tiempo real por todas las columnas
   const filteredOrdenes = useMemo(() => {
-    const q = search.trim().toLowerCase();
+    const q = normalizar(search.trim());
+
     return normalizedOrdenes.filter((orden) => {
-      const matchesSearch =
-        !q ||
-        String(orden.id).includes(q) ||
-        (orden.productos && orden.productos.toLowerCase().includes(q)) ||
-        (orden.producto && orden.producto.toLowerCase().includes(q)) ||
-        (orden.responsable && orden.responsable.toLowerCase().includes(q)) ||
-        (orden.observaciones && orden.observaciones.toLowerCase().includes(q));
+      // 1. Buscador en tiempo real por todas las columnas
+      if (q) {
+        const matchCodigo = normalizar(orden.codigo_orden).includes(q);
+        const matchId = String(orden.id).includes(q);
+        const matchProductos = normalizar(orden.productos).includes(q);
+        const matchEmpleado = normalizar(orden.responsable).includes(q);
+        const matchEstado = normalizar(orden.nombre_estado).includes(q);
+        const matchFechaIso = orden.fecha_estimada.includes(q);
+        const matchFechaVisual = orden.fecha_estimada_visual.includes(q);
+        const matchObs = normalizar(orden.observaciones).includes(q);
 
-      const matchesStatus =
-        statusFilter === 'Todos los estados' ||
-        orden.nombre_estado.toLowerCase() === statusFilter.toLowerCase();
+        const matchesSearch =
+          matchCodigo ||
+          matchId ||
+          matchProductos ||
+          matchEmpleado ||
+          matchEstado ||
+          matchFechaIso ||
+          matchFechaVisual ||
+          matchObs;
 
-      return matchesSearch && matchesStatus;
+        if (!matchesSearch) return false;
+      }
+
+      // 2. Filtro de Estado
+      if (statusFilter && statusFilter !== 'Todos los estados') {
+        if (normalizar(orden.nombre_estado) !== normalizar(statusFilter)) {
+          return false;
+        }
+      }
+
+      // 3. Filtro de Empleado
+      if (empleadoFilter) {
+        if (String(orden.id_usuario) !== String(empleadoFilter)) {
+          return false;
+        }
+      }
+
+      // 4. Filtro de Fechas (solo aplicar si no hay error de rango)
+      if (!filtroFechasError) {
+        if (fechaDesde && orden.fecha_estimada < fechaDesde) {
+          return false;
+        }
+        if (fechaHasta && orden.fecha_estimada > fechaHasta) {
+          return false;
+        }
+      }
+
+      return true;
     });
-  }, [normalizedOrdenes, search, statusFilter]);
+  }, [normalizedOrdenes, search, statusFilter, empleadoFilter, fechaDesde, fechaHasta, filtroFechasError]);
 
   // Paginación
   const totalPages = Math.max(1, Math.ceil(filteredOrdenes.length / pageSize));
@@ -192,7 +297,7 @@ export default function useProduccion() {
     return filteredOrdenes.slice(start, start + pageSize);
   }, [filteredOrdenes, validPage, pageSize]);
 
-  // Modales
+  // Acciones de apertura de modales
   const abrirRegistrar = useCallback(() => {
     setSelectedOrden(null);
     setModalRegistrarOpen(true);
@@ -202,12 +307,25 @@ export default function useProduccion() {
     setSelectedOrden(orden);
     setModalEditarOpen(true);
     try {
-      const detalle = await obtenerProduccionPorId(orden.id);
+      const detalle = await obtenerProduccionPorId(orden.id || orden.id_orden_produccion);
       if (detalle) {
-        setSelectedOrden((prev) => ({ ...prev, ...detalle }));
+        setSelectedOrden((prev) => ({ ...prev, ...detalle, id: detalle.id_orden_produccion || orden.id }));
       }
     } catch {
-      // Usar datos locales
+      // Usar datos existentes
+    }
+  }, []);
+
+  const recargarSelectedOrden = useCallback(async (id) => {
+    try {
+      const detalle = await obtenerProduccionPorId(id);
+      if (detalle) {
+        setSelectedOrden((prev) => ({ ...prev, ...detalle, id: detalle.id_orden_produccion || id }));
+      }
+      const ordenesData = await listarProduccion();
+      setOrdenes(Array.isArray(ordenesData) ? ordenesData : []);
+    } catch (err) {
+      console.error('Error al recargar orden:', err);
     }
   }, []);
 
@@ -216,16 +334,26 @@ export default function useProduccion() {
     setModalCambiarEstadoOpen(true);
   }, []);
 
+  const abrirCancelar = useCallback((orden) => {
+    setSelectedOrden(orden);
+    setModalCancelarOpen(true);
+  }, []);
+
+  const abrirCosto = useCallback((orden) => {
+    setSelectedOrden(orden);
+    setModalCostoOpen(true);
+  }, []);
+
   const abrirVer = useCallback(async (orden) => {
     setSelectedOrden(orden);
     setModalVerOpen(true);
     try {
-      const detalle = await obtenerProduccionPorId(orden.id);
+      const detalle = await obtenerProduccionPorId(orden.id || orden.id_orden_produccion);
       if (detalle) {
-        setSelectedOrden((prev) => ({ ...prev, ...detalle }));
+        setSelectedOrden((prev) => ({ ...prev, ...detalle, id: detalle.id_orden_produccion || orden.id }));
       }
     } catch {
-      // Usar datos locales
+      // Usar datos existentes
     }
   }, []);
 
@@ -238,35 +366,27 @@ export default function useProduccion() {
     setModalRegistrarOpen(false);
     setModalEditarOpen(false);
     setModalCambiarEstadoOpen(false);
+    setModalCancelarOpen(false);
+    setModalCostoOpen(false);
     setModalVerOpen(false);
     setModalEliminarOpen(false);
     setSelectedOrden(null);
   }, []);
 
-  // Operaciones
+  // Operaciones API
   const handleCreateProduccion = useCallback(
     async (formData) => {
       setGuardando(true);
       try {
-        const primerDet = Array.isArray(formData.detalles) && formData.detalles[0] ? formData.detalles[0] : null;
-        const idProductoVari = Number(primerDet?.id_producto_vari ?? formData.id_producto_vari);
-        const cantidad = Number(primerDet?.cantidad ?? formData.cantidad ?? 1);
-
         const payload = {
           id_usuario: Number(formData.id_usuario),
+          fecha_inicio: formData.fecha_inicio,
           fecha_estimada: formData.fecha_estimada,
           observaciones: formData.observaciones || null,
-          detalles: Array.isArray(formData.detalles) && formData.detalles.length > 0
-            ? formData.detalles.map((d) => ({
-                id_producto_vari: Number(d.id_producto_vari),
-                cantidad: Number(d.cantidad),
-              }))
-            : [
-                {
-                  id_producto_vari: idProductoVari,
-                  cantidad: cantidad,
-                },
-              ],
+          detalles: (formData.detalles || []).map((d) => ({
+            id_producto_vari: Number(d.id_producto_vari),
+            cantidad: Number(d.cantidad),
+          })),
           id_estado_orden: Number(formData.id_estado_orden || 1),
         };
         await crearProduccion(payload);
@@ -274,7 +394,8 @@ export default function useProduccion() {
         cerrarModales();
         await recargarDatos();
       } catch (err) {
-        showAlert('error', err.message || 'No se pudo registrar la orden.');
+        const msg = err.response?.data?.detail || err.message || 'No se pudo registrar la orden.';
+        showAlert('error', msg);
         throw err;
       } finally {
         setGuardando(false);
@@ -289,19 +410,13 @@ export default function useProduccion() {
       try {
         const payload = {
           id_usuario: Number(formData.id_usuario),
+          fecha_inicio: formData.fecha_inicio,
           fecha_estimada: formData.fecha_estimada,
           observaciones: formData.observaciones || null,
-          detalles: Array.isArray(formData.detalles) && formData.detalles.length > 0
-            ? formData.detalles.map((d) => ({
-                id_producto_vari: Number(d.id_producto_vari),
-                cantidad: Number(d.cantidad),
-              }))
-            : [
-                {
-                  id_producto_vari: Number(formData.id_producto_vari),
-                  cantidad: Number(formData.cantidad || 1),
-                },
-              ],
+          detalles: (formData.detalles || []).map((d) => ({
+            id_producto_vari: Number(d.id_producto_vari),
+            cantidad: Number(d.cantidad),
+          })),
         };
         await editarProduccion(id, payload);
         showAlert('success', 'Orden de producción actualizada correctamente.');
@@ -320,50 +435,13 @@ export default function useProduccion() {
 
   const handleChangeStatus = useCallback(
     async (id, newStatusId, newStatusName) => {
-      // Búsqueda del orden y estado para actualización optimista
-      const ordenPrev = ordenes.find((o) => Number(o.id_orden_produccion ?? o.id) === Number(id));
-      const anteriorEstado = ordenPrev?.nombre_estado || ordenPrev?.estado || 'Pendiente';
-      const anteriorIdEstado = ordenPrev?.id_estado_orden ?? 1;
-
-      const estadoObj = estados.find(
-        (e) => Number(e.id_estado_orden ?? e.id) === Number(newStatusId)
-      );
-      const nombreFinal = newStatusName || estadoObj?.nombre || 'nuevo estado';
-
-      // Actualización visual inmediata (optimista)
-      setOrdenes((prev) =>
-        prev.map((o) =>
-          Number(o.id_orden_produccion ?? o.id) === Number(id)
-            ? {
-                ...o,
-                id_estado_orden: Number(newStatusId),
-                nombre_estado: nombreFinal,
-                estado: nombreFinal,
-              }
-            : o
-        )
-      );
-
       setGuardando(true);
       try {
         await cambiarEstadoProduccion(id, newStatusId);
-        showAlert('success', `Estado cambiado a ${nombreFinal} correctamente.`);
+        showAlert('success', `Estado cambiado a ${newStatusName || 'nuevo estado'} correctamente.`);
         cerrarModales();
         await recargarDatos();
       } catch (err) {
-        // Revertir cambio visual en caso de error del procedimiento
-        setOrdenes((prev) =>
-          prev.map((o) =>
-            Number(o.id_orden_produccion ?? o.id) === Number(id)
-              ? {
-                  ...o,
-                  id_estado_orden: anteriorIdEstado,
-                  nombre_estado: anteriorEstado,
-                  estado: anteriorEstado,
-                }
-              : o
-          )
-        );
         const msg = err.response?.data?.detail || err.message || 'No se pudo cambiar el estado.';
         showAlert('error', msg);
         throw err;
@@ -371,7 +449,26 @@ export default function useProduccion() {
         setGuardando(false);
       }
     },
-    [ordenes, estados, showAlert, cerrarModales, recargarDatos]
+    [showAlert, cerrarModales, recargarDatos]
+  );
+
+  const handleCancelProduccion = useCallback(
+    async (id, motivo) => {
+      setGuardando(true);
+      try {
+        await cancelarProduccion(id, motivo);
+        showAlert('success', 'Orden cancelada correctamente.');
+        cerrarModales();
+        await recargarDatos();
+      } catch (err) {
+        const msg = err.response?.data?.detail || err.message || 'No se pudo cancelar la orden.';
+        showAlert('error', msg);
+        throw err;
+      } finally {
+        setGuardando(false);
+      }
+    },
+    [showAlert, cerrarModales, recargarDatos]
   );
 
   const handleDeleteProduccion = useCallback(
@@ -395,6 +492,8 @@ export default function useProduccion() {
 
   return {
     ordenes: paginatedOrdenes,
+    paginatedOrdenes,
+    todasLasOrdenes: normalizedOrdenes,
     filteredOrdenes,
     empleados,
     variantes,
@@ -412,27 +511,51 @@ export default function useProduccion() {
       setStatusFilter(val);
       setCurrentPage(1);
     },
+    fechaDesde,
+    setFechaDesde: (val) => {
+      setFechaDesde(val);
+      setCurrentPage(1);
+    },
+    fechaHasta,
+    setFechaHasta: (val) => {
+      setFechaHasta(val);
+      setCurrentPage(1);
+    },
+    empleadoFilter,
+    setEmpleadoFilter: (val) => {
+      setEmpleadoFilter(val);
+      setCurrentPage(1);
+    },
+    filtroFechasError,
     currentPage: validPage,
     setCurrentPage,
     totalPages,
     pageSize,
+    setPageSize,
     modalRegistrarOpen,
     modalEditarOpen,
     modalCambiarEstadoOpen,
+    modalCancelarOpen,
+    modalCostoOpen,
     modalVerOpen,
     modalEliminarOpen,
     selectedOrden,
     abrirRegistrar,
     abrirEditar,
+    recargarSelectedOrden,
     abrirCambiarEstado,
+    abrirCancelar,
+    abrirCosto,
     abrirVer,
     abrirEliminar,
     cerrarModales,
     handleCreateProduccion,
     handleUpdateProduccion,
     handleChangeStatus,
+    handleCancelProduccion,
     handleDeleteProduccion,
     alert,
+    showAlert,
     closeAlert,
   };
 }

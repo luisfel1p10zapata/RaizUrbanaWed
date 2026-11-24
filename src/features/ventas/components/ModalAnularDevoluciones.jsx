@@ -53,11 +53,10 @@ export default function ModalAnularDevoluciones({
                 <AlertTriangle size={26} />
               </div>
               <h3 className="dev-status-question">
-                ¿Deseas anular la devolución #{selectedDevolucion.id}?
+                ¿Deseas anular la devolución {selectedDevolucion.codigo_devolucion || `#${selectedDevolucion.id || selectedDevolucion.id_devoluciones}`}?
               </h3>
               <p className="dev-status-help-text">
-                Esta acción registrará la anulación y restaurará la cantidad disponible en la venta de{' '}
-                <strong>{selectedDevolucion.producto}</strong>.
+                La devolución quedará anulada y, si había reintegrado stock, se descontará del inventario.
               </p>
             </div>
 

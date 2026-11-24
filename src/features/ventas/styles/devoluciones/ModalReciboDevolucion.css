@@ -1,0 +1,323 @@
+/* ==================================================================
+   ModalReciboDevolucion.css — Estilos e impresión del Recibo de Devolución
+   ================================================================== */
+
+.dev-recibo-modal {
+  max-width: 680px;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.dev-recibo-body {
+  max-height: calc(88vh - 120px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 1.5rem;
+  background: var(--bg-surface-subtle, #F9FAFB);
+}
+
+[data-theme="dark"] .dev-recibo-body {
+  background: #0B0F19;
+}
+
+/* Printable Document Sheet */
+.recibo-sheet {
+  background: #FFFFFF;
+  color: #111827;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 2rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  font-family: inherit;
+}
+
+[data-theme="dark"] .recibo-sheet {
+  background: #111827;
+  color: #F9FAFB;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Header */
+.recibo-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 2px solid #E5E7EB;
+  padding-bottom: 1.25rem;
+}
+
+[data-theme="dark"] .recibo-header {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.recibo-brand h1 {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  margin: 0;
+  color: #1F2937;
+}
+
+[data-theme="dark"] .recibo-brand h1 {
+  color: #F9FAFB;
+}
+
+.recibo-brand span {
+  font-size: 12px;
+  color: #6B7280;
+}
+
+.recibo-badge-box {
+  text-align: right;
+}
+
+.recibo-title {
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #4B5563;
+  margin: 0 0 2px 0;
+}
+
+[data-theme="dark"] .recibo-title {
+  color: #9CA3AF;
+}
+
+.recibo-code {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--color-primary, #2563EB);
+  font-family: monospace;
+}
+
+.recibo-date {
+  font-size: 12px;
+  color: #6B7280;
+  margin-top: 2px;
+}
+
+/* Grids */
+.recibo-grid-two {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+@media (max-width: 540px) {
+  .recibo-grid-two {
+    grid-template-columns: 1fr;
+  }
+}
+
+.recibo-card-info {
+  background: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-radius: 6px;
+  padding: 0.875rem 1rem;
+  font-size: 12px;
+}
+
+[data-theme="dark"] .recibo-card-info {
+  background: #1E293B;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.recibo-card-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #6B7280;
+  margin-bottom: 6px;
+  border-bottom: 1px dashed #E5E7EB;
+  padding-bottom: 4px;
+}
+
+[data-theme="dark"] .recibo-card-title {
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #9CA3AF;
+}
+
+.recibo-info-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.recibo-info-row:last-child {
+  margin-bottom: 0;
+}
+
+.recibo-info-label {
+  color: #6B7280;
+}
+
+[data-theme="dark"] .recibo-info-label {
+  color: #9CA3AF;
+}
+
+.recibo-info-val {
+  font-weight: 600;
+  color: #111827;
+}
+
+[data-theme="dark"] .recibo-info-val {
+  color: #F9FAFB;
+}
+
+/* Item Table */
+.recibo-table-wrapper {
+  overflow-x: auto;
+}
+
+.recibo-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.recibo-table th {
+  background: #F3F4F6;
+  color: #374151;
+  font-weight: 700;
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid #D1D5DB;
+}
+
+[data-theme="dark"] .recibo-table th {
+  background: #1E293B;
+  color: #E5E7EB;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.recibo-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #E5E7EB;
+  color: #1F2937;
+}
+
+[data-theme="dark"] .recibo-table td {
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #F3F4F6;
+}
+
+.recibo-table td.text-right,
+.recibo-table th.text-right {
+  text-align: right;
+}
+
+/* Resolution box */
+.recibo-resolucion-box {
+  background: #F0FDF4;
+  border: 1px solid #BBF7D0;
+  border-radius: 6px;
+  padding: 1rem;
+  font-size: 13px;
+  color: #166534;
+}
+
+[data-theme="dark"] .recibo-resolucion-box {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.25);
+  color: #A7F3D0;
+}
+
+.recibo-res-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+/* Signatures */
+.recibo-signatures {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+}
+
+.recibo-sig-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.recibo-sig-line {
+  width: 80%;
+  border-top: 1px solid #9CA3AF;
+  margin-bottom: 6px;
+}
+
+.recibo-sig-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: #374151;
+}
+
+[data-theme="dark"] .recibo-sig-name {
+  color: #E5E7EB;
+}
+
+.recibo-sig-sub {
+  font-size: 11px;
+  color: #6B7280;
+}
+
+/* Footer buttons */
+.dev-recibo-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--border-color, #E5E7EB);
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  background: var(--bg-surface, #FFFFFF);
+}
+
+[data-theme="dark"] .dev-recibo-footer {
+  background: #111827;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* ==================================================================
+   PRINT MEDIA RULES: ONLY PRINT RECEIPT SHEET
+   ================================================================== */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  #recibo-devolucion-print-area,
+  #recibo-devolucion-print-area * {
+    visibility: visible;
+  }
+
+  #recibo-devolucion-print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 1.5cm;
+    background: #FFFFFF !important;
+    color: #000000 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  .dev-recibo-modal,
+  .ru-modal-overlay,
+  .dev-recibo-footer,
+  .ru-modal-header {
+    display: none !important;
+  }
+}

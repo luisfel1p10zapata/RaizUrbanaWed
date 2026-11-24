@@ -22,6 +22,7 @@ export const Icons = {
   Download: mk("M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"),
   Close: mk("M6 18L18 6M6 6l12 12"),
   Check: mk("M5 13l4 4L19 7"),
+  ChevronDown: mk("M19 9l-7 7-7-7"),
 
   // --- MÓDULOS Y NAVEGACIÓN ---
   Home: mk("M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"),

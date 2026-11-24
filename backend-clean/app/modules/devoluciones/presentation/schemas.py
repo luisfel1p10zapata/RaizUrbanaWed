@@ -48,3 +48,16 @@ class ActualizarMotivoRequest(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
 
     nombre: str = Field(min_length=1, max_length=100)
+
+
+class DefinirResolucionRequest(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    id_tipo_resolucion: int = Field(gt=0)
+    monto: float | None = None
+    id_producto_vari_cambio: int | None = None
+    detalle: str | None = Field(default=None, max_length=255)
+
+
+class CompletarDevolucionRequest(BaseModel):
+    id_usuario: int | None = None

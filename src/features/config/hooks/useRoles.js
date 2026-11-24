@@ -9,7 +9,7 @@ import {
   eliminarRol,
 } from '../services/rolesService';
 
-export default function useRoles() {
+export default function useRoles(initialPageSize = 6) {
   const [roles, setRoles] = useState([]);
   const [permisos, setPermisos] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -20,7 +20,13 @@ export default function useRoles() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('Todos los estados');
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 6;
+  const [pageSize, setPageSize] = useState(initialPageSize);
+
+  useEffect(() => {
+    if (initialPageSize && initialPageSize !== pageSize) {
+      setPageSize(initialPageSize);
+    }
+  }, [initialPageSize]);
 
   // Estado de modales y rol seleccionado
   const [modalRegistrarOpen, setModalRegistrarOpen] = useState(false);
@@ -131,13 +137,44 @@ export default function useRoles() {
 
   // Filtro por búsqueda y por estado
   const filteredRoles = useMemo(() => {
-    const q = search.trim().toLowerCase();
+    const rawQ = search.trim();
+    // Normalizar texto quitando acentos y a minúsculas
+    const normalizeText = (txt) =>
+      String(txt || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase();
+
+    const q = normalizeText(rawQ);
+
     return normalizedRoles.filter((r) => {
-      const matchesSearch =
-        !q ||
-        r.nombre.toLowerCase().includes(q) ||
-        r.descripcion.toLowerCase().includes(q) ||
-        String(r.id).includes(q);
+      let matchesSearch = true;
+
+      if (q) {
+        const nombreNorm = normalizeText(r.nombre);
+        const descNorm = normalizeText(r.descripcion);
+        const idStr = String(r.id);
+
+        // Comprobación de estado por texto exacto o parcial
+        // Si el término es exactamente "activo" -> solo r.estado === true
+        // Si el término empieza por "inac" o contiene "inactiv" -> solo r.estado === false
+        let matchesEstado = false;
+        if (q === 'activo') {
+          matchesEstado = r.estado === true;
+        } else if (
+          q === 'inactivo' ||
+          q.startsWith('inac') ||
+          'inactivo'.startsWith(q)
+        ) {
+          matchesEstado = r.estado === false;
+        }
+
+        matchesSearch =
+          matchesEstado ||
+          nombreNorm.includes(q) ||
+          descNorm.includes(q) ||
+          idStr.includes(q);
+      }
 
       const matchesStatus =
         statusFilter === 'Todos los estados' ||
@@ -348,6 +385,7 @@ export default function useRoles() {
     setCurrentPage,
     totalPages,
     pageSize,
+    setPageSize,
     totalRoles,
     activeRoles,
     inactiveRoles,

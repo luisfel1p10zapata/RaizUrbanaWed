@@ -1,4 +1,3 @@
-
 from datetime import date
 
 import psycopg
@@ -11,6 +10,10 @@ from app.modules.orden_produccion.presentation.schemas import (
     RegistrarOrdenProduccionRequest,
     ActualizarOrdenProduccionRequest,
     CambiarEstadoOrdenProduccionRequest,
+    CancelarOrdenProduccionRequest,
+    RegistrarNoConformeRequest,
+    ResolverNoConformeRequest,
+    AnularNoConformeRequest,
 )
 
 router = APIRouter(
@@ -20,11 +23,13 @@ router = APIRouter(
 
 
 def manejar_error(error: Exception):
-    """Convierte errores de PostgreSQL en respuestas HTTP."""
+    """Convierte errores de PostgreSQL en respuestas HTTP con su mensaje exacto."""
 
     if isinstance(error, psycopg.Error):
         codigo = error.sqlstate
-        mensaje = str(error).split("\n")[0].replace("ERROR:", "").strip()
+        mensaje = getattr(getattr(error, "diag", None), "message_primary", None)
+        if not mensaje:
+            mensaje = str(error).split("\n")[0].replace("ERROR:", "").strip()
 
         if codigo == "P0002":
             raise HTTPException(
@@ -32,19 +37,13 @@ def manejar_error(error: Exception):
                 detail=mensaje,
             ) from error
 
-        if codigo == "P0001":
+        if codigo in ("22023", "22007", "22P02", "P0001"):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=mensaje,
             ) from error
 
-        if codigo in ("22023", "22007", "22P02", "23514", "55000"):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=mensaje,
-            ) from error
-
-        if codigo in ("23503", "23505", "23502"):
+        if codigo in ("23514", "55000", "23503", "23505", "23502"):
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail=mensaje,
@@ -133,7 +132,7 @@ def listar_estados():
 
 
 # --------------------------------------------------
-# LISTAR VARIANTES
+# LISTAR VARIANTES (ACCESORIOS)
 # GET /api/ordenes-produccion/variantes
 # --------------------------------------------------
 
@@ -141,6 +140,99 @@ def listar_estados():
 def listar_variantes():
     try:
         return OrdenProduccionRepository().listar_variantes()
+    except Exception as error:
+        manejar_error(error)
+
+
+# --------------------------------------------------
+# LISTAR ACCIONES DE NO CONFORME
+# GET /api/ordenes-produccion/acciones-no-conforme
+# --------------------------------------------------
+
+@router.get("/acciones-no-conforme")
+def listar_acciones_no_conforme():
+    try:
+        return OrdenProduccionRepository().listar_acciones_no_conforme()
+    except Exception as error:
+        manejar_error(error)
+
+
+# --------------------------------------------------
+# REGISTRAR PRODUCTO NO CONFORME
+# POST /api/ordenes-produccion/detalles/{id_detalle}/no-conforme
+# --------------------------------------------------
+
+@router.post("/detalles/{id_detalle}/no-conforme", status_code=status.HTTP_201_CREATED)
+def registrar_producto_no_conforme(
+    id_detalle: int,
+    datos: RegistrarNoConformeRequest,
+):
+    if id_detalle <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="El ID de detalle de producción debe ser mayor que cero.",
+        )
+
+    try:
+        return OrdenProduccionRepository().registrar_no_conforme(
+            id_detalle_produccion=id_detalle,
+            cantidad=datos.cantidad,
+            motivo=datos.motivo,
+            id_accion=datos.id_accion,
+            detalle_accion=datos.detalle_accion,
+        )
+    except Exception as error:
+        manejar_error(error)
+
+
+# --------------------------------------------------
+# RESOLVER PRODUCTO NO CONFORME
+# PATCH /api/ordenes-produccion/no-conforme/{id_no_conforme}/resolver
+# --------------------------------------------------
+
+@router.patch("/no-conforme/{id_no_conforme}/resolver")
+def resolver_producto_no_conforme(
+    id_no_conforme: int,
+    datos: ResolverNoConformeRequest | None = None,
+):
+    if id_no_conforme <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="El ID de producto no conforme debe ser mayor que cero.",
+        )
+
+    try:
+        observacion = datos.observacion if datos else None
+        return OrdenProduccionRepository().resolver_no_conforme(
+            id_producto_no_conforme=id_no_conforme,
+            observacion=observacion,
+        )
+    except Exception as error:
+        manejar_error(error)
+
+
+# --------------------------------------------------
+# ANULAR PRODUCTO NO CONFORME
+# PATCH /api/ordenes-produccion/no-conforme/{id_no_conforme}/anular
+# --------------------------------------------------
+
+@router.patch("/no-conforme/{id_no_conforme}/anular")
+def anular_producto_no_conforme(
+    id_no_conforme: int,
+    datos: AnularNoConformeRequest | None = None,
+):
+    if id_no_conforme <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="El ID de producto no conforme debe ser mayor que cero.",
+        )
+
+    try:
+        observacion = datos.observacion if datos else None
+        return OrdenProduccionRepository().anular_no_conforme(
+            id_producto_no_conforme=id_no_conforme,
+            observacion=observacion,
+        )
     except Exception as error:
         manejar_error(error)
 
@@ -163,6 +255,7 @@ def registrar_orden(datos: RegistrarOrdenProduccionRequest):
             fecha_estimada=datos.fecha_estimada,
             observaciones=datos.observaciones,
             detalles=detalles,
+            fecha_inicio=datos.fecha_inicio,
             id_estado_orden=datos.id_estado_orden,
         )
     except Exception as error:
@@ -210,6 +303,7 @@ def actualizar_orden(
             fecha_estimada=datos.fecha_estimada,
             observaciones=datos.observaciones,
             detalles=detalles,
+            fecha_inicio=datos.fecha_inicio,
         )
 
         if resultado is None:
@@ -284,6 +378,68 @@ def cambiar_estado_orden(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="No se encontró la orden de producción.",
+            )
+
+        return resultado
+
+    except HTTPException:
+        raise
+    except Exception as error:
+        manejar_error(error)
+
+
+# --------------------------------------------------
+# CANCELAR ORDEN
+# POST /api/ordenes-produccion/{id_orden_produccion}/cancelar
+# --------------------------------------------------
+
+@router.post("/{id_orden_produccion}/cancelar")
+def cancelar_orden(
+    id_orden_produccion: int,
+    datos: CancelarOrdenProduccionRequest,
+):
+    if id_orden_produccion <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="El ID de la orden debe ser mayor que cero.",
+        )
+
+    try:
+        resultado = OrdenProduccionRepository().cancelar(
+            id_orden_produccion=id_orden_produccion,
+            motivo=datos.motivo,
+        )
+
+        return resultado
+
+    except HTTPException:
+        raise
+    except Exception as error:
+        manejar_error(error)
+
+
+# --------------------------------------------------
+# CONSULTAR COSTO DE PRODUCCIÓN
+# GET /api/ordenes-produccion/{id_orden_produccion}/costo
+# --------------------------------------------------
+
+@router.get("/{id_orden_produccion}/costo")
+def obtener_costo_orden(id_orden_produccion: int):
+    if id_orden_produccion <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="El ID de la orden debe ser mayor que cero.",
+        )
+
+    try:
+        resultado = OrdenProduccionRepository().obtener_costo(
+            id_orden_produccion
+        )
+
+        if resultado is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No se encontró el costo de la orden de producción.",
             )
 
         return resultado
