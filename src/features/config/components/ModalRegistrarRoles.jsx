@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { X, CircleCheck, ChevronDown, ChevronUp } from 'lucide-react';
 import ConfirmCancelModal from '../../../components/ui/ConfirmCancelModal';
 import Button from '../../../components/ui/Button';
@@ -72,6 +72,20 @@ export default function ModalRegistrarRoles({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, intentarCerrar]);
 
+  // Filtrar 'Acceso Total' del catálogo para no duplicar con el toggle general
+  const permisosValidos = useMemo(() => {
+    return (permisos || []).filter(
+      (p) => (p?.permiso || p?.nombre || '').trim().toLowerCase() !== 'acceso total'
+    );
+  }, [permisos]);
+
+  // Manejo de permisos y privilegios
+  const todosLosPrivilegios = useMemo(() => {
+    return permisosValidos.flatMap((p) =>
+      (p?.privilegios ?? []).map((priv) => Number(priv.id_privilegio))
+    );
+  }, [permisosValidos]);
+
   if (!isOpen) return null;
 
   const handleSubmit = async (e) => {
@@ -85,20 +99,6 @@ export default function ModalRegistrarRoles({
       // El error lo maneja el hook useRoles con el toast
     }
   };
-
-  // Filtrar 'Acceso Total' del catálogo para no duplicar con el toggle general
-  const permisosValidos = useMemo(() => {
-    return (permisos || []).filter(
-      (p) => (p.permiso || p.nombre || '').trim().toLowerCase() !== 'acceso total'
-    );
-  }, [permisos]);
-
-  // Manejo de permisos y privilegios
-  const todosLosPrivilegios = useMemo(() => {
-    return permisosValidos.flatMap((p) =>
-      (p.privilegios ?? []).map((priv) => Number(priv.id_privilegio))
-    );
-  }, [permisosValidos]);
 
   const accesoTotal =
     todosLosPrivilegios.length > 0 &&

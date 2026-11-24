@@ -12,6 +12,8 @@ from app.modules.devoluciones.presentation.schemas import (
     CambiarMotivoDevolucionRequest,
     RegistrarMotivoRequest,
     ActualizarMotivoRequest,
+    DefinirResolucionRequest,
+    CompletarDevolucionRequest,
 )
 
 
@@ -140,6 +142,7 @@ def filtrar_devoluciones(
     fecha_fin: date | None = None,
     id_motivo: int | None = Query(default=None, gt=0),
     estado: str | None = Query(default=None, max_length=50),
+    id_tipo_resolucion: int | None = Query(default=None, gt=0),
 ):
     try:
         return DevolucionService().filtrar(
@@ -147,7 +150,36 @@ def filtrar_devoluciones(
             fecha_fin=fecha_fin,
             id_motivo=id_motivo,
             estado=estado,
+            id_tipo_resolucion=id_tipo_resolucion,
         )
+
+    except Exception as error:
+        manejar_error(error)
+
+
+# --------------------------------------------------
+# LISTAR TIPOS DE RESOLUCIÓN
+# GET /api/devoluciones/tipos-resolucion
+# --------------------------------------------------
+
+@router.get("/tipos-resolucion")
+def listar_tipos_resolucion():
+    try:
+        return DevolucionService().listar_tipos_resolucion()
+
+    except Exception as error:
+        manejar_error(error)
+
+
+# --------------------------------------------------
+# LISTAR CANDIDATOS CAMBIO
+# GET /api/devoluciones/candidatos-cambio
+# --------------------------------------------------
+
+@router.get("/candidatos-cambio")
+def listar_candidatos_cambio():
+    try:
+        return DevolucionService().listar_candidatos_cambio()
 
     except Exception as error:
         manejar_error(error)
@@ -259,6 +291,120 @@ def obtener_devolucion(id_devoluciones: int):
 
 
 # --------------------------------------------------
+# OBTENER DETALLE COMPLETO (JSONB)
+# GET /api/devoluciones/{id_devoluciones}/detalle
+# --------------------------------------------------
+
+@router.get("/{id_devoluciones}/detalle")
+def obtener_detalle_devolucion(id_devoluciones: int):
+    try:
+        resultado = DevolucionService().obtener_detalle(
+            id_devoluciones,
+        )
+
+        if resultado is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No se encontró la devolución.",
+            )
+
+        return resultado
+
+    except HTTPException:
+        raise
+
+    except Exception as error:
+        manejar_error(error)
+
+
+# --------------------------------------------------
+# OBTENER RECIBO IMPRIMIBLE (JSONB)
+# GET /api/devoluciones/{id_devoluciones}/recibo
+# --------------------------------------------------
+
+@router.get("/{id_devoluciones}/recibo")
+def obtener_recibo_devolucion(id_devoluciones: int):
+    try:
+        resultado = DevolucionService().obtener_recibo(
+            id_devoluciones,
+        )
+
+        if resultado is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No se encontró el recibo de la devolución.",
+            )
+
+        return resultado
+
+    except HTTPException:
+        raise
+
+    except Exception as error:
+        manejar_error(error)
+
+
+# --------------------------------------------------
+# DEFINIR RESOLUCIÓN
+# POST /api/devoluciones/{id_devoluciones}/resolucion
+# --------------------------------------------------
+
+@router.post("/{id_devoluciones}/resolucion")
+def definir_resolucion_devolucion(
+    id_devoluciones: int,
+    datos: DefinirResolucionRequest,
+):
+    try:
+        resultado = DevolucionService().definir_resolucion(
+            id_devolucion=id_devoluciones,
+            id_tipo_resolucion=datos.id_tipo_resolucion,
+            monto=datos.monto,
+            id_producto_vari_cambio=datos.id_producto_vari_cambio,
+            detalle=datos.detalle,
+        )
+
+        return {
+            "mensaje": "Resolución guardada correctamente.",
+            "devolucion": resultado,
+        }
+
+    except HTTPException:
+        raise
+
+    except Exception as error:
+        manejar_error(error)
+
+
+# --------------------------------------------------
+# COMPLETAR DEVOLUCIÓN
+# POST /api/devoluciones/{id_devoluciones}/completar
+# --------------------------------------------------
+
+@router.post("/{id_devoluciones}/completar")
+def completar_devolucion(
+    id_devoluciones: int,
+    datos: CompletarDevolucionRequest | None = None,
+):
+    try:
+        id_usuario = datos.id_usuario if datos else None
+        resultado = DevolucionService().completar_devolucion(
+            id_devolucion=id_devoluciones,
+            id_usuario=id_usuario,
+        )
+
+        return {
+            "mensaje": "Devolución completada correctamente.",
+            "devolucion": resultado,
+        }
+
+    except HTTPException:
+        raise
+
+    except Exception as error:
+        manejar_error(error)
+
+
+# --------------------------------------------------
 # ACTUALIZAR DEVOLUCIÓN
 # PUT /api/devoluciones/{id_devoluciones}
 # --------------------------------------------------
@@ -359,34 +505,25 @@ def cambiar_motivo_devolucion(
 
 
 # --------------------------------------------------
-# ELIMINAR/ANULAR DEVOLUCIÓN (DELETE)
+# ELIMINAR DEVOLUCIÓN (DELETE DEFINITIVO)
 # DELETE /api/devoluciones/{id_devoluciones}
 # --------------------------------------------------
 
 @router.delete("/{id_devoluciones}")
-def eliminar_devolucion(
-    id_devoluciones: int,
-    observacion_anulacion: str | None = None,
-):
+def eliminar_devolucion(id_devoluciones: int):
     try:
-        resultado = DevolucionService().anular(
-            id_devoluciones=id_devoluciones,
-            observacion_anulacion=observacion_anulacion,
-        )
-
-        if resultado is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="No se encontró la devolución.",
-            )
+        DevolucionService().eliminar(id_devoluciones)
 
         return {
-            "mensaje": "Devolución anulada correctamente.",
-            "devolucion": resultado,
+            "mensaje": "Devolución eliminada correctamente.",
+            "id_devoluciones": id_devoluciones,
         }
 
     except HTTPException:
         raise
+
+    except Exception as error:
+        manejar_error(error)
 
     except Exception as error:
         manejar_error(error)

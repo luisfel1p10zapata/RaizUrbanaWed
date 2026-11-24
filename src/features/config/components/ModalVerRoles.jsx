@@ -68,10 +68,10 @@ export default function ModalVerRoles({
                   {selectedRole.estado ? 'Activo' : 'Inactivo'}
                 </Badge>
               </div>
-              <p className="roles-view-description" style={{ margin: '6px 0 10px 0', color: '#64748b', fontSize: '13px' }}>
+              <p className="roles-view-description">
                 {selectedRole.descripcion || selectedRole.description || 'Sin descripción'}
               </p>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#f1f5f9', padding: '4px 10px', borderRadius: '12px', fontSize: '12px', color: '#475569' }}>
+              <div className="roles-view-users-pill">
                 <Users size={14} />
                 <span><strong>{totalUsuarios}</strong> {totalUsuarios === 1 ? 'usuario asignado' : 'usuarios asignados'}</span>
               </div>
@@ -92,7 +92,7 @@ export default function ModalVerRoles({
                 <span>Acceso Total {tieneAccesoTotal ? '(Concedido)' : '(No concedido)'}</span>
               </div>
             </div>
-            <div className="roles-view-perms-list" style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '280px', overflowY: 'auto' }}>
+            <div className="roles-view-perms-list" style={{ maxHeight: '280px', overflowY: 'auto' }}>
               {permisosValidos.map((permiso) => {
                 const nombrePermiso = permiso.permiso || permiso.nombre || `Permiso #${permiso.id_permiso}`;
                 const privs = permiso.privilegios ?? [];
@@ -106,7 +106,6 @@ export default function ModalVerRoles({
                   <div
                     key={permiso.id_permiso}
                     className={`roles-view-perm-item ${tienePermisoCompleto ? 'active' : ''}`}
-                    style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '10px 12px', background: '#ffffff' }}
                   >
                     <div
                       className="roles-view-perm-item-left"
@@ -121,23 +120,23 @@ export default function ModalVerRoles({
                         ) : (
                           <XCircle size={16} color="#94A3B8" />
                         )}
-                        <span className="roles-view-perm-name" style={{ fontWeight: 500, fontSize: '13px' }}>{nombrePermiso}</span>
+                        <span className="roles-view-perm-name">{nombrePermiso}</span>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span className="roles-view-perm-count" style={{ fontSize: '12px', color: '#64748b' }}>
+                        <span className="roles-view-perm-count">
                           {asignados} de {idsPrivilegios.length} privilegios
                         </span>
-                        {isExpanded ? <ChevronUp size={14} color="#64748b" /> : <ChevronDown size={14} color="#64748b" />}
+                        {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                       </div>
                     </div>
 
                     {isExpanded && privs.length > 0 && (
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '6px', marginTop: '8px', paddingTop: '8px', borderTop: '1px solid #f1f5f9' }}>
+                      <div className="roles-view-privs-grid">
                         {privs.map((priv) => {
                           const pId = Number(priv.id_privilegio);
                           const asignado = rolePrivIds.includes(pId);
                           return (
-                            <div key={pId} style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: asignado ? '#1e293b' : '#94a3b8' }}>
+                            <div key={pId} className={`roles-view-priv-chip ${asignado ? '' : 'unassigned'}`}>
                               {asignado ? (
                                 <CheckCircle2 size={12} color="#16a34a" />
                               ) : (

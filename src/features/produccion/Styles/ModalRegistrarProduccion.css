@@ -1,39 +1,121 @@
 /* ==================================================================
    ModalRegistrarProduccion.css — Estilos del Modal de Registro de Producción
+   Optimizado para pantallas ~1366x768 (sin scroll con 1 producto)
    ================================================================== */
 
 .prod-reg-modal {
-  max-width: 600px;
-  max-height: 90vh;
+  max-width: 660px;
+  width: 100%;
+  max-height: 88vh;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  border-radius: 16px;
+  background: var(--panel, #ffffff);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+}
+
+.prod-reg-modal form {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
   overflow: hidden;
 }
 
 .prod-reg-modal-body {
-  max-height: calc(85vh - 130px);
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
+  padding: 16px 24px 12px 24px;
 }
 
+/* Espaciados compactos entre campos */
 .prod-reg-field {
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .prod-reg-grid-2col {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-bottom: 16px;
+  gap: 12px;
+  margin-bottom: 12px;
 }
 
+/* Fila compacta de producto dinámico */
+.prod-reg-item-row {
+  display: grid;
+  grid-template-columns: 1fr 105px 38px;
+  gap: 8px;
+  align-items: start;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line, var(--border, #e2e8f0));
+  background: var(--field-bg, var(--bg-card, #f8fafc));
+}
+
+/* Textarea autoajustable sin control de arrastre */
 .prod-reg-textarea {
-  resize: vertical;
+  resize: none !important;
+  min-height: 38px;
+  line-height: 1.4;
+  padding: 8px 12px;
+  box-sizing: border-box;
+  overflow-y: hidden;
+  transition: border-color 0.15s ease;
 }
 
-@media (max-width: 600px) {
+/* Pie del modal con padding generoso y separación de bordes */
+.prod-reg-modal .ru-modal-footer {
+  padding: 16px 24px 20px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  border-top: 1px solid var(--line, var(--border, #e2e8f0));
+  background: var(--panel, #ffffff);
+  flex-shrink: 0;
+}
+
+/* Modo oscuro */
+[data-theme="dark"] .prod-reg-modal {
+  background: var(--panel, #1C1E2E);
+}
+
+[data-theme="dark"] .prod-reg-item-row {
+  border-color: var(--line, #2A2C40);
+  background: var(--field-bg, #161722);
+}
+
+[data-theme="dark"] .prod-reg-modal .ru-modal-footer {
+  border-top-color: var(--line, #2A2C40);
+  background: var(--panel, #1C1E2E);
+}
+
+/* Responsive: una sola columna en pantallas móviles */
+@media (max-width: 640px) {
+  .prod-reg-modal {
+    max-height: 94vh;
+  }
+
+  .prod-reg-modal-body {
+    padding: 14px 16px 10px 16px;
+  }
+
   .prod-reg-grid-2col {
     grid-template-columns: 1fr;
-    gap: 12px;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .prod-reg-item-row {
+    grid-template-columns: 1fr 90px 36px;
+    gap: 6px;
+    padding: 6px 8px;
+  }
+
+  .prod-reg-modal .ru-modal-footer {
+    padding: 14px 16px 18px 16px;
   }
 }

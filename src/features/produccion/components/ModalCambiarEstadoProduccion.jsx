@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { X, RefreshCw, AlertCircle, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { X, RefreshCw, AlertTriangle } from 'lucide-react';
 import Button from '../../../components/ui/Button';
 import Badge from '../../../components/ui/Badge';
 import ConfirmModal from '../../../components/ui/ConfirmModal';
@@ -13,8 +13,6 @@ const ESTADOS_DEFAULT = [
   { id_estado_orden: 1, nombre: 'Pendiente' },
   { id_estado_orden: 2, nombre: 'En Proceso' },
   { id_estado_orden: 3, nombre: 'Terminado' },
-  { id_estado_orden: 4, nombre: 'Entregado' },
-  { id_estado_orden: 5, nombre: 'Producto no Conforme' },
 ];
 
 export default function ModalCambiarEstadoProduccion({
@@ -25,6 +23,9 @@ export default function ModalCambiarEstadoProduccion({
   selectedOrden,
   estados = [],
 }) {
+  const [selectedStatus, setSelectedStatus] = useState('');
+  const [showConfirmTerminado, setShowConfirmTerminado] = useState(false);
+
   const listaEstados = useMemo(() => {
     return Array.isArray(estados) && estados.length > 0 ? estados : ESTADOS_DEFAULT;
   }, [estados]);
@@ -41,9 +42,6 @@ export default function ModalCambiarEstadoProduccion({
     return transiciones.filter((t) => t.permitida);
   }, [transiciones]);
 
-  const [selectedStatus, setSelectedStatus] = useState('');
-  const [showConfirmTerminado, setShowConfirmTerminado] = useState(false);
-
   useEffect(() => {
     if (isOpen && opcionesPermitidas.length > 0) {
       setSelectedStatus(opcionesPermitidas[0].id_estado_orden);
@@ -51,8 +49,6 @@ export default function ModalCambiarEstadoProduccion({
       setSelectedStatus('');
     }
   }, [isOpen, opcionesPermitidas]);
-
-  if (!isOpen || !selectedOrden) return null;
 
   const handleClose = () => {
     setSelectedStatus('');
@@ -93,15 +89,12 @@ export default function ModalCambiarEstadoProduccion({
     await ejecutarCambio(selectedStatus);
   };
 
-  const lower = normalizarEstado(selectedOrden.nombre_estado || selectedOrden.estado);
-  let badgeVariant = 'pendiente';
-  if (lower.includes('terminado') || lower.includes('entregado')) {
-    badgeVariant = 'activo';
-  } else if (lower.includes('no conforme') || lower.includes('cancelado')) {
-    badgeVariant = 'cancelado';
-  } else if (lower.includes('proceso') || lower.includes('produccion')) {
-    badgeVariant = 'info';
-  }
+  const normActual = normalizarEstado(selectedOrden?.nombre_estado || selectedOrden?.estado);
+  const badgeVariant = normActual.includes('terminado')
+    ? 'activo'
+    : normActual.includes('proceso') || normActual.includes('produccion')
+    ? 'info'
+    : 'pendiente';
 
   const estadoSeleccionadoObj = transiciones.find(
     (t) => Number(t.id_estado_orden) === Number(selectedStatus)
@@ -109,14 +102,19 @@ export default function ModalCambiarEstadoProduccion({
   const esTerminadoSeleccionado =
     normalizarEstado(estadoSeleccionadoObj?.nombre) === 'terminado';
 
+  // Regla de hooks: return condicional después de todos los hooks
+  if (!isOpen || !selectedOrden) return null;
+
   return (
     <>
       <div className="ru-modal-overlay" onClick={handleClose}>
         <div className="ru-modal prod-status-modal" onClick={(e) => e.stopPropagation()}>
           {/* Header */}
           <div className="ru-modal-header">
-            <span className="ru-modal-eyebrow">ESTADO DE ORDEN #{selectedOrden.id}</span>
-            <h2 className="ru-modal-title">Cambiar Estado</h2>
+            <div>
+              <span className="ru-modal-eyebrow">ESTADO DE ORDEN #{selectedOrden.id || selectedOrden.id_orden_produccion}</span>
+              <h2 className="ru-modal-title">Cambiar Estado</h2>
+            </div>
             <button
               type="button"
               className="ru-modal-close"
@@ -168,7 +166,7 @@ export default function ModalCambiarEstadoProduccion({
                     disabled={guardando || opcionesPermitidas.length === 0}
                   >
                     {opcionesPermitidas.length === 0 ? (
-                      <option value="">Sin transiciones permitidas</option>
+                      <option value="">Sin transiciones permitidas (Estado final)</option>
                     ) : (
                       transiciones.map((est) => (
                         <option
@@ -176,7 +174,7 @@ export default function ModalCambiarEstadoProduccion({
                           value={est.id_estado_orden}
                           disabled={!est.permitida}
                         >
-                          {est.nombre} {est.esActual ? '(Estado actual - No seleccionable)' : !est.permitida ? `— (${est.motivo})` : ''}
+                          {est.nombre} {est.esActual ? '(Estado actual)' : !est.permitida ? `— (${est.motivo})` : ''}
                         </option>
                       ))
                     )}
@@ -187,16 +185,16 @@ export default function ModalCambiarEstadoProduccion({
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', padding: '10px 12px', background: '#fffbeb', border: '1px solid #fef3c7', borderRadius: '6px', marginTop: '10px', fontSize: '12px', color: '#92400e' }}>
                     <AlertTriangle size={16} style={{ flexShrink: 0, marginTop: '2px' }} />
                     <span>
-                      <strong>Atención:</strong> Al pasar a &quot;Terminado&quot;, se descontará el stock de los insumos requeridos y se incrementará el stock del producto terminado. Se solicitará confirmación antes de guardar.
+                      <strong>Atención:</strong> Al pasar a &quot;Terminado&quot;, no deben existir productos no conformes pendientes y se descontará el stock de los insumos requeridos de la ficha técnica.
                     </span>
                   </div>
                 )}
               </div>
 
-              {/* Listado de todos los estados de la BD con sus condiciones */}
+              {/* Listado de todos los estados del sistema */}
               <div style={{ marginTop: '16px' }}>
                 <span className="ru-form-label" style={{ display: 'block', marginBottom: '8px', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#64748b' }}>
-                  TODOS LOS ESTADOS DEL SISTEMA
+                  ESTADOS DE PRODUCCIÓN
                 </span>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   {transiciones.map((est) => {
@@ -289,7 +287,7 @@ export default function ModalCambiarEstadoProduccion({
       {showConfirmTerminado && (
         <ConfirmModal
           title="¿Marcar orden como Terminada?"
-          message="Al pasar a Terminado se consumirán los insumos de la ficha técnica, se sumará el stock de los productos fabricados y la acción no se puede deshacer. ¿Deseas continuar?"
+          message="Al pasar a Terminado se verificarán los no conformes (no debe haber ninguno pendiente) y se consumirá el stock de insumos requeridos. ¿Deseas continuar?"
           confirmText="Sí, marcar como Terminada"
           cancelText="Volver"
           confirmVariant="primary"
