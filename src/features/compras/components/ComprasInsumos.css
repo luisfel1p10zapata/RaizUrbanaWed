@@ -1,0 +1,1019 @@
+/* ==================================================================
+   ComprasInsumos.css — Módulo de Compras de Insumos (Raíz Urbana)
+   Tipografías: Playfair Display (títulos) + Montserrat (interfaz)
+   Sistema visual unificado con Ventas.css (prefijo ci-)
+   ================================================================== */
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap");
+
+.compras-insumos-page,
+.ci-modal-overlay {
+  --bg: #f3e8e3;
+  --panel: #ffffff;
+  --border: #c9aea7;
+  --line: #e6dcd8;
+  --ink: #1c1d36;
+  --ink-soft: #4b4b5a;
+  --muted: #7b7a88;
+  --soft-bg: #eceaee;
+  --thead-bg: #f5f3f4;
+  --editor-bg: #fbf9f8;
+  --hover-bg: #f4eeeb;
+  --placeholder: #a5a3ae;
+  --id-border: #d8d5da;
+  --overlay-bg: rgba(60, 50, 55, 0.35);
+  --modal-shadow: rgba(20, 16, 10, 0.25);
+  --dark: #1f2038;
+  --dark-hover: #2e2f4d;
+  --green-bg: #e3f7ea; --green-fg: #1f9d55; --green-bd: #a9e3c0;
+  --blue-bg: #e6effd; --blue-fg: #2f6fed; --blue-bd: #b7cef8;
+  --amber-bg: #fdf3d3; --amber-fg: #b7790a; --amber-bd: #f2dc95;
+  --red-bg: #fde6e3; --red-fg: #d8483a; --red-bd: #f5b8b1;
+  --serif: "Playfair Display", Georgia, serif;
+}
+
+/* ------------------------------------------------------------------ */
+/* MODO OSCURO — paleta oficial (Background/Surface/Primary/Accent)   */
+/* ------------------------------------------------------------------ */
+:root[data-theme="dark"] .compras-insumos-page,
+:root[data-theme="dark"] .ci-modal-overlay {
+  --bg: #12131C;
+  --panel: #1C1E2E;
+  --border: #3A3D57;
+  --line: #2A2C40;
+  --ink: #F2E9E4;
+  --ink-soft: #C9ADA7;
+  --muted: #9A8C98;
+  --soft-bg: #252839;
+  --thead-bg: #1A1C2A;
+  --editor-bg: #252839;
+  --hover-bg: #252839;
+  --placeholder: #6f6a7a;
+  --id-border: #3A3D57;
+  --overlay-bg: rgba(8, 9, 15, 0.75);
+  --modal-shadow: rgba(0, 0, 0, 0.55);
+  --dark: #4A4E69;
+  --dark-hover: #5B6082;
+
+  --green-bg: rgba(34, 197, 94, 0.12); --green-fg: #4ade80; --green-bd: rgba(34, 197, 94, 0.3);
+  --blue-bg: rgba(59, 130, 246, 0.12); --blue-fg: #60a5fa; --blue-bd: rgba(59, 130, 246, 0.3);
+  --amber-bg: rgba(245, 158, 11, 0.12); --amber-fg: #fbbf24; --amber-bd: rgba(245, 158, 11, 0.3);
+  --red-bg: rgba(239, 68, 68, 0.12); --red-fg: #fca5a5; --red-bd: rgba(239, 68, 68, 0.3);
+}
+
+/* Respaldo global: cubre cualquier elemento del módulo que quedara
+   fuera de .compras-insumos-page en el DOM (evita fondos blancos). */
+:root[data-theme="dark"] {
+  --ci-panel-fallback: #1C1E2E;
+  --ci-ink-fallback: #F2E9E4;
+  --ci-border-fallback: #3A3D57;
+  --ci-placeholder-fallback: #6f6a7a;
+}
+:root[data-theme="dark"] .ci-search,
+:root[data-theme="dark"] .ci-filters-row select,
+:root[data-theme="dark"] .ci-filter-date,
+:root[data-theme="dark"] .ci-form-grid input,
+:root[data-theme="dark"] .ci-form-grid select,
+:root[data-theme="dark"] .ci-status-option {
+  background-color: var(--ci-panel-fallback) !important;
+  border-color: var(--ci-border-fallback) !important;
+  color: var(--ci-ink-fallback) !important;
+}
+:root[data-theme="dark"] .ci-search input,
+:root[data-theme="dark"] .ci-filter-date input {
+  color: var(--ci-ink-fallback) !important;
+}
+:root[data-theme="dark"] .ci-search input::placeholder,
+:root[data-theme="dark"] .ci-form-grid input::placeholder {
+  color: var(--ci-placeholder-fallback) !important;
+}
+
+.compras-insumos-page {
+  font-family: "Montserrat", -apple-system, "Segoe UI", sans-serif;
+  color: var(--ink);
+  padding: 48px 10px 90px;
+  min-height: 100vh;
+  box-sizing: border-box;
+  background: transparent;
+  transition: color 0.3s ease;
+}
+.compras-insumos-page *,
+.ci-modal-overlay * { box-sizing: border-box; font-family: inherit; }
+.compras-insumos-page h1 { margin: 0; }
+
+/* ---------------- Header ---------------- */
+.ci-page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 28px; flex-wrap: wrap; gap: 16px; }
+.ci-module-label { display: block; font-size: 12px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 9px; }
+.ci-page-header h1 { font-family: var(--serif) !important; font-size: 44px; font-weight: 500; line-height: 1.15; color: var(--ink); }
+.ci-page-header p { margin: 5px 0 0; font-size: 14.5px; color: var(--ink-soft); }
+.ci-register-button { padding: 15px 28px; font-size: 14.5px; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; border-radius: 10px; min-width: 0; min-height: 0; }
+
+/* ---------------- Buttons ---------------- */
+.ci-primary-button, .ci-secondary-button, .ci-danger-button {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  font-size: 14.5px; font-weight: 600; padding: 13px 22px; min-height: 0; border-radius: 10px;
+  border: 1px solid transparent; cursor: pointer; transition: background .15s, border-color .15s, opacity .15s;
+}
+.ci-primary-button svg, .ci-secondary-button svg, .ci-danger-button svg { width: 17px; height: 17px; flex-shrink: 0; }
+.ci-primary-button:disabled, .ci-secondary-button:disabled, .ci-danger-button:disabled { opacity: .45; cursor: not-allowed; }
+.ci-primary-button { background: var(--dark); border-color: var(--dark); color: #fff; }
+.ci-primary-button:hover:not(:disabled) { background: var(--dark-hover); }
+.ci-secondary-button { background: var(--panel); border-color: var(--border); color: var(--ink); }
+.ci-secondary-button:hover:not(:disabled) { background: var(--hover-bg); }
+.ci-danger-button { background: var(--red-fg); border-color: var(--red-fg); color: #fff; }
+.ci-danger-button:hover:not(:disabled) { opacity: .9; }
+.compras-insumos-page .ci-outline-button { background: transparent; border: 1px solid var(--dark); color: var(--dark); }
+.compras-insumos-page .ci-ghost-button { background: transparent; border: 0; color: var(--ink); }
+
+/* ---------------- KPI cards ---------------- */
+.ci-kpi-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 22px; }
+.ci-kpi-card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 24px 26px; display: grid; grid-template-columns: 42px 1fr; column-gap: 15px; align-items: start; min-width: 0; min-height: 0; box-shadow: none; }
+.ci-kpi-icon { grid-row: 1 / span 3; width: 38px; height: 38px; border-radius: 10px; background: var(--soft-bg); color: var(--ink); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.ci-kpi-icon svg { width: 18px; height: 18px; }
+.ci-kpi-content { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; gap: 0; }
+.ci-kpi-content > span { font-size: 13px; color: var(--muted); line-height: 1.3; }
+.ci-kpi-content > strong { display: block; font-size: 19px; font-weight: 700; margin-top: 2px; color: var(--ink); line-height: 1.2; word-break: break-word; }
+.ci-kpi-content > small { font-size: 13px; color: var(--muted); margin-top: 2px; line-height: 1.3; }
+.ci-positive { color: var(--green-fg) !important; }
+.ci-negative { color: var(--red-fg) !important; }
+
+/* ---------------- Filters ---------------- */
+.ci-filters-card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; margin-bottom: 22px; overflow: hidden; box-shadow: none; }
+.ci-filters-title { display: flex; align-items: center; gap: 10px; font-size: 14.5px; font-weight: 600; padding: 18px 24px; min-height: 0; border-bottom: 1px solid var(--border); color: var(--ink); flex-wrap: wrap; }
+.ci-filters-title svg { width: 17px; height: 17px; flex-shrink: 0; }
+.ci-filters-row { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(0, .78fr) minmax(0, .9fr) minmax(0, .82fr) minmax(0, .78fr) auto; gap: 12px; padding: 24px 26px; min-width: 0; align-items: center; }
+
+.ci-search, .ci-filters-row select, .ci-filter-date { min-height: 46px; height: auto; border: 1px solid var(--border); border-radius: 10px; background: var(--panel); color: var(--ink); font-size: 14.5px; }
+.ci-search { display: flex; align-items: center; gap: 10px; padding: 0 15px; min-width: 0; overflow: hidden; }
+.ci-search svg { flex-shrink: 0; width: 16px; height: 16px; color: var(--ink); }
+.ci-search input { width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; padding: 12px 0; font-size: 14.5px; color: var(--ink); }
+.ci-search input::placeholder { color: var(--placeholder); }
+.ci-filters-row select { width: 100%; min-width: 0; padding: 12px 15px; outline: none; }
+.ci-filter-date { position: relative; display: flex; align-items: center; min-width: 0; }
+.ci-filter-date input { width: 100%; height: 100%; padding: 12px 40px 12px 15px; border: 0; outline: 0; background: transparent; font-size: 14.5px; color: var(--ink); }
+.ci-filter-date svg { position: absolute; right: 14px; width: 16px; height: 16px; color: var(--ink); pointer-events: none; }
+.ci-search:focus-within, .ci-filter-date:focus-within, .ci-filters-row select:focus { border-color: var(--ink-soft); }
+.ci-clear-filters { border: 0; background: transparent; color: var(--red-fg); font-size: 14px; font-weight: 600; cursor: pointer; padding: 12px 8px; white-space: nowrap; }
+
+/* ---------------- Table ---------------- */
+.ci-table-card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; margin-bottom: 22px; overflow: hidden; box-shadow: none; }
+.ci-table-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 18px 24px; min-height: 0; border-bottom: 1px solid var(--border); flex-wrap: wrap; row-gap: 6px; }
+.ci-table-header > div { display: flex; align-items: center; gap: 8px; }
+.ci-table-header strong { font-size: 14.5px; font-weight: 600; color: var(--ink); }
+.ci-table-header > span { margin-left: auto; font-size: 13px; color: var(--muted); }
+.ci-count { display: inline-flex; align-items: center; justify-content: center; background: var(--soft-bg); color: var(--ink); font-size: 12px; font-weight: 600; padding: 2px 9px; min-width: 0; height: auto; border-radius: 999px; }
+
+.ci-table-scroll { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.ci-table-scroll table { width: 100%; min-width: 980px; border-collapse: collapse; font-size: 14px; }
+.ci-table-scroll th { text-align: left; font-size: 11.5px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); padding: 15px 20px; height: auto; background: var(--thead-bg); border-bottom: 1px solid var(--border); white-space: nowrap; }
+.ci-table-scroll td { padding: 18px 20px; height: auto; border-bottom: 1px solid var(--border); vertical-align: middle; font-size: 14px; color: var(--ink-soft); }
+.ci-table-scroll th:first-child, .ci-table-scroll td:first-child { padding-left: 24px; }
+.ci-table-scroll th:last-child, .ci-table-scroll td:last-child { padding-right: 24px; }
+.ci-table-scroll th:nth-child(1), .ci-table-scroll td:nth-child(1) { width: 90px; }
+.ci-table-scroll th:nth-child(2), .ci-table-scroll td:nth-child(2) { width: 76px; }
+
+.ci-photo { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 10px; background: var(--soft-bg); color: var(--ink); }
+.ci-id { display: inline-flex; background: var(--soft-bg); border: 1px solid var(--id-border); border-radius: 6px; padding: 4px 10px; font-size: 12.5px; font-weight: 600; color: var(--ink-soft); white-space: nowrap; }
+.ci-provider { display: flex; flex-direction: column; gap: 1px; }
+.ci-provider strong { font-size: 14.5px; font-weight: 600; color: var(--ink); }
+.ci-provider small { font-size: 12.5px; color: var(--muted); }
+.ci-payment { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: var(--ink-soft); }
+.ci-payment svg { width: 16px; height: 16px; }
+
+/* ---------------- Badges de estado ---------------- */
+.ci-status-button { padding: 0; border: 0; background: transparent; cursor: pointer; }
+.ci-status { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; padding: 5px 13px; min-height: 0; border-radius: 999px; border: 1px solid transparent; white-space: nowrap; }
+.ci-status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+.ci-status.completed { background: var(--green-bg); color: var(--green-fg); border-color: var(--green-bd); }
+.ci-status.pending   { background: var(--amber-bg); color: var(--amber-fg); border-color: var(--amber-bd); }
+.ci-status.cancelled { background: var(--red-bg);   color: var(--red-fg);   border-color: var(--red-bd); }
+
+/* ---------------- Acciones de fila ---------------- */
+/* ---------------- Acciones de fila ---------------- */
+
+.ci-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  min-width: 110px;
+}
+
+.ci-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--blue-fg);
+  cursor: pointer;
+  flex: 0 0 34px;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.ci-actions button svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.ci-actions button:hover {
+  background: var(--hover-bg);
+}
+
+.ci-actions button:nth-child(2) {
+  color: #f0a020;
+}
+
+.ci-actions .ci-delete-action {
+  color: var(--red-fg);
+}
+
+.ci-actions button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.ci-actions button:disabled:hover {
+  background: transparent;
+}
+
+.ci-no-results {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 180px;
+  padding: 34px 0;
+  color: var(--muted);
+  text-align: center;
+}
+
+.ci-no-results strong {
+  font-size: 14.5px;
+  color: var(--ink);
+}
+
+.ci-no-results span {
+  font-size: 13px;
+}
+
+/* ---------------- Footer + paginación ---------------- */
+.ci-table-footer { display: flex; align-items: center; justify-content: space-between; padding: 18px 24px; min-height: 0; font-size: 12.5px; color: var(--muted); flex-wrap: wrap; gap: 10px; }
+.ci-pagination { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.ci-pagination button, .ci-pagination span { display: inline-flex; align-items: center; justify-content: center; min-width: 32px; width: auto; height: 32px; padding: 0 6px; border: none; border-radius: 8px; background: none; color: var(--ink); font-size: 14.5px; cursor: pointer; }
+.ci-pagination button:hover:not(:disabled) { background: var(--hover-bg); }
+.ci-pagination button:disabled { opacity: .35; cursor: not-allowed; }
+.ci-pagination span { background: var(--dark); color: #fff; font-weight: 600; cursor: default; }
+
+/* ---------------- Modal shell ---------------- */
+.ci-modal-overlay { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 24px; background: var(--overlay-bg); backdrop-filter: blur(3px); color: var(--ink); font-family: "Montserrat", -apple-system, "Segoe UI", sans-serif; }
+.ci-modal { width: 100%; max-width: 720px; max-height: 92vh; display: flex; flex-direction: column; background: var(--panel); border: none; border-radius: 22px; box-shadow: 0 24px 60px var(--modal-shadow); overflow: hidden; }
+.ci-detail-modal { max-width: 520px; }
+.ci-status-modal { max-width: 460px; }
+.ci-delete-modal { max-width: 460px; }
+
+.ci-modal-header { display: flex; justify-content: space-between; align-items: flex-start; padding: 26px 30px 18px; gap: 12px; border-bottom: none; }
+.ci-modal-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 7px; }
+.ci-modal-header h2 { margin: 0; font-family: var(--serif); font-size: 26px; font-weight: 600; color: var(--ink); }
+.ci-close-button { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 7px; background: transparent; color: var(--ink); cursor: pointer; flex-shrink: 0; }
+.ci-close-button svg { width: 18px; height: 18px; }
+.ci-close-button:hover { background: var(--hover-bg); }
+
+.ci-modal-content,
+.ci-detail-content { padding: 24px 30px 8px; display: flex; flex-direction: column; overflow-y: auto; border-top: 1px solid var(--border); flex: 1; max-height: none; }
+.ci-modal-content::-webkit-scrollbar { width: 7px; }
+.ci-modal-content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+.ci-modal-footer { display: flex; gap: 12px; padding: 18px 30px 26px; border-top: 1px solid var(--border); flex-wrap: wrap; }
+.ci-modal-footer > * { flex: 1; min-width: 120px; }
+
+/* ---------------- Secciones y formularios ---------------- */
+.ci-form-section + .ci-form-section { margin-top: 20px; }
+.ci-section-title { display: flex; align-items: center; gap: 10px; font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-soft); margin: 18px 0 11px; }
+.ci-form-section:first-child .ci-section-title { margin-top: 0; }
+.ci-section-title::before { content: ""; width: 14px; height: 1px; background: var(--border); }
+.ci-section-title::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+
+.ci-form-grid { display: grid; gap: 13px; margin-bottom: 13px; }
+.ci-grid-2 { grid-template-columns: 1fr 1fr; }
+.ci-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+.ci-form-grid label { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+.ci-form-grid label > span { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); }
+.ci-form-grid input, .ci-form-grid select { width: 100%; height: auto; min-width: 0; font-size: 14.5px; padding: 12px 15px; border-radius: 10px; border: 1px solid var(--border); background: var(--panel); color: var(--ink); outline: none; }
+.ci-form-grid input:focus, .ci-form-grid select:focus { border-color: var(--ink-soft); }
+.ci-form-grid input::placeholder { color: var(--placeholder); }
+
+.ci-date-input { position: relative; }
+.ci-date-input input { padding-right: 40px; }
+.ci-date-input svg { position: absolute; top: 50%; transform: translateY(-50%); right: 14px; width: 16px; height: 16px; color: var(--ink); pointer-events: none; }
+
+/* ---------------- Editor de insumos ---------------- */
+.ci-supply-editor { background: var(--editor-bg); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+.ci-bottom-fields { margin-top: 13px; }
+.ci-add-supply-button { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: auto; margin-top: 13px; padding: 13px 22px; border: 1px solid var(--dark); border-radius: 10px; background: var(--dark); color: #fff; font-size: 14.5px; font-weight: 600; cursor: pointer; transition: background .15s; }
+.ci-add-supply-button:hover { background: var(--dark-hover); }
+.ci-add-supply-button svg { width: 17px; height: 17px; }
+
+.ci-empty-products { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px; min-height: 96px; margin-top: 16px; border: 1px dashed var(--border); border-radius: 10px; color: var(--muted); font-size: 13.5px; text-align: center; }
+
+.ci-added-products { margin-top: 16px; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.ci-added-header, .ci-added-row { display: grid; grid-template-columns: 1.15fr 1.45fr .48fr .7fr .4fr; align-items: center; }
+.ci-added-header { padding: 12px 0; background: var(--thead-bg); color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+.ci-added-header span, .ci-added-row > * { padding: 0 9px; }
+.ci-added-row { padding: 12px 0; border-top: 1px solid var(--border); color: var(--ink); font-size: 13.5px; }
+.ci-added-row > div:first-child { display: flex; flex-direction: column; gap: 2px; }
+.ci-added-row small { color: var(--muted); font-size: 12px; }
+.ci-variants { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.ci-variants span { display: inline-flex; background: var(--soft-bg); color: var(--ink-soft); font-size: 12px; padding: 3px 8px; border-radius: 6px; }
+.ci-delete-item { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 7px; background: transparent; color: var(--red-fg); cursor: pointer; }
+.ci-delete-item:hover { background: var(--hover-bg); }
+
+.ci-products-total, .ci-detail-total { display: flex; align-items: center; justify-content: space-between; gap: 6px; flex-wrap: wrap; padding: 15px; min-height: 0; border-top: 1px solid var(--border); background: var(--soft-bg); color: var(--ink); font-size: 13.5px; font-weight: 700; }
+.ci-products-total span:last-child, .ci-detail-total span:last-child { font-size: 17px; }
+
+/* ---------------- Detalle ---------------- */
+.ci-detail-content section + section { margin-top: 22px; }
+.ci-detail-info > div { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; padding: 13px 2px; font-size: 14px; color: var(--ink-soft); border-bottom: 1px solid var(--line); }
+.ci-detail-info > div:last-child { border-bottom: none; }
+.ci-detail-info strong { color: var(--ink); font-weight: 600; }
+
+.ci-detail-products { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.ci-detail-head, .ci-detail-row { display: grid; grid-template-columns: 1.2fr 1.4fr .45fr .7fr; align-items: center; padding: 0 15px; }
+.ci-detail-head { padding-top: 12px; padding-bottom: 12px; background: var(--thead-bg); color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+.ci-detail-row { padding-top: 13px; padding-bottom: 13px; border-top: 1px solid var(--border); color: var(--ink-soft); font-size: 13.5px; }
+.ci-detail-row > div:first-child { display: flex; flex-direction: column; gap: 2px; }
+.ci-detail-row strong { color: var(--ink); font-weight: 600; }
+.ci-detail-row small { color: var(--muted); font-size: 12px; }
+
+/* ---------------- Cambio de estado ---------------- */
+.ci-status-options { display: flex; flex-direction: column; gap: 10px; padding: 24px 30px 8px; border-top: 1px solid var(--border); }
+.ci-status-option { display: flex; align-items: center; gap: 12px; padding: 14px 17px; min-height: 0; border: 1px solid var(--border); border-radius: 10px; background: var(--panel); color: var(--ink); font-size: 14.5px; font-weight: 600; text-align: left; cursor: pointer; }
+.ci-status-option:hover { background: var(--hover-bg); }
+.ci-status-option.selected { border: 1.5px solid var(--dark); background: var(--soft-bg); }
+.ci-status-option svg { margin-left: auto; width: 16px; height: 16px; color: var(--dark); }
+.ci-option-dot { width: 8px; height: 8px; border-radius: 50%; }
+.ci-option-dot.completed { background: #22c55e; }
+.ci-option-dot.pending { background: #f5b800; }
+.ci-option-dot.cancelled { background: #f0616d; }
+
+/* ---------------- Modal eliminar ---------------- */
+.ci-delete-content { padding: 24px 30px 8px; text-align: center; border-top: 1px solid var(--border); }
+.ci-delete-icon { display: flex; align-items: center; justify-content: center; width: 46px; height: 46px; margin: 0 auto 14px; border-radius: 50%; background: var(--red-bg); color: var(--red-fg); }
+.ci-delete-icon svg { width: 20px; height: 20px; }
+.ci-delete-content h3 { margin: 0 0 8px; font-family: var(--serif); font-size: 20px; font-weight: 600; color: var(--ink); }
+.ci-delete-content p { margin: 0; color: var(--ink-soft); font-size: 14px; line-height: 1.55; }
+
+/* ==================================================================
+   RESPONSIVE — 1180 / 980 / 780 / 640 / 480 / 380
+   ================================================================== */
+
+/* ---------------- 1180px ---------------- */
+
+@media (max-width: 1180px) {
+
+  .compras-insumos-page {
+    padding: 40px 24px 80px;
+  }
+
+  .ci-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .ci-filters-row {
+    grid-template-columns:
+      minmax(0, 1.5fr)
+      minmax(0, 1fr)
+      minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .ci-table-scroll table {
+    min-width: 1050px;
+  }
+
+  .ci-actions {
+    min-width: 110px;
+  }
+}
+
+
+/* ---------------- 980px ---------------- */
+
+@media (max-width: 980px) {
+
+  .compras-insumos-page {
+    padding: 32px 20px 70px;
+  }
+
+  .ci-page-header h1 {
+    font-size: 40px;
+  }
+
+  .ci-kpi-card {
+    padding: 20px;
+  }
+
+  .ci-filters-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ci-search {
+    grid-column: 1 / -1;
+  }
+
+  .ci-clear-filters {
+    justify-self: start;
+  }
+
+  .ci-table-scroll {
+    overflow-x: auto;
+  }
+
+  .ci-table-scroll table {
+    min-width: 1000px;
+  }
+
+  .ci-table-scroll th,
+  .ci-table-scroll td {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+
+  .ci-table-scroll th:first-child,
+  .ci-table-scroll td:first-child {
+    padding-left: 20px;
+  }
+
+  .ci-table-scroll th:last-child,
+  .ci-table-scroll td:last-child {
+    padding-right: 20px;
+  }
+
+  .ci-modal-header,
+  .ci-modal-footer {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+
+  .ci-modal-content,
+  .ci-detail-content,
+  .ci-status-options,
+  .ci-delete-content {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+}
+
+
+/* ---------------- 780px ---------------- */
+
+@media (max-width: 780px) {
+
+  .compras-insumos-page {
+    padding: 26px 16px 60px;
+  }
+
+  /* Header */
+
+  .ci-page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    margin-bottom: 22px;
+  }
+
+  .ci-page-header h1 {
+    font-size: 34px;
+  }
+
+  .ci-page-header p {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .ci-register-button {
+    width: 100%;
+  }
+
+
+  /* KPI */
+
+  .ci-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .ci-kpi-card {
+    padding: 18px 16px;
+    grid-template-columns: 36px minmax(0, 1fr);
+    column-gap: 11px;
+  }
+
+  .ci-kpi-icon {
+    width: 34px;
+    height: 34px;
+  }
+
+  .ci-kpi-content > strong {
+    font-size: 17px;
+  }
+
+
+  /* Filtros */
+
+  .ci-filters-title,
+  .ci-table-header {
+    padding: 16px 18px;
+  }
+
+  .ci-filters-row {
+    grid-template-columns: 1fr;
+    padding: 18px;
+    gap: 10px;
+  }
+
+  .ci-search {
+    grid-column: auto;
+  }
+
+  .ci-clear-filters {
+    justify-self: start;
+  }
+
+
+  /* Tabla */
+
+  .ci-table-scroll {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .ci-table-scroll table {
+    min-width: 980px;
+  }
+
+  .ci-table-scroll th {
+    padding: 12px 14px;
+    font-size: 11px;
+  }
+
+  .ci-table-scroll td {
+    padding: 14px;
+    font-size: 13.5px;
+  }
+
+  .ci-table-scroll th:first-child,
+  .ci-table-scroll td:first-child {
+    padding-left: 18px;
+  }
+
+  .ci-table-scroll th:last-child,
+  .ci-table-scroll td:last-child {
+    padding-right: 18px;
+    min-width: 120px;
+  }
+
+  /* Acciones: nunca se apilan */
+
+  .ci-actions {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 4px;
+    min-width: 108px;
+  }
+
+  .ci-actions button {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    flex: 0 0 32px;
+  }
+
+  .ci-actions button svg {
+    width: 17px;
+    height: 17px;
+  }
+
+
+  /* Footer */
+
+  .ci-table-footer {
+    padding: 14px 18px;
+    gap: 12px;
+  }
+
+  .ci-pagination {
+    flex-wrap: nowrap;
+  }
+
+
+  /* Modal */
+
+  .ci-modal-overlay {
+    padding: 12px;
+    align-items: flex-end;
+  }
+
+  .ci-modal,
+  .ci-detail-modal,
+  .ci-status-modal,
+  .ci-delete-modal {
+    width: 100%;
+    max-width: 100%;
+    max-height: 94vh;
+    border-radius: 20px 20px 0 0;
+  }
+
+  .ci-modal-header {
+    padding: 20px 20px 14px;
+  }
+
+  .ci-modal-header h2 {
+    font-size: 24px;
+  }
+
+  .ci-modal-content,
+  .ci-detail-content {
+    padding: 18px 20px 8px;
+  }
+
+  .ci-status-options,
+  .ci-delete-content {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .ci-modal-footer {
+    padding: 14px 20px 20px;
+  }
+
+  .ci-grid-2,
+  .ci-grid-3 {
+    grid-template-columns: 1fr;
+  }
+
+
+  /* Productos agregados */
+
+  .ci-added-products {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .ci-added-header,
+  .ci-added-row {
+    min-width: 560px;
+  }
+}
+
+
+/* ---------------- 640px ---------------- */
+
+@media (max-width: 640px) {
+
+  .compras-insumos-page {
+    padding: 22px 14px 50px;
+  }
+
+  /* KPI en una sola columna */
+
+  .ci-kpi-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .ci-kpi-card {
+    min-height: 74px;
+    grid-template-columns: 36px minmax(0, 1fr);
+    padding: 16px;
+  }
+
+  .ci-kpi-content > span,
+  .ci-kpi-content > small {
+    font-size: 12px;
+  }
+
+  .ci-kpi-content > strong {
+    font-size: 16px;
+  }
+
+
+  /* Tabla */
+
+  .ci-table-scroll table {
+    min-width: 960px;
+  }
+
+  .ci-table-scroll th {
+    padding: 11px 12px;
+  }
+
+  .ci-table-scroll td {
+    padding: 13px 12px;
+  }
+
+  .ci-table-scroll th:first-child,
+  .ci-table-scroll td:first-child {
+    padding-left: 16px;
+  }
+
+  .ci-table-scroll th:last-child,
+  .ci-table-scroll td:last-child {
+    padding-right: 16px;
+    min-width: 116px;
+  }
+
+  .ci-actions {
+    gap: 3px;
+    min-width: 105px;
+  }
+
+  .ci-actions button {
+    width: 31px;
+    height: 31px;
+    min-width: 31px;
+    flex-basis: 31px;
+  }
+
+
+  /* Footer */
+
+  .ci-table-footer {
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+    padding: 14px 16px;
+  }
+
+  .ci-table-footer > * {
+    width: 100%;
+  }
+
+  .ci-pagination {
+    justify-content: center;
+    width: 100%;
+  }
+
+
+  /* Modal */
+
+  .ci-modal-overlay {
+    padding: 0;
+  }
+
+  .ci-modal,
+  .ci-detail-modal,
+  .ci-status-modal,
+  .ci-delete-modal {
+    max-height: 96vh;
+    border-radius: 18px 18px 0 0;
+  }
+
+  .ci-modal-header {
+    padding: 18px 16px 12px;
+  }
+
+  .ci-modal-header h2 {
+    font-size: 22px;
+  }
+
+  .ci-modal-content,
+  .ci-detail-content {
+    padding: 16px 16px 8px;
+  }
+
+  .ci-status-options,
+  .ci-delete-content {
+    padding: 16px 16px 8px;
+  }
+
+  .ci-modal-footer {
+    flex-direction: column;
+    padding: 12px 16px 16px;
+  }
+
+  .ci-modal-footer > * {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .ci-status-option {
+    padding: 13px 14px;
+  }
+
+
+  /* Formularios */
+
+  .ci-form-grid {
+    gap: 10px;
+  }
+
+  .ci-form-grid input,
+  .ci-form-grid select {
+    font-size: 14px;
+  }
+}
+
+
+/* ---------------- 480px ---------------- */
+
+@media (max-width: 480px) {
+
+  .compras-insumos-page {
+    padding: 18px 10px 45px;
+  }
+
+  .ci-module-label {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+  }
+
+  .ci-page-header h1 {
+    font-size: 28px;
+  }
+
+  .ci-page-header p {
+    font-size: 13px;
+  }
+
+  .ci-register-button {
+    padding: 13px 16px;
+    font-size: 13px;
+  }
+
+
+  /* KPI */
+
+  .ci-kpi-card {
+    padding: 14px;
+  }
+
+  .ci-kpi-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .ci-kpi-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+
+
+  /* Filtros */
+
+  .ci-filters-title {
+    padding: 14px 15px;
+  }
+
+  .ci-filters-row {
+    padding: 14px;
+  }
+
+  .ci-search,
+  .ci-filters-row select,
+  .ci-filter-date {
+    min-height: 44px;
+    font-size: 13.5px;
+  }
+
+
+  /* Tabla */
+
+  .ci-table-scroll table {
+    min-width: 930px;
+  }
+
+  .ci-status {
+    font-size: 12px;
+    padding: 4px 10px;
+  }
+
+  .ci-actions button {
+    width: 30px;
+    height: 30px;
+    min-width: 30px;
+    flex-basis: 30px;
+  }
+
+  .ci-actions button svg {
+    width: 16px;
+    height: 16px;
+  }
+
+
+  /* Modal */
+
+  .ci-modal-header {
+    padding: 16px 14px 10px;
+  }
+
+  .ci-modal-content,
+  .ci-detail-content {
+    padding: 14px 14px 6px;
+  }
+
+  .ci-modal-footer {
+    padding: 10px 14px 14px;
+  }
+
+  .ci-status-options,
+  .ci-delete-content {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .ci-modal-header h2 {
+    font-size: 21px;
+  }
+
+  .ci-modal-eyebrow {
+    font-size: 10px;
+  }
+}
+
+
+/* ---------------- 380px ---------------- */
+
+@media (max-width: 380px) {
+
+  .compras-insumos-page {
+    padding: 16px 8px 40px;
+  }
+
+  .ci-page-header h1 {
+    font-size: 25px;
+  }
+
+  .ci-primary-button,
+  .ci-secondary-button,
+  .ci-danger-button {
+    padding: 11px 14px;
+    font-size: 13px;
+  }
+
+  .ci-register-button {
+    padding: 12px 16px;
+  }
+
+
+  /* Tabla */
+
+  .ci-table-scroll table {
+    min-width: 900px;
+  }
+
+  .ci-table-scroll th,
+  .ci-table-scroll td {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .ci-table-scroll th:first-child,
+  .ci-table-scroll td:first-child {
+    padding-left: 12px;
+  }
+
+  .ci-table-scroll th:last-child,
+  .ci-table-scroll td:last-child {
+    padding-right: 12px;
+  }
+
+  .ci-actions {
+    min-width: 102px;
+    gap: 2px;
+  }
+
+  .ci-actions button {
+    width: 29px;
+    height: 29px;
+    min-width: 29px;
+    flex-basis: 29px;
+  }
+
+  .ci-actions button svg {
+    width: 15px;
+    height: 15px;
+  }
+
+
+  /* Formularios */
+
+  .ci-form-grid {
+    gap: 9px;
+  }
+
+  .ci-form-grid input,
+  .ci-form-grid select {
+    padding: 11px 12px;
+  }
+}

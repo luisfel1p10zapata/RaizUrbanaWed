@@ -1,0 +1,430 @@
+/* =========================================================
+   BAJAS DE INSUMOS — RAÍZ URBANA
+   ========================================================= */
+
+.bajas-page {
+    --bajas-panel: #ffffff;
+    --bajas-border: #dec4bd;
+    --bajas-line: #eadfdb;
+    --bajas-text: #22223b;
+    --bajas-muted: #777486;
+    --bajas-field: #ffffff;
+    --bajas-soft: #f5f1f0;
+    --bajas-primary: #22223b;
+    --bajas-primary-hover: #343451;
+    --bajas-error: #c83e4d;
+    --bajas-overlay: rgba(24, 23, 36, 0.55);
+
+    width: 100%;
+    min-width: 0;
+    padding: 24px;
+    color: var(--bajas-text);
+}
+
+[data-theme='dark'] .bajas-page,
+.dark .bajas-page,
+.dark-mode .bajas-page,
+.bajas-page[data-theme='dark'] {
+    --bajas-panel: #252635;
+    --bajas-border: #4a4050;
+    --bajas-line: #403b49;
+    --bajas-text: #f4edf0;
+    --bajas-muted: #bbb0bb;
+    --bajas-field: #1d1e2c;
+    --bajas-soft: #30303f;
+    --bajas-primary: #c9ada7;
+    --bajas-primary-hover: #dec4bd;
+    --bajas-error: #ff8994;
+    --bajas-overlay: rgba(0, 0, 0, 0.72);
+}
+
+.bajas-page *,
+.bajas-page *::before,
+.bajas-page *::after {
+    box-sizing: border-box;
+}
+
+.bajas-page button,
+.bajas-page input,
+.bajas-page select,
+.bajas-page textarea {
+    font: inherit;
+}
+
+.bajas-page button {
+    cursor: pointer;
+}
+
+.bajas-page button:disabled {
+    cursor: not-allowed;
+    opacity: 0.65;
+}
+
+.bajas-page button:focus-visible,
+.bajas-page input:focus-visible,
+.bajas-page select:focus-visible,
+.bajas-page textarea:focus-visible {
+    outline: 2px solid #a77c78;
+    outline-offset: 2px;
+}
+
+/* =========================================================
+   ENCABEZADO
+   ========================================================= */
+
+.bajas-page .bajas-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.bajas-page .bajas-eyebrow {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--bajas-muted);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+}
+
+.bajas-page .bajas-header h1 {
+    margin: 0;
+    color: var(--bajas-text);
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: clamp(26px, 2.4vw, 34px);
+    font-weight: 700;
+    line-height: 1.15;
+}
+
+.bajas-page .bajas-header p {
+    margin: 5px 0 0;
+    color: var(--bajas-muted);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+/* =========================================================
+   TABLA GLOBAL
+   ========================================================= */
+
+.bajas-page .bajas-tabla-estandar {
+    width: 100%;
+    min-width: 0;
+    margin-top: 14px;
+}
+
+.bajas-page .bajas-ver-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    color: #3976d3;
+    background: transparent;
+    border: 0;
+    border-radius: 7px;
+    transition:
+        background-color 0.2s ease,
+        color 0.2s ease;
+}
+
+.bajas-page .bajas-ver-btn:hover {
+    color: #2056aa;
+    background: rgba(57, 118, 211, 0.1);
+}
+
+/* =========================================================
+   BOTONES DE LOS MODALES
+   ========================================================= */
+
+.bajas-page .bajas-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 10px 18px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    transition:
+        background-color 0.2s ease,
+        border-color 0.2s ease,
+        color 0.2s ease;
+}
+
+.bajas-page .bajas-btn--principal {
+    color: #ffffff;
+    background: #22223b;
+    border-color: #22223b;
+}
+
+.bajas-page .bajas-btn--principal:hover:not(:disabled) {
+    background: #343451;
+    border-color: #343451;
+}
+
+.bajas-page .bajas-btn--secundario {
+    color: var(--bajas-text);
+    background: var(--bajas-panel);
+    border-color: var(--bajas-border);
+}
+
+.bajas-page .bajas-btn--secundario:hover:not(:disabled) {
+    background: var(--bajas-soft);
+}
+
+/* =========================================================
+   MODALES
+   ========================================================= */
+
+.bajas-page .bajas-modal-fondo {
+    position: fixed;
+    z-index: 1000;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    overflow-y: auto;
+    background: var(--bajas-overlay);
+    backdrop-filter: blur(3px);
+}
+
+.bajas-page .bajas-modal {
+    width: min(100%, 620px);
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+    color: var(--bajas-text);
+    background: var(--bajas-panel);
+    border: 1px solid var(--bajas-border);
+    border-radius: 14px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+
+.bajas-page .bajas-modal--detalle {
+    width: min(100%, 580px);
+}
+
+.bajas-page .bajas-modal__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--bajas-line);
+}
+
+.bajas-page .bajas-modal__header span {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--bajas-muted);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+}
+
+.bajas-page .bajas-modal__header h2 {
+    margin: 0;
+    color: var(--bajas-text);
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 23px;
+    line-height: 1.2;
+}
+
+.bajas-page .bajas-cerrar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    color: var(--bajas-text);
+    background: transparent;
+    border: 0;
+    border-radius: 7px;
+}
+
+.bajas-page .bajas-cerrar:hover:not(:disabled) {
+    background: var(--bajas-soft);
+}
+
+.bajas-page .bajas-modal__contenido {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 22px 24px;
+}
+
+.bajas-page .bajas-nota {
+    margin: 0;
+    padding: 12px 14px;
+    color: var(--bajas-text);
+    background: var(--bajas-soft);
+    border: 1px solid var(--bajas-line);
+    border-radius: 8px;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.bajas-page .bajas-modal__acciones {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 16px 24px;
+    border-top: 1px solid var(--bajas-line);
+}
+
+/* =========================================================
+   FORMULARIO Y VALIDACIONES
+   ========================================================= */
+
+.bajas-page .bajas-campo {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    min-width: 0;
+}
+
+.bajas-page .bajas-campo label {
+    color: var(--bajas-text);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.bajas-page .bajas-campo input,
+.bajas-page .bajas-campo select,
+.bajas-page .bajas-campo textarea {
+    width: 100%;
+    min-width: 0;
+    padding: 10px 12px;
+    color: var(--bajas-text);
+    background: var(--bajas-field);
+    border: 1px solid var(--bajas-border);
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.bajas-page .bajas-campo input,
+.bajas-page .bajas-campo select {
+    min-height: 42px;
+}
+
+.bajas-page .bajas-campo textarea {
+    min-height: 96px;
+    resize: vertical;
+}
+
+.bajas-page .bajas-campo input::placeholder,
+.bajas-page .bajas-campo textarea::placeholder {
+    color: var(--bajas-muted);
+}
+
+.bajas-page .bajas-campo input[aria-invalid='true'],
+.bajas-page .bajas-campo select[aria-invalid='true'],
+.bajas-page .bajas-campo textarea[aria-invalid='true'] {
+    border-color: var(--bajas-error);
+}
+
+.bajas-page .bajas-ayuda {
+    color: var(--bajas-muted);
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.bajas-page .bajas-error-campo {
+    color: var(--bajas-error);
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+/* =========================================================
+   DETALLE DE LA BAJA
+   ========================================================= */
+
+.bajas-page .bajas-detalle {
+    overflow: hidden;
+    border: 1px solid var(--bajas-border);
+    border-radius: 8px;
+}
+
+.bajas-page .bajas-detalle>div {
+    display: grid;
+    grid-template-columns: minmax(100px, 0.8fr) 1.2fr;
+    gap: 16px;
+    padding: 13px 15px;
+    border-bottom: 1px solid var(--bajas-line);
+}
+
+.bajas-page .bajas-detalle>div:last-child {
+    border-bottom: 0;
+}
+
+.bajas-page .bajas-detalle span {
+    color: var(--bajas-muted);
+    font-size: 12px;
+}
+
+.bajas-page .bajas-detalle strong {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    color: var(--bajas-text);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+/* =========================================================
+   PANTALLAS PEQUEÑAS
+   ========================================================= */
+
+@media (max-width: 768px) {
+    .bajas-page {
+        padding: 18px;
+    }
+
+    .bajas-page .bajas-header h1 {
+        font-size: 27px;
+    }
+}
+
+@media (max-width: 480px) {
+    .bajas-page {
+        padding: 14px;
+    }
+
+    .bajas-page .bajas-modal-fondo {
+        padding: 12px;
+    }
+
+    .bajas-page .bajas-modal {
+        max-height: calc(100vh - 24px);
+    }
+
+    .bajas-page .bajas-modal__header,
+    .bajas-page .bajas-modal__contenido,
+    .bajas-page .bajas-modal__acciones {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    .bajas-page .bajas-modal__acciones {
+        flex-direction: column-reverse;
+    }
+
+    .bajas-page .bajas-modal__acciones .bajas-btn {
+        width: 100%;
+    }
+
+    .bajas-page .bajas-detalle>div {
+        grid-template-columns: 1fr;
+        gap: 5px;
+    }
+}

@@ -1,0 +1,401 @@
+﻿========================================
+ARCHIVO: domain\schemas.py
+========================================
+"""DTOs y esquemas de dominio para el módulo de categorías."""
+from pydantic import Field, field_validator
+from app.shared.schemas import CamelModel
+
+
+class CategoriaCreate(CamelModel):
+    """Esquema para el registro de una nueva categoría."""
+    nombre: str = Field(..., min_length=2, max_length=100, description="Nombre identificador de la categoría")
+    estado: bool = Field(default=True, description="Estado de disponibilidad de la categoría")
+
+    @field_validator("nombre")
+    @classmethod
+    def validar_nombre(cls, v: str) -> str:
+        limpio = v.strip()
+        if not limpio:
+            raise ValueError("El nombre de la categoría no puede estar vacío.")
+        if len(limpio) < 2:
+            raise ValueError("El nombre de la categoría debe tener al menos 2 caracteres.")
+        if limpio.isdigit():
+            raise ValueError("El nombre de la categoría no puede estar compuesto únicamente por números.")
+        return limpio
+
+
+class CategoriaUpdate(CamelModel):
+    """Esquema para la actualización parcial de una categoría."""
+    nombre: str | None = Field(default=None, min_length=2, max_length=100)
+    estado: bool | None = None
+
+    @field_validator("nombre")
+    @classmethod
+    def validar_nombre_opcional(cls, v: str | None) -> str | None:
+        if v is None:
+            return v
+        limpio = v.strip()
+        if not limpio:
+            raise ValueError("El nombre de la categoría no puede estar vacío.")
+        if len(limpio) < 2:
+            raise ValueError("El nombre de la categoría debe tener al menos 2 caracteres.")
+        if limpio.isdigit():
+            raise ValueError("El nombre de la categoría no puede estar compuesto únicamente por números.")
+        return limpio
+
+
+class CategoriaResponse(CamelModel):
+    """Esquema de respuesta para una categoría."""
+    id: int
+    nombre: str
+    estado: bool
+
+
+========================================
+ARCHIVO: domain\exceptions.py
+========================================
+"""Excepciones de dominio para el módulo de categorías."""
+
+
+class CategoriaError(Exception):
+    """Excepción base para el módulo de categorías."""
+    pass
+
+
+class CategoriaDuplicadaError(CategoriaError):
+    """Lanzada cuando ya existe una categoría con el mismo nombre."""
+    def __init__(self, nombre: str):
+        super().__init__(f"Ya existe una categoría con el nombre '{nombre}'.")
+        self.nombre = nombre
+
+
+class CategoriaNoEncontradaError(CategoriaError):
+    """Lanzada cuando una categoría no existe."""
+    def __init__(self, categoria_id: int):
+        super().__init__(f"No se encontró la categoría con ID {categoria_id}.")
+        self.categoria_id = categoria_id
+
+
+class CategoriaInvalidaError(CategoriaError):
+    """Lanzada cuando los datos de una categoría no son válidos."""
+    pass
+
+
+========================================
+ARCHIVO: infrastructure\repository.py
+========================================
+
+"""Repositorio temporal en memoria para el módulo de Categorías."""
+
+from typing import Any
+
+from app.modules.categorias.domain.exceptions import (
+    CategoriaDuplicadaError,
+    CategoriaNoEncontradaError,
+)
+
+
+class CategoriaInMemoryRepository:
+    """Almacenamiento compartido en memoria durante el desarrollo."""
+
+    _db: list[dict[str, Any]] = [
+        {"id": 1, "nombre": "Ropa", "estado": True},
+        {"id": 2, "nombre": "Calzado", "estado": True},
+        {"id": 3, "nombre": "Accesorios", "estado": True},
+    ]
+    _secuencia_id: int = 4
+
+    def obtener_por_id(self, categoria_id: int) -> dict[str, Any] | None:
+        for categoria in self._db:
+            if categoria["id"] == categoria_id:
+                return dict(categoria)
+        return None
+
+    def obtener_por_nombre(self, nombre: str) -> dict[str, Any] | None:
+        nombre_normalizado = nombre.strip().casefold()
+
+        for categoria in self._db:
+            if categoria["nombre"].strip().casefold() == nombre_normalizado:
+                return dict(categoria)
+
+        return None
+
+    def listar(self) -> list[dict[str, Any]]:
+        return [dict(categoria) for categoria in self._db]
+
+    def guardar(self, datos: dict[str, Any]) -> dict[str, Any]:
+        nombre = datos["nombre"].strip()
+
+        if self.obtener_por_nombre(nombre):
+            raise CategoriaDuplicadaError(nombre)
+
+        nuevo_id = CategoriaInMemoryRepository._secuencia_id
+        CategoriaInMemoryRepository._secuencia_id += 1
+
+        registro = {
+            "id": nuevo_id,
+            "nombre": nombre,
+            "estado": datos.get("estado", True),
+        }
+
+        self._db.append(registro)
+        return dict(registro)
+
+    def actualizar(
+        self,
+        categoria_id: int,
+        datos: dict[str, Any],
+    ) -> dict[str, Any]:
+        categoria = next(
+            (c for c in self._db if c["id"] == categoria_id),
+            None,
+        )
+
+        if categoria is None:
+            raise CategoriaNoEncontradaError(categoria_id)
+
+        if datos.get("nombre") is not None:
+            nuevo_nombre = datos["nombre"].strip()
+            existente = self.obtener_por_nombre(nuevo_nombre)
+
+            if existente and existente["id"] != categoria_id:
+                raise CategoriaDuplicadaError(nuevo_nombre)
+
+            categoria["nombre"] = nuevo_nombre
+
+        if datos.get("estado") is not None:
+            categoria["estado"] = datos["estado"]
+
+        return dict(categoria)
+
+    def eliminar(self, categoria_id: int) -> None:
+        categoria = next(
+            (c for c in self._db if c["id"] == categoria_id),
+            None,
+        )
+
+        if categoria is None:
+            raise CategoriaNoEncontradaError(categoria_id)
+
+        self._db.remove(categoria)
+
+
+class CategoriaPostgresRepository:
+    """Implementación pendiente hasta disponer de PostgreSQL."""
+
+    def __init__(self):
+        from app.core.database import get_connection
+        self._get_connection = get_connection
+
+    def guardar(self, datos: dict[str, Any]) -> dict[str, Any]:
+        raise NotImplementedError("PostgreSQL aún no está configurado.")
+
+    def listar(self) -> list[dict[str, Any]]:
+        raise NotImplementedError("PostgreSQL aún no está configurado.")
+
+
+CategoriaRepository = CategoriaInMemoryRepository
+
+========================================
+ARCHIVO: application\service.py
+========================================
+
+"""Lógica de negocio del módulo de Categorías."""
+
+from app.modules.categorias.domain.schemas import (
+    CategoriaCreate,
+    CategoriaUpdate,
+    CategoriaResponse,
+)
+from app.modules.categorias.domain.exceptions import (
+    CategoriaNoEncontradaError,
+)
+from app.modules.categorias.infrastructure.repository import (
+    CategoriaRepository,
+)
+
+
+class CategoriaService:
+    def __init__(self, repositorio=None):
+        self.repositorio = (
+            repositorio if repositorio is not None
+            else CategoriaRepository()
+        )
+
+    def registrar_categoria(
+        self,
+        datos: CategoriaCreate,
+    ) -> CategoriaResponse:
+        creado = self.repositorio.guardar({
+            "nombre": datos.nombre.strip(),
+            "estado": datos.estado,
+        })
+
+        return CategoriaResponse.model_validate(creado)
+
+    def listar_categorias(self) -> list[CategoriaResponse]:
+        registros = self.repositorio.listar()
+
+        return [
+            CategoriaResponse.model_validate(registro)
+            for registro in registros
+        ]
+
+    def obtener_categoria_por_id(
+        self,
+        categoria_id: int,
+    ) -> CategoriaResponse:
+        registro = self.repositorio.obtener_por_id(categoria_id)
+
+        if registro is None:
+            raise CategoriaNoEncontradaError(categoria_id)
+
+        return CategoriaResponse.model_validate(registro)
+
+    def actualizar_categoria(
+        self,
+        categoria_id: int,
+        datos: CategoriaUpdate,
+    ) -> CategoriaResponse:
+        cambios = datos.model_dump(exclude_unset=True)
+
+        actualizado = self.repositorio.actualizar(
+            categoria_id,
+            cambios,
+        )
+
+        return CategoriaResponse.model_validate(actualizado)
+
+    def cambiar_estado(
+        self,
+        categoria_id: int,
+        estado: bool,
+    ) -> CategoriaResponse:
+        actualizado = self.repositorio.actualizar(
+            categoria_id,
+            {"estado": estado},
+        )
+
+        return CategoriaResponse.model_validate(actualizado)
+
+    def eliminar_categoria(self, categoria_id: int) -> None:
+        self.repositorio.eliminar(categoria_id)
+
+========================================
+ARCHIVO: presentation\controller.py
+========================================
+
+"""Rutas HTTP del módulo de Categorías."""
+
+from fastapi import APIRouter, HTTPException, status
+from pydantic import BaseModel
+
+from app.modules.categorias.application.service import CategoriaService
+from app.modules.categorias.domain.schemas import (
+    CategoriaCreate,
+    CategoriaUpdate,
+    CategoriaResponse,
+)
+from app.modules.categorias.domain.exceptions import (
+    CategoriaDuplicadaError,
+    CategoriaNoEncontradaError,
+    CategoriaInvalidaError,
+)
+
+
+router = APIRouter(prefix="/categorias", tags=["Categorías"])
+
+
+class CategoriaEstadoUpdate(BaseModel):
+    estado: bool
+
+
+def manejar_error(error: Exception):
+    if isinstance(error, CategoriaNoEncontradaError):
+        raise HTTPException(status_code=404, detail=str(error)) from error
+
+    if isinstance(error, CategoriaDuplicadaError):
+        raise HTTPException(status_code=409, detail=str(error)) from error
+
+    if isinstance(error, (CategoriaInvalidaError, ValueError)):
+        raise HTTPException(status_code=400, detail=str(error)) from error
+
+    raise HTTPException(
+        status_code=500,
+        detail="Error interno al procesar la categoría.",
+    ) from error
+
+
+@router.post(
+    "",
+    response_model=CategoriaResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def registrar_categoria(datos: CategoriaCreate):
+    try:
+        return CategoriaService().registrar_categoria(datos)
+    except Exception as error:
+        manejar_error(error)
+
+
+@router.get(
+    "",
+    response_model=list[CategoriaResponse],
+)
+def listar_categorias():
+    try:
+        return CategoriaService().listar_categorias()
+    except Exception as error:
+        manejar_error(error)
+
+
+@router.get(
+    "/{categoria_id}",
+    response_model=CategoriaResponse,
+)
+def obtener_categoria(categoria_id: int):
+    try:
+        return CategoriaService().obtener_categoria_por_id(categoria_id)
+    except Exception as error:
+        manejar_error(error)
+
+
+@router.put(
+    "/{categoria_id}",
+    response_model=CategoriaResponse,
+)
+def editar_categoria(categoria_id: int, datos: CategoriaUpdate):
+    try:
+        return CategoriaService().actualizar_categoria(
+            categoria_id,
+            datos,
+        )
+    except Exception as error:
+        manejar_error(error)
+
+
+@router.patch(
+    "/{categoria_id}/estado",
+    response_model=CategoriaResponse,
+)
+def cambiar_estado(categoria_id: int, datos: CategoriaEstadoUpdate):
+    try:
+        return CategoriaService().cambiar_estado(
+            categoria_id,
+            datos.estado,
+        )
+    except Exception as error:
+        manejar_error(error)
+
+
+@router.delete(
+    "/{categoria_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def eliminar_categoria(categoria_id: int):
+    try:
+        CategoriaService().eliminar_categoria(categoria_id)
+        return None
+    except Exception as error:
+        manejar_error(error)
+

@@ -1,0 +1,178 @@
+/**
+ * Servicio de conexión con la API de Ventas (FastAPI)
+ * Raíz Urbana Design System & Backend Clean Architecture
+ */
+
+const API_BASE = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL)
+  ? `${import.meta.env.VITE_API_URL}/ventas`
+  : 'http://127.0.0.1:8000/api/ventas';
+
+/**
+ * Función común para solicitar datos al backend y formatear errores.
+ */
+async function solicitar(ruta = '', opciones = {}) {
+  let respuesta;
+  try {
+    respuesta = await fetch(`${API_BASE}${ruta}`, {
+      ...opciones,
+      headers: {
+        'Content-Type': 'application/json',
+        ...opciones.headers,
+      },
+    });
+  } catch (error) {
+    throw new Error(
+      'No se pudo conectar con el servidor backend (FastAPI). Verifica que esté encendido en http://127.0.0.1:8000.',
+      { cause: error }
+    );
+  }
+
+  if (respuesta.status === 204) {
+    return null;
+  }
+
+  const datos = await respuesta.json().catch(() => null);
+
+  if (!respuesta.ok) {
+    let mensaje = `Error HTTP ${respuesta.status}`;
+    if (typeof datos?.detail === 'string') {
+      mensaje = datos.detail;
+    } else if (Array.isArray(datos?.detail)) {
+      mensaje = datos.detail.map((err) => err.msg || 'Dato inválido').join(', ');
+    }
+    throw new Error(mensaje);
+  }
+
+  return datos;
+}
+
+/**
+ * Obtener lista de ventas con filtros de búsqueda, estado y paginación.
+ */
+export async function obtenerVentas({
+  search = '',
+  estadoVenta = '',
+  page = 1,
+  pageSize = 8,
+} = {}) {
+  const params = new URLSearchParams();
+
+  if (search && search.trim()) {
+    params.append('search', search.trim());
+  }
+
+  if (estadoVenta && estadoVenta !== 'Todos los estados' && estadoVenta !== 'Todos') {
+    params.append('estadoVenta', estadoVenta);
+  }
+
+  params.append('page', String(page));
+  params.append('pageSize', String(pageSize));
+
+  const query = params.toString() ? `?${params.toString()}` : '';
+  return solicitar(query);
+}
+
+/**
+ * Obtener las 4 métricas KPI del módulo de ventas.
+ */
+export async function obtenerMetricasVentas() {
+  return solicitar('/metricas');
+}
+
+/**
+ * Obtener datos auxiliares maestros (clientes, métodos de pago, productos con stock real).
+ */
+export async function obtenerAuxiliaresVenta() {
+  return solicitar('/auxiliares');
+}
+
+/**
+ * Obtener el detalle de una venta por su ID.
+ */
+export async function obtenerVentaPorId(id) {
+  return solicitar(`/${encodeURIComponent(id)}`);
+}
+
+/**
+ * Registrar una nueva venta en el backend.
+ */
+export async function crearVenta(datos) {
+  const payload = {
+    clienteId: datos.clienteId || datos.cliente?.id || undefined,
+    cliente: datos.cliente ? {
+      id: datos.cliente.id,
+      nombre: datos.cliente.nombre || 'Cliente',
+      email: datos.cliente.email || '',
+      rol: datos.cliente.rol || undefined,
+    } : undefined,
+    idMetodoPago: datos.idMetodoPago || (datos.metodoPago?.id ? datos.metodoPago.id : undefined),
+    metodoPago: typeof datos.metodoPago === 'string' ? datos.metodoPago : (datos.metodoPago?.nombre || 'Efectivo'),
+    ...(datos.idEstadoComp ? { idEstadoComp: Number(datos.idEstadoComp) } : {}),
+    estadoVenta: datos.estadoVenta || 'Pendiente',
+    estadoPago: datos.estadoPago || 'Pendiente',
+    ...(datos.fotoComprobante ? { fotoComprobante: String(datos.fotoComprobante).trim() } : {}),
+    ...(datos.fechaEntrega ? { fechaEntrega: datos.fechaEntrega } : {}),
+    items: (datos.items || []).map((it) => ({
+      idProductoVari: it.idProductoVari || it.id_producto_vari || undefined,
+      productoId: it.productoId || it.producto?.id || undefined,
+      producto: it.producto ? {
+        id: it.producto.id,
+        nombre: it.producto.nombre,
+        precio: Number(it.producto.precio || 0),
+      } : undefined,
+      cantidad: Number(it.cantidad || 1),
+      talla: it.talla || 'Única',
+      color: it.color || 'Único',
+      subtotal: Number(it.subtotal || 0),
+    })),
+    total: datos.total ? Number(datos.total) : undefined,
+  };
+
+  return solicitar('', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+/**
+ * Actualizar datos de una venta (estados o método de pago).
+ */
+export async function actualizarVenta(id, datos) {
+  const payload = {
+    ...(datos.idEstadoComp ? { idEstadoComp: Number(datos.idEstadoComp) } : {}),
+    ...(datos.estadoVenta ? { estadoVenta: datos.estadoVenta } : {}),
+    ...(datos.estadoPago ? { estadoPago: datos.estadoPago } : {}),
+    ...(datos.idMetodoPago ? { idMetodoPago: Number(datos.idMetodoPago) } : {}),
+    ...(datos.metodoPago ? { metodoPago: datos.metodoPago } : {}),
+    ...(datos.fotoComprobante !== undefined ? { fotoComprobante: datos.fotoComprobante } : {}),
+    ...(datos.fechaEntrega !== undefined ? { fechaEntrega: datos.fechaEntrega } : {}),
+  };
+
+  return solicitar(`/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  });
+}
+
+/**
+ * Cambiar exclusivamente el estado de una venta.
+ */
+export async function cambiarEstadoVenta(id, nuevoEstado, idEstadoComp = undefined) {
+  return solicitar(`/${encodeURIComponent(id)}/estado`, {
+    method: 'PATCH',
+    body: JSON.stringify({
+      estadoVenta: nuevoEstado,
+      ...(idEstadoComp ? { idEstadoComp: Number(idEstadoComp) } : {}),
+    }),
+  });
+}
+
+/**
+ * Eliminar una venta por su ID.
+ */
+export async function eliminarVenta(id) {
+  return solicitar(`/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+  });
+}
+

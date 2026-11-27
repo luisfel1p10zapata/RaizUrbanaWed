@@ -1,0 +1,287 @@
+/* ==========================================================================
+   FiltrarBuscarGlobal — Componente global de buscador unificado
+   Modos soportados:
+     1. Tarjeta estándar (.ru-filters-card)
+     2. Barra unificada con botón de acción (.ru-filters-card.ru-filters-toolbar)
+     3. Buscador compacto en línea (.ru-search-inline)
+   Soporte completo para Modo Claro y Modo Oscuro (data-theme="dark")
+   ========================================================================== */
+
+.ru-filters-card,
+.ru-search-inline {
+  --fb-bg: #FFFFFF;
+  --fb-border: #EAD9CF;
+  --fb-title: #22223B;
+  --fb-icon: #4A4E69;
+  --fb-field-bg: #FAF7F5;
+  --fb-field-focus-bg: #FFFFFF;
+  --fb-field-border: #E5D4CA;
+  --fb-text: #22223B;
+  --fb-muted: #9691A0;
+  --fb-focus: #4A4E69;
+  --fb-focus-ring: rgba(74, 78, 105, 0.14);
+  --fb-clear-hover: rgba(34, 34, 59, 0.08);
+  --fb-radius: 12px;
+}
+
+.ru-filters-card {
+  background-color: var(--fb-bg);
+  border: 1px solid var(--fb-border);
+  border-radius: var(--fb-radius, 12px);
+  padding: clamp(12px, 1.5vh, 18px) clamp(16px, 1.8vw, 22px);
+  margin-bottom: clamp(12px, 1.6vh, 18px);
+  box-shadow: 0 2px 8px rgba(34, 34, 59, 0.04);
+  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Variante barra unificada (buscador + botón crear lado a lado) */
+.ru-filters-card.ru-filters-toolbar {
+  padding: 12px 14px;
+  margin-bottom: clamp(12px, 1.6vh, 16px);
+}
+
+.ru-toolbar-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.ru-toolbar-search {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.ru-toolbar-action {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.ru-toolbar-action .btn {
+  height: 42px;
+  min-height: 42px;
+  padding: 0 20px;
+  font-size: 13px;
+  letter-spacing: 0.03em;
+  border-radius: 9px;
+}
+
+/* ==========================================================================
+   MODO OSCURO (Dark Mode)
+   ========================================================================== */
+[data-theme="dark"] .ru-filters-card,
+.dark .ru-filters-card,
+.dark-mode .ru-filters-card,
+[data-theme="dark"] .ru-search-inline,
+.dark .ru-search-inline,
+.dark-mode .ru-search-inline {
+  --fb-bg: #1C1E2E;
+  --fb-border: #3A3D57;
+  --fb-title: #F2E9E4;
+  --fb-icon: #9A8C98;
+  --fb-field-bg: #131520;
+  --fb-field-focus-bg: #161826;
+  --fb-field-border: #343852;
+  --fb-text: #F2E9E4;
+  --fb-muted: #9A8C98;
+  --fb-focus: #C9ADA7;
+  --fb-focus-ring: rgba(201, 173, 167, 0.16);
+  --fb-clear-hover: rgba(255, 255, 255, 0.08);
+  color-scheme: dark;
+}
+
+[data-theme="dark"] .ru-filters-card,
+.dark .ru-filters-card,
+.dark-mode .ru-filters-card {
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.28);
+}
+
+/* Encabezado */
+.ru-filters-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--fb-title);
+  margin-bottom: clamp(8px, 1.1vh, 12px);
+  transition: color 0.2s ease;
+}
+
+.ru-filters-head svg {
+  color: var(--fb-icon);
+  flex-shrink: 0;
+  transition: color 0.2s ease;
+}
+
+/* Fila de búsqueda a ancho completo */
+.ru-filters-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+}
+
+/* Input con ícono y botón limpiar */
+.ru-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.ru-input-wrap svg.ru-search-icon {
+  position: absolute;
+  left: 14px;
+  color: var(--fb-muted);
+  pointer-events: none;
+  transition: color 0.2s ease;
+}
+
+.ru-input-wrap:focus-within svg.ru-search-icon {
+  color: var(--fb-focus);
+}
+
+.ru-filters-card .ru-input,
+.ru-search-inline .ru-input {
+  width: 100%;
+  height: 42px;
+  border: 1px solid var(--fb-field-border);
+  background-color: var(--fb-field-bg);
+  border-radius: 9px;
+  padding: 0 14px 0 40px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 13.5px;
+  color: var(--fb-text);
+  outline: none;
+  transition: border-color 0.15s ease, background-color 0.2s ease, color 0.2s ease, box-shadow 0.15s ease;
+}
+
+.ru-filters-card .ru-input.has-clear,
+.ru-search-inline .ru-input.has-clear {
+  padding-right: 36px;
+}
+
+.ru-input-clear {
+  position: absolute;
+  right: 9px;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--fb-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.ru-input-clear:hover {
+  background-color: var(--fb-clear-hover);
+  color: var(--fb-text);
+}
+
+/* Modo compacto en línea */
+.ru-search-inline {
+  width: 100%;
+  min-width: 0;
+}
+
+.ru-filters-card .ru-input::placeholder,
+.ru-search-inline .ru-input::placeholder {
+  color: var(--fb-muted);
+  opacity: 1;
+}
+
+.ru-filters-card .ru-input:focus,
+.ru-search-inline .ru-input:focus {
+  background-color: var(--fb-field-focus-bg);
+  border-color: var(--fb-focus);
+  box-shadow: 0 0 0 3px var(--fb-focus-ring);
+}
+
+/* Autocompletado del navegador en modo oscuro y claro */
+.ru-filters-card .ru-input:-webkit-autofill,
+.ru-search-inline .ru-input:-webkit-autofill {
+  -webkit-text-fill-color: var(--fb-text);
+  -webkit-box-shadow: 0 0 0 1000px var(--fb-field-bg) inset;
+}
+
+/* ==========================================================================
+   RESPONSIVE
+   ========================================================================== */
+@media (max-height: 780px) and (min-width: 769px) {
+  .ru-filters-card.ru-filters-toolbar {
+    padding: 9px 12px;
+    margin-bottom: 10px;
+  }
+
+  .ru-filters-card.ru-filters-toolbar .ru-input {
+    height: 36px;
+    font-size: 12.5px;
+    padding-left: 36px;
+  }
+
+  .ru-filters-card.ru-filters-toolbar .ru-input-wrap svg.ru-search-icon {
+    left: 12px;
+    width: 14px;
+    height: 14px;
+  }
+
+  .ru-toolbar-action .btn {
+    height: 36px;
+    min-height: 36px;
+    padding: 0 15px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 780px) {
+  .ru-filters-card {
+    padding: 12px 14px;
+    margin-bottom: 12px;
+  }
+
+  .ru-filters-card.ru-filters-toolbar {
+    padding: 10px 12px;
+  }
+
+  .ru-filters-head {
+    font-size: 13px;
+    margin-bottom: 8px;
+  }
+
+  .ru-filters-card .ru-input {
+    height: 38px;
+    padding: 0 12px 0 36px;
+    font-size: 13px;
+  }
+
+  .ru-input-wrap svg.ru-search-icon {
+    left: 12px;
+  }
+
+  .ru-toolbar-action .btn {
+    height: 38px;
+    min-height: 38px;
+    padding: 0 14px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 640px) {
+  .ru-toolbar-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .ru-toolbar-action,
+  .ru-toolbar-action .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

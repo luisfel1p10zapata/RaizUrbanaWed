@@ -1,0 +1,22 @@
+"""Caso de uso: Asignar o reemplazar el rol de un usuario."""
+from app.modules.usuarios.application.schemas import UsuarioResponse
+from app.modules.usuarios.domain.exceptions import RolInvalidoError
+from app.modules.usuarios.infrastructure.usuario_repository import (
+    UsuarioRepository,
+)
+
+
+class AsignarRolUsuario:
+    def __init__(self, repositorio=None):
+        self.repositorio = repositorio or UsuarioRepository()
+
+    def ejecutar(self, usuario_id: int, nuevo_rol: str) -> UsuarioResponse:
+        rol_limpio = nuevo_rol.strip()
+        if not rol_limpio or not self.repositorio.existe_rol(rol_limpio):
+            raise RolInvalidoError(nuevo_rol)
+
+        usuario_actualizado = self.repositorio.reemplazar_rol(
+            usuario_id=usuario_id,
+            nuevo_rol=rol_limpio
+        )
+        return UsuarioResponse.model_validate(usuario_actualizado)

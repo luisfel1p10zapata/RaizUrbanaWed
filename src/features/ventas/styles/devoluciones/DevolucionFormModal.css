@@ -1,0 +1,280 @@
+/* ==================================================================
+   DevolucionFormModal.css
+   Estilos específicos del modal de devolución (compartido entre Ventas y Devoluciones).
+   Soporte completo para modo claro y modo oscuro.
+   ================================================================== */
+
+.ru-dev-modal {
+  width: 100%;
+  max-width: 620px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--card-bg, #ffffff);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--card-border, #e2e8f0);
+}
+
+.ru-dev-modal-body {
+  padding: 20px 24px;
+  overflow-y: auto;
+  max-height: calc(90vh - 150px);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ru-dev-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.ru-dev-col-full {
+  grid-column: 1 / -1;
+}
+
+/* Custom Searchable Select */
+.ru-dev-select-container {
+  position: relative;
+  width: 100%;
+}
+
+.ru-dev-select-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.ru-dev-select-input {
+  width: 100%;
+  padding: 10px 36px 10px 14px;
+  border: 1px solid var(--card-border, #cbd5e1);
+  border-radius: 8px;
+  background: var(--card-bg, #ffffff);
+  color: var(--primary, #0f172a);
+  font-size: 13.5px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ru-dev-select-input:focus {
+  border-color: var(--secondary, #3b82f6);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+}
+
+.ru-dev-select-input.is-invalid {
+  border-color: #ef4444 !important;
+}
+
+.ru-dev-select-input:disabled {
+  background: var(--background, #f8fafc);
+  color: var(--muted-text, #64748b);
+  cursor: not-allowed;
+  opacity: 0.85;
+}
+
+.ru-dev-select-arrow {
+  position: absolute;
+  right: 12px;
+  pointer-events: none;
+  color: var(--muted-text, #94a3b8);
+  display: flex;
+  align-items: center;
+}
+
+.ru-dev-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  background: var(--card-bg, #ffffff);
+  border: 1px solid var(--card-border, #cbd5e1);
+  border-radius: 8px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.08);
+  z-index: 1050;
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+}
+
+.ru-dev-dropdown-item {
+  padding: 9px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--primary, #1e293b);
+  transition: background-color 0.1s ease;
+}
+
+.ru-dev-dropdown-item:hover,
+.ru-dev-dropdown-item.is-highlighted {
+  background: var(--hover-bg, #f1f5f9);
+}
+
+.ru-dev-dropdown-item.is-selected {
+  background: var(--selected-bg, #eff6ff);
+  font-weight: 600;
+  color: #2563eb;
+}
+
+.ru-dev-dropdown-item.is-disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  background: transparent !important;
+  color: var(--muted-text, #94a3b8) !important;
+}
+
+.ru-dev-dropdown-item-add {
+  border-top: 1px dashed var(--divider, #e2e8f0);
+  color: #2563eb;
+  font-weight: 500;
+  background: rgba(37, 99, 235, 0.04);
+}
+
+.ru-dev-dropdown-item-add:hover,
+.ru-dev-dropdown-item-add.is-highlighted {
+  background: rgba(37, 99, 235, 0.1);
+}
+
+.ru-btn-delete-motivo {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 0;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.ru-btn-delete-motivo:hover {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+}
+
+.ru-dev-field-hint {
+  font-size: 11.5px;
+  color: var(--muted-text, #64748b);
+  margin-top: 4px;
+  display: block;
+}
+
+.ru-dev-field-error {
+  color: #ef4444;
+  font-size: 11.5px;
+  margin-top: 4px;
+  display: block;
+}
+
+.ru-dev-textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--card-border, #cbd5e1);
+  border-radius: 8px;
+  background: var(--card-bg, #ffffff);
+  color: var(--primary, #0f172a);
+  font-size: 13.5px;
+  font-family: inherit;
+  resize: none;
+  height: 88px;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.ru-dev-textarea:focus {
+  border-color: var(--secondary, #3b82f6);
+}
+
+.ru-dev-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+  margin-top: 4px;
+}
+
+.ru-dev-checkbox-row input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #2563eb;
+}
+
+.ru-dev-checkbox-row label {
+  font-size: 13px;
+  color: var(--primary, #1e293b);
+  cursor: pointer;
+}
+
+/* Modo oscuro */
+[data-theme="dark"] .ru-dev-modal {
+  background: var(--card-bg, #1e1b2e);
+  border-color: var(--card-border, #2d2942);
+}
+
+[data-theme="dark"] .ru-dev-select-input,
+[data-theme="dark"] .ru-dev-textarea {
+  background: var(--card-bg, #1e1b2e);
+  border-color: var(--card-border, #2d2942);
+  color: var(--primary, #f1f5f9);
+}
+
+[data-theme="dark"] .ru-dev-select-input:disabled {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--muted-text, #94a3b8);
+}
+
+[data-theme="dark"] .ru-dev-dropdown-menu {
+  background: var(--card-bg, #1e1b2e);
+  border-color: var(--card-border, #2d2942);
+}
+
+[data-theme="dark"] .ru-dev-dropdown-item {
+  color: var(--primary, #f1f5f9);
+}
+
+[data-theme="dark"] .ru-dev-dropdown-item:hover,
+[data-theme="dark"] .ru-dev-dropdown-item.is-highlighted {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .ru-dev-dropdown-item.is-selected {
+  background: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+}
+
+[data-theme="dark"] .ru-dev-dropdown-item-add {
+  border-top-color: var(--divider, #2d2942);
+  color: #60a5fa;
+  background: rgba(59, 130, 246, 0.1);
+}
+
+[data-theme="dark"] .ru-dev-dropdown-item-add:hover,
+[data-theme="dark"] .ru-dev-dropdown-item-add.is-highlighted {
+  background: rgba(59, 130, 246, 0.2);
+}
+
+/* Responsive: 1 columna en móviles */
+@media (max-width: 600px) {
+  .ru-dev-form-grid {
+    grid-template-columns: 1fr;
+  }
+}

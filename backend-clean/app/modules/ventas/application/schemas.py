@@ -1,0 +1,190 @@
+"""DTO del módulo de ventas."""
+from datetime import date
+from enum import StrEnum
+
+from pydantic import Field
+
+from app.shared.schemas import CamelModel, Pagina
+
+
+# --------------------------------------------------------------------------
+# Valores permitidos (los mismos que maneja el frontend)
+# --------------------------------------------------------------------------
+class EstadoVenta(StrEnum):
+    PENDIENTE = "Pendiente"
+    PROCESANDO = "Procesando"
+    COMPLETADA = "Completada"
+    CANCELADA = "Cancelada"
+
+
+class EstadoPago(StrEnum):
+    PAGADO = "Pagado"
+    PENDIENTE = "Pendiente"
+    CANCELADO = "Cancelado"
+
+
+class MetodoPago(StrEnum):
+    EFECTIVO = "Efectivo"
+    TARJETA = "Tarjeta"
+    TRANSFERENCIA = "Transferencia"
+    CHEQUE = "Cheque"
+
+
+# --------------------------------------------------------------------------
+# MODELOS BASE COMPARTIDOS
+# --------------------------------------------------------------------------
+class ClienteResumen(CamelModel):
+    id: int = 1
+    nombre: str
+    email: str
+    rol: str | None = None
+
+
+class ProductoResumen(CamelModel):
+    id: int = 101
+    nombre: str
+    precio: float
+
+
+# --------------------------------------------------------------------------
+# ENTRADA (lo que RECIBE la API)
+# --------------------------------------------------------------------------
+class ItemVentaCreate(CamelModel):
+    id_producto_vari: int | None = None
+    producto_id: int | None = None
+    producto: ProductoResumen | None = None
+    cantidad: int = Field(default=1, ge=1, description="Mínimo 1 unidad")
+    talla: str = Field(default="M", max_length=30)
+    color: str = Field(default="Único", max_length=30)
+    subtotal: float | None = None
+
+
+class VentaCreate(CamelModel):
+    cliente_id: int | None = None
+    cliente: ClienteResumen | None = None
+    id_metodo_pago: int | None = None
+    metodo_pago: str = "Efectivo"
+    id_estado_comp: int | None = None
+    estado_venta: str = EstadoVenta.PENDIENTE.value
+    estado_pago: EstadoPago = EstadoPago.PENDIENTE
+    foto_comprobante: str | None = Field(default=None, max_length=255)
+    fecha_entrega: date | None = None
+    items: list[ItemVentaCreate] = Field(min_length=1, description="Al menos un producto")
+    total: float | None = None
+
+
+class VentaUpdate(CamelModel):
+    """Editar venta: campos que el modal permite cambiar."""
+
+    id_estado_comp: int | None = None
+    estado_venta: str | None = None
+    estado_pago: EstadoPago | None = None
+    id_metodo_pago: int | None = None
+    metodo_pago: str | None = None
+    foto_comprobante: str | None = Field(default=None, max_length=255)
+    fecha_entrega: date | None = None
+
+
+class VentaEstadoUpdate(CamelModel):
+    """Modal 'Cambiar estado'."""
+
+    id_estado_comp: int | None = None
+    estado_venta: str
+
+
+class VentaFiltros(CamelModel):
+    """Parámetros de listado (búsqueda, filtro y paginación)."""
+
+    search: str | None = None
+    estado_venta: str | None = None   # None = "Todos los estados"
+    page: int = Field(default=1, ge=1)
+    page_size: int = Field(default=8, ge=1, le=100)
+
+
+# --------------------------------------------------------------------------
+# SALIDA (lo que DEVUELVE la API)
+# --------------------------------------------------------------------------
+class ItemVentaResponse(CamelModel):
+    id_det_venta: int | None = None
+    id_producto_vari: int | None = None
+    producto: ProductoResumen
+    cantidad: int
+    talla: str
+    color: str
+    subtotal: float
+
+
+class HistorialVenta(CamelModel):
+    accion: str          # "Creado" | "Actualizado"
+    fecha: date
+
+
+class VentaResponse(CamelModel):
+    id: int
+    codigo: str
+    cliente: ClienteResumen
+    fecha: date
+    fecha_entrega: date | None = None
+    foto_comprobante: str | None = None
+    id_estado_comp: int | None = None
+    estado_venta: str
+    estado_pago: EstadoPago
+    id_metodo_pago: int | None = None
+    metodo_pago: str
+    items: list[ItemVentaResponse]
+    total: float
+    historial: list[HistorialVenta]
+    rol_usuario: str | None = None
+    creado_por_admin: bool = False
+
+
+class VentasMetricas(CamelModel):
+    """Los 4 KPI de la pantalla."""
+
+    ventas_totales: int
+    ventas_del_mes: int
+    monto_total: float
+    ventas_pendientes: int
+
+
+class ClienteAuxiliar(CamelModel):
+    id: int
+    nombre: str
+    email: str
+    documento: str | None = None
+    telefono: str | None = None
+    rol: str | None = None
+
+
+class MetodoPagoAuxiliar(CamelModel):
+    id: int
+    nombre: str
+    nro_cuenta: str | None = None
+    estado: str = "Activo"
+
+
+class EstadoVentaAuxiliar(CamelModel):
+    id: int
+    nombre: str
+
+
+class ProductoVarianteAuxiliar(CamelModel):
+    id_producto_vari: int
+    id_producto: int
+    nombre: str
+    color: str
+    talla: str
+    precio: float
+    stock: int
+    foto_producto: str | None = None
+
+
+class VentasAuxiliaresResponse(CamelModel):
+    clientes: list[ClienteAuxiliar]
+    metodos_pago: list[MetodoPagoAuxiliar]
+    productos: list[ProductoVarianteAuxiliar]
+    estados: list[EstadoVentaAuxiliar] = Field(default_factory=list)
+
+
+# Listado paginado: GET /ventas  ->  { items, total, page, pageSize, totalPages }
+VentaPagina = Pagina[VentaResponse]

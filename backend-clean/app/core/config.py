@@ -1,0 +1,28 @@
+import os
+from pathlib import Path
+from dotenv import load_dotenv # type: ignore
+
+# Cargar .env desde la raíz de backend-clean
+_BASE_DIR = Path(__file__).resolve().parent.parent.parent
+load_dotenv(_BASE_DIR / ".env")
+
+
+class Settings:
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "")
+    DB_HOST: str = os.getenv("DB_HOST", "localhost")
+    DB_PORT: int = int(os.getenv("DB_PORT", "5432"))
+    DB_NAME: str = os.getenv("DB_NAME", "")
+    DB_USER: str = os.getenv("DB_USER", "")
+    DB_PASSWORD: str = os.getenv("DB_PASSWORD", "")
+
+    # Supabase Storage
+    SUPABASE_URL: str = os.getenv("SUPABASE_URL", "").strip().rstrip("/")
+    SUPABASE_SERVICE_ROLE_KEY: str = os.getenv(
+        "SUPABASE_SERVICE_ROLE_KEY", ""
+    ).strip()
+    SUPABASE_STORAGE_BUCKET: str = (
+        os.getenv("SUPABASE_STORAGE_BUCKET", "media").strip() or "media"
+    )
+
+
+settings = Settings()

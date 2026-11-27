@@ -1,0 +1,925 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+/* Estilos exclusivos del registro. */
+
+.ru-register,
+.ru-register *,
+.ru-register *::before,
+.ru-register *::after {
+    box-sizing: border-box;
+}
+
+.ru-register {
+    --rg-page: #f4eee9;
+    --rg-surface: #ffffff;
+    --rg-input: #fcfbfa;
+    --rg-ink: #1b1b28;
+    --rg-muted: #767381;
+    --rg-border: #e7e2de;
+    --rg-accent: #1b1b28;
+    --rg-button-text: #ffffff;
+    --rg-focus: #9a8174;
+    --rg-logo-bg: #ffffff;
+
+    display: grid;
+    place-items: center;
+
+    width: 100%;
+    min-height: 100vh;
+    min-height: 100svh;
+    padding: 18px clamp(16px, 3vw, 48px);
+
+    background:
+        radial-gradient(ellipse at 8% 12%,
+            rgba(201, 173, 167, 0.18),
+            transparent 46%),
+        var(--rg-page);
+
+    color: var(--rg-ink);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    isolation: isolate;
+}
+
+.ru-register h1,
+.ru-register h2,
+.ru-register p {
+    margin: 0;
+}
+
+.ru-register input,
+.ru-register select,
+.ru-register button {
+    font: inherit;
+}
+
+.ru-register a {
+    text-underline-offset: 4px;
+}
+
+.ru-register__layout {
+    width: 100%;
+    max-width: 1180px;
+    min-width: 0;
+}
+
+.ru-register__navigation {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.ru-register__back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+
+    min-height: 32px;
+
+    color: var(--rg-ink);
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+
+    transition: opacity 180ms ease;
+}
+
+.ru-register__back:hover {
+    opacity: 0.7;
+}
+
+/* La columna del formulario es más amplia por sus nueve campos. */
+
+.ru-register__shell {
+    display: grid;
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+
+    width: 100%;
+    min-width: 0;
+
+    border: 1px solid rgba(27, 27, 40, 0.07);
+    border-radius: 24px;
+    overflow: hidden;
+
+    background: var(--rg-surface);
+
+    box-shadow:
+        0 28px 70px rgba(35, 29, 32, 0.1),
+        0 4px 16px rgba(35, 29, 32, 0.03);
+}
+
+/* Panel izquierdo */
+
+.ru-register__brand {
+    position: relative;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 36px;
+
+    min-width: 0;
+    padding: clamp(28px, 3vw, 44px);
+    overflow: hidden;
+
+    color: #f8f3ef;
+
+    background:
+        radial-gradient(ellipse at 95% 5%,
+            rgba(201, 173, 167, 0.14),
+            transparent 55%),
+        linear-gradient(145deg,
+            #292938 0%,
+            #1b1b28 58%,
+            #15151f 100%);
+}
+
+.ru-register__brand-top,
+.ru-register__hero,
+.ru-register__brand-footer {
+    position: relative;
+    z-index: 1;
+}
+
+.ru-register__brand-top {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.ru-register__brand-logo {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 150px;
+    height: 76px;
+    padding: 10px 16px;
+
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+
+    background: var(--rg-logo-bg);
+}
+
+.ru-register__brand-logo img {
+    display: block;
+    width: auto;
+    max-width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.ru-register__brand-label {
+    color: #c6bac2;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 2px;
+}
+
+.ru-register__eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    margin-bottom: 20px;
+
+    color: #d1b8ad;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 1.4px;
+}
+
+.ru-register__eyebrow::before {
+    content: '';
+    flex: 0 0 24px;
+    height: 1px;
+    background: #bda296;
+}
+
+.ru-register .ru-register__hero-title {
+    color: #faf5f0;
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: clamp(34px, 3.5vw, 49px);
+    font-weight: 400;
+    line-height: 1.16;
+    letter-spacing: -1px;
+}
+
+.ru-register__hero-title em {
+    color: #d5b9aa;
+    font-weight: 400;
+}
+
+.ru-register .ru-register__hero-description {
+    max-width: 320px;
+    margin-top: 20px;
+
+    color: #c1bec9;
+    font-size: 13px;
+    line-height: 1.85;
+}
+
+.ru-register__modules {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 24px;
+}
+
+.ru-register__modules span {
+    padding: 7px 12px;
+
+    border: 1px solid rgba(227, 210, 199, 0.16);
+    border-radius: 999px;
+
+    background: rgba(255, 255, 255, 0.035);
+    color: #e0d5ce;
+    font-size: 10px;
+    font-weight: 500;
+}
+
+.ru-register__brand-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+
+    padding-top: 18px;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+
+    color: #b9b3be;
+    font-size: 9px;
+}
+
+.ru-register__brand-footer>span:first-child {
+    color: #e2d5cb;
+    font-weight: 600;
+    letter-spacing: 2px;
+}
+
+.ru-register__decoration {
+    position: absolute;
+    right: -250px;
+    bottom: -290px;
+
+    width: 650px;
+    height: 650px;
+
+    border: 1px solid rgba(213, 185, 170, 0.15);
+    border-radius: 50%;
+
+    pointer-events: none;
+}
+
+.ru-register__decoration::before,
+.ru-register__decoration::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+}
+
+.ru-register__decoration::before {
+    inset: 48px;
+    border: 1px solid rgba(213, 185, 170, 0.11);
+}
+
+.ru-register__decoration::after {
+    inset: 100px;
+    background: rgba(213, 185, 170, 0.035);
+}
+
+/* Panel derecho */
+
+.ru-register__panel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    min-width: 0;
+    padding: 26px clamp(24px, 3vw, 40px);
+
+    background: var(--rg-surface);
+}
+
+.ru-register__content {
+    width: 100%;
+    max-width: 560px;
+    min-width: 0;
+}
+
+/* Logo y título en una fila para ahorrar altura. */
+
+.ru-register__heading {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+
+    margin-bottom: 20px;
+}
+
+.ru-register__form-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    flex: 0 0 94px;
+    height: 60px;
+    padding-right: 16px;
+
+    border-right: 1px solid var(--rg-border);
+}
+
+.ru-register__form-logo img {
+    display: block;
+    width: auto;
+    max-width: 100%;
+    max-height: 58px;
+    object-fit: contain;
+}
+
+.ru-register__heading-text {
+    min-width: 0;
+}
+
+.ru-register__subtitle {
+    display: block;
+    margin-bottom: 3px;
+
+    color: var(--rg-muted);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1.8px;
+}
+
+.ru-register__heading h2 {
+    color: var(--rg-ink);
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 30px;
+    font-weight: 500;
+    line-height: 1.2;
+    letter-spacing: -0.6px;
+}
+
+.ru-register__heading p {
+    margin-top: 6px;
+    color: var(--rg-muted);
+    font-size: 11px;
+    line-height: 1.6;
+}
+
+/* Formulario */
+
+.ru-register__form {
+    display: flex;
+    flex-direction: column;
+    gap: 13px;
+}
+
+.ru-register__section {
+    display: block;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+.ru-register__section legend {
+    display: block;
+    width: 100%;
+    margin: 0 0 8px;
+    padding: 0;
+
+    color: var(--rg-muted);
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 1.5;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+}
+
+.ru-register__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 11px 14px;
+}
+
+.ru-register__field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+}
+
+.ru-register__field--full {
+    grid-column: 1 / -1;
+}
+
+.ru-register__field label {
+    color: var(--rg-ink);
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.5;
+}
+
+.ru-register__input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-width: 0;
+}
+
+.ru-register__input-wrap>svg {
+    position: absolute;
+    left: 12px;
+    color: var(--rg-muted);
+    pointer-events: none;
+}
+
+.ru-register__field input,
+.ru-register__field select {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    height: 42px;
+    padding: 0 12px 0 36px;
+
+    border: 1px solid var(--rg-border);
+    border-radius: 9px;
+    outline: none;
+
+    background: var(--rg-input);
+    color: var(--rg-ink);
+    font-size: 12px;
+
+    transition:
+        border-color 180ms ease,
+        box-shadow 180ms ease;
+}
+
+.ru-register__field select {
+    padding-right: 24px;
+}
+
+.ru-register__field .ru-register__select-plain {
+    padding-left: 12px;
+}
+
+.ru-register__field input::placeholder {
+    color: var(--rg-muted);
+    opacity: 0.85;
+}
+
+.ru-register__field input:focus,
+.ru-register__field select:focus {
+    border-color: var(--rg-focus);
+    box-shadow: 0 0 0 3px rgba(154, 129, 116, 0.13);
+}
+
+.ru-register__field .ru-register__password {
+    padding-right: 42px;
+}
+
+.ru-register__password-toggle {
+    position: absolute;
+    right: 3px;
+
+    display: grid;
+    place-items: center;
+
+    width: 36px;
+    height: 36px;
+    padding: 0;
+
+    border: 0;
+    border-radius: 7px;
+
+    background: transparent;
+    color: var(--rg-muted);
+    cursor: pointer;
+}
+
+.ru-register__password-toggle:hover {
+    background: rgba(154, 129, 116, 0.08);
+    color: var(--rg-ink);
+}
+
+.ru-register__submit {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+
+    width: 100%;
+    min-height: 44px;
+    margin-top: 3px;
+    padding: 11px 18px;
+
+    border: 1px solid transparent;
+    border-radius: 10px;
+
+    background: var(--rg-accent);
+    color: var(--rg-button-text);
+
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.6;
+    letter-spacing: 0.8px;
+    cursor: pointer;
+
+    transition:
+        transform 180ms ease,
+        box-shadow 180ms ease;
+}
+
+.ru-register__submit svg {
+    flex-shrink: 0;
+}
+
+.ru-register__submit:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 7px 18px rgba(27, 27, 40, 0.16);
+}
+
+.ru-register__submit:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.ru-register__submit:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.ru-register .ru-register__footer {
+    margin-top: 15px;
+
+    color: var(--rg-muted);
+    font-size: 11px;
+    line-height: 1.8;
+    text-align: center;
+}
+
+.ru-register__footer a {
+    color: var(--rg-ink);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.ru-register__footer a:hover {
+    text-decoration: underline;
+}
+
+/* Mensajes sin recortes */
+
+.ru-register__alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+
+    margin-bottom: 15px;
+    padding: 11px 13px;
+
+    border: 1px solid;
+    border-radius: 9px;
+
+    font-size: 12px;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+}
+
+.ru-register__alert svg {
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.ru-register__alert span {
+    min-width: 0;
+}
+
+.ru-register__alert--error {
+    border-color: #efc9c5;
+    background: #fff2f0;
+    color: #9d352b;
+}
+
+.ru-register__alert--success {
+    border-color: #c9e3d1;
+    background: #edf7f0;
+    color: #24643a;
+}
+
+.ru-register a:focus-visible,
+.ru-register button:focus-visible {
+    outline: 2px solid var(--rg-focus);
+    outline-offset: 4px;
+}
+
+/* Modo oscuro */
+
+.ru-register[data-theme='dark'] {
+    --rg-page: #12131c;
+    --rg-surface: #1c1e2b;
+    --rg-input: #232535;
+    --rg-ink: #f2e9e4;
+    --rg-muted: #b4adbb;
+    --rg-border: #393b4d;
+    --rg-accent: #d1b6a8;
+    --rg-button-text: #1b1b28;
+    --rg-focus: #d1b6a8;
+    --rg-logo-bg: #1c1e2b;
+
+    color-scheme: dark;
+}
+
+.ru-register[data-theme='dark'] .ru-register__shell {
+    border-color: rgba(255, 255, 255, 0.07);
+    box-shadow: 0 28px 70px rgba(0, 0, 0, 0.28);
+}
+
+.ru-register[data-theme='dark'] .ru-register__alert--error {
+    border-color: #70403c;
+    background: #362324;
+    color: #ffc2b8;
+}
+
+.ru-register[data-theme='dark'] .ru-register__alert--success {
+    border-color: #385845;
+    background: #203129;
+    color: #b7e3c4;
+}
+
+/* Ajuste compacto para portátiles con menor altura disponible. */
+
+@media (min-width: 901px) and (max-height: 760px) {
+    .ru-register {
+        padding-block: 12px;
+    }
+
+    .ru-register__navigation {
+        margin-bottom: 6px;
+    }
+
+    .ru-register__panel {
+        padding-block: 20px;
+    }
+
+    .ru-register__brand {
+        padding-block: 28px;
+        gap: 26px;
+    }
+
+    .ru-register__heading {
+        margin-bottom: 15px;
+    }
+
+    .ru-register__form {
+        gap: 10px;
+    }
+
+    .ru-register__section legend {
+        margin-bottom: 6px;
+    }
+
+    .ru-register__grid {
+        row-gap: 9px;
+    }
+
+    .ru-register__field input,
+    .ru-register__field select {
+        height: 40px;
+    }
+
+    .ru-register .ru-register__footer {
+        margin-top: 11px;
+    }
+}
+
+/* En tabletas, formulario primero y marca debajo. */
+
+@media (max-width: 900px) {
+    .ru-register {
+        padding: 16px;
+    }
+
+    .ru-register__layout {
+        max-width: 640px;
+    }
+
+    .ru-register__shell {
+        grid-template-columns: minmax(0, 1fr);
+        border-radius: 20px;
+    }
+
+    .ru-register__panel {
+        grid-row: 1;
+        padding: 28px;
+    }
+
+    .ru-register__brand {
+        grid-row: 2;
+        padding: 28px;
+        gap: 24px;
+    }
+
+    .ru-register__brand-top {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+    }
+
+    .ru-register__brand-logo {
+        flex-shrink: 0;
+        width: 116px;
+        height: 58px;
+        padding: 8px 12px;
+    }
+
+    .ru-register__brand-label {
+        max-width: 130px;
+        font-size: 8px;
+        line-height: 1.8;
+        letter-spacing: 1.2px;
+        text-align: right;
+    }
+
+    .ru-register .ru-register__hero-title {
+        font-size: 36px;
+    }
+
+    .ru-register__field input,
+    .ru-register__field select {
+        height: 46px;
+        font-size: 16px;
+    }
+
+    .ru-register__password-toggle {
+        height: 40px;
+    }
+}
+
+/* Celulares: una columna para mantener legibles los campos. */
+
+@media (max-width: 540px) {
+
+    .ru-register__panel,
+    .ru-register__brand {
+        padding: 24px 20px;
+    }
+
+    .ru-register__grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 12px;
+    }
+
+    .ru-register__heading {
+        gap: 13px;
+    }
+
+    .ru-register__form-logo {
+        flex-basis: 76px;
+        height: 56px;
+        padding-right: 12px;
+    }
+
+    .ru-register__heading h2 {
+        font-size: 27px;
+    }
+
+    .ru-register__heading p {
+        font-size: 10px;
+    }
+
+    .ru-register__form {
+        gap: 18px;
+    }
+
+    .ru-register__field label {
+        font-size: 12px;
+    }
+
+    .ru-register__section legend {
+        margin-bottom: 10px;
+    }
+
+    .ru-register__eyebrow {
+        font-size: 8px;
+        letter-spacing: 1px;
+    }
+
+    .ru-register .ru-register__hero-title {
+        font-size: 32px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .ru-register *,
+    .ru-register *::before,
+    .ru-register *::after {
+        transition: none !important;
+    }
+}
+
+/* =========================================================
+   REGISTRO — SEGURIDAD Y TÉRMINOS
+   ========================================================= */
+
+.ru-register .ru-register__requirements {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 14px;
+    margin: 10px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ru-register .ru-register__requirements li {
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.ru-register .ru-register__requirements li span:first-child {
+    flex-shrink: 0;
+    width: 14px;
+    font-weight: 700;
+    text-align: center;
+}
+
+.ru-register .ru-register__requirements .is-complete {
+    color: #16804a;
+}
+
+.ru-register .ru-register__requirements .is-pending {
+    color: #777486;
+}
+
+.ru-register .ru-register__security-error {
+    display: block;
+    margin-top: 5px;
+    color: #c83e4d;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.ru-register .ru-register__terms {
+    margin: 10px 0 16px;
+}
+
+.ru-register .ru-register__terms label {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    cursor: pointer;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.ru-register .ru-register__terms input[type='checkbox'] {
+    flex: 0 0 17px;
+    width: 17px;
+    height: 17px;
+    margin: 2px 0 0;
+    padding: 0;
+    accent-color: #22223b;
+    cursor: pointer;
+}
+
+.ru-register .ru-register__terms a {
+    color: inherit;
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.ru-register .ru-register__terms a:hover {
+    opacity: 0.75;
+}
+
+.ru-register[data-theme='dark'] .ru-register__requirements .is-complete {
+    color: #72d6a1;
+}
+
+.ru-register[data-theme='dark'] .ru-register__requirements .is-pending {
+    color: #c2b9c3;
+}
+
+.ru-register[data-theme='dark'] .ru-register__security-error {
+    color: #ff929c;
+}
+
+.ru-register[data-theme='dark'] .ru-register__terms input[type='checkbox'] {
+    accent-color: #c9ada7;
+}
+
+@media (max-width: 600px) {
+    .ru-register .ru-register__requirements {
+        grid-template-columns: 1fr;
+    }
+}

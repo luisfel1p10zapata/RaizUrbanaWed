@@ -1,0 +1,300 @@
+/* ==================================================================
+   ModalResolucionDevolucion.css — Gestión y definición de resolución
+   ================================================================== */
+
+.dev-resolucion-modal {
+  max-width: 620px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.dev-resolucion-body {
+  max-height: calc(85vh - 120px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.dev-resolucion-summary-card {
+  background: var(--bg-card-subtle, rgba(243, 244, 246, 0.6));
+  border: 1px solid var(--border-color, #E5E7EB);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+[data-theme="dark"] .dev-resolucion-summary-card {
+  background: rgba(30, 41, 59, 0.5);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.dev-res-sum-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.dev-res-prod-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-main, #1F2937);
+  margin: 0 0 4px 0;
+}
+
+[data-theme="dark"] .dev-res-prod-title {
+  color: #F9FAFB;
+}
+
+.dev-res-prod-meta {
+  font-size: 13px;
+  color: var(--text-muted, #6B7280);
+}
+
+.dev-res-sum-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.75rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed var(--border-color, #E5E7EB);
+}
+
+[data-theme="dark"] .dev-res-sum-grid {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.dev-res-sum-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.dev-res-sum-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-muted, #6B7280);
+  letter-spacing: 0.5px;
+}
+
+.dev-res-sum-val {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-main, #1F2937);
+}
+
+[data-theme="dark"] .dev-res-sum-val {
+  color: #F9FAFB;
+}
+
+/* Form Sections */
+.dev-res-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+}
+
+.dev-res-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-main, #374151);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+[data-theme="dark"] .dev-res-label {
+  color: #E5E7EB;
+}
+
+.dev-res-required {
+  color: #EF4444;
+}
+
+.dev-res-select,
+.dev-res-input,
+.dev-res-textarea {
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color, #D1D5DB);
+  background: var(--bg-input, #FFFFFF);
+  color: var(--text-main, #1F2937);
+  font-size: 14px;
+  outline: none;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+[data-theme="dark"] .dev-res-select,
+[data-theme="dark"] .dev-res-input,
+[data-theme="dark"] .dev-res-textarea {
+  background: #1E293B;
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #F3F4F6;
+}
+
+.dev-res-input:focus,
+.dev-res-select:focus,
+.dev-res-textarea:focus {
+  border-color: var(--color-primary, #3B82F6);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.dev-res-input.is-error,
+.dev-res-select.is-error,
+.dev-res-textarea.is-error {
+  border-color: #EF4444;
+}
+
+.dev-res-error-text {
+  font-size: 12px;
+  color: #EF4444;
+  margin-top: 2px;
+}
+
+/* Custom dropdown for candidate search */
+.dev-res-dropdown-wrapper {
+  position: relative;
+}
+
+.dev-res-dropdown-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  margin-top: 4px;
+  max-height: 220px;
+  overflow-y: auto;
+  background: var(--bg-surface, #FFFFFF);
+  border: 1px solid var(--border-color, #E5E7EB);
+  border-radius: 8px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  padding: 4px;
+}
+
+[data-theme="dark"] .dev-res-dropdown-list {
+  background: #1E293B;
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+}
+
+.dev-res-dropdown-item {
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background 0.15s ease;
+  color: var(--text-main, #1F2937);
+}
+
+[data-theme="dark"] .dev-res-dropdown-item {
+  color: #F3F4F6;
+}
+
+.dev-res-dropdown-item:hover,
+.dev-res-dropdown-item.is-selected {
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.dev-res-dropdown-item.is-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: transparent !important;
+}
+
+/* Info and difference cards */
+.dev-res-notice-box {
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 8px;
+  padding: 0.875rem 1rem;
+  font-size: 13px;
+  color: var(--text-main, #1F2937);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+[data-theme="dark"] .dev-res-notice-box {
+  background: rgba(59, 130, 246, 0.15);
+  color: #E0E7FF;
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.dev-res-diff-card {
+  border-radius: 8px;
+  padding: 0.875rem 1rem;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.dev-res-diff-card.diff-excedente {
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #92400E;
+}
+
+[data-theme="dark"] .dev-res-diff-card.diff-excedente {
+  background: rgba(245, 158, 11, 0.2);
+  color: #FDE68A;
+}
+
+.dev-res-diff-card.diff-saldo-favor {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #065F46;
+}
+
+[data-theme="dark"] .dev-res-diff-card.diff-saldo-favor {
+  background: rgba(16, 185, 129, 0.2);
+  color: #A7F3D0;
+}
+
+.dev-res-diff-card.diff-neutral {
+  background: rgba(107, 114, 128, 0.1);
+  border: 1px solid rgba(107, 114, 128, 0.2);
+  color: #374151;
+}
+
+[data-theme="dark"] .dev-res-diff-card.diff-neutral {
+  background: rgba(107, 114, 128, 0.2);
+  color: #D1D5DB;
+}
+
+/* Modal footer actions */
+.dev-resolucion-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--border-color, #E5E7EB);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg-surface, #FFFFFF);
+}
+
+[data-theme="dark"] .dev-resolucion-footer {
+  background: #111827;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.dev-res-footer-left,
+.dev-res-footer-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
