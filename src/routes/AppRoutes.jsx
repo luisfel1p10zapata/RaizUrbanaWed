@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+
 import {
   BrowserRouter,
   Routes,
@@ -8,16 +9,21 @@ import {
 
 import MainNavbar from '../components/navegacion/MainNavbar';
 import AdminLayout from '../components/layout/AdminLayout';
+
 import { consultarSesion } from '../features/usuarios/services/authService';
+
+import TerminosCondiciones from '../features/usuarios/components/TerminosCondiciones';
 
 // Ventas y catálogo
 import Inicio from '../features/ventas/components/Inicio';
-import Catalogo from '../features/ventas/components/Catalogo';
+import Catalogo from '../features/ventas/components/catalogo';
 import Ventas from '../features/ventas/components/Ventas';
 import Carrito from '../features/ventas/components/Carrito';
+
 import Productos from '../features/control-de-existencias/components/Productos';
 import Categorias from '../features/control-de-existencias/components/Categorias';
 import Subcategorias from '../features/control-de-existencias/components/Subcategorias';
+
 import Devoluciones from '../features/ventas/components/Devoluciones';
 
 // Dashboard
@@ -50,24 +56,33 @@ import ActivarCuenta from '../features/usuarios/components/ActivarCuenta';
 import Perfil from '../features/usuarios/components/Perfil';
 import RutaProtegida from '../features/usuarios/components/RutaProtegida';
 
+
+/**
+ * Muestra el carrito con la navegación correspondiente
+ * al rol de la persona que inició sesión.
+ */
 const CarritoAdaptivePage = () => {
   const [esAdmin, setEsAdmin] = useState(null);
 
   useEffect(() => {
     let activo = true;
+
     consultarSesion()
       .then((usuario) => {
         if (!activo) return;
-        const permisos = Array.isArray(usuario?.permisos) ? usuario.permisos : [];
+
         const admin =
           usuario?.rol === 'Administrador' ||
-          usuario?.rol === 'Empleado' ||
-          permisos.some((p) => ['Acceso Total', 'Dashboard', 'Ventas'].includes(p));
-        setEsAdmin(Boolean(admin));
+          usuario?.rol === 'Empleado';
+
+        setEsAdmin(admin);
       })
       .catch(() => {
-        if (activo) setEsAdmin(false);
+        if (activo) {
+          setEsAdmin(false);
+        }
       });
+
     return () => {
       activo = false;
     };
@@ -77,7 +92,13 @@ const CarritoAdaptivePage = () => {
     return (
       <>
         <MainNavbar />
-        <p role="status" style={{ padding: '24px' }}>Cargando carrito...</p>
+
+        <p
+          role="status"
+          style={{ padding: '24px' }}
+        >
+          Cargando carrito...
+        </p>
       </>
     );
   }
@@ -94,11 +115,15 @@ const CarritoAdaptivePage = () => {
   );
 };
 
+
 const AppRoutes = () => {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Rutas públicas */}
+
+        {/* ========================================= */}
+        {/* RUTAS PÚBLICAS                            */}
+        {/* ========================================= */}
 
         <Route
           path="/inicio"
@@ -108,6 +133,11 @@ const AppRoutes = () => {
               <Inicio />
             </>
           }
+        />
+
+        <Route
+          path="/terminos-y-condiciones"
+          element={<TerminosCondiciones />}
         />
 
         <Route
@@ -145,7 +175,10 @@ const AppRoutes = () => {
           element={<ActivarCuenta />}
         />
 
-        {/* Perfil y Carrito para cualquier usuario con sesión activa (Clientes y Admin) */}
+
+        {/* ========================================= */}
+        {/* PERFIL Y CARRITO CON SESIÓN ACTIVA        */}
+        {/* ========================================= */}
 
         <Route element={<RutaProtegida />}>
           <Route
@@ -157,37 +190,77 @@ const AppRoutes = () => {
               </>
             }
           />
-          <Route path="/carrito" element={<CarritoAdaptivePage />}>
-            <Route index element={<Carrito />} />
+
+          <Route
+            path="/carrito"
+            element={<CarritoAdaptivePage />}
+          >
+            <Route
+              index
+              element={<Carrito />}
+            />
           </Route>
         </Route>
 
-        {/* Área administrativa */}
 
-        <Route element={<RutaProtegida soloAdministrativo />}>
+        {/* ========================================= */}
+        {/* ÁREA ADMINISTRATIVA                       */}
+        {/* ========================================= */}
+
+        <Route
+          element={<RutaProtegida soloAdministrativo />}
+        >
           <Route element={<AdminLayout />}>
-            <Route element={<RutaProtegida permiso="Dashboard" />}>
+
+            {/* Dashboard */}
+
+            <Route
+              element={
+                <RutaProtegida permiso="Dashboard" />
+              }
+            >
               <Route
                 path="/dashboard"
                 element={<Dashboard />}
               />
             </Route>
 
-            <Route element={<RutaProtegida permiso="Ventas" />}>
+
+            {/* Ventas */}
+
+            <Route
+              element={
+                <RutaProtegida permiso="Ventas" />
+              }
+            >
               <Route
                 path="/ventas"
                 element={<Ventas />}
               />
             </Route>
 
-            <Route element={<RutaProtegida permiso="Productos" />}>
+
+            {/* Productos */}
+
+            <Route
+              element={
+                <RutaProtegida permiso="Productos" />
+              }
+            >
               <Route
                 path="/productos"
                 element={<Productos />}
               />
             </Route>
 
-            <Route element={<RutaProtegida permiso="Categoria" />}>
+
+            {/* Categorías */}
+
+            <Route
+              element={
+                <RutaProtegida permiso="Categoria" />
+              }
+            >
               <Route
                 path="/categorias"
                 element={<Categorias />}
@@ -199,14 +272,28 @@ const AppRoutes = () => {
               />
             </Route>
 
-            <Route element={<RutaProtegida permiso="SubCategoria" />}>
+
+            {/* Subcategorías */}
+
+            <Route
+              element={
+                <RutaProtegida permiso="SubCategoria" />
+              }
+            >
               <Route
                 path="/subcategorias"
                 element={<Subcategorias />}
               />
             </Route>
 
-            <Route element={<RutaProtegida permiso="Compras" />}>
+
+            {/* Compras */}
+
+            <Route
+              element={
+                <RutaProtegida permiso="Compras" />
+              }
+            >
               <Route
                 path="/compras"
                 element={<Compras />}
@@ -218,33 +305,64 @@ const AppRoutes = () => {
               />
             </Route>
 
-            <Route element={<RutaProtegida permiso="Proveedores" />}>
+
+            {/* Proveedores */}
+
+            <Route
+              element={
+                <RutaProtegida permiso="Proveedores" />
+              }
+            >
               <Route
                 path="/proveedores"
                 element={<Proveedores />}
               />
             </Route>
 
-            <Route element={<RutaProtegida permiso="Bajas Insumos" />}>
+
+            {/* Bajas de insumos */}
+
+            <Route
+              element={
+                <RutaProtegida permiso="Bajas Insumos" />
+              }
+            >
               <Route
                 path="/inventario/bajas-insumos"
                 element={<BajasInsumos />}
               />
             </Route>
 
-            <Route element={<RutaProtegida permiso="Devoluciones" />}>
+
+            {/* Devoluciones */}
+
+            <Route
+              element={
+                <RutaProtegida permiso="Devoluciones" />
+              }
+            >
               <Route
                 path="/devoluciones"
                 element={<Devoluciones />}
               />
             </Route>
 
-            <Route element={<RutaProtegida permiso="Insumos" />}>
+
+            {/* Insumos */}
+
+            <Route
+              element={
+                <RutaProtegida permiso="Insumos" />
+              }
+            >
               <Route
                 path="/inventario/insumos"
                 element={<Insumos />}
               />
             </Route>
+
+
+            {/* Producción */}
 
             <Route
               element={
@@ -257,30 +375,55 @@ const AppRoutes = () => {
               />
             </Route>
 
-            <Route element={<RutaProtegida permiso="Metodo Pago" />}>
+
+            {/* Métodos de pago */}
+
+            <Route
+              element={
+                <RutaProtegida permiso="Metodo Pago" />
+              }
+            >
               <Route
                 path="/procesos/metodo-pago"
                 element={<MetodoPago />}
               />
             </Route>
 
-            <Route element={<RutaProtegida permiso="Usuarios" />}>
+
+            {/* Usuarios */}
+
+            <Route
+              element={
+                <RutaProtegida permiso="Usuarios" />
+              }
+            >
               <Route
                 path="/administracion/usuarios"
                 element={<Usuarios />}
               />
             </Route>
 
-            <Route element={<RutaProtegida permiso="Roles" />}>
+
+            {/* Roles */}
+
+            <Route
+              element={
+                <RutaProtegida permiso="Roles" />
+              }
+            >
               <Route
                 path="/administracion/roles"
                 element={<Roles />}
               />
             </Route>
+
           </Route>
         </Route>
 
-        {/* Redirecciones */}
+
+        {/* ========================================= */}
+        {/* REDIRECCIONES                             */}
+        {/* ========================================= */}
 
         <Route
           path="/"
@@ -291,6 +434,7 @@ const AppRoutes = () => {
           path="*"
           element={<Navigate to="/inicio" replace />}
         />
+
       </Routes>
     </BrowserRouter>
   );

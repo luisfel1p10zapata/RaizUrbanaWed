@@ -1,4 +1,4 @@
-import React from 'react';
+import 'react';
 import '../../styles/kpiglobal.css';
 
 export default function KpiGlobal({ kpis = [] }) {

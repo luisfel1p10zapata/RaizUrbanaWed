@@ -823,3 +823,103 @@
         transition: none !important;
     }
 }
+
+/* =========================================================
+   REGISTRO — SEGURIDAD Y TÉRMINOS
+   ========================================================= */
+
+.ru-register .ru-register__requirements {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 14px;
+    margin: 10px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ru-register .ru-register__requirements li {
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.ru-register .ru-register__requirements li span:first-child {
+    flex-shrink: 0;
+    width: 14px;
+    font-weight: 700;
+    text-align: center;
+}
+
+.ru-register .ru-register__requirements .is-complete {
+    color: #16804a;
+}
+
+.ru-register .ru-register__requirements .is-pending {
+    color: #777486;
+}
+
+.ru-register .ru-register__security-error {
+    display: block;
+    margin-top: 5px;
+    color: #c83e4d;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.ru-register .ru-register__terms {
+    margin: 10px 0 16px;
+}
+
+.ru-register .ru-register__terms label {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    cursor: pointer;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.ru-register .ru-register__terms input[type='checkbox'] {
+    flex: 0 0 17px;
+    width: 17px;
+    height: 17px;
+    margin: 2px 0 0;
+    padding: 0;
+    accent-color: #22223b;
+    cursor: pointer;
+}
+
+.ru-register .ru-register__terms a {
+    color: inherit;
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.ru-register .ru-register__terms a:hover {
+    opacity: 0.75;
+}
+
+.ru-register[data-theme='dark'] .ru-register__requirements .is-complete {
+    color: #72d6a1;
+}
+
+.ru-register[data-theme='dark'] .ru-register__requirements .is-pending {
+    color: #c2b9c3;
+}
+
+.ru-register[data-theme='dark'] .ru-register__security-error {
+    color: #ff929c;
+}
+
+.ru-register[data-theme='dark'] .ru-register__terms input[type='checkbox'] {
+    accent-color: #c9ada7;
+}
+
+@media (max-width: 600px) {
+    .ru-register .ru-register__requirements {
+        grid-template-columns: 1fr;
+    }
+}

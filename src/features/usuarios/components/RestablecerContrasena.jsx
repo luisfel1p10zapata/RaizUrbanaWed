@@ -18,14 +18,91 @@ import './recuperarcontraseña.css';
 const API_URL =
     'http://localhost:8000/api/auth/restablecer-contrasena';
 
+function tieneCaracterEspecial(valor) {
+    return [...valor].some((caracter) => {
+        const codigo = caracter.charCodeAt(0);
+
+        return (
+            (codigo >= 33 && codigo <= 47) ||
+            (codigo >= 58 && codigo <= 64) ||
+            (codigo >= 91 && codigo <= 96) ||
+            (codigo >= 123 && codigo <= 126)
+        );
+    });
+}
+
+function obtenerRequisitos(password) {
+    return [
+        {
+            id: 'longitud',
+            texto: 'Mínimo 8 caracteres',
+            cumplido: [...password].length >= 8,
+        },
+        {
+            id: 'mayuscula',
+            texto: 'Una letra mayúscula',
+            cumplido: /[A-Z]/.test(password),
+        },
+        {
+            id: 'minuscula',
+            texto: 'Una letra minúscula',
+            cumplido: /[a-z]/.test(password),
+        },
+        {
+            id: 'numero',
+            texto: 'Un número',
+            cumplido: /[0-9]/.test(password),
+        },
+        {
+            id: 'especial',
+            texto: 'Un carácter especial',
+            cumplido: tieneCaracterEspecial(password),
+        },
+        {
+            id: 'bytes',
+            texto: 'Máximo 72 bytes',
+            cumplido:
+                new TextEncoder().encode(password).length <= 72,
+        },
+    ];
+}
+
+function obtenerErrorRespuesta(data) {
+    if (typeof data?.detail === 'string') {
+        return data.detail;
+    }
+
+    if (Array.isArray(data?.detail)) {
+        return data.detail
+            .map((detalle) =>
+                String(detalle.msg || 'Dato inválido')
+                    .replace(/^Value error,\s*/i, '')
+            )
+            .join('. ');
+    }
+
+    return 'No se pudo cambiar la contraseña.';
+}
+
 export default function RestablecerContrasena() {
     const [searchParams] = useSearchParams();
     const token = searchParams.get('token') || '';
 
     const [password, setPassword] = useState('');
     const [confirmacion, setConfirmacion] = useState('');
-    const [mostrarPassword, setMostrarPassword] = useState(false);
-    const [mostrarConfirmacion, setMostrarConfirmacion] = useState(false);
+
+    const [mostrarPassword, setMostrarPassword] =
+        useState(false);
+
+    const [mostrarConfirmacion, setMostrarConfirmacion] =
+        useState(false);
+
+    const [confirmacionTocada, setConfirmacionTocada] =
+        useState(false);
+
+    const [intentoGuardar, setIntentoGuardar] =
+        useState(false);
+
     const [error, setError] = useState('');
     const [mensaje, setMensaje] = useState('');
     const [loading, setLoading] = useState(false);
@@ -37,20 +114,26 @@ export default function RestablecerContrasena() {
             ? '/images/logoDark.png'
             : '/images/logo-ru.png';
 
-    const passwordValida = password.length >= 8;
-    const excedeLimiteBytes =
-        new TextEncoder().encode(password).length > 72;
+    const requisitos = obtenerRequisitos(password);
+
+    const passwordValida = requisitos.every(
+        (requisito) => requisito.cumplido
+    );
 
     const contrasenasCoinciden =
         password !== '' && password === confirmacion;
 
+    const mostrarErrorConfirmacion =
+        (confirmacionTocada || intentoGuardar) &&
+        !contrasenasCoinciden;
+
     const handleSubmit = async (event) => {
         event.preventDefault();
 
-        if (loading) return;
+        if (loading || mensaje) return;
 
         setError('');
-        setMensaje('');
+        setIntentoGuardar(true);
 
         if (!token) {
             setError(
@@ -60,12 +143,9 @@ export default function RestablecerContrasena() {
         }
 
         if (!passwordValida) {
-            setError('La contraseña debe tener al menos 8 caracteres.');
-            return;
-        }
-
-        if (excedeLimiteBytes) {
-            setError('La contraseña supera la longitud permitida.');
+            setError(
+                'La contraseña debe cumplir todos los requisitos de seguridad.'
+            );
             return;
         }
 
@@ -79,28 +159,28 @@ export default function RestablecerContrasena() {
         try {
             const response = await fetch(API_URL, {
                 method: 'POST',
+
                 headers: {
                     'Content-Type': 'application/json',
                 },
+
                 body: JSON.stringify({
                     token,
                     password,
                 }),
             });
 
-            const data = await response.json().catch(() => null);
+            const data = await response
+                .json()
+                .catch(() => null);
 
             if (!response.ok) {
-                const detalle =
-                    typeof data?.detail === 'string'
-                        ? data.detail
-                        : 'No se pudo cambiar la contraseña. Solicita un enlace nuevo.';
-
-                throw new Error(detalle);
+                throw new Error(obtenerErrorRespuesta(data));
             }
 
             setPassword('');
             setConfirmacion('');
+
             setMensaje(
                 'Tu contraseña fue actualizada. Ya puedes iniciar sesión.'
             );
@@ -108,7 +188,8 @@ export default function RestablecerContrasena() {
             setError(
                 err instanceof TypeError
                     ? 'No fue posible conectar con el servidor.'
-                    : err.message || 'No se pudo cambiar la contraseña.'
+                    : err.message ||
+                    'No se pudo cambiar la contraseña.'
             );
         } finally {
             setLoading(false);
@@ -204,9 +285,10 @@ export default function RestablecerContrasena() {
                                     role="alert"
                                 >
                                     <AlertCircle size={18} aria-hidden="true" />
+
                                     <span>
-                                        Este enlace no contiene un código de recuperación.
-                                        Solicita uno nuevo.
+                                        Este enlace no contiene un código de
+                                        recuperación. Solicita uno nuevo.
                                     </span>
                                 </div>
                             )}
@@ -236,10 +318,11 @@ export default function RestablecerContrasena() {
                                     onSubmit={handleSubmit}
                                     className="ru-recovery__form"
                                     aria-busy={loading}
+                                    noValidate
                                 >
                                     <div className="ru-recovery__field">
                                         <label htmlFor="ru-new-password">
-                                            Nueva contraseña
+                                            Nueva contraseña *
                                         </label>
 
                                         <div className="ru-recovery__input-wrap">
@@ -252,14 +335,17 @@ export default function RestablecerContrasena() {
                                             <input
                                                 id="ru-new-password"
                                                 type={mostrarPassword ? 'text' : 'password'}
-                                                placeholder="Mínimo 8 caracteres"
+                                                placeholder="Crea tu nueva contraseña"
                                                 autoComplete="new-password"
                                                 value={password}
                                                 onChange={(event) => {
                                                     setPassword(event.target.value);
                                                     setError('');
                                                 }}
-                                                minLength={8}
+                                                aria-describedby="ru-password-requisitos"
+                                                aria-invalid={
+                                                    intentoGuardar && !passwordValida
+                                                }
                                                 required
                                             />
 
@@ -275,6 +361,7 @@ export default function RestablecerContrasena() {
                                                         : 'Mostrar contraseña'
                                                 }
                                                 aria-pressed={mostrarPassword}
+                                                aria-controls="ru-new-password"
                                             >
                                                 {mostrarPassword ? (
                                                     <EyeOff size={18} aria-hidden="true" />
@@ -284,22 +371,42 @@ export default function RestablecerContrasena() {
                                             </button>
                                         </div>
 
-                                        {password && !passwordValida && (
-                                            <small className="ru-recovery__field-error">
-                                                Usa al menos 8 caracteres.
-                                            </small>
-                                        )}
+                                        <div
+                                            id="ru-password-requisitos"
+                                            className="ru-recovery__requirements"
+                                        >
+                                            <strong>Requisitos de seguridad</strong>
 
-                                        {password && excedeLimiteBytes && (
-                                            <small className="ru-recovery__field-error">
-                                                La contraseña supera la longitud permitida.
-                                            </small>
-                                        )}
+                                            <ul>
+                                                {requisitos.map((requisito) => (
+                                                    <li
+                                                        key={requisito.id}
+                                                        className={
+                                                            requisito.cumplido
+                                                                ? 'is-complete'
+                                                                : 'is-pending'
+                                                        }
+                                                    >
+                                                        <span aria-hidden="true">
+                                                            {requisito.cumplido ? '✓' : '○'}
+                                                        </span>
+
+                                                        <span>
+                                                            {requisito.texto}
+                                                            {' — '}
+                                                            {requisito.cumplido
+                                                                ? 'Cumplido'
+                                                                : 'Pendiente'}
+                                                        </span>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
                                     </div>
 
                                     <div className="ru-recovery__field">
                                         <label htmlFor="ru-confirm-password">
-                                            Confirmar contraseña
+                                            Confirmar contraseña *
                                         </label>
 
                                         <div className="ru-recovery__input-wrap">
@@ -312,15 +419,27 @@ export default function RestablecerContrasena() {
                                             <input
                                                 id="ru-confirm-password"
                                                 type={
-                                                    mostrarConfirmacion ? 'text' : 'password'
+                                                    mostrarConfirmacion
+                                                        ? 'text'
+                                                        : 'password'
                                                 }
                                                 placeholder="Repite la contraseña"
                                                 autoComplete="new-password"
                                                 value={confirmacion}
                                                 onChange={(event) => {
                                                     setConfirmacion(event.target.value);
+                                                    setConfirmacionTocada(true);
                                                     setError('');
                                                 }}
+                                                onBlur={() =>
+                                                    setConfirmacionTocada(true)
+                                                }
+                                                aria-invalid={mostrarErrorConfirmacion}
+                                                aria-describedby={
+                                                    mostrarErrorConfirmacion
+                                                        ? 'ru-confirm-error'
+                                                        : undefined
+                                                }
                                                 required
                                             />
 
@@ -328,7 +447,9 @@ export default function RestablecerContrasena() {
                                                 type="button"
                                                 className="ru-recovery__password-toggle"
                                                 onClick={() =>
-                                                    setMostrarConfirmacion((actual) => !actual)
+                                                    setMostrarConfirmacion(
+                                                        (actual) => !actual
+                                                    )
                                                 }
                                                 aria-label={
                                                     mostrarConfirmacion
@@ -336,6 +457,7 @@ export default function RestablecerContrasena() {
                                                         : 'Mostrar confirmación'
                                                 }
                                                 aria-pressed={mostrarConfirmacion}
+                                                aria-controls="ru-confirm-password"
                                             >
                                                 {mostrarConfirmacion ? (
                                                     <EyeOff size={18} aria-hidden="true" />
@@ -345,9 +467,15 @@ export default function RestablecerContrasena() {
                                             </button>
                                         </div>
 
-                                        {confirmacion && !contrasenasCoinciden && (
-                                            <small className="ru-recovery__field-error">
-                                                Las contraseñas no coinciden.
+                                        {mostrarErrorConfirmacion && (
+                                            <small
+                                                id="ru-confirm-error"
+                                                className="ru-recovery__field-error"
+                                                role="alert"
+                                            >
+                                                {confirmacion
+                                                    ? 'Las contraseñas no coinciden.'
+                                                    : 'Debes confirmar la contraseña.'}
                                             </small>
                                         )}
                                     </div>
@@ -377,6 +505,7 @@ export default function RestablecerContrasena() {
                                 className="ru-recovery__login-link"
                             >
                                 <ArrowLeft size={16} aria-hidden="true" />
+
                                 {!token
                                     ? 'Solicitar un enlace nuevo'
                                     : 'Volver al inicio de sesión'}

@@ -2,9 +2,10 @@
 
 import hashlib
 import secrets
+
 from typing import Any
 
-from psycopg.rows import dict_row # type: ignore
+from psycopg.rows import dict_row  # type: ignore
 
 from app.core.database import get_connection
 
@@ -14,6 +15,10 @@ class AccesoRepository:
 
     HORAS_SESION = 8
     MINUTOS_RECUPERACION = 30
+
+    # Esta versión corresponde al texto de términos
+    # que actualmente se muestra en el frontend.
+    VERSION_TERMINOS = "borrador-1"
 
     @staticmethod
     def _hash_token(token: str) -> str:
@@ -28,7 +33,7 @@ class AccesoRepository:
         cursor,
         usuario_id: int,
     ) -> list[str]:
-        """Consulta los permisos actuales del rol del usuario."""
+        """Consulta los permisos actuales del rol."""
 
         cursor.execute(
             """
@@ -58,10 +63,12 @@ class AccesoRepository:
         correo: str,
         password: str,
     ) -> dict[str, Any] | None:
-        """Verifica las credenciales y obtiene los permisos."""
+        """Verifica credenciales y obtiene permisos."""
 
         with get_connection() as conn:
-            with conn.cursor(row_factory=dict_row) as cursor:
+            with conn.cursor(
+                row_factory=dict_row
+            ) as cursor:
                 cursor.execute(
                     """
                     SELECT *
@@ -97,10 +104,10 @@ class AccesoRepository:
         self,
         usuario_id: int,
     ) -> str | None:
-        """Crea una sesión para un usuario y rol activos.
+        """Crea una sesión para un usuario activo.
 
-        El token original se devuelve una sola vez. En la base
-        de datos se guarda únicamente su hash.
+        El token original se devuelve una sola vez.
+        En la base de datos se guarda únicamente su hash.
         """
 
         token = secrets.token_urlsafe(32)
@@ -145,7 +152,7 @@ class AccesoRepository:
         self,
         token: str,
     ) -> dict[str, Any] | None:
-        """Consulta una sesión vigente y sus permisos actuales."""
+        """Consulta una sesión vigente y sus permisos."""
 
         if not token:
             return None
@@ -153,7 +160,9 @@ class AccesoRepository:
         token_hash = self._hash_token(token)
 
         with get_connection() as conn:
-            with conn.cursor(row_factory=dict_row) as cursor:
+            with conn.cursor(
+                row_factory=dict_row
+            ) as cursor:
                 cursor.execute(
                     """
                     SELECT
@@ -196,14 +205,16 @@ class AccesoRepository:
                     "rol": usuario["rol"],
                     "estado": usuario["estado"],
                     "permisos": permisos,
-                    "fecha_expiracion": usuario["fecha_expiracion"],
+                    "fecha_expiracion": (
+                        usuario["fecha_expiracion"]
+                    ),
                 }
 
     def cerrar_sesion(
         self,
         token: str,
     ) -> bool:
-        """Invalida la sesión correspondiente al token."""
+        """Invalida la sesión del token."""
 
         if not token:
             return False
@@ -229,16 +240,25 @@ class AccesoRepository:
         self,
         datos: dict[str, Any],
     ) -> int:
-        """Registra una cuenta con el rol Cliente.
+        """Registra un cliente y su aceptación de términos.
 
-        El rol se selecciona en el backend. La función de
-        PostgreSQL procesa la contraseña y guarda su hash.
+        El usuario y la aceptación se guardan en la misma
+        transacción. Si ocurre un error, ambos se revierten.
         """
 
-        sigla_documento = datos["id_TipoDoc"].strip().upper()
+        if datos.get("terminosAceptados") is not True:
+            raise ValueError(
+                "Debes aceptar los términos y condiciones."
+            )
+
+        sigla_documento = (
+            datos["id_TipoDoc"].strip().upper()
+        )
 
         with get_connection() as conn:
-            with conn.cursor(row_factory=dict_row) as cursor:
+            with conn.cursor(
+                row_factory=dict_row
+            ) as cursor:
                 cursor.execute(
                     """
                     SELECT id_tipodoc
@@ -252,7 +272,8 @@ class AccesoRepository:
 
                 if tipo_doc is None:
                     raise ValueError(
-                        "El tipo de documento seleccionado no existe."
+                        "El tipo de documento "
+                        "seleccionado no existe."
                     )
 
                 cursor.execute(
@@ -268,7 +289,8 @@ class AccesoRepository:
 
                 if rol is None:
                     raise ValueError(
-                        "El registro de clientes no está disponible."
+                        "El registro de clientes "
+                        "no está disponible."
                     )
 
                 cursor.execute(
@@ -294,13 +316,35 @@ class AccesoRepository:
 
                 resultado = cursor.fetchone()
 
-                return resultado["id_usuario"]
+                if resultado is None:
+                    raise RuntimeError(
+                        "No fue posible obtener "
+                        "el usuario registrado."
+                    )
+
+                id_usuario = resultado["id_usuario"]
+
+                cursor.execute(
+                    """
+                    INSERT INTO public.tb_aceptacion_terminos (
+                        id_usuario,
+                        version_terminos
+                    )
+                    VALUES (%s, %s)
+                    """,
+                    (
+                        id_usuario,
+                        self.VERSION_TERMINOS,
+                    ),
+                )
+
+                return id_usuario
 
     def crear_token_recuperacion(
         self,
         correo: str,
     ) -> dict[str, str] | None:
-        """Crea un token temporal para recuperar una cuenta.
+        """Crea un token temporal para recuperación.
 
         En la base de datos se guarda el hash. El token
         original se devuelve para enviarlo por correo.
@@ -310,7 +354,9 @@ class AccesoRepository:
         token_hash = self._hash_token(token)
 
         with get_connection() as conn:
-            with conn.cursor(row_factory=dict_row) as cursor:
+            with conn.cursor(
+                row_factory=dict_row
+            ) as cursor:
                 cursor.execute(
                     """
                     SELECT *
@@ -343,17 +389,18 @@ class AccesoRepository:
         token: str,
         password: str,
     ) -> None:
-        """Cambia la contraseña y cierra las sesiones abiertas.
+        """Cambia contraseña y cierra sesiones abiertas.
 
-        La contraseña, el consumo del token y el cierre de
-        sesiones se gestionan en una misma transacción.
+        El cambio de contraseña, el consumo del token y
+        el cierre de sesiones usan una misma transacción.
         """
 
         token_hash = self._hash_token(token)
 
         with get_connection() as conn:
-            with conn.cursor(row_factory=dict_row) as cursor:
-                # Localizar y bloquear el token y el usuario.
+            with conn.cursor(
+                row_factory=dict_row
+            ) as cursor:
                 cursor.execute(
                     """
                     SELECT
@@ -375,13 +422,12 @@ class AccesoRepository:
 
                 if registro is None:
                     raise ValueError(
-                        "El enlace de recuperación no es válido "
-                        "o ya expiró."
+                        "El enlace de recuperación no "
+                        "es válido o ya expiró."
                     )
 
                 usuario_id = registro["id_usuario"]
 
-                # Cambiar la contraseña y consumir el token.
                 cursor.execute(
                     """
                     SELECT public.sp_restablecer_contrasena(
@@ -399,10 +445,10 @@ class AccesoRepository:
 
                 if not resultado or not resultado["actualizado"]:
                     raise ValueError(
-                        "No fue posible restablecer la contraseña."
+                        "No fue posible restablecer "
+                        "la contraseña."
                     )
 
-                # Cerrar todas las sesiones abiertas de la cuenta.
                 cursor.execute(
                     """
                     UPDATE public.tb_sesiones_acceso

@@ -1,16 +1,21 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
+
+import { obtenerToken } from '../../usuarios/services/authService';
 
 import {
-  AlertCircle,
-  CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
-  ClipboardList,
   Eye,
   Plus,
-  Search,
   X,
 } from 'lucide-react';
+
+import AppAlert from '../../../components/ui/AppAlert';
+import FiltrarBuscarGlobal from '../../../components/ui/FiltrarBuscarGlobal';
+import TableGlobal from '../../../components/ui/TableGlobal';
 
 import {
   listarBajasInsumosApi,
@@ -19,7 +24,9 @@ import {
 
 import './BajasInsumos.css';
 
-const API_INSUMOS = 'http://127.0.0.1:8000/api/insumos';
+const API_INSUMOS =
+  'http://127.0.0.1:8000/api/insumos';
+
 const REGISTROS_POR_PAGINA = 5;
 
 const FORMULARIO_INICIAL = {
@@ -32,7 +39,15 @@ async function listarInsumos() {
   let respuesta;
 
   try {
-    respuesta = await fetch(API_INSUMOS);
+    const token = obtenerToken();
+
+    respuesta = await fetch(API_INSUMOS, {
+      headers: {
+        ...(token
+          ? { Authorization: `Bearer ${token}` }
+          : {}),
+      },
+    });
   } catch {
     throw new Error(
       'No fue posible conectar con el servidor para cargar los insumos.'
@@ -40,7 +55,9 @@ async function listarInsumos() {
   }
 
   if (!respuesta.ok) {
-    throw new Error('No fue posible cargar los insumos.');
+    throw new Error(
+      'No fue posible cargar los insumos.'
+    );
   }
 
   return respuesta.json();
@@ -51,7 +68,9 @@ function formatearFecha(fecha) {
 
   const partes = String(fecha).split('-');
 
-  if (partes.length !== 3) return fecha;
+  if (partes.length !== 3) {
+    return fecha;
+  }
 
   return `${partes[2]}/${partes[1]}/${partes[0]}`;
 }
@@ -63,13 +82,19 @@ function validarCantidad(valor, insumo) {
 
   const cantidad = Number(valor);
 
-  if (!Number.isSafeInteger(cantidad) || cantidad <= 0) {
+  if (
+    !Number.isSafeInteger(cantidad) ||
+    cantidad <= 0
+  ) {
     return 'Ingresa un número entero mayor que cero.';
   }
 
-  if (insumo && cantidad > Number(insumo.stock)) {
+  if (
+    insumo &&
+    cantidad > Number(insumo.stock)
+  ) {
     return (
-      `La cantidad no puede superar el stock disponible: ` +
+      'La cantidad no puede superar el stock disponible: ' +
       `${insumo.stock}.`
     );
   }
@@ -87,23 +112,37 @@ export default function BajasInsumos() {
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
 
-  const [modalRegistro, setModalRegistro] = useState(false);
-  const [bajaSeleccionada, setBajaSeleccionada] = useState(null);
+  const [modalRegistro, setModalRegistro] =
+    useState(false);
 
-  const [formulario, setFormulario] = useState(FORMULARIO_INICIAL);
+  const [bajaSeleccionada, setBajaSeleccionada] =
+    useState(null);
+
+  const [formulario, setFormulario] = useState(
+    FORMULARIO_INICIAL
+  );
+
   const [tocados, setTocados] = useState({});
-  const [intentoGuardar, setIntentoGuardar] = useState(false);
+
+  const [intentoGuardar, setIntentoGuardar] =
+    useState(false);
 
   const [alerta, setAlerta] = useState(null);
 
   const cargarDatos = useCallback(async () => {
-    const [bajasApi, insumosApi] = await Promise.all([
-      listarBajasInsumosApi(),
-      listarInsumos(),
-    ]);
+    const [bajasApi, insumosApi] =
+      await Promise.all([
+        listarBajasInsumosApi(),
+        listarInsumos(),
+      ]);
 
-    setBajas(Array.isArray(bajasApi) ? bajasApi : []);
-    setInsumos(Array.isArray(insumosApi) ? insumosApi : []);
+    setBajas(
+      Array.isArray(bajasApi) ? bajasApi : []
+    );
+
+    setInsumos(
+      Array.isArray(insumosApi) ? insumosApi : []
+    );
   }, []);
 
   useEffect(() => {
@@ -116,8 +155,15 @@ export default function BajasInsumos() {
       .then(([bajasApi, insumosApi]) => {
         if (!activo) return;
 
-        setBajas(Array.isArray(bajasApi) ? bajasApi : []);
-        setInsumos(Array.isArray(insumosApi) ? insumosApi : []);
+        setBajas(
+          Array.isArray(bajasApi) ? bajasApi : []
+        );
+
+        setInsumos(
+          Array.isArray(insumosApi)
+            ? insumosApi
+            : []
+        );
       })
       .catch((error) => {
         if (!activo) return;
@@ -163,9 +209,13 @@ export default function BajasInsumos() {
   const insumoSeleccionado = useMemo(() => {
     return insumosDisponibles.find(
       (insumo) =>
-        String(insumo.idInsumo) === formulario.idInsumo
+        String(insumo.idInsumo) ===
+        formulario.idInsumo
     );
-  }, [insumosDisponibles, formulario.idInsumo]);
+  }, [
+    insumosDisponibles,
+    formulario.idInsumo,
+  ]);
 
   const bajasFiltradas = useMemo(() => {
     const texto = busqueda.trim().toLowerCase();
@@ -181,20 +231,29 @@ export default function BajasInsumos() {
         baja.nombreUsuario,
         baja.motivo,
       ].some((valor) =>
-        String(valor ?? '').toLowerCase().includes(texto)
+        String(valor ?? '')
+          .toLowerCase()
+          .includes(texto)
       )
     );
   }, [bajas, busqueda]);
 
   const totalPaginas = Math.max(
     1,
-    Math.ceil(bajasFiltradas.length / REGISTROS_POR_PAGINA)
+    Math.ceil(
+      bajasFiltradas.length /
+      REGISTROS_POR_PAGINA
+    )
   );
 
-  const paginaVisible = Math.min(pagina, totalPaginas);
+  const paginaVisible = Math.min(
+    pagina,
+    totalPaginas
+  );
 
   const bajasPagina = bajasFiltradas.slice(
-    (paginaVisible - 1) * REGISTROS_POR_PAGINA,
+    (paginaVisible - 1) *
+    REGISTROS_POR_PAGINA,
     paginaVisible * REGISTROS_POR_PAGINA
   );
 
@@ -235,6 +294,17 @@ export default function BajasInsumos() {
     }));
   };
 
+  const marcarCampoComoTocado = (evento) => {
+    const { name } = evento.target;
+
+    if (!name) return;
+
+    setTocados((actual) => ({
+      ...actual,
+      [name]: true,
+    }));
+  };
+
   const abrirRegistro = () => {
     setFormulario(FORMULARIO_INICIAL);
     setTocados({});
@@ -263,8 +333,12 @@ export default function BajasInsumos() {
 
     try {
       await registrarBajaInsumoApi({
-        idInsumo: Number(formulario.idInsumo),
-        cantidad: Number(formulario.cantidad),
+        idInsumo: Number(
+          formulario.idInsumo
+        ),
+        cantidad: Number(
+          formulario.cantidad
+        ),
         motivo: formulario.motivo.trim(),
       });
 
@@ -276,7 +350,8 @@ export default function BajasInsumos() {
 
         setAlerta({
           tipo: 'success',
-          mensaje: 'La baja se registró correctamente.',
+          mensaje:
+            'La baja se registró correctamente.',
         });
       } catch {
         setAlerta({
@@ -297,29 +372,62 @@ export default function BajasInsumos() {
     }
   };
 
+  const columnas = [
+    {
+      header: 'ID',
+      render: (baja) => `#${baja.idBaja}`,
+    },
+    {
+      header: 'Insumo',
+      render: (baja) => (
+        <strong>{baja.nombreInsumo}</strong>
+      ),
+    },
+    {
+      header: 'Cantidad',
+      render: (baja) => baja.cantidad,
+    },
+    {
+      header: 'Motivo',
+      render: (baja) => baja.motivo,
+    },
+    {
+      header: 'Responsable',
+      render: (baja) => baja.nombreUsuario,
+    },
+    {
+      header: 'Fecha',
+      render: (baja) =>
+        formatearFecha(baja.fechaBaja),
+    },
+    {
+      header: 'Acciones',
+      render: (baja) => (
+        <button
+          type="button"
+          className="bajas-ver-btn"
+          onClick={() =>
+            setBajaSeleccionada(baja)
+          }
+          aria-label={`Consultar baja ${baja.idBaja}`}
+          title="Consultar"
+        >
+          <Eye size={17} aria-hidden="true" />
+        </button>
+      ),
+    },
+  ];
+
   return (
     <main className="bajas-page">
       {alerta && (
-        <div
-          className={`bajas-alerta bajas-alerta--${alerta.tipo}`}
-          role={alerta.tipo === 'error' ? 'alert' : 'status'}
-        >
-          {alerta.tipo === 'error' ? (
-            <AlertCircle size={19} aria-hidden="true" />
-          ) : (
-            <CheckCircle2 size={19} aria-hidden="true" />
-          )}
-
-          <span>{alerta.mensaje}</span>
-
-          <button
-            type="button"
-            onClick={() => setAlerta(null)}
-            aria-label="Cerrar alerta"
-          >
-            <X size={16} aria-hidden="true" />
-          </button>
-        </div>
+        <AppAlert
+          key={`${alerta.tipo}-${alerta.mensaje}`}
+          type={alerta.tipo}
+          message={alerta.mensaje}
+          duration={3000}
+          onClose={() => setAlerta(null)}
+        />
       )}
 
       <header className="bajas-header">
@@ -331,171 +439,72 @@ export default function BajasInsumos() {
           <h1>Bajas de insumos</h1>
 
           <p>
-            Registra y consulta las salidas de insumos del inventario.
+            Registra y consulta las salidas de
+            insumos del inventario.
           </p>
         </div>
-
-        <button
-          type="button"
-          className="bajas-btn bajas-btn--principal"
-          onClick={abrirRegistro}
-          disabled={cargando}
-        >
-          <Plus size={18} aria-hidden="true" />
-          Registrar baja
-        </button>
       </header>
 
-      <section
-        className="bajas-kpis"
-        aria-label="Resumen de bajas"
-      >
-        <div className="bajas-kpi">
-          <div className="bajas-kpi__encabezado">
-            <span>Total de bajas</span>
-            <ClipboardList size={20} aria-hidden="true" />
-          </div>
+      <FiltrarBuscarGlobal
+        searchPlaceholder="Buscar por insumo, responsable o motivo..."
+        searchValue={busqueda}
+        onSearchChange={(valor) => {
+          setBusqueda(valor);
+          setPagina(1);
+        }}
+        action={
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={abrirRegistro}
+            disabled={cargando}
+          >
+            <Plus size={16} aria-hidden="true" />
+            <span>REGISTRAR BAJA</span>
+          </button>
+        }
+      />
 
-          <strong>{bajas.length}</strong>
-
-          <small>Registros de bajas de insumos</small>
-        </div>
-      </section>
-
-      <section className="bajas-filtros">
-        <div className="bajas-filtros__titulo">
-          <Search size={17} aria-hidden="true" />
-          <span>Buscar bajas</span>
-        </div>
-
-        <div className="bajas-filtros__contenido">
-          <label className="bajas-buscador">
-            <Search size={18} aria-hidden="true" />
-
-            <span className="bajas-solo-lector">
-              Buscar por insumo, responsable o motivo
-            </span>
-
-            <input
-              type="search"
-              value={busqueda}
-              placeholder="Buscar por insumo, responsable o motivo..."
-              onChange={(evento) => {
-                setBusqueda(evento.target.value);
-                setPagina(1);
-              }}
-            />
-          </label>
-        </div>
-      </section>
-
-      <section className="bajas-panel">
-        <div className="bajas-panel__header">
-          <div>
-            <h2>Historial de bajas</h2>
-            <p>Consulta las salidas registradas en el inventario.</p>
-          </div>
-        </div>
-
-        <div className="bajas-tabla-contenedor">
-          <table className="bajas-tabla">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Insumo</th>
-                <th>Cantidad</th>
-                <th>Motivo</th>
-                <th>Responsable</th>
-                <th>Fecha</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {cargando ? (
-                <tr>
-                  <td colSpan="7" className="bajas-vacio">
-                    Cargando bajas...
-                  </td>
-                </tr>
-              ) : bajasPagina.length === 0 ? (
-                <tr>
-                  <td colSpan="7" className="bajas-vacio">
-                    No se encontraron bajas.
-                  </td>
-                </tr>
-              ) : (
-                bajasPagina.map((baja) => (
-                  <tr key={baja.idBaja}>
-                    <td>#{baja.idBaja}</td>
-
-                    <td className="bajas-tabla__nombre">
-                      {baja.nombreInsumo}
-                    </td>
-
-                    <td>{baja.cantidad}</td>
-                    <td>{baja.motivo}</td>
-                    <td>{baja.nombreUsuario}</td>
-                    <td>{formatearFecha(baja.fechaBaja)}</td>
-
-                    <td>
-                      <button
-                        type="button"
-                        className="bajas-ver-btn"
-                        onClick={() => setBajaSeleccionada(baja)}
-                        aria-label={`Consultar baja ${baja.idBaja}`}
-                        title="Consultar"
-                      >
-                        <Eye size={17} aria-hidden="true" />
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="bajas-paginacion">
-          <span>{bajasFiltradas.length} registro(s)</span>
-
-          <div className="bajas-paginacion__controles">
-            <button
-              type="button"
-              onClick={() =>
-                setPagina((actual) => Math.max(1, actual - 1))
-              }
-              disabled={paginaVisible <= 1}
-              aria-label="Página anterior"
-            >
-              <ChevronLeft size={17} aria-hidden="true" />
-            </button>
-
-            <span>
-              Página {paginaVisible} de {totalPaginas}
-            </span>
-
-            <button
-              type="button"
-              onClick={() =>
-                setPagina((actual) =>
-                  Math.min(totalPaginas, actual + 1)
-                )
-              }
-              disabled={paginaVisible >= totalPaginas}
-              aria-label="Página siguiente"
-            >
-              <ChevronRight size={17} aria-hidden="true" />
-            </button>
-          </div>
-        </div>
-      </section>
+      <div className="bajas-tabla-estandar">
+        <TableGlobal
+          title="Historial de bajas"
+          totalCount={bajasFiltradas.length}
+          pageInfoTop={
+            `Página ${paginaVisible} de ${totalPaginas}`
+          }
+          columns={columnas}
+          data={bajasPagina}
+          currentPage={paginaVisible}
+          totalPages={totalPaginas}
+          onPageChange={setPagina}
+          paginationText={
+            `Mostrando ${bajasFiltradas.length === 0
+              ? 0
+              : (paginaVisible - 1) *
+              REGISTROS_POR_PAGINA +
+              1
+            }-${Math.min(
+              paginaVisible *
+              REGISTROS_POR_PAGINA,
+              bajasFiltradas.length
+            )} de ${bajasFiltradas.length} registros`
+          }
+          emptyMessage={
+            cargando
+              ? 'Cargando bajas...'
+              : 'No se encontraron bajas.'
+          }
+        />
+      </div>
 
       {modalRegistro && (
         <div
           className="bajas-modal-fondo"
           onClick={(evento) => {
-            if (evento.target === evento.currentTarget) {
+            if (
+              evento.target ===
+              evento.currentTarget
+            ) {
               cerrarRegistro();
             }
           }}
@@ -509,6 +518,7 @@ export default function BajasInsumos() {
             <div className="bajas-modal__header">
               <div>
                 <span>NUEVO REGISTRO</span>
+
                 <h2 id="bajas-titulo-registro">
                   Registrar baja
                 </h2>
@@ -528,12 +538,15 @@ export default function BajasInsumos() {
             <form
               className="bajas-formulario"
               onSubmit={registrarBaja}
+              onBlurCapture={
+                marcarCampoComoTocado
+              }
               noValidate
             >
               <div className="bajas-modal__contenido">
                 <p className="bajas-nota">
-                  La cantidad registrada se descontará del stock del
-                  insumo.
+                  La cantidad registrada se
+                  descontará del stock del insumo.
                 </p>
 
                 <div className="bajas-campo">
@@ -556,18 +569,27 @@ export default function BajasInsumos() {
                       Selecciona un insumo
                     </option>
 
-                    {insumosDisponibles.map((insumo) => (
-                      <option
-                        key={insumo.idInsumo}
-                        value={String(insumo.idInsumo)}
-                      >
-                        {insumo.nombre} — Stock: {insumo.stock}
-                      </option>
-                    ))}
+                    {insumosDisponibles.map(
+                      (insumo) => (
+                        <option
+                          key={insumo.idInsumo}
+                          value={String(
+                            insumo.idInsumo
+                          )}
+                        >
+                          {insumo.nombre}
+                          {' — Stock: '}
+                          {insumo.stock}
+                        </option>
+                      )
+                    )}
                   </select>
 
                   {mostrarError('idInsumo') && (
-                    <small className="bajas-error-campo">
+                    <small
+                      className="bajas-error-campo"
+                      role="alert"
+                    >
                       {mostrarError('idInsumo')}
                     </small>
                   )}
@@ -584,7 +606,9 @@ export default function BajasInsumos() {
                     type="number"
                     min="1"
                     step="1"
-                    max={insumoSeleccionado?.stock}
+                    max={
+                      insumoSeleccionado?.stock
+                    }
                     value={formulario.cantidad}
                     onChange={cambiarCampo}
                     placeholder="Ejemplo: 2"
@@ -597,12 +621,16 @@ export default function BajasInsumos() {
 
                   {insumoSeleccionado && (
                     <span className="bajas-ayuda">
-                      Stock disponible: {insumoSeleccionado.stock}
+                      Stock disponible:{' '}
+                      {insumoSeleccionado.stock}
                     </span>
                   )}
 
                   {mostrarError('cantidad') && (
-                    <small className="bajas-error-campo">
+                    <small
+                      className="bajas-error-campo"
+                      role="alert"
+                    >
                       {mostrarError('cantidad')}
                     </small>
                   )}
@@ -629,11 +657,15 @@ export default function BajasInsumos() {
                   />
 
                   <span className="bajas-ayuda">
-                    {formulario.motivo.length}/255 caracteres
+                    {formulario.motivo.length}
+                    /255 caracteres
                   </span>
 
                   {mostrarError('motivo') && (
-                    <small className="bajas-error-campo">
+                    <small
+                      className="bajas-error-campo"
+                      role="alert"
+                    >
                       {mostrarError('motivo')}
                     </small>
                   )}
@@ -655,7 +687,9 @@ export default function BajasInsumos() {
                   className="bajas-btn bajas-btn--principal"
                   disabled={guardando}
                 >
-                  {guardando ? 'Guardando...' : 'Registrar baja'}
+                  {guardando
+                    ? 'Guardando...'
+                    : 'Registrar baja'}
                 </button>
               </div>
             </form>
@@ -667,7 +701,10 @@ export default function BajasInsumos() {
         <div
           className="bajas-modal-fondo"
           onClick={(evento) => {
-            if (evento.target === evento.currentTarget) {
+            if (
+              evento.target ===
+              evento.currentTarget
+            ) {
               setBajaSeleccionada(null);
             }
           }}
@@ -680,7 +717,9 @@ export default function BajasInsumos() {
           >
             <div className="bajas-modal__header">
               <div>
-                <span>BAJA #{bajaSeleccionada.idBaja}</span>
+                <span>
+                  BAJA #{bajaSeleccionada.idBaja}
+                </span>
 
                 <h2 id="bajas-titulo-detalle">
                   Consultar baja
@@ -690,7 +729,9 @@ export default function BajasInsumos() {
               <button
                 type="button"
                 className="bajas-cerrar"
-                onClick={() => setBajaSeleccionada(null)}
+                onClick={() =>
+                  setBajaSeleccionada(null)
+                }
                 aria-label="Cerrar"
               >
                 <X size={20} aria-hidden="true" />
@@ -701,29 +742,38 @@ export default function BajasInsumos() {
               <div className="bajas-detalle">
                 <div>
                   <span>Insumo</span>
-                  <strong>{bajaSeleccionada.nombreInsumo}</strong>
+                  <strong>
+                    {bajaSeleccionada.nombreInsumo}
+                  </strong>
                 </div>
 
                 <div>
                   <span>Cantidad</span>
-                  <strong>{bajaSeleccionada.cantidad}</strong>
+                  <strong>
+                    {bajaSeleccionada.cantidad}
+                  </strong>
                 </div>
 
                 <div>
                   <span>Motivo</span>
-                  <strong>{bajaSeleccionada.motivo}</strong>
+                  <strong>
+                    {bajaSeleccionada.motivo}
+                  </strong>
                 </div>
 
                 <div>
                   <span>Responsable</span>
-                  <strong>{bajaSeleccionada.nombreUsuario}</strong>
+                  <strong>
+                    {bajaSeleccionada.nombreUsuario}
+                  </strong>
                 </div>
 
                 <div>
                   <span>Fecha</span>
-
                   <strong>
-                    {formatearFecha(bajaSeleccionada.fechaBaja)}
+                    {formatearFecha(
+                      bajaSeleccionada.fechaBaja
+                    )}
                   </strong>
                 </div>
               </div>
@@ -733,7 +783,9 @@ export default function BajasInsumos() {
               <button
                 type="button"
                 className="bajas-btn bajas-btn--secundario"
-                onClick={() => setBajaSeleccionada(null)}
+                onClick={() =>
+                  setBajaSeleccionada(null)
+                }
               >
                 Cerrar
               </button>
