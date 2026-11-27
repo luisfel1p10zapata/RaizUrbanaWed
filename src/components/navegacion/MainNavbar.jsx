@@ -107,7 +107,7 @@ const MainNavbar = () => {
 
             <nav className="main-navbar-links">
                 <NavLink to="/inicio">Inicio</NavLink>
-                <NavLink to="/productos">Colecciones</NavLink>
+                <NavLink to="/catalogo">Catálogo</NavLink>
             </nav>
 
             <div className="main-navbar-actions">

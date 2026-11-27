@@ -36,3 +36,5 @@ env/
 venv/
 ENV/
 *.log
+
+backend-clean/env.backup
