@@ -12,7 +12,7 @@ import { consultarSesion } from '../features/usuarios/services/authService';
 
 // Ventas y catálogo
 import Inicio from '../features/ventas/components/Inicio';
-import Catalogo from '../features/ventas/components/catalogo';
+import Catalogo from '../features/ventas/components/Catalogo';
 import Ventas from '../features/ventas/components/Ventas';
 import Carrito from '../features/ventas/components/Carrito';
 import Productos from '../features/control-de-existencias/components/Productos';

@@ -19,6 +19,7 @@ import {
 } from '../services/carritoService';
 import { listarProductosApi } from '../../control-de-existencias/services/productoService';
 import { listarProductoVariantesApi } from '../../control-de-existencias/services/productoVarianteService';
+import ProductRail from './ProductRail';
 import './Catalogo.css';
 
 const FILTROS_PUBLICO = ['Todos', 'Hombre', 'Mujer', 'Niño', 'Niña'];
@@ -36,6 +37,99 @@ const COLOR_PALETTE = {
   Dorado: '#d4af37',
   Plateado: '#ced4da',
 };
+
+const DESTACADOS_RESPALDO = [
+  {
+    id: 'demo-1',
+    nombre: 'Chaqueta Urbana Classic',
+    tipo: 'CHAQUETA',
+    grupoCategoria: 'ROPA',
+    publicoNorm: 'Hombre',
+    precio: 145000,
+    descripcion: 'Chaqueta ligera de corte urbano con acabados resistentes para uso diario.',
+    fotos: ['https://images.unsplash.com/photo-1551028719-00167b16eac5?auto=format&fit=crop&w=800&q=85'],
+    foto: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?auto=format&fit=crop&w=800&q=85',
+    variantes: [],
+    colores: ['Negro'],
+    tallas: ['S', 'M', 'L'],
+    stockTotal: 10,
+  },
+  {
+    id: 'demo-2',
+    nombre: 'Vestido Esencial Lino',
+    tipo: 'VESTIDO',
+    grupoCategoria: 'ROPA',
+    publicoNorm: 'Mujer',
+    precio: 118000,
+    descripcion: 'Vestido fresco de caída suave confeccionado en pequeñas series.',
+    fotos: ['https://images.unsplash.com/photo-1539008835657-9e8e9680c956?auto=format&fit=crop&w=800&q=85'],
+    foto: 'https://images.unsplash.com/photo-1539008835657-9e8e9680c956?auto=format&fit=crop&w=800&q=85',
+    variantes: [],
+    colores: ['Beige'],
+    tallas: ['S', 'M', 'L'],
+    stockTotal: 8,
+  },
+  {
+    id: 'demo-3',
+    nombre: 'Conjunto Urbano Kids',
+    tipo: 'CONJUNTO',
+    grupoCategoria: 'ROPA',
+    publicoNorm: 'Niño',
+    precio: 89000,
+    descripcion: 'Prenda cómoda y resistente pensada para acompañar cada aventura.',
+    fotos: ['https://images.pexels.com/photos/15249960/pexels-photo-15249960.jpeg?auto=compress&cs=tinysrgb&w=800&q=85'],
+    foto: 'https://images.pexels.com/photos/15249960/pexels-photo-15249960.jpeg?auto=compress&cs=tinysrgb&w=800&q=85',
+    variantes: [],
+    colores: ['Azul'],
+    tallas: ['6', '8', '10'],
+    stockTotal: 12,
+  },
+  {
+    id: 'demo-4',
+    nombre: 'Sombrero Canela',
+    tipo: 'SOMBRERO',
+    grupoCategoria: 'ACCESORIO',
+    publicoNorm: 'Niña',
+    precio: 56000,
+    descripcion: 'Sombrero ligero de ala corta con cinta suave y ajuste interior.',
+    fotos: ['https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?auto=format&fit=crop&w=800&q=85'],
+    foto: 'https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?auto=format&fit=crop&w=800&q=85',
+    variantes: [],
+    colores: ['Beige'],
+    tallas: ['Única'],
+    stockTotal: 6,
+  },
+  {
+    id: 'demo-5',
+    nombre: 'Camiseta Básica Studio',
+    tipo: 'CAMISETA',
+    grupoCategoria: 'ROPA',
+    publicoNorm: 'Unisex',
+    precio: 68000,
+    descripcion: 'Algodón suave de alto gramaje con caída relajada.',
+    fotos: ['https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=800&q=85'],
+    foto: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=800&q=85',
+    variantes: [],
+    colores: ['Blanco'],
+    tallas: ['S', 'M', 'L', 'XL'],
+    stockTotal: 15,
+  },
+  {
+    id: 'demo-6',
+    nombre: 'Gorra Clásica Urbana',
+    tipo: 'GORRA',
+    grupoCategoria: 'ACCESORIO',
+    publicoNorm: 'Unisex',
+    precio: 48000,
+    descripcion: 'Visera curva con ajuste metálico trasero y bordado sutil.',
+    fotos: ['https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=800&q=85'],
+    foto: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=800&q=85',
+    variantes: [],
+    colores: ['Negro'],
+    tallas: ['Única'],
+    stockTotal: 14,
+  },
+];
 
 const extraerLista = (respuesta) => {
   if (Array.isArray(respuesta)) return respuesta;
@@ -316,6 +410,15 @@ const Catalogo = () => {
     );
   }, [productosBase, filtroActivo]);
 
+  // Productos para el riel colgante superior
+  const itemsRiel = useMemo(() => {
+    const base = productosBase.length > 0 ? productosBase.slice(0, 7) : DESTACADOS_RESPALDO;
+    return base.map((p) => ({
+      ...p,
+      imagenRender: obtenerImagen(p),
+    }));
+  }, [productosBase]);
+
   const resolverVariante = (producto, color, talla) => {
     const vars = producto?.variantes || [];
     if (!vars.length) return null;
@@ -414,27 +517,14 @@ const Catalogo = () => {
 
   return (
     <main className="catalogo-page">
-      {/* HERO EDITORIAL */}
-      <section className="catalogo-hero">
-        <div className="catalogo-container catalogo-hero-grid">
-          <div>
-            <div className="catalogo-eyebrow">
-              <span />
-              PARA TODOS · TODOS LOS DÍAS
-            </div>
-            <h1>
-              Vestir en familia,
-              <br />
-              con identidad.
-            </h1>
-          </div>
-
-          <p className="catalogo-hero-desc">
-            Ropa y accesorios de espíritu urbano para grandes y pequeños,
-            elegidos para combinar, durar y acompañar.
-          </p>
-        </div>
-      </section>
+      {/* RIEL INTERACTIVO COLGANTE DE PRODUCTOS */}
+      <ProductRail
+        items={itemsRiel}
+        eyebrow="COLECCIÓN DESTACADA · RAÍZ URBANA"
+        autoplay={true}
+        interval={2600}
+        onSelectProduct={(prod) => abrirDetalle(prod)}
+      />
 
       {/* BARRA DE FILTROS */}
       <div className="catalogo-filter-bar">
