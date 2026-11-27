@@ -3,9 +3,17 @@
 from decimal import Decimal
 from typing import Literal
 
-from pydantic import Field, field_validator, model_validator # type: ignore
+from pydantic import (
+    Field,
+    field_validator,
+    model_validator,
+)  # type: ignore
 
 from app.shared.schemas import CamelModel
+
+
+# ID confirmado en la tabla tb_categorias de Supabase.
+ID_CATEGORIA_ACCESORIOS = 2
 
 
 class InsumoDatosBase(CamelModel):
@@ -52,7 +60,9 @@ class InsumoDatosBase(CamelModel):
     stock_maximo: int | None = Field(
         default=None,
         ge=0,
-        description="Cantidad máxima esperada. Es opcional.",
+        description=(
+            "Cantidad máxima esperada. Es opcional."
+        ),
     )
 
     foto_insumo: str | None = Field(
@@ -60,6 +70,22 @@ class InsumoDatosBase(CamelModel):
         max_length=255,
         description="Ruta o URL de la foto del insumo.",
     )
+
+    @field_validator("id_categoria")
+    @classmethod
+    def validar_categoria_insumo(
+        cls,
+        valor: int,
+    ) -> int:
+        """Los insumos solo pertenecen a Accesorios."""
+
+        if valor != ID_CATEGORIA_ACCESORIOS:
+            raise ValueError(
+                "Los insumos solo pueden pertenecer "
+                "a la categoría Accesorios."
+            )
+
+        return valor
 
     @field_validator("nombre", mode="before")
     @classmethod
@@ -71,7 +97,10 @@ class InsumoDatosBase(CamelModel):
 
     @field_validator("nombre")
     @classmethod
-    def validar_nombre(cls, valor: str) -> str:
+    def validar_nombre(
+        cls,
+        valor: str,
+    ) -> str:
         if not valor:
             raise ValueError(
                 "El nombre del insumo es obligatorio."
@@ -182,7 +211,10 @@ class MaterialCreate(CamelModel):
 
     @field_validator("nombre")
     @classmethod
-    def validar_nombre(cls, valor: str) -> str:
+    def validar_nombre(
+        cls,
+        valor: str,
+    ) -> str:
         if valor.isdigit():
             raise ValueError(
                 "El nombre del material no puede "
@@ -223,4 +255,4 @@ class TamanoResponse(CamelModel):
 
     id_tamano: int
     nombre: str
-    estado: bool
+    estado: bool    

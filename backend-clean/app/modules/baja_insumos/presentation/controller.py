@@ -1,16 +1,27 @@
-"""Rutas HTTP para bajas de insumos."""
+"""Rutas HTTP protegidas para bajas de insumos."""
 
 import logging
 from typing import Any
 
-import psycopg # type: ignore
-from fastapi import APIRouter, Depends, HTTPException, Path, status # type: ignore
+import psycopg  # type: ignore
 
-from app.modules.accesos.presentation.dependencies import exigir_permiso
+from fastapi import ( # type: ignore
+    APIRouter,
+    Depends,
+    HTTPException,
+    Path,
+    status,
+)  # type: ignore
+
+from app.modules.accesos.presentation.dependencies import (
+    exigir_permiso,
+)
+
 from app.modules.baja_insumos.application.service import (
     BajaInsumoNoEncontradaError,
     BajaInsumoService,
 )
+
 from app.modules.baja_insumos.domain.schemas import (
     BajaInsumoCreate,
     BajaInsumoRegistrada,
@@ -25,8 +36,29 @@ router = APIRouter(
     tags=["Bajas de insumos"],
 )
 
-# Se verifica la sesión y el permiso en el backend.
+
+# Primero comprueba la sesión y el permiso.
 permiso_bajas = exigir_permiso("Bajas Insumos")
+
+
+def verificar_acceso_bajas(
+    usuario: dict[str, Any] = Depends(permiso_bajas),
+) -> dict[str, Any]:
+    """Exige permiso de bajas y un rol administrativo."""
+
+    if usuario.get("rol") not in (
+        "Administrador",
+        "Empleado",
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=(
+                "No tienes permiso para acceder "
+                "a las bajas de insumos."
+            ),
+        )
+
+    return usuario
 
 
 @router.get(
@@ -34,7 +66,9 @@ permiso_bajas = exigir_permiso("Bajas Insumos")
     response_model=list[BajaInsumoResponse],
 )
 def listar_bajas(
-    usuario: dict[str, Any] = Depends(permiso_bajas),
+    usuario: dict[str, Any] = Depends(
+        verificar_acceso_bajas
+    ),
 ):
     """Lista las bajas registradas."""
 
@@ -42,11 +76,16 @@ def listar_bajas(
         return BajaInsumoService().listar()
 
     except Exception as error:
-        logger.exception("Error al listar las bajas de insumos.")
+        logger.exception(
+            "Error al listar las bajas de insumos."
+        )
 
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="No fue posible consultar las bajas de insumos.",
+            detail=(
+                "No fue posible consultar "
+                "las bajas de insumos."
+            ),
         ) from error
 
 
@@ -56,12 +95,16 @@ def listar_bajas(
 )
 def obtener_baja(
     id_baja: int = Path(..., gt=0),
-    usuario: dict[str, Any] = Depends(permiso_bajas),
+    usuario: dict[str, Any] = Depends(
+        verificar_acceso_bajas
+    ),
 ):
     """Consulta una baja por su identificador."""
 
     try:
-        return BajaInsumoService().obtener_por_id(id_baja)
+        return BajaInsumoService().obtener_por_id(
+            id_baja
+        )
 
     except BajaInsumoNoEncontradaError as error:
         raise HTTPException(
@@ -70,11 +113,16 @@ def obtener_baja(
         ) from error
 
     except Exception as error:
-        logger.exception("Error al consultar la baja de insumo.")
+        logger.exception(
+            "Error al consultar la baja de insumo."
+        )
 
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="No fue posible consultar la baja de insumo.",
+            detail=(
+                "No fue posible consultar "
+                "la baja de insumo."
+            ),
         ) from error
 
 
@@ -85,7 +133,9 @@ def obtener_baja(
 )
 def registrar_baja(
     datos: BajaInsumoCreate,
-    usuario: dict[str, Any] = Depends(permiso_bajas),
+    usuario: dict[str, Any] = Depends(
+        verificar_acceso_bajas
+    ),
 ):
     """Registra una baja para el usuario autenticado."""
 
@@ -106,17 +156,27 @@ def registrar_baja(
                 ),
             ) from error
 
-        logger.exception("Error de base de datos al registrar la baja.")
+        logger.exception(
+            "Error de base de datos al registrar la baja."
+        )
 
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="No fue posible registrar la baja de insumo.",
+            detail=(
+                "No fue posible registrar "
+                "la baja de insumo."
+            ),
         ) from error
 
     except Exception as error:
-        logger.exception("Error inesperado al registrar la baja.")
+        logger.exception(
+            "Error inesperado al registrar la baja."
+        )
 
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="No fue posible registrar la baja de insumo.",
+            detail=(
+                "No fue posible registrar "
+                "la baja de insumo."
+            ),
         ) from error

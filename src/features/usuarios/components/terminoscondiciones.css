@@ -1,0 +1,117 @@
+/* =========================================================
+   TÉRMINOS Y CONDICIONES — RAÍZ URBANA
+   ========================================================= */
+
+.ru-terms {
+    --terms-bg: #f4ece9;
+    --terms-card: #ffffff;
+    --terms-text: #22223b;
+    --terms-muted: #6f6c7c;
+    --terms-border: #dfc8c2;
+
+    min-height: 100vh;
+    padding: 32px 20px 60px;
+    color: var(--terms-text);
+    background: var(--terms-bg);
+}
+
+.ru-terms[data-theme='dark'] {
+    --terms-bg: #191a27;
+    --terms-card: #252635;
+    --terms-text: #f4edf0;
+    --terms-muted: #c2b9c3;
+    --terms-border: #4a4050;
+}
+
+.ru-terms *,
+.ru-terms *::before,
+.ru-terms *::after {
+    box-sizing: border-box;
+}
+
+.ru-terms__container {
+    width: min(100%, 820px);
+    margin: 0 auto;
+}
+
+.ru-terms__back {
+    display: inline-block;
+    margin-bottom: 18px;
+    color: var(--terms-text);
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.ru-terms__back:hover {
+    text-decoration: underline;
+}
+
+.ru-terms__card {
+    padding: clamp(22px, 5vw, 46px);
+    background: var(--terms-card);
+    border: 1px solid var(--terms-border);
+    border-radius: 14px;
+    box-shadow: 0 8px 25px rgba(34, 34, 59, 0.06);
+}
+
+.ru-terms__eyebrow {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--terms-muted);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+}
+
+.ru-terms h1,
+.ru-terms h2,
+.ru-terms p {
+    margin-top: 0;
+}
+
+.ru-terms h1 {
+    margin-bottom: 10px;
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: clamp(28px, 4vw, 38px);
+    line-height: 1.2;
+}
+
+.ru-terms__intro {
+    margin-bottom: 30px;
+    color: var(--terms-muted);
+}
+
+.ru-terms section+section {
+    margin-top: 24px;
+}
+
+.ru-terms h2 {
+    margin-bottom: 8px;
+    color: var(--terms-text);
+    font-size: 16px;
+}
+
+.ru-terms p {
+    color: var(--terms-text);
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+.ru-terms .ru-terms__intro {
+    color: var(--terms-muted);
+}
+
+@media (max-width: 600px) {
+    .ru-terms {
+        padding: 20px 14px 40px;
+    }
+
+    .ru-terms__card {
+        padding: 22px;
+    }
+
+    .ru-terms h1 {
+        font-size: 28px;
+    }
+}

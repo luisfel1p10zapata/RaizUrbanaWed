@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { Check, Info, AlertTriangle, X } from 'lucide-react';
 import '../../styles/AppAlert.css';
 

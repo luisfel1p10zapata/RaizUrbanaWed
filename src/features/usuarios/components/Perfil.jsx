@@ -15,6 +15,9 @@ import {
   X,
 } from 'lucide-react';
 
+import AppAlert from '../../../components/ui/AppAlert';
+import CambiarContrasena from './CambiarContrasena';
+
 import {
   cerrarSesion,
   obtenerToken,
@@ -22,7 +25,8 @@ import {
 
 import './perfil.css';
 
-const API_PERFIL = 'http://localhost:8000/api/auth/perfil';
+const API_PERFIL =
+  'http://localhost:8000/api/auth/perfil';
 
 async function solicitarPerfil(opciones = {}) {
   const token = obtenerToken();
@@ -38,6 +42,7 @@ async function solicitarPerfil(opciones = {}) {
   try {
     respuesta = await fetch(API_PERFIL, {
       ...opciones,
+
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
@@ -50,7 +55,9 @@ async function solicitarPerfil(opciones = {}) {
     );
   }
 
-  const datos = await respuesta.json().catch(() => null);
+  const datos = await respuesta
+    .json()
+    .catch(() => null);
 
   if (!respuesta.ok) {
     const mensaje =
@@ -60,6 +67,7 @@ async function solicitarPerfil(opciones = {}) {
 
     const error = new Error(mensaje);
     error.status = respuesta.status;
+
     throw error;
   }
 
@@ -104,6 +112,7 @@ export default function Perfil() {
   const navigate = useNavigate();
 
   const [perfil, setPerfil] = useState(null);
+
   const [formulario, setFormulario] = useState({
     nombres: '',
     apellidos: '',
@@ -114,7 +123,9 @@ export default function Perfil() {
 
   const [editando, setEditando] = useState(false);
   const [tocados, setTocados] = useState({});
-  const [intentoGuardar, setIntentoGuardar] = useState(false);
+
+  const [intentoGuardar, setIntentoGuardar] =
+    useState(false);
 
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
@@ -139,11 +150,13 @@ export default function Perfil() {
           navigate('/cuenta/inicio-sesion', {
             replace: true,
           });
+
           return;
         }
 
         setError(
-          err.message || 'No fue posible cargar tu perfil.'
+          err.message ||
+          'No fue posible cargar tu perfil.'
         );
       })
       .finally(() => {
@@ -210,6 +223,9 @@ export default function Perfil() {
 
   const guardarCambios = async (event) => {
     event.preventDefault();
+
+    if (guardando) return;
+
     setIntentoGuardar(true);
     setError('');
     setMensaje('');
@@ -223,6 +239,7 @@ export default function Perfil() {
     try {
       const datos = await solicitarPerfil({
         method: 'PUT',
+
         body: JSON.stringify({
           nombres: formulario.nombres.trim(),
           apellidos: formulario.apellidos.trim(),
@@ -234,17 +251,22 @@ export default function Perfil() {
 
       setPerfil(datos);
       setEditando(false);
-      setMensaje('Tus datos se actualizaron correctamente.');
+
+      setMensaje(
+        'Tus datos se actualizaron correctamente.'
+      );
     } catch (err) {
       if (err.status === 401) {
         navigate('/cuenta/inicio-sesion', {
           replace: true,
         });
+
         return;
       }
 
       setError(
-        err.message || 'No fue posible actualizar tu perfil.'
+        err.message ||
+        'No fue posible actualizar tu perfil.'
       );
     } finally {
       setGuardando(false);
@@ -277,7 +299,9 @@ export default function Perfil() {
   if (cargando) {
     return (
       <div className="profile-page-container">
-        <p role="status">Cargando tu perfil...</p>
+        <p role="status">
+          Cargando tu perfil...
+        </p>
       </div>
     );
   }
@@ -287,7 +311,8 @@ export default function Perfil() {
       <div className="profile-page-container">
         <div className="profile-content-wrapper">
           <p role="alert">
-            {error || 'No fue posible cargar tu perfil.'}
+            {error ||
+              'No fue posible cargar tu perfil.'}
           </p>
 
           <Link to="/cuenta/inicio-sesion">
@@ -309,18 +334,46 @@ export default function Perfil() {
 
   return (
     <div className="profile-page-container">
+      {error && (
+        <AppAlert
+          key={`error-${error}`}
+          type="error"
+          message={error}
+          duration={3000}
+          onClose={() => setError('')}
+        />
+      )}
+
+      {mensaje && (
+        <AppAlert
+          key={`success-${mensaje}`}
+          type="success"
+          message={mensaje}
+          duration={3000}
+          onClose={() => setMensaje('')}
+        />
+      )}
+
       <div className="profile-content-wrapper">
-        <Link to={volverA} className="profile-back-link">
+        <Link
+          to={volverA}
+          className="profile-back-link"
+        >
           <ArrowLeft size={14} />
+
           {volverA === '/dashboard'
             ? 'Volver al Dashboard'
             : 'Volver al inicio'}
         </Link>
 
         <div className="profile-header-titles">
-          <div className="profile-subtitle-tag">PERFIL</div>
+          <div className="profile-subtitle-tag">
+            PERFIL
+          </div>
 
-          <h1 className="profile-title">Mi Cuenta</h1>
+          <h1 className="profile-title">
+            Mi Cuenta
+          </h1>
 
           <p className="profile-desc">
             Información de tu cuenta de usuario
@@ -348,18 +401,6 @@ export default function Perfil() {
           </div>
         </div>
 
-        {error && (
-          <div className="profile-message profile-message--error" role="alert">
-            {error}
-          </div>
-        )}
-
-        {mensaje && (
-          <div className="profile-message profile-message--success" role="status">
-            {mensaje}
-          </div>
-        )}
-
         <div className="profile-details-card">
           <div className="profile-details-header">
             <div className="profile-details-title">
@@ -382,6 +423,16 @@ export default function Perfil() {
             <form
               className="profile-edit-form"
               onSubmit={guardarCambios}
+              onBlurCapture={(event) => {
+                const campo = event.target.name;
+
+                if (campo) {
+                  setTocados((actual) => ({
+                    ...actual,
+                    [campo]: true,
+                  }));
+                }
+              }}
               noValidate
             >
               <div className="profile-edit-field">
@@ -395,7 +446,9 @@ export default function Perfil() {
                   value={formulario.nombres}
                   onChange={cambiarCampo}
                   maxLength={80}
-                  aria-invalid={Boolean(mostrarError('nombres'))}
+                  aria-invalid={Boolean(
+                    mostrarError('nombres')
+                  )}
                   required
                 />
 
@@ -417,7 +470,9 @@ export default function Perfil() {
                   value={formulario.apellidos}
                   onChange={cambiarCampo}
                   maxLength={80}
-                  aria-invalid={Boolean(mostrarError('apellidos'))}
+                  aria-invalid={Boolean(
+                    mostrarError('apellidos')
+                  )}
                   required
                 />
 
@@ -440,7 +495,9 @@ export default function Perfil() {
                   value={formulario.telefono}
                   onChange={cambiarCampo}
                   maxLength={20}
-                  aria-invalid={Boolean(mostrarError('telefono'))}
+                  aria-invalid={Boolean(
+                    mostrarError('telefono')
+                  )}
                   required
                 />
 
@@ -462,7 +519,9 @@ export default function Perfil() {
                   value={formulario.direccion}
                   onChange={cambiarCampo}
                   maxLength={200}
-                  aria-invalid={Boolean(mostrarError('direccion'))}
+                  aria-invalid={Boolean(
+                    mostrarError('direccion')
+                  )}
                   required
                 />
 
@@ -483,13 +542,26 @@ export default function Perfil() {
                   name="genero"
                   value={formulario.genero}
                   onChange={cambiarCampo}
-                  aria-invalid={Boolean(mostrarError('genero'))}
+                  aria-invalid={Boolean(
+                    mostrarError('genero')
+                  )}
                   required
                 >
-                  <option value="">Seleccionar</option>
-                  <option value="Masculino">Masculino</option>
-                  <option value="Femenino">Femenino</option>
-                  <option value="Otro">Otro</option>
+                  <option value="">
+                    Seleccionar
+                  </option>
+
+                  <option value="Masculino">
+                    Masculino
+                  </option>
+
+                  <option value="Femenino">
+                    Femenino
+                  </option>
+
+                  <option value="Otro">
+                    Otro
+                  </option>
                 </select>
 
                 {mostrarError('genero') && (
@@ -515,7 +587,9 @@ export default function Perfil() {
                   className="profile-save-btn"
                   disabled={guardando}
                 >
-                  {guardando ? 'Guardando...' : 'Guardar cambios'}
+                  {guardando
+                    ? 'Guardando...'
+                    : 'Guardar cambios'}
                 </button>
               </div>
             </form>
@@ -530,6 +604,7 @@ export default function Perfil() {
                   <span className="profile-info-label">
                     NOMBRE COMPLETO
                   </span>
+
                   <span className="profile-info-value">
                     {nombreCompleto}
                   </span>
@@ -545,6 +620,7 @@ export default function Perfil() {
                   <span className="profile-info-label">
                     CORREO ELECTRÓNICO
                   </span>
+
                   <span className="profile-info-value">
                     {perfil.correo}
                   </span>
@@ -560,6 +636,7 @@ export default function Perfil() {
                   <span className="profile-info-label">
                     TELÉFONO
                   </span>
+
                   <span className="profile-info-value">
                     {perfil.telefono || '—'}
                   </span>
@@ -575,6 +652,7 @@ export default function Perfil() {
                   <span className="profile-info-label">
                     DIRECCIÓN
                   </span>
+
                   <span className="profile-info-value">
                     {perfil.direccion || '—'}
                   </span>
@@ -590,6 +668,7 @@ export default function Perfil() {
                   <span className="profile-info-label">
                     GÉNERO
                   </span>
+
                   <span className="profile-info-value">
                     {perfil.genero || '—'}
                   </span>
@@ -602,7 +681,10 @@ export default function Perfil() {
                 </div>
 
                 <div className="profile-info-text">
-                  <span className="profile-info-label">ROL</span>
+                  <span className="profile-info-label">
+                    ROL
+                  </span>
+
                   <span className="profile-info-value">
                     {perfil.rol}
                   </span>
@@ -618,6 +700,7 @@ export default function Perfil() {
                   <span className="profile-info-label">
                     ESTADO DE LA CUENTA
                   </span>
+
                   <span className="profile-info-value">
                     {perfil.estado}
                   </span>
@@ -627,15 +710,7 @@ export default function Perfil() {
           )}
         </div>
 
-        <div className="profile-security-alert">
-          <Info size={18} />
-
-          <span>
-            Por seguridad, la contraseña no se muestra.
-            Puedes usar la opción de recuperar contraseña
-            desde el inicio de sesión.
-          </span>
-        </div>
+        <CambiarContrasena />
 
         <button
           type="button"
@@ -644,7 +719,10 @@ export default function Perfil() {
           disabled={cerrando}
         >
           <LogOut size={16} />
-          {cerrando ? 'Cerrando sesión...' : 'Cerrar sesión'}
+
+          {cerrando
+            ? 'Cerrando sesión...'
+            : 'Cerrar sesión'}
         </button>
       </div>
     </div>

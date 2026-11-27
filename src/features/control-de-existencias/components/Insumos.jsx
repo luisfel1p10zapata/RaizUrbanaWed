@@ -1,22 +1,31 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { obtenerToken } from '../../usuarios/services/authService';
 
 import {
   AlertTriangle,
   Boxes,
   CheckCircle2,
   Eye,
-  Filter,
   ImagePlus,
   Pencil,
   Plus,
-  Search,
   Trash2,
   X,
   XCircle,
 } from 'lucide-react';
 
 import TableGlobal from '../../../components/ui/TableGlobal';
-import { subirImagen, CARPETAS_UPLOAD } from '../../../services/uploadService';
+import KpiGlobal from '../../../components/ui/KpiGlobal';
+import AppAlert from '../../../components/ui/AppAlert';
+import FiltrarBuscarGlobal from '../../../components/ui/FiltrarBuscarGlobal';
+
+
+import '../../../styles/kpiglobal.css';
+
+import {
+  subirImagen,
+  CARPETAS_UPLOAD,
+} from '../../../services/uploadService';
 
 import {
   listarInsumosApi,
@@ -29,17 +38,20 @@ import {
 
 import './Insumos.css';
 
-// Categorías temporales mientras se termina la API de Categorías.
+// Se conservan estas referencias para mostrar correctamente
+// las categorías de los insumos registrados anteriormente.
 const CATEGORIAS = [
   { id: 1, nombre: 'Ropa' },
   { id: 2, nombre: 'Accesorios' },
 ];
 
+const ID_CATEGORIA_ACCESORIOS = '2';
+
 const API_INSUMOS = 'http://127.0.0.1:8000/api/insumos';
 
 const crearFormularioVacio = () => ({
   nombre: '',
-  idCategoria: '',
+  idCategoria: ID_CATEGORIA_ACCESORIOS,
   idMaterial: '',
   idTamano: '',
   precioUnitario: '',
@@ -57,6 +69,11 @@ async function solicitarCatalogo(ruta, opciones = {}) {
       ...opciones,
       headers: {
         'Content-Type': 'application/json',
+
+        ...(obtenerToken()
+          ? { Authorization: `Bearer ${obtenerToken()}` }
+          : {}),
+
         ...opciones.headers,
       },
     });
@@ -67,7 +84,8 @@ async function solicitarCatalogo(ruta, opciones = {}) {
   }
 
   if (!respuesta.ok) {
-    let mensaje = `No se pudo completar la operación. Código: ${respuesta.status}.`;
+    let mensaje =
+      `No se pudo completar la operación. Código: ${respuesta.status}.`;
 
     try {
       const error = await respuesta.json();
@@ -98,18 +116,37 @@ function normalizarInsumo(insumo) {
     id: insumo.idInsumo ?? insumo.id_insumo,
     nombre: insumo.nombre ?? '',
     estado: insumo.estado ?? '',
-    idCategoria: insumo.idCategoria ?? insumo.id_categoria,
-    idMaterial: insumo.idMaterial ?? insumo.id_material,
-    idTamano: insumo.idTamano ?? insumo.id_tamano,
+
+    idCategoria:
+      insumo.idCategoria ?? insumo.id_categoria,
+
+    idMaterial:
+      insumo.idMaterial ?? insumo.id_material,
+
+    idTamano:
+      insumo.idTamano ?? insumo.id_tamano,
+
     precioUnitario:
-      insumo.precioUnitario ?? insumo.precio_unitario ?? '',
+      insumo.precioUnitario ??
+      insumo.precio_unitario ??
+      '',
+
     stock: insumo.stock ?? 0,
+
     stockMinimo:
-      insumo.stockMinimo ?? insumo.stock_minimo ?? 0,
+      insumo.stockMinimo ??
+      insumo.stock_minimo ??
+      0,
+
     stockMaximo:
-      insumo.stockMaximo ?? insumo.stock_maximo ?? null,
+      insumo.stockMaximo ??
+      insumo.stock_maximo ??
+      null,
+
     fotoInsumo:
-      insumo.fotoInsumo ?? insumo.foto_insumo ?? '',
+      insumo.fotoInsumo ??
+      insumo.foto_insumo ??
+      '',
   };
 }
 
@@ -136,15 +173,19 @@ function validarFormulario(formulario, editando) {
   if (!nombre) {
     errores.nombre = 'El nombre es obligatorio.';
   } else if (nombre.length < 2) {
-    errores.nombre = 'El nombre debe tener al menos 2 caracteres.';
+    errores.nombre =
+      'El nombre debe tener al menos 2 caracteres.';
   } else if (nombre.length > 60) {
-    errores.nombre = 'El nombre no puede superar 60 caracteres.';
+    errores.nombre =
+      'El nombre no puede superar 60 caracteres.';
   } else if (/^\d+$/.test(nombre)) {
-    errores.nombre = 'El nombre no puede contener solo números.';
+    errores.nombre =
+      'El nombre no puede contener solo números.';
   }
 
   if (!formulario.idCategoria) {
-    errores.idCategoria = 'Selecciona una categoría.';
+    errores.idCategoria =
+      'La categoría del insumo es obligatoria.';
   }
 
   if (!formulario.idMaterial) {
@@ -157,7 +198,9 @@ function validarFormulario(formulario, editando) {
 
   if (
     formulario.precioUnitario === '' ||
-    !Number.isFinite(Number(formulario.precioUnitario)) ||
+    !Number.isFinite(
+      Number(formulario.precioUnitario)
+    ) ||
     Number(formulario.precioUnitario) < 0
   ) {
     errores.precioUnitario =
@@ -177,7 +220,9 @@ function validarFormulario(formulario, editando) {
 
   if (
     formulario.stockMinimo === '' ||
-    !Number.isInteger(Number(formulario.stockMinimo)) ||
+    !Number.isInteger(
+      Number(formulario.stockMinimo)
+    ) ||
     Number(formulario.stockMinimo) < 0
   ) {
     errores.stockMinimo =
@@ -208,7 +253,8 @@ function validarFormulario(formulario, editando) {
   }
 
   if (formulario.fotoInsumo.trim().length > 255) {
-    errores.fotoInsumo = 'La ruta no puede superar 255 caracteres.';
+    errores.fotoInsumo =
+      'La ruta no puede superar 255 caracteres.';
   }
 
   return errores;
@@ -232,7 +278,10 @@ function ImagenInsumo({ src, nombre, className }) {
 
   if (!src || error) {
     return (
-      <div className={className} aria-label="Imagen no disponible">
+      <div
+        className={className}
+        aria-label="Imagen no disponible"
+      >
         <Boxes size={22} />
       </div>
     );
@@ -249,15 +298,25 @@ function ImagenInsumo({ src, nombre, className }) {
   );
 }
 
-function Modal({ titulo, subtitulo, onClose, children }) {
+function Modal({
+  titulo,
+  subtitulo,
+  onClose,
+  children,
+}) {
   return (
-    <div className="ins-modal-overlay" onMouseDown={onClose}>
+    <div
+      className="ins-modal-overlay"
+      onMouseDown={onClose}
+    >
       <div
         className="ins-modal ins-form-modal-custom"
         role="dialog"
         aria-modal="true"
         aria-label={titulo}
-        onMouseDown={(event) => event.stopPropagation()}
+        onMouseDown={(event) =>
+          event.stopPropagation()
+        }
       >
         <div className="ins-modal-header">
           <div>
@@ -267,7 +326,9 @@ function Modal({ titulo, subtitulo, onClose, children }) {
               </span>
             )}
 
-            <h2 className="ins-modal-title">{titulo}</h2>
+            <h2 className="ins-modal-title">
+              {titulo}
+            </h2>
           </div>
 
           <button
@@ -290,7 +351,10 @@ function CampoError({ mensaje }) {
   if (!mensaje) return null;
 
   return (
-    <small className="ins-field-error" role="alert">
+    <small
+      className="ins-field-error"
+      role="alert"
+    >
       {mensaje}
     </small>
   );
@@ -302,12 +366,12 @@ export default function Insumos() {
   const [tamanos, setTamanos] = useState([]);
 
   const [busqueda, setBusqueda] = useState('');
-  const [filtroCategoria, setFiltroCategoria] = useState('');
   const [filtroEstado, setFiltroEstado] = useState('');
   const [pagina, setPagina] = useState(1);
 
   const [modal, setModal] = useState(null);
   const [seleccionado, setSeleccionado] = useState(null);
+
   const [formulario, setFormulario] = useState(
     crearFormularioVacio
   );
@@ -324,28 +388,36 @@ export default function Insumos() {
   const [cargando, setCargando] = useState(true);
   const [procesando, setProcesando] = useState(false);
   const [subiendoFoto, setSubiendoFoto] = useState(false);
+
   const archivoFotoRef = useRef(null);
 
   const manejarSubidaFotoInsumo = async (event) => {
     const archivo = event.target.files?.[0];
+
     event.target.value = '';
+
     if (!archivo) return;
 
     try {
       setSubiendoFoto(true);
       setErrorFormulario('');
-      const resultado = await subirImagen(archivo, CARPETAS_UPLOAD.INSUMOS);
+
+      const resultado = await subirImagen(
+        archivo,
+        CARPETAS_UPLOAD.INSUMOS
+      );
+
       cambiarCampo('fotoInsumo', resultado.url);
     } catch (error) {
       setErrorFormulario(
-        error.message || 'No se pudo subir la imagen del insumo.'
+        error.message ||
+        'No se pudo subir la imagen del insumo.'
       );
     } finally {
       setSubiendoFoto(false);
     }
   };
 
-  // Carga inicial de insumos, materiales y tamaños.
   useEffect(() => {
     let activo = true;
 
@@ -354,31 +426,46 @@ export default function Insumos() {
       solicitarCatalogo('/materiales'),
       solicitarCatalogo('/tamanos'),
     ])
-      .then(([listaInsumos, listaMateriales, listaTamanos]) => {
-        if (!activo) return;
+      .then(
+        ([
+          listaInsumos,
+          listaMateriales,
+          listaTamanos,
+        ]) => {
+          if (!activo) return;
 
-        if (
-          !Array.isArray(listaInsumos) ||
-          !Array.isArray(listaMateriales) ||
-          !Array.isArray(listaTamanos)
-        ) {
-          throw new Error(
-            'El servidor devolvió una respuesta inesperada.'
+          if (
+            !Array.isArray(listaInsumos) ||
+            !Array.isArray(listaMateriales) ||
+            !Array.isArray(listaTamanos)
+          ) {
+            throw new Error(
+              'El servidor devolvió una respuesta inesperada.'
+            );
+          }
+
+          setInsumos(
+            listaInsumos.map(normalizarInsumo)
+          );
+
+          setMateriales(
+            listaMateriales.map(normalizarMaterial)
+          );
+
+          setTamanos(
+            listaTamanos.map(normalizarTamano)
           );
         }
-
-        setInsumos(listaInsumos.map(normalizarInsumo));
-        setMateriales(listaMateriales.map(normalizarMaterial));
-        setTamanos(listaTamanos.map(normalizarTamano));
-      })
+      )
       .catch((error) => {
-        if (activo) {
-          setAlerta({
-            type: 'error',
-            message:
-              error.message || 'No se pudieron cargar los datos.',
-          });
-        }
+        if (!activo) return;
+
+        setAlerta({
+          type: 'error',
+          message:
+            error.message ||
+            'No se pudieron cargar los datos.',
+        });
       })
       .finally(() => {
         if (activo) {
@@ -390,17 +477,6 @@ export default function Insumos() {
       activo = false;
     };
   }, []);
-
-  // Cierra la alerta automáticamente después de 3 segundos.
-  useEffect(() => {
-    if (!alerta) return undefined;
-
-    const temporizador = setTimeout(() => {
-      setAlerta(null);
-    }, 3000);
-
-    return () => clearTimeout(temporizador);
-  }, [alerta]);
 
   const actualizarLista = async () => {
     const lista = await listarInsumosApi();
@@ -436,19 +512,22 @@ export default function Insumos() {
       const categoria =
         CATEGORIAS.find(
           (item) =>
-            String(item.id) === String(insumo.idCategoria)
+            String(item.id) ===
+            String(insumo.idCategoria)
         )?.nombre || '';
 
       const material =
         materiales.find(
           (item) =>
-            String(item.id) === String(insumo.idMaterial)
+            String(item.id) ===
+            String(insumo.idMaterial)
         )?.nombre || '';
 
       const tamano =
         tamanos.find(
           (item) =>
-            String(item.id) === String(insumo.idTamano)
+            String(item.id) ===
+            String(insumo.idTamano)
         )?.nombre || '';
 
       const contenido = [
@@ -463,9 +542,8 @@ export default function Insumos() {
 
       return (
         (!texto || contenido.includes(texto)) &&
-        (!filtroCategoria ||
-          String(insumo.idCategoria) === filtroCategoria) &&
-        (!filtroEstado || insumo.estado === filtroEstado)
+        (!filtroEstado ||
+          insumo.estado === filtroEstado)
       );
     });
   }, [
@@ -473,7 +551,6 @@ export default function Insumos() {
     materiales,
     tamanos,
     busqueda,
-    filtroCategoria,
     filtroEstado,
   ]);
 
@@ -481,11 +558,18 @@ export default function Insumos() {
 
   const totalPaginas = Math.max(
     1,
-    Math.ceil(insumosFiltrados.length / porPagina)
+    Math.ceil(
+      insumosFiltrados.length / porPagina
+    )
   );
 
-  const paginaActual = Math.min(pagina, totalPaginas);
-  const inicio = (paginaActual - 1) * porPagina;
+  const paginaActual = Math.min(
+    pagina,
+    totalPaginas
+  );
+
+  const inicio =
+    (paginaActual - 1) * porPagina;
 
   const insumosPaginados = insumosFiltrados.slice(
     inicio,
@@ -512,7 +596,8 @@ export default function Insumos() {
       value: insumos.filter(
         (item) =>
           item.estado === 'Activo' &&
-          Number(item.stock) <= Number(item.stockMinimo)
+          Number(item.stock) <=
+          Number(item.stockMinimo)
       ).length,
       label: 'Requieren revisión',
       icon: <AlertTriangle size={22} />,
@@ -528,7 +613,11 @@ export default function Insumos() {
   ];
 
   const editando = modal === 'editar';
-  const errores = validarFormulario(formulario, editando);
+
+  const errores = validarFormulario(
+    formulario,
+    editando
+  );
 
   const mostrarError = (campo) =>
     tocados[campo] || intentoGuardar
@@ -580,16 +669,25 @@ export default function Insumos() {
       if (destino === 'editar') {
         setFormulario({
           nombre: insumo.nombre,
-          idCategoria: String(insumo.idCategoria),
+          idCategoria: ID_CATEGORIA_ACCESORIOS,
           idMaterial: String(insumo.idMaterial),
           idTamano: String(insumo.idTamano),
-          precioUnitario: String(insumo.precioUnitario),
+
+          precioUnitario: String(
+            insumo.precioUnitario
+          ),
+
           stock: String(insumo.stock),
-          stockMinimo: String(insumo.stockMinimo),
+
+          stockMinimo: String(
+            insumo.stockMinimo
+          ),
+
           stockMaximo:
             insumo.stockMaximo === null
               ? ''
               : String(insumo.stockMaximo),
+
           fotoInsumo: insumo.fotoInsumo || '',
         });
       }
@@ -603,7 +701,8 @@ export default function Insumos() {
       setAlerta({
         type: 'error',
         message:
-          error.message || 'No se pudo consultar el insumo.',
+          error.message ||
+          'No se pudo consultar el insumo.',
       });
     } finally {
       setProcesando(false);
@@ -620,16 +719,31 @@ export default function Insumos() {
 
     const datos = {
       nombre: formulario.nombre.trim(),
-      idCategoria: Number(formulario.idCategoria),
-      idMaterial: Number(formulario.idMaterial),
+
+      idCategoria: Number(
+        formulario.idCategoria
+      ),
+
+      idMaterial: Number(
+        formulario.idMaterial
+      ),
+
       idTamano: Number(formulario.idTamano),
-      precioUnitario: formulario.precioUnitario,
-      stockMinimo: Number(formulario.stockMinimo),
+
+      precioUnitario:
+        formulario.precioUnitario,
+
+      stockMinimo: Number(
+        formulario.stockMinimo
+      ),
+
       stockMaximo:
         formulario.stockMaximo === ''
           ? null
           : Number(formulario.stockMaximo),
-      fotoInsumo: formulario.fotoInsumo.trim() || null,
+
+      fotoInsumo:
+        formulario.fotoInsumo.trim() || null,
     };
 
     if (!editando) {
@@ -641,7 +755,10 @@ export default function Insumos() {
       setErrorFormulario('');
 
       if (editando) {
-        await actualizarInsumoApi(seleccionado.id, datos);
+        await actualizarInsumoApi(
+          seleccionado.id,
+          datos
+        );
       } else {
         await registrarInsumoApi(datos);
       }
@@ -667,7 +784,8 @@ export default function Insumos() {
       }
     } catch (error) {
       setErrorFormulario(
-        error.message || 'No se pudo guardar el insumo.'
+        error.message ||
+        'No se pudo guardar el insumo.'
       );
     } finally {
       setProcesando(false);
@@ -676,7 +794,9 @@ export default function Insumos() {
 
   const crearCatalogo = async () => {
     const nombre = nombreCatalogo.trim();
-    const esMaterial = nuevoCatalogo === 'material';
+
+    const esMaterial =
+      nuevoCatalogo === 'material';
 
     if (!nombre) {
       setErrorCatalogo('Escribe un nombre.');
@@ -717,15 +837,31 @@ export default function Insumos() {
       );
 
       if (esMaterial) {
-        const creado = normalizarMaterial(respuesta);
+        const creado =
+          normalizarMaterial(respuesta);
 
-        setMateriales((actual) => [...actual, creado]);
-        cambiarCampo('idMaterial', String(creado.id));
+        setMateriales((actual) => [
+          ...actual,
+          creado,
+        ]);
+
+        cambiarCampo(
+          'idMaterial',
+          String(creado.id)
+        );
       } else {
-        const creado = normalizarTamano(respuesta);
+        const creado =
+          normalizarTamano(respuesta);
 
-        setTamanos((actual) => [...actual, creado]);
-        cambiarCampo('idTamano', String(creado.id));
+        setTamanos((actual) => [
+          ...actual,
+          creado,
+        ]);
+
+        cambiarCampo(
+          'idTamano',
+          String(creado.id)
+        );
       }
 
       setNuevoCatalogo(null);
@@ -755,14 +891,18 @@ export default function Insumos() {
           ? 'Inactivo'
           : 'Activo';
 
-      await cambiarEstadoInsumoApi(insumo.id, estado);
+      await cambiarEstadoInsumoApi(
+        insumo.id,
+        estado
+      );
 
       try {
         await actualizarLista();
 
         setAlerta({
           type: 'success',
-          message: 'Estado actualizado correctamente.',
+          message:
+            'Estado actualizado correctamente.',
         });
       } catch {
         setAlerta({
@@ -775,7 +915,8 @@ export default function Insumos() {
       setAlerta({
         type: 'error',
         message:
-          error.message || 'No se pudo cambiar el estado.',
+          error.message ||
+          'No se pudo cambiar el estado.',
       });
     } finally {
       setProcesando(false);
@@ -790,6 +931,7 @@ export default function Insumos() {
       setErrorFormulario('');
 
       await eliminarInsumoApi(seleccionado.id);
+
       setModal(null);
 
       try {
@@ -797,7 +939,8 @@ export default function Insumos() {
 
         setAlerta({
           type: 'success',
-          message: 'Insumo eliminado correctamente.',
+          message:
+            'Insumo eliminado correctamente.',
         });
       } catch {
         setAlerta({
@@ -808,7 +951,8 @@ export default function Insumos() {
       }
     } catch (error) {
       setErrorFormulario(
-        error.message || 'No se pudo eliminar el insumo.'
+        error.message ||
+        'No se pudo eliminar el insumo.'
       );
     } finally {
       setProcesando(false);
@@ -849,7 +993,9 @@ export default function Insumos() {
       header: 'Material / tamaño',
       render: (insumo) => (
         <div className="ins-ref-mat-size">
-          <span>{nombreMaterial(insumo.idMaterial)}</span>
+          <span>
+            {nombreMaterial(insumo.idMaterial)}
+          </span>
 
           <span className="size-chip">
             {nombreTamano(insumo.idTamano)}
@@ -861,7 +1007,8 @@ export default function Insumos() {
       header: 'Stock',
       render: (insumo) => (
         <span
-          className={`stock-text ${Number(insumo.stock) <= Number(insumo.stockMinimo)
+          className={`stock-text ${Number(insumo.stock) <=
+            Number(insumo.stockMinimo)
             ? 'low'
             : 'ok'
             }`}
@@ -874,7 +1021,11 @@ export default function Insumos() {
       header: 'Precio',
       render: (insumo) => (
         <div className="price-cell">
-          <strong>{formatearPrecio(insumo.precioUnitario)}</strong>
+          <strong>
+            {formatearPrecio(
+              insumo.precioUnitario
+            )}
+          </strong>
         </div>
       ),
     },
@@ -911,7 +1062,10 @@ export default function Insumos() {
             aria-label={`Consultar ${insumo.nombre}`}
             disabled={procesando}
             onClick={() =>
-              consultarInsumo(insumo.id, 'consulta')
+              consultarInsumo(
+                insumo.id,
+                'consulta'
+              )
             }
           >
             <Eye size={16} />
@@ -924,7 +1078,10 @@ export default function Insumos() {
             aria-label={`Editar ${insumo.nombre}`}
             disabled={procesando}
             onClick={() =>
-              consultarInsumo(insumo.id, 'editar')
+              consultarInsumo(
+                insumo.id,
+                'editar'
+              )
             }
           >
             <Pencil size={16} />
@@ -952,25 +1109,13 @@ export default function Insumos() {
   return (
     <div className="insumos-page">
       {alerta && (
-        <div
-          className={`ins-toast ${alerta.type}`}
-          role={alerta.type === 'error' ? 'alert' : 'status'}
-        >
-          {alerta.type === 'error' ? (
-            <AlertTriangle size={19} aria-hidden="true" />
-          ) : (
-            <CheckCircle2 size={19} aria-hidden="true" />
-          )}
-          <span>{alerta.message}</span>
-
-          <button
-            type="button"
-            aria-label="Cerrar alerta"
-            onClick={() => setAlerta(null)}
-          >
-            <X size={17} />
-          </button>
-        </div>
+        <AppAlert
+          key={`${alerta.type}-${alerta.message}`}
+          type={alerta.type}
+          message={alerta.message}
+          duration={3000}
+          onClose={() => setAlerta(null)}
+        />
       )}
 
       <header className="ins-page-header">
@@ -985,128 +1130,108 @@ export default function Insumos() {
             Control e inventario de los insumos disponibles.
           </p>
         </div>
-
-        <button
-          type="button"
-          className="ins-primary-button ins-register-button"
-          onClick={abrirRegistro}
-          disabled={cargando}
-        >
-          <Plus size={17} />
-          REGISTRAR INSUMO
-        </button>
       </header>
 
-      <section
-        className="ins-kpis"
-        aria-label="Indicadores de insumos"
-      >
-        {indicadores.map((indicador) => (
-          <article className="ins-kpi" key={indicador.title}>
-            <div className="ins-kpi-heading">
-              <span>{indicador.title}</span>
-              <span className="ins-kpi-icon">
-                {indicador.icon}
-              </span>
-            </div>
+      <KpiGlobal kpis={indicadores} />
 
-            <strong>{indicador.value}</strong>
-            <small>{indicador.label}</small>
-          </article>
-        ))}
-      </section>
-
-      <section className="ins-filters-card">
-        <div className="ins-filters-title">
-          <Filter size={16} />
-          <span>Filtros y búsqueda</span>
-        </div>
-
-        <div className="ins-filters-row">
-          <div className="ins-search">
-            <Search size={16} />
-
-            <input
-              type="text"
-              aria-label="Buscar insumos"
-              placeholder="Buscar por nombre, ID, material o tamaño..."
-              value={busqueda}
-              onChange={(event) => {
-                setBusqueda(event.target.value);
-                setPagina(1);
-              }}
-            />
-          </div>
-
-          <select
-            aria-label="Filtrar por categoría"
-            value={filtroCategoria}
-            onChange={(event) => {
-              setFiltroCategoria(event.target.value);
-              setPagina(1);
-            }}
+      <FiltrarBuscarGlobal
+        searchPlaceholder="Buscar por nombre, ID, material o tamaño..."
+        searchValue={busqueda}
+        onSearchChange={(valor) => {
+          setBusqueda(valor);
+          setPagina(1);
+        }}
+        action={
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={abrirRegistro}
+            disabled={cargando}
           >
-            <option value="">Todas las categorías</option>
+            <Plus size={16} />
+            <span>REGISTRAR INSUMO</span>
+          </button>
+        }
+      />
 
-            {CATEGORIAS.map((categoria) => (
-              <option key={categoria.id} value={categoria.id}>
-                {categoria.nombre}
-              </option>
-            ))}
-          </select>
+      <div className="ins-filtros-estandar">
+        <div className="ins-filtro-grupo">
+          <label htmlFor="ins-filtro-estado">
+            Estado:
+          </label>
 
           <select
-            aria-label="Filtrar por estado"
+            id="ins-filtro-estado"
             value={filtroEstado}
             onChange={(event) => {
               setFiltroEstado(event.target.value);
               setPagina(1);
             }}
           >
-            <option value="">Todos los estados</option>
-            <option value="Activo">Activo</option>
-            <option value="Inactivo">Inactivo</option>
-          </select>
+            <option value="">
+              Todos los estados
+            </option>
 
+            <option value="Activo">
+              Activo
+            </option>
+
+            <option value="Inactivo">
+              Inactivo
+            </option>
+          </select>
+        </div>
+
+        {filtroEstado && (
           <button
             type="button"
-            className="ins-secondary-button"
+            className="ins-limpiar-filtros"
             onClick={() => {
-              setBusqueda('');
-              setFiltroCategoria('');
               setFiltroEstado('');
               setPagina(1);
             }}
           >
-            Limpiar
+            Limpiar filtros
           </button>
-        </div>
-      </section>
+        )}
+      </div>
 
-      <TableGlobal
-        title="Listado de Insumos"
-        totalCount={insumosFiltrados.length}
-        pageInfoTop={`Página ${paginaActual} de ${totalPaginas}`}
-        columns={columnas}
-        data={insumosPaginados}
-        currentPage={paginaActual}
-        totalPages={totalPaginas}
-        onPageChange={setPagina}
-        paginationText={`Mostrando ${insumosFiltrados.length ? inicio + 1 : 0
-          }-${Math.min(
-            inicio + porPagina,
-            insumosFiltrados.length
-          )} de ${insumosFiltrados.length} registros`}
-        emptyMessage={
-          cargando
-            ? 'Cargando insumos...'
-            : 'No se encontraron insumos.'
-        }
-      />
+      <div className="ins-standard-table-slot">
+        <TableGlobal
+          title="Listado de Insumos"
+          totalCount={insumosFiltrados.length}
+          pageInfoTop={
+            `Página ${paginaActual} de ${totalPaginas}`
+          }
+          columns={columnas}
+          data={insumosPaginados}
+          currentPage={paginaActual}
+          totalPages={totalPaginas}
+          onPageChange={setPagina}
+          paginationText={
+            `Mostrando ${insumosFiltrados.length
+              ? inicio + 1
+              : 0
+            }-${Math.min(
+              inicio + porPagina,
+              insumosFiltrados.length
+            )} de ${insumosFiltrados.length} registros`
+          }
+          emptyMessage={
+            cargando
+              ? 'Cargando insumos...'
+              : 'No se encontraron insumos.'
+          }
+        />
+      </div>
 
       {(modal === 'registro' || modal === 'editar') && (
         <Modal
-          titulo={editando ? 'Editar Insumo' : 'Registrar Insumo'}
+          titulo={
+            editando
+              ? 'Editar Insumo'
+              : 'Registrar Insumo'
+          }
           subtitulo={
             editando
               ? `EDITAR · INSUMO #${seleccionado?.id}`
@@ -1114,55 +1239,85 @@ export default function Insumos() {
           }
           onClose={cerrarModal}
         >
-          <form onSubmit={guardarInsumo} noValidate>
+          <form
+            onSubmit={guardarInsumo}
+            noValidate
+            onBlurCapture={(event) => {
+              const camposPorId = {
+                'ins-nombre': 'nombre',
+                'ins-material': 'idMaterial',
+                'ins-tamano': 'idTamano',
+                'ins-precio': 'precioUnitario',
+                'ins-stock': 'stock',
+                'ins-stock-minimo': 'stockMinimo',
+                'ins-stock-maximo': 'stockMaximo',
+                'ins-foto': 'fotoInsumo',
+              };
+
+              const campo = camposPorId[event.target.id];
+
+              if (campo) {
+                setTocados((actual) => ({
+                  ...actual,
+                  [campo]: true,
+                }));
+              }
+            }}
+          >
             <div className="ins-form-body-custom">
               <div className="ins-section-divider">
                 Información del insumo
               </div>
 
               <div className="ins-field-group full">
-                <label htmlFor="ins-nombre">Nombre *</label>
+                <label htmlFor="ins-nombre">
+                  Nombre *
+                </label>
 
                 <input
                   id="ins-nombre"
                   maxLength={60}
                   value={formulario.nombre}
                   onChange={(event) =>
-                    cambiarCampo('nombre', event.target.value)
+                    cambiarCampo(
+                      'nombre',
+                      event.target.value
+                    )
                   }
-                  aria-invalid={Boolean(mostrarError('nombre'))}
+                  aria-invalid={Boolean(
+                    mostrarError('nombre')
+                  )}
                 />
 
-                <CampoError mensaje={mostrarError('nombre')} />
+                <CampoError
+                  mensaje={mostrarError('nombre')}
+                />
               </div>
 
               <div className="ins-field-group full">
                 <label htmlFor="ins-categoria">
-                  Categoría *
+                  Categoría
                 </label>
 
-                <select
+                <input
                   id="ins-categoria"
-                  value={formulario.idCategoria}
-                  onChange={(event) =>
-                    cambiarCampo('idCategoria', event.target.value)
-                  }
-                  aria-invalid={Boolean(
-                    mostrarError('idCategoria')
+                  value="Accesorios"
+                  readOnly
+                />
+
+                {editando &&
+                  String(seleccionado?.idCategoria) !==
+                  ID_CATEGORIA_ACCESORIOS && (
+                    <p className="ins-field-hint">
+                      Actualmente este insumo tiene la
+                      categoría{' '}
+                      {nombreCategoria(
+                        seleccionado.idCategoria
+                      )}
+                      . Al guardar se cambiará a
+                      Accesorios.
+                    </p>
                   )}
-                >
-                  <option value="">
-                    Selecciona una categoría
-                  </option>
-
-                  {CATEGORIAS.map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.nombre}
-                    </option>
-                  ))}
-                </select>
-
-                <CampoError mensaje={mostrarError('idCategoria')} />
               </div>
 
               <div className="ins-form-row-2">
@@ -1196,13 +1351,20 @@ export default function Insumos() {
                             String(item.id) ===
                             formulario.idMaterial
                         ) && (
-                          <option value={formulario.idMaterial}>
-                            Material #{formulario.idMaterial} no disponible
+                          <option
+                            value={formulario.idMaterial}
+                          >
+                            Material #
+                            {formulario.idMaterial}
+                            {' '}no disponible
                           </option>
                         )}
 
                       {materiales.map((item) => (
-                        <option key={item.id} value={item.id}>
+                        <option
+                          key={item.id}
+                          value={item.id}
+                        >
                           {item.nombre}
                         </option>
                       ))}
@@ -1222,11 +1384,15 @@ export default function Insumos() {
                     </button>
                   </div>
 
-                  <CampoError mensaje={mostrarError('idMaterial')} />
+                  <CampoError
+                    mensaje={mostrarError('idMaterial')}
+                  />
                 </div>
 
                 <div className="ins-field-group">
-                  <label htmlFor="ins-tamano">Tamaño *</label>
+                  <label htmlFor="ins-tamano">
+                    Tamaño *
+                  </label>
 
                   <div className="ins-select-create">
                     <select
@@ -1253,13 +1419,20 @@ export default function Insumos() {
                             String(item.id) ===
                             formulario.idTamano
                         ) && (
-                          <option value={formulario.idTamano}>
-                            Tamaño #{formulario.idTamano} no disponible
+                          <option
+                            value={formulario.idTamano}
+                          >
+                            Tamaño #
+                            {formulario.idTamano}
+                            {' '}no disponible
                           </option>
                         )}
 
                       {tamanos.map((item) => (
-                        <option key={item.id} value={item.id}>
+                        <option
+                          key={item.id}
+                          value={item.id}
+                        >
                           {item.nombre}
                         </option>
                       ))}
@@ -1279,7 +1452,9 @@ export default function Insumos() {
                     </button>
                   </div>
 
-                  <CampoError mensaje={mostrarError('idTamano')} />
+                  <CampoError
+                    mensaje={mostrarError('idTamano')}
+                  />
                 </div>
               </div>
 
@@ -1297,7 +1472,9 @@ export default function Insumos() {
                       value={nombreCatalogo}
                       maxLength={60}
                       onChange={(event) => {
-                        setNombreCatalogo(event.target.value);
+                        setNombreCatalogo(
+                          event.target.value
+                        );
                         setErrorCatalogo('');
                       }}
                     />
@@ -1316,13 +1493,17 @@ export default function Insumos() {
                       className="ins-close-button"
                       aria-label="Cancelar creación"
                       disabled={procesando}
-                      onClick={() => setNuevoCatalogo(null)}
+                      onClick={() =>
+                        setNuevoCatalogo(null)
+                      }
                     >
                       <X size={18} />
                     </button>
                   </div>
 
-                  <CampoError mensaje={errorCatalogo} />
+                  <CampoError
+                    mensaje={errorCatalogo}
+                  />
                 </div>
               )}
 
@@ -1354,13 +1535,17 @@ export default function Insumos() {
                   />
 
                   <CampoError
-                    mensaje={mostrarError('precioUnitario')}
+                    mensaje={mostrarError(
+                      'precioUnitario'
+                    )}
                   />
                 </div>
 
                 <div className="ins-field-group">
                   <label htmlFor="ins-stock">
-                    {editando ? 'Stock actual' : 'Stock inicial *'}
+                    {editando
+                      ? 'Stock actual'
+                      : 'Stock inicial *'}
                   </label>
 
                   <input
@@ -1371,17 +1556,24 @@ export default function Insumos() {
                     value={formulario.stock}
                     disabled={editando}
                     onChange={(event) =>
-                      cambiarCampo('stock', event.target.value)
+                      cambiarCampo(
+                        'stock',
+                        event.target.value
+                      )
                     }
-                    aria-invalid={Boolean(mostrarError('stock'))}
+                    aria-invalid={Boolean(
+                      mostrarError('stock')
+                    )}
                   />
 
-                  <CampoError mensaje={mostrarError('stock')} />
+                  <CampoError
+                    mensaje={mostrarError('stock')}
+                  />
 
                   {editando && (
                     <small className="ins-field-hint">
-                      El stock se actualiza mediante movimientos
-                      de inventario.
+                      El stock se actualiza mediante
+                      movimientos de inventario.
                     </small>
                   )}
                 </div>
@@ -1410,7 +1602,9 @@ export default function Insumos() {
                     )}
                   />
 
-                  <CampoError mensaje={mostrarError('stockMinimo')} />
+                  <CampoError
+                    mensaje={mostrarError('stockMinimo')}
+                  />
                 </div>
 
                 <div className="ins-field-group">
@@ -1435,7 +1629,9 @@ export default function Insumos() {
                     )}
                   />
 
-                  <CampoError mensaje={mostrarError('stockMaximo')} />
+                  <CampoError
+                    mensaje={mostrarError('stockMaximo')}
+                  />
                 </div>
               </div>
 
@@ -1481,8 +1677,12 @@ export default function Insumos() {
                   <button
                     type="button"
                     className="btn-cancel-custom"
-                    disabled={subiendoFoto || procesando}
-                    onClick={() => archivoFotoRef.current?.click()}
+                    disabled={
+                      subiendoFoto || procesando
+                    }
+                    onClick={() =>
+                      archivoFotoRef.current?.click()
+                    }
                     style={{
                       display: 'inline-flex',
                       alignItems: 'center',
@@ -1490,8 +1690,11 @@ export default function Insumos() {
                     }}
                   >
                     <ImagePlus size={15} />
+
                     <span>
-                      {subiendoFoto ? 'Subiendo imagen...' : 'Subir desde equipo'}
+                      {subiendoFoto
+                        ? 'Subiendo imagen...'
+                        : 'Subir desde equipo'}
                     </span>
                   </button>
 
@@ -1505,15 +1708,28 @@ export default function Insumos() {
                     >
                       <ImagenInsumo
                         key={formulario.fotoInsumo}
-                        src={formulario.fotoInsumo.trim()}
-                        nombre={formulario.nombre || 'Vista previa'}
+                        src={
+                          formulario.fotoInsumo.trim()
+                        }
+                        nombre={
+                          formulario.nombre ||
+                          'Vista previa'
+                        }
                         className="ins-ref-avatar"
                       />
+
                       <button
                         type="button"
                         className="btn-cancel-custom"
-                        disabled={subiendoFoto || procesando}
-                        onClick={() => cambiarCampo('fotoInsumo', '')}
+                        disabled={
+                          subiendoFoto || procesando
+                        }
+                        onClick={() =>
+                          cambiarCampo(
+                            'fotoInsumo',
+                            ''
+                          )
+                        }
                         aria-label="Quitar foto del insumo"
                         style={{ padding: '6px 8px' }}
                       >
@@ -1523,11 +1739,16 @@ export default function Insumos() {
                   )}
                 </div>
 
-                <CampoError mensaje={mostrarError('fotoInsumo')} />
+                <CampoError
+                  mensaje={mostrarError('fotoInsumo')}
+                />
               </div>
 
               {errorFormulario && (
-                <p className="ins-form-error" role="alert">
+                <p
+                  className="ins-form-error"
+                  role="alert"
+                >
                   {errorFormulario}
                 </p>
               )}
@@ -1580,7 +1801,9 @@ export default function Insumos() {
                 <h3>{seleccionado.nombre}</h3>
 
                 <p>
-                  {nombreCategoria(seleccionado.idCategoria)}
+                  {nombreCategoria(
+                    seleccionado.idCategoria
+                  )}
                   {' · '}
                   {seleccionado.estado}
                 </p>
@@ -1589,44 +1812,69 @@ export default function Insumos() {
 
             <div className="ins-view-details-table">
               <div className="ins-view-row">
-                <span className="lbl">Material</span>
+                <span className="lbl">
+                  Material
+                </span>
+
                 <span className="val">
-                  {nombreMaterial(seleccionado.idMaterial)}
+                  {nombreMaterial(
+                    seleccionado.idMaterial
+                  )}
                 </span>
               </div>
 
               <div className="ins-view-row">
-                <span className="lbl">Tamaño</span>
+                <span className="lbl">
+                  Tamaño
+                </span>
+
                 <span className="val">
-                  {nombreTamano(seleccionado.idTamano)}
+                  {nombreTamano(
+                    seleccionado.idTamano
+                  )}
                 </span>
               </div>
 
               <div className="ins-view-row">
-                <span className="lbl">Precio unitario</span>
+                <span className="lbl">
+                  Precio unitario
+                </span>
+
                 <span className="val">
-                  {formatearPrecio(seleccionado.precioUnitario)}
+                  {formatearPrecio(
+                    seleccionado.precioUnitario
+                  )}
                 </span>
               </div>
 
               <div className="ins-view-row">
-                <span className="lbl">Stock actual</span>
+                <span className="lbl">
+                  Stock actual
+                </span>
+
                 <span className="val">
                   {seleccionado.stock}
                 </span>
               </div>
 
               <div className="ins-view-row">
-                <span className="lbl">Stock mínimo</span>
+                <span className="lbl">
+                  Stock mínimo
+                </span>
+
                 <span className="val">
                   {seleccionado.stockMinimo}
                 </span>
               </div>
 
               <div className="ins-view-row">
-                <span className="lbl">Stock máximo</span>
+                <span className="lbl">
+                  Stock máximo
+                </span>
+
                 <span className="val">
-                  {seleccionado.stockMaximo ?? 'Sin límite'}
+                  {seleccionado.stockMaximo ??
+                    'Sin límite'}
                 </span>
               </div>
             </div>
@@ -1646,7 +1894,10 @@ export default function Insumos() {
               className="btn-submit-custom"
               disabled={procesando}
               onClick={() =>
-                consultarInsumo(seleccionado.id, 'editar')
+                consultarInsumo(
+                  seleccionado.id,
+                  'editar'
+                )
               }
             >
               Editar
@@ -1670,13 +1921,18 @@ export default function Insumos() {
 
             <p>
               Se intentará eliminar el insumo{' '}
-              <strong>{seleccionado.nombre}</strong>.
-              Si tiene stock o registros relacionados,
+              <strong>
+                {seleccionado.nombre}
+              </strong>
+              . Si tiene stock o registros relacionados,
               puedes dejarlo inactivo.
             </p>
 
             {errorFormulario && (
-              <p className="ins-form-error" role="alert">
+              <p
+                className="ins-form-error"
+                role="alert"
+              >
                 {errorFormulario}
               </p>
             )}
@@ -1698,7 +1954,9 @@ export default function Insumos() {
               onClick={confirmarEliminacion}
               disabled={procesando}
             >
-              {procesando ? 'Eliminando...' : 'Eliminar'}
+              {procesando
+                ? 'Eliminando...'
+                : 'Eliminar'}
             </button>
           </div>
         </Modal>
@@ -1706,4 +1964,3 @@ export default function Insumos() {
     </div>
   );
 }
-

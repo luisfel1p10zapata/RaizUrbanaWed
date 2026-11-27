@@ -769,3 +769,48 @@
     font-size: 12px;
     line-height: 1.4;
 }
+
+.ru-recovery .ru-recovery__requirements {
+  margin-top: 10px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.ru-recovery .ru-recovery__requirements ul {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px 12px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ru-recovery .ru-recovery__requirements li {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+}
+
+.ru-recovery .ru-recovery__requirements .is-complete {
+  color: #16804a;
+}
+
+.ru-recovery .ru-recovery__requirements .is-pending {
+  color: #777486;
+}
+
+.ru-recovery[data-theme='dark']
+  .ru-recovery__requirements .is-complete {
+  color: #72d6a1;
+}
+
+.ru-recovery[data-theme='dark']
+  .ru-recovery__requirements .is-pending {
+  color: #c2b9c3;
+}
+
+@media (max-width: 600px) {
+  .ru-recovery .ru-recovery__requirements ul {
+    grid-template-columns: 1fr;
+  }
+}
