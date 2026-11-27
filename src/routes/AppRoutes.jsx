@@ -16,6 +16,7 @@ import TerminosCondiciones from '../features/usuarios/components/TerminosCondici
 
 // Ventas y catálogo
 import Inicio from '../features/ventas/components/Inicio';
+import Catalogo from '../features/ventas/components/catalogo';
 import Ventas from '../features/ventas/components/Ventas';
 import Carrito from '../features/ventas/components/Carrito';
 
@@ -137,6 +138,16 @@ const AppRoutes = () => {
         <Route
           path="/terminos-y-condiciones"
           element={<TerminosCondiciones />}
+        />
+
+        <Route
+          path="/catalogo"
+          element={
+            <>
+              <MainNavbar />
+              <Catalogo />
+            </>
+          }
         />
 
         <Route
@@ -429,4 +440,4 @@ const AppRoutes = () => {
   );
 };
 
-export default AppRoutes; 
+export default AppRoutes;
